@@ -19,9 +19,9 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-[#0B0B0B]/95 backdrop-blur-md border-b border-[#1B1B1B]">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
         <Link href="/" className="flex items-center shrink-0">
-          <img src="/logo.png" alt="BallMtaani" className="h-12 w-auto" />
+          <img src="/logo.png" alt="BallMtaani" className="h-36 w-auto" />
         </Link>
 
         {/* Desktop Nav */}
@@ -82,7 +82,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-16 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
+        <div className="lg:hidden absolute top-24 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
           {links.map((link) => {
             const isActive = location === link.href || (link.href !== "/" && location.startsWith(link.href));
             return (
