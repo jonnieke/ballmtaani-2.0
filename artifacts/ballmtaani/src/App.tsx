@@ -15,7 +15,7 @@ function HeroSection() {
     <div
       className="relative w-full flex flex-col items-center justify-center text-center py-10 px-4"
       style={{
-        background: `linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(11,11,11,0.85) 100%), url('/stadium.png') center center / cover no-repeat`,
+        background: `linear-gradient(160deg, #1a0000 0%, #0B0B0B 50%, #00051a 100%)`,
         minHeight: "340px",
       }}
     >
@@ -59,12 +59,7 @@ function HeroSection() {
 
 function MainContent() {
   return (
-    <div
-      className="relative px-4 py-6"
-      style={{
-        background: `linear-gradient(to bottom, rgba(11,11,11,0.97) 0%, rgba(11,11,11,0.85) 50%, rgba(11,11,11,0.97) 100%), url('/stadium.png') center 60% / cover no-repeat`,
-      }}
-    >
+    <div className="relative px-4 py-6 bg-[#0B0B0B]">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
         <AIPredictionCard />
         <FanDebateCard />
@@ -443,12 +438,7 @@ function TwitterIcon() {
 
 function Footer() {
   return (
-    <div
-      className="relative py-8 px-4 text-center"
-      style={{
-        background: `linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(11,11,11,0.8) 100%), url('/stadium.png') center 80% / cover no-repeat`,
-      }}
-    >
+    <div className="relative py-8 px-4 text-center bg-[#0B0B0B] border-t border-[#1B1B1B]">
       <div className="max-w-4xl mx-auto">
         <div
           className="inline-block px-8 py-3 rounded-full mb-4 border border-[#B30000]/60"
