@@ -1,19 +1,36 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { UPCOMING_FIXTURES } from "../data/mockData";
-import { CheckCircle2 } from "lucide-react";
+import { useUpcomingFixtures } from "../hooks/useData";
+import { supabase } from "../lib/supabase";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
 
 export default function PredictionsPage() {
   const [activeTab, setActiveTab] = useState<"make" | "my">("make");
-  const { isLoggedIn, openLoginModal } = useAuth();
+  const { isLoggedIn, user, openLoginModal } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
   const [predictions, setPredictions] = useState<Record<string, {home: string, away: string, saved: boolean}>>({});
 
-  const handlePredict = (fixtureId: string) => {
-    if (!isLoggedIn) { openLoginModal(); return; }
+  const { data: fixtures = [] } = useUpcomingFixtures();
+
+  const handlePredict = async (fixtureId: string) => {
+    if (!isLoggedIn || !user) { openLoginModal(); return; }
+    
     const pred = predictions[fixtureId];
     if (pred && pred.home !== "" && pred.away !== "") {
-      setPredictions({ ...predictions, [fixtureId]: { ...pred, saved: true } });
+      setIsSubmitting(fixtureId);
+      
+      const { error } = await supabase.from("predictions").insert({
+        user_id: user.id,
+        match_id: fixtureId,
+        predicted_score: `${pred.home} - ${pred.away}`
+      });
+
+      setIsSubmitting(null);
+      
+      if (!error) {
+        setPredictions({ ...predictions, [fixtureId]: { ...pred, saved: true } });
+      }
     }
   };
 
@@ -49,7 +66,7 @@ export default function PredictionsPage() {
 
       {activeTab === "make" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {UPCOMING_FIXTURES.map(fixture => {
+          {fixtures.map((fixture: any) => {
             const isSaved = predictions[fixture.id]?.saved;
             const hScore = predictions[fixture.id]?.home || "";
             const aScore = predictions[fixture.id]?.away || "";
@@ -79,7 +96,7 @@ export default function PredictionsPage() {
                       maxLength={2}
                       value={hScore}
                       onChange={(e) => handleScoreChange(fixture.id, 'home', e.target.value)}
-                      disabled={isSaved}
+                      disabled={isSaved || isSubmitting === fixture.id}
                       className="w-14 h-16 md:w-16 md:h-20 bg-[#0B0B0B] border-2 border-white/10 focus:border-[#B30000] rounded text-center text-3xl font-black text-white focus:outline-none disabled:opacity-50 transition-colors"
                       placeholder="-"
                     />
@@ -89,7 +106,7 @@ export default function PredictionsPage() {
                       maxLength={2}
                       value={aScore}
                       onChange={(e) => handleScoreChange(fixture.id, 'away', e.target.value)}
-                      disabled={isSaved}
+                      disabled={isSaved || isSubmitting === fixture.id}
                       className="w-14 h-16 md:w-16 md:h-20 bg-[#0B0B0B] border-2 border-white/10 focus:border-[#B30000] rounded text-center text-3xl font-black text-white focus:outline-none disabled:opacity-50 transition-colors"
                       placeholder="-"
                     />
@@ -117,9 +134,10 @@ export default function PredictionsPage() {
                 ) : (
                   <button
                     onClick={() => handlePredict(fixture.id)}
-                    disabled={hScore === "" || aScore === ""}
-                    className="w-full bg-[#B30000] hover:bg-red-800 disabled:bg-gray-800 disabled:text-gray-500 text-white font-black uppercase tracking-wider text-sm py-3 rounded transition-colors"
+                    disabled={(hScore === "" || aScore === "") || isSubmitting === fixture.id}
+                    className="w-full bg-[#B30000] hover:bg-red-800 disabled:bg-gray-800 disabled:text-gray-500 text-white font-black uppercase tracking-wider text-sm py-3 rounded transition-colors flex items-center justify-center gap-2"
                   >
+                    {isSubmitting === fixture.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {isLoggedIn ? "Submit Prediction" : "Log In to Predict"}
                   </button>
                 )}

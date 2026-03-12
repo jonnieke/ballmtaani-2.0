@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { LEADERBOARD } from "../data/mockData";
+import { useLeaderboard } from "../hooks/useData";
 import { Trophy, HelpCircle } from "lucide-react";
 
 export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<"global" | "weekly" | "country">("global");
   const { isLoggedIn, username } = useAuth();
+  
+  const { data: records = [] } = useLeaderboard();
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -46,7 +48,7 @@ export default function LeaderboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {LEADERBOARD.map((player) => {
+              {records.map((player: any) => {
                 const isMe = isLoggedIn && player.name === username;
                 let rankStyle = "text-gray-400";
                 if (player.rank === 1) rankStyle = "text-[#FFD700] font-black text-lg";
@@ -66,7 +68,7 @@ export default function LeaderboardPage() {
                           player.rank === 3 ? 'bg-gradient-to-br from-[#CD7F32] to-amber-800 text-white' :
                           'bg-[#0B0B0B] border border-white/10 text-white'
                         }`}>
-                          {player.name[0]}
+                          {player.name ? player.name[0] : '?'}
                         </div>
                         <div>
                           <span className={`font-bold block ${isMe ? 'text-[#B30000]' : 'text-white'}`}>

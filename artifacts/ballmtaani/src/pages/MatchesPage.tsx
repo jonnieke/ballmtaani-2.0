@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "wouter";
-import { LIVE_MATCHES, UPCOMING_FIXTURES } from "../data/mockData";
+import { useMatches, useUpcomingFixtures } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
 
 export default function MatchesPage() {
   const [activeTab, setActiveTab] = useState<"live" | "fixtures">("live");
   const { isLoggedIn, openLoginModal } = useAuth();
+
+  const { data: liveMatches = [] } = useMatches();
+  const { data: upcomingFixtures = [] } = useUpcomingFixtures();
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
@@ -34,7 +37,7 @@ export default function MatchesPage() {
 
       {activeTab === "live" ? (
         <div className="space-y-6">
-          {LIVE_MATCHES.map(match => (
+          {liveMatches.map((match: any) => (
             <div key={match.id} className="bg-[rgba(20,20,25,0.95)] rounded-xl border-l-4 border-[#B30000] border-y border-r border-white/5 p-5 md:p-6 shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#B30000]/5 blur-[50px] rounded-full pointer-events-none"></div>
 
@@ -86,41 +89,46 @@ export default function MatchesPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {["Today", "Tomorrow"].map(date => (
-            <div key={date}>
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gray-600"></div> {date}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {UPCOMING_FIXTURES.filter(f => f.date === date).map(fixture => (
-                  <div key={fixture.id} className="bg-[#1B1B1B] rounded-xl border border-white/5 p-4 shadow-lg hover:border-white/10 transition-colors flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{fixture.league}</span>
-                      <span className="bg-[#0B0B0B] border border-white/10 text-gray-300 text-[10px] font-bold uppercase px-2 py-1 rounded">
-                        {fixture.time}
-                      </span>
-                    </div>
+          {["Today", "Tomorrow"].map(date => {
+            const dateFixtures = upcomingFixtures.filter((f: any) => f.date === date || (date === "Today" && f.date === "Upcoming"));
+            if (dateFixtures.length === 0) return null;
 
-                    <div className="flex items-center justify-between mb-5 flex-1">
-                      <div className="flex flex-col items-center gap-2 w-[40%]">
-                        <TeamLogo logo={fixture.homeLogo} initial={fixture.homeInitial} color={fixture.homeColor} size="lg" />
-                        <span className="font-bold text-sm text-center w-full truncate">{fixture.home}</span>
+            return (
+              <div key={date}>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-600"></div> {date}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {dateFixtures.map((fixture: any) => (
+                    <div key={fixture.id} className="bg-[#1B1B1B] rounded-xl border border-white/5 p-4 shadow-lg hover:border-white/10 transition-colors flex flex-col">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{fixture.league}</span>
+                        <span className="bg-[#0B0B0B] border border-white/10 text-gray-300 text-[10px] font-bold uppercase px-2 py-1 rounded">
+                          {fixture.time}
+                        </span>
                       </div>
-                      <div className="text-sm font-black text-gray-600">VS</div>
-                      <div className="flex flex-col items-center gap-2 w-[40%]">
-                        <TeamLogo logo={fixture.awayLogo} initial={fixture.awayInitial} color={fixture.awayColor} size="lg" />
-                        <span className="font-bold text-sm text-center w-full truncate">{fixture.away}</span>
-                      </div>
-                    </div>
 
-                    <Link href="/predictions" className="block w-full text-center bg-[#B30000] hover:bg-red-800 text-white font-bold uppercase tracking-wider text-xs py-2.5 rounded transition-colors mt-auto">
-                      Predict Score
-                    </Link>
-                  </div>
-                ))}
+                      <div className="flex items-center justify-between mb-5 flex-1">
+                        <div className="flex flex-col items-center gap-2 w-[40%]">
+                          <TeamLogo logo={fixture.homeLogo} initial={fixture.homeInitial} color={fixture.homeColor} size="lg" />
+                          <span className="font-bold text-sm text-center w-full truncate">{fixture.home}</span>
+                        </div>
+                        <div className="text-sm font-black text-gray-600">VS</div>
+                        <div className="flex flex-col items-center gap-2 w-[40%]">
+                          <TeamLogo logo={fixture.awayLogo} initial={fixture.awayInitial} color={fixture.awayColor} size="lg" />
+                          <span className="font-bold text-sm text-center w-full truncate">{fixture.away}</span>
+                        </div>
+                      </div>
+
+                      <Link href="/predictions" className="block w-full text-center bg-[#B30000] hover:bg-red-800 text-white font-bold uppercase tracking-wider text-xs py-2.5 rounded transition-colors mt-auto">
+                        Predict Score
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

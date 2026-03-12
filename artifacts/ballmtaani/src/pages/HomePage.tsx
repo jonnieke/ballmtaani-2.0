@@ -2,12 +2,20 @@ import { Link } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 import { Share2, MessageSquare, ChevronRight, Trophy, Zap, Users, TrendingUp } from "lucide-react";
-import { LIVE_MATCHES, UPCOMING_FIXTURES, AI_PREDICTIONS, DEBATES, BANTER_TWEETS, LEADERBOARD, CLUB_LOGOS } from "../data/mockData";
+import { BANTER_TWEETS, CLUB_LOGOS, AI_PREDICTIONS } from "../data/mockData";
+import { useMatches, useUpcomingFixtures, useDebates, useLeaderboard } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
+import AdBanner from "../components/AdBanner";
 
 export default function HomePage() {
   const { isLoggedIn, openLoginModal } = useAuth();
   const [heroBannerError, setHeroBannerError] = useState(false);
+
+  // Supabase Hooks
+  const { data: liveMatches = [] } = useMatches();
+  const { data: upcomingFixtures = [] } = useUpcomingFixtures();
+  const { data: debates = [] } = useDebates();
+  const { data: leaderboard = [] } = useLeaderboard();
 
   return (
     <div className="pb-12">
@@ -130,6 +138,11 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Ad Section */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <AdBanner label="BallMtaani Premier Partner" />
+      </div>
+
       {/* ═══════════════════════════════════════════
           LIVE MATCHES
       ═══════════════════════════════════════════ */}
@@ -141,7 +154,7 @@ export default function HomePage() {
           </h2>
 
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
-            {LIVE_MATCHES.map((match) => (
+            {liveMatches.map((match: any) => (
               <div key={match.id} className="snap-start shrink-0 w-[300px] rounded-xl bg-[rgba(20,20,25,0.95)] border-l-[3px] border-[#B30000] border-y border-r border-white/10 shadow-lg p-4 relative overflow-hidden hover:bg-[#1f1f25] transition-colors">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{match.league}</span>
@@ -186,7 +199,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {UPCOMING_FIXTURES.map((fixture) => (
+            {upcomingFixtures.map((fixture: any) => (
               <div key={fixture.id} className="rounded-xl bg-[#1B1B1B] border border-white/5 p-4 shadow-lg hover:border-white/10 transition-colors">
                 <div className="text-center mb-4">
                   <span className="bg-white/5 text-gray-300 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">{fixture.time}</span>
@@ -224,7 +237,7 @@ export default function HomePage() {
             <h2 className="uppercase font-black tracking-widest border-l-4 border-[#FFD700] pl-3 text-xl flex items-center gap-2">
               <span className="text-[#FFD700]">AI</span> Predictions
             </h2>
-            <Link href="/predictions" className="text-xs font-bold text-[#FFD700] hover:text-yellow-400 uppercase tracking-wider flex items-center gap-1">
+            <Link href="/predictions" className="text-xs font-bold text-[#FFD700] hover:Yellow-400 uppercase tracking-wider flex items-center gap-1">
               See All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -283,7 +296,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            {DEBATES.slice(0, 3).map((debate) => (
+            {debates.slice(0, 3).map((debate: any) => (
               <div key={debate.id} className="rounded-xl bg-[#1B1B1B] border border-white/5 p-5 shadow-lg flex flex-col justify-between">
                 <div>
                   <h3 className="font-black text-lg mb-4 text-center">{debate.title}</h3>
@@ -357,7 +370,7 @@ export default function HomePage() {
           </div>
           <div className="rounded-xl bg-[#1B1B1B] border border-white/5 shadow-lg overflow-hidden">
             <div className="divide-y divide-white/5">
-              {LEADERBOARD.slice(0, 5).map((player) => (
+              {leaderboard.slice(0, 5).map((player: any) => (
                 <div key={player.rank} className="flex items-center justify-between p-3 hover:bg-white/5 transition-colors">
                   <div className="flex items-center gap-3">
                     <span className={`w-5 text-center font-black text-sm ${player.rank === 1 ? 'text-[#FFD700]' : player.rank === 2 ? 'text-gray-300' : player.rank === 3 ? 'text-[#CD7F32]' : 'text-gray-600'}`}>

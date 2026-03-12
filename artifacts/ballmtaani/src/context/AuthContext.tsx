@@ -1,10 +1,13 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "../lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  user: User | null;
   username: string;
-  login: (username: string) => void;
-  logout: () => void;
+  login: (username: string) => Promise<void>;
+  logout: () => Promise<void>;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
   closeLoginModal: () => void;
@@ -13,19 +16,39 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const login = (user: string) => {
-    setIsLoggedIn(true);
-    setUsername(user);
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setIsLoggedIn(!!session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (username: string) => {
+    // For now, we use a simplified login that sets the username in metadata
+    // In a real app, this would be a full signup/login flow
+    const { error } = await supabase.auth.signInWithOtp({
+      email: `${username}@mock.com`, // Placeholder for simplified demo
+    });
+
+    if (error) throw error;
     setIsLoginModalOpen(false);
   };
 
-  const logout = () => {
-    setIsLoggedIn(false);
-    setUsername("");
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   const openLoginModal = () => setIsLoginModalOpen(true);
@@ -35,7 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         isLoggedIn,
-        username,
+        user,
+        username: user?.user_metadata?.username || user?.email?.split("@")[0] || "",
         login,
         logout,
         isLoginModalOpen,
