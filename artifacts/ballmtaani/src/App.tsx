@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { Navbar } from "./components/Navbar";
 import { LoginModal } from "./components/LoginModal";
+import { useState, useEffect } from "react";
+import { verifyGeminiConnection, verifyFootballConnection, verifySupabaseConnection } from "./lib/api-verify";
 
 import HomePage from "./pages/HomePage";
 import MatchesPage from "./pages/MatchesPage";
@@ -15,6 +17,28 @@ import ProfilePage from "./pages/ProfilePage";
 const queryClient = new QueryClient();
 
 export default function App() {
+  const [statuses, setStatuses] = useState<Record<string, any>>({
+    gemini: { status: 'loading' },
+    football: { status: 'loading' },
+    supabase: { status: 'loading' }
+  });
+
+  useEffect(() => {
+    const checkAll = async () => {
+      const results = await Promise.all([
+        verifyGeminiConnection(),
+        verifyFootballConnection(),
+        verifySupabaseConnection()
+      ]);
+      setStatuses({
+        gemini: results[0],
+        football: results[1],
+        supabase: results[2]
+      });
+    };
+    checkAll();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -53,6 +77,25 @@ export default function App() {
             </footer>
             
             <LoginModal />
+
+            {/* Development Utility: API Status Tracker */}
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="fixed bottom-4 left-4 z-[9999] bg-black/80 backdrop-blur-md border border-white/10 p-3 rounded-lg shadow-2xl text-[10px] uppercase font-bold tracking-widest flex flex-col gap-2">
+                <div className="text-gray-500 mb-1">System Health check</div>
+                <div className="flex items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full ${statuses.supabase.status === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : statuses.supabase.status === 'loading' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></span>
+                   SUPABASE
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full ${statuses.gemini.status === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : statuses.gemini.status === 'loading' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></span>
+                   GEMINI AI
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`w-2 h-2 rounded-full ${statuses.football.status === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : statuses.football.status === 'loading' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`}></span>
+                   FOOTBALL API
+                </div>
+              </div>
+            )}
           </div>
         </WouterRouter>
       </AuthProvider>

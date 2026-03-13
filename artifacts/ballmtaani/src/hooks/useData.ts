@@ -3,10 +3,25 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import * as mock from "../data/mockData";
 
+import { fetchLiveMatches } from "../lib/football-api";
+
 export function useMatches() {
   return useQuery({
     queryKey: ["matches"],
     queryFn: async () => {
+      // Prioritize Football API for live scores
+      try {
+        const liveMatches = await fetchLiveMatches();
+        if (liveMatches && liveMatches.length > 0) {
+          return liveMatches;
+        }
+      } catch (err) {
+        console.error("Football API failed, falling back to Supabase/Mock:", err);
+      }
+
+      // Fallback to Supabase/Mock logic
+      if (!supabase) return mock.LIVE_MATCHES;
+
       const { data, error } = await supabase
         .from("matches")
         .select(`
@@ -20,7 +35,6 @@ export function useMatches() {
         return mock.LIVE_MATCHES;
       }
       
-      // Transform Supabase data to match frontend expectations if necessary
       return data.map(m => ({
         id: m.id,
         home: m.home_team.name,
@@ -46,6 +60,8 @@ export function useUpcomingFixtures() {
   return useQuery({
     queryKey: ["upcoming-fixtures"],
     queryFn: async () => {
+      if (!supabase) return mock.UPCOMING_FIXTURES;
+
       const { data, error } = await supabase
         .from("matches")
         .select(`
@@ -70,7 +86,7 @@ export function useUpcomingFixtures() {
         awayLogo: m.away_team.logo_url,
         awayColor: m.away_team.color,
         awayInitial: m.away_team.initial,
-        time: m.match_date, // Or formatted time
+        time: m.match_date,
         league: m.league,
         date: "Upcoming"
       }));
@@ -82,6 +98,8 @@ export function useDebates() {
   return useQuery({
     queryKey: ["debates"],
     queryFn: async () => {
+      if (!supabase) return mock.DEBATES;
+
       const { data, error } = await supabase
         .from("debates")
         .select("*")
@@ -108,6 +126,8 @@ export function useLeaderboard() {
   return useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
+      if (!supabase) return mock.LEADERBOARD;
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -122,7 +142,7 @@ export function useLeaderboard() {
         rank: index + 1,
         name: p.username,
         country: p.country || "🌍",
-        correct: Math.floor(p.points / 5), // Mocking some stats if not in DB
+        correct: Math.floor(p.points / 5),
         streak: p.streak,
         pts: p.points
       }));
@@ -134,6 +154,8 @@ export function useFanZones() {
   return useQuery({
     queryKey: ["fan-zones"],
     queryFn: async () => {
+      if (!supabase) return mock.FAN_ZONES;
+
       const { data, error } = await supabase
         .from("fan_zones")
         .select("*");
@@ -151,7 +173,10 @@ export function useProfile(userId: string | undefined) {
   return useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!userId || !supabase) {
+        return { username: "Fan", points: 0, streak: 0, country: "KEN", favorite_team: "None" };
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -159,13 +184,7 @@ export function useProfile(userId: string | undefined) {
         .single();
 
       if (error || !data) {
-        return {
-          username: "Fan",
-          points: 0,
-          streak: 0,
-          country: "KEN",
-          favorite_team: "None"
-        };
+        return { username: "Fan", points: 0, streak: 0, country: "KEN", favorite_team: "None" };
       }
 
       return data;
@@ -177,11 +196,10 @@ export function useProfile(userId: string | undefined) {
 export function useBanter(zoneId: string | null) {
   const queryClient = useQueryClient();
 
-  // 1. Initial fetch
   const query = useQuery({
     queryKey: ["banter", zoneId],
     queryFn: async () => {
-      if (!zoneId) return [];
+      if (!zoneId || !supabase) return [];
       const { data, error } = await supabase
         .from("banter")
         .select("*")
@@ -194,9 +212,8 @@ export function useBanter(zoneId: string | null) {
     enabled: !!zoneId
   });
 
-  // 2. Real-time subscription
   useEffect(() => {
-    if (!zoneId) return;
+    if (!zoneId || !supabase) return;
 
     const channel = supabase
       .channel(`banter-${zoneId}`)
@@ -209,10 +226,8 @@ export function useBanter(zoneId: string | null) {
           filter: `fan_zone_id=eq.${zoneId}`
         },
         (payload) => {
-          // Manually update the cache with the new message
           queryClient.setQueryData(["banter", zoneId], (old: any[] | undefined) => {
-            const newList = [payload.new, ...(old || [])];
-            return newList;
+            return [payload.new, ...(old || [])];
           });
         }
       )

@@ -1,10 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY || "";
 
-if (!supabaseUrl || !supabaseAnonKey) {
+let _supabase: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  _supabase = createClient(supabaseUrl, supabaseAnonKey);
+} else {
   console.warn("Supabase credentials missing. Mock data will be used.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = _supabase as SupabaseClient;

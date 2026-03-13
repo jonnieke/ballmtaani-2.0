@@ -6,14 +6,15 @@ import { BANTER_TWEETS, CLUB_LOGOS, AI_PREDICTIONS } from "../data/mockData";
 import { useMatches, useUpcomingFixtures, useDebates, useLeaderboard } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
+import { SkeletonMatch } from "../components/Skeletons";
 
 export default function HomePage() {
   const { isLoggedIn, openLoginModal } = useAuth();
   const [heroBannerError, setHeroBannerError] = useState(false);
 
   // Supabase Hooks
-  const { data: liveMatches = [] } = useMatches();
-  const { data: upcomingFixtures = [] } = useUpcomingFixtures();
+  const { data: liveMatches = [], isLoading: isLoadingMatches } = useMatches();
+  const { data: upcomingFixtures = [], isLoading: isLoadingUpcoming } = useUpcomingFixtures();
   const { data: debates = [] } = useDebates();
   const { data: leaderboard = [] } = useLeaderboard();
 
@@ -138,15 +139,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Ad Section */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <AdBanner label="BallMtaani Premier Partner" />
-      </div>
-
       {/* ═══════════════════════════════════════════
           LIVE MATCHES
       ═══════════════════════════════════════════ */}
-      <section className="py-10 border-b border-[#1B1B1B]">
+      <section className="py-6 border-b border-[#1B1B1B]">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="uppercase font-black tracking-widest border-l-4 border-[#B30000] pl-3 mb-6 text-xl flex items-center gap-3">
             Live Action
@@ -154,7 +150,9 @@ export default function HomePage() {
           </h2>
 
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
-            {liveMatches.map((match: any) => (
+            {isLoadingMatches ? (
+              [1, 2, 3].map(i => <SkeletonMatch key={i} />)
+            ) : liveMatches.map((match: any) => (
               <div key={match.id} className="snap-start shrink-0 w-[300px] rounded-xl bg-[rgba(20,20,25,0.95)] border-l-[3px] border-[#B30000] border-y border-r border-white/10 shadow-lg p-4 relative overflow-hidden hover:bg-[#1f1f25] transition-colors">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{match.league}</span>
@@ -189,7 +187,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════
           TODAY'S FIXTURES
       ═══════════════════════════════════════════ */}
-      <section className="py-10 border-b border-[#1B1B1B]">
+      <section className="py-6 border-b border-[#1B1B1B]">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-end mb-6">
             <h2 className="uppercase font-black tracking-widest border-l-4 border-[#B30000] pl-3 text-xl">Today's Fixtures</h2>
@@ -231,7 +229,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════
           AI PREDICTIONS STRIP
       ═══════════════════════════════════════════ */}
-      <section className="py-10 bg-[#0B0B0B] border-b border-[#1B1B1B]">
+      <section className="py-6 bg-[#0B0B0B] border-b border-[#1B1B1B]">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-end mb-6">
             <h2 className="uppercase font-black tracking-widest border-l-4 border-[#FFD700] pl-3 text-xl flex items-center gap-2">
@@ -286,7 +284,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════
           TRENDING DEBATES
       ═══════════════════════════════════════════ */}
-      <section className="py-10 border-b border-[#1B1B1B]">
+      <section className="py-6 border-b border-[#1B1B1B]">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-end mb-6">
             <h2 className="uppercase font-black tracking-widest border-l-4 border-[#1E6FFF] pl-3 text-xl">Trending Debates</h2>
@@ -334,7 +332,7 @@ export default function HomePage() {
       {/* ═══════════════════════════════════════════
           BANTER + LEADERBOARD
       ═══════════════════════════════════════════ */}
-      <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
         <section className="lg:col-span-2">
           <h2 className="uppercase font-black tracking-widest border-l-4 border-[#B30000] pl-3 mb-6 text-xl flex items-center gap-2">
             Mtaani Banter

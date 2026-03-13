@@ -4,10 +4,11 @@ import { useDebates } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 import { MessageSquarePlus, Check, Loader2 } from "lucide-react";
 import AdBanner from "../components/AdBanner";
+import { SkeletonDebate } from "../components/Skeletons";
 
 export default function DebatesPage() {
   const { isLoggedIn, openLoginModal } = useAuth();
-  const { data: debates = [], refetch } = useDebates();
+  const { data: debates = [], refetch, isLoading } = useDebates();
   
   // Track voted states locally for immediate UI feedback: debateId -> 'left' | 'right'
   const [localVotes, setLocalVotes] = useState<Record<string, 'left' | 'right'>>({});
@@ -72,7 +73,9 @@ export default function DebatesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
-        {debates.map((debate: any, index: number) => {
+        {isLoading ? (
+          [1, 2, 3, 4].map(i => <SkeletonDebate key={i} />)
+        ) : debates.map((debate: any, index: number) => {
           const userVote = localVotes[debate.id];
           
           const totalVotesRaw = parseInt(debate.totalVotes.replace(',', '')) || 0;

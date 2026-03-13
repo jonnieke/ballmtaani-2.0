@@ -1,20 +1,39 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useFanZones } from "../hooks/useData";
-import { Users, ArrowLeft, MessageSquare, Heart } from "lucide-react";
+import { useFanZones, useBanter } from "../hooks/useData";
+import { supabase } from "../lib/supabase";
+import { Users, ArrowLeft, MessageSquare, Heart, Send } from "lucide-react";
+import AdBanner from "../components/AdBanner";
+import { SkeletonBanter } from "../components/Skeletons";
 
 export default function FanZonesPage() {
-  const { isLoggedIn, openLoginModal } = useAuth();
+  const { isLoggedIn, user, username, openLoginModal } = useAuth();
   const [activeZone, setActiveZone] = useState<string | null>(null);
   const [newPost, setNewPost] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: zones = [] } = useFanZones();
+  const { data: banter = [], isLoading: isLoadingBanter } = useBanter(activeZone);
 
-  const handlePost = (e: React.FormEvent) => {
+  const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn) { openLoginModal(); return; }
-    setNewPost("");
-    alert("Post added to fan zone!");
+    if (!newPost.trim() || !activeZone || !user) return;
+
+    setIsSubmitting(true);
+    const { error } = await supabase.from("banter").insert({
+      user_id: user.id,
+      fan_zone_id: activeZone,
+      content: newPost,
+      author_name: username
+    });
+
+    if (error) {
+      alert("Error posting banter. Please try again.");
+    } else {
+      setNewPost("");
+    }
+    setIsSubmitting(false);
   };
 
   const zone: any = zones.find((z: any) => z.id === activeZone);
@@ -56,7 +75,7 @@ export default function FanZonesPage() {
               <div className="flex gap-4">
                 <div className="w-10 h-10 rounded-full bg-gray-800 shrink-0 border border-white/10 overflow-hidden">
                   {isLoggedIn ? (
-                    <div className="w-full h-full flex items-center justify-center text-white font-black text-sm">Me</div>
+                    <div className="w-full h-full flex items-center justify-center text-white font-black text-sm">{username.substring(0, 2).toUpperCase()}</div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-500"><Users className="w-5 h-5" /></div>
                   )}
@@ -72,10 +91,10 @@ export default function FanZonesPage() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      disabled={!newPost.trim() && isLoggedIn}
-                      className="bg-white text-black font-black uppercase tracking-wider px-6 py-2 rounded text-xs transition-colors disabled:opacity-50 hover:bg-gray-200"
+                      disabled={(!newPost.trim() && isLoggedIn) || isSubmitting}
+                      className="bg-white text-black font-black uppercase tracking-wider px-6 py-2 rounded text-xs transition-colors disabled:opacity-50 hover:bg-gray-200 flex items-center gap-2"
                     >
-                      {isLoggedIn ? "Post" : "Log In to Post"}
+                      {isSubmitting ? "Posting..." : isLoggedIn ? <><Send className="w-3 h-3" /> Post</> : "Log In to Post"}
                     </button>
                   </div>
                 </div>
@@ -84,35 +103,47 @@ export default function FanZonesPage() {
 
             <div className="space-y-4">
               <h3 className="font-bold uppercase tracking-widest text-xs text-gray-500 mb-4 border-b border-white/5 pb-2">Latest Banter</h3>
-              {[
-                { author: "GunnerKev",    time: "2h ago", text: zone.preview || zone.preview_text, likes: 24 },
-                { author: "FootballFan99", time: "4h ago", text: `Honestly, ${zone.team || zone.team_name} is looking sharp this season. Keep this up and we're winning it all.`, likes: 12 },
-                { author: "NaijaBaller",  time: "5h ago", text: "The manager needs to wake up and make changes before 70 mins! Every single time...", likes: 45 }
-              ].map((post, i) => (
-                <div key={i} className="bg-[#0B0B0B] rounded-xl border border-white/5 p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-xs font-black">
-                      {post.author[0]}
-                    </div>
-                    <div>
-                      <span className="font-bold text-sm block leading-none mb-1">{post.author}</span>
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{post.time}</span>
-                    </div>
-                  </div>
-                  <p className="text-gray-300 text-sm mb-4 leading-relaxed">{post.text}</p>
-                  <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-white transition-colors">
-                      <Heart className="w-4 h-4" /> {post.likes}
-                    </button>
-                    <button className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-white transition-colors">
-                      <MessageSquare className="w-4 h-4" /> Reply
-                    </button>
-                  </div>
+              
+              {isLoadingBanter ? (
+                [1, 2, 3].map(i => <SkeletonBanter key={i} />)
+              ) : banter.length === 0 ? (
+                <div className="text-center py-10">
+                  <MessageSquare className="w-12 h-12 text-gray-800 mx-auto mb-3" />
+                  <p className="text-gray-500 font-bold text-sm">No banter yet. Be the first to start the fire!</p>
                 </div>
-              ))}
+              ) : (
+                banter.map((post: any, i: number) => (
+                  <div key={post.id || i} className="bg-[#0B0B0B] rounded-xl border border-white/5 p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-xs font-black">
+                          {post.author_name ? post.author_name[0].toUpperCase() : "F"}
+                        </div>
+                        <div>
+                          <span className="font-bold text-sm block leading-none mb-1">{post.author_name || "Anonymous Fan"}</span>
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                            {new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                      {i === 0 && (
+                        <span className="bg-[#B30000]/10 text-[#B30000] text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-[#B30000]/20">New</span>
+                      )}
+                    </div>
+                    <p className="text-gray-300 text-sm mb-4 leading-relaxed">{post.content}</p>
+                    <div className="flex items-center gap-4">
+                      <button className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-white transition-colors">
+                        <Heart className="w-4 h-4" /> {post.likes_count || 0}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
+
+        <AdBanner label="Fan Zone Sponsor" className="mt-8" />
       </div>
     );
   }

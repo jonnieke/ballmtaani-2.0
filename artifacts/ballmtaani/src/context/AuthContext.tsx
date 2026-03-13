@@ -21,6 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
+    if (!supabase) return; // No Supabase client - run in offline/mock mode
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -37,10 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string) => {
-    // For now, we use a simplified login that sets the username in metadata
-    // In a real app, this would be a full signup/login flow
+    if (!supabase) {
+      // Offline mock login
+      setIsLoggedIn(true);
+      setIsLoginModalOpen(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
-      email: `${username}@mock.com`, // Placeholder for simplified demo
+      email: `${username}@mock.com`,
     });
 
     if (error) throw error;
@@ -48,7 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    setUser(null);
+    setIsLoggedIn(false);
   };
 
   const openLoginModal = () => setIsLoginModalOpen(true);
