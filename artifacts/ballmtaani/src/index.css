@@ -238,6 +238,10 @@
   .glow-blue {
     box-shadow: 0 0 20px rgba(30, 111, 255, 0.3);
   }
+
+  .perspektiv-lg {
+    perspective: 1000px;
+  }
 }
 
 @keyframes pulse {

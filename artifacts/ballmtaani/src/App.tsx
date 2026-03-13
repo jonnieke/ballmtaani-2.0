@@ -2,7 +2,6 @@ import { Route, Switch, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { Navbar } from "./components/Navbar";
-import { LoginModal } from "./components/LoginModal";
 import { useState, useEffect } from "react";
 import { verifyGeminiConnection, verifyFootballConnection, verifySupabaseConnection } from "./lib/api-verify";
 
@@ -13,6 +12,9 @@ import DebatesPage from "./pages/DebatesPage";
 import FanZonesPage from "./pages/FanZonesPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import LiveCenterPage from "./pages/LiveCenterPage";
+import LoginPage from "./pages/auth/LoginPage";
+import VerifyOTPPage from "./pages/auth/OTPPage";
 
 const queryClient = new QueryClient();
 
@@ -43,16 +45,19 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <div className="min-h-screen bg-[#0B0B0B] text-white font-sans overflow-x-hidden selection:bg-[#B30000] selection:text-white">
+          <div className="min-h-screen bg-[#0B0B0B] text-white font-sans selection:bg-[#B30000] selection:text-white">
             <Navbar />
             <Switch>
               <Route path="/" component={HomePage} />
+              <Route path="/login" component={LoginPage} />
+              <Route path="/verify" component={VerifyOTPPage} />
               <Route path="/matches" component={MatchesPage} />
               <Route path="/predictions" component={PredictionsPage} />
               <Route path="/debates" component={DebatesPage} />
               <Route path="/fan-zones" component={FanZonesPage} />
               <Route path="/leaderboard" component={LeaderboardPage} />
               <Route path="/profile" component={ProfilePage} />
+              <Route path="/live-center/:id" component={LiveCenterPage} />
               <Route>
                 <div className="flex flex-col items-center justify-center min-h-[70vh]">
                   <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>
@@ -75,11 +80,9 @@ export default function App() {
                 </p>
               </div>
             </footer>
-            
-            <LoginModal />
 
             {/* Development Utility: API Status Tracker */}
-            {process.env.NODE_ENV !== 'production' && (
+            {import.meta.env.DEV && (
               <div className="fixed bottom-4 left-4 z-[9999] bg-black/80 backdrop-blur-md border border-white/10 p-3 rounded-lg shadow-2xl text-[10px] uppercase font-bold tracking-widest flex flex-col gap-2">
                 <div className="text-gray-500 mb-1">System Health check</div>
                 <div className="flex items-center gap-3">

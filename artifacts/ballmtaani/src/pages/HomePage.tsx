@@ -1,12 +1,13 @@
 import { Link } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
-import { Share2, MessageSquare, ChevronRight, Trophy, Zap, Users, TrendingUp } from "lucide-react";
+import { Share2, MessageSquare, ChevronRight, Trophy, Zap, Users, TrendingUp, Calendar } from "lucide-react";
 import { BANTER_TWEETS, CLUB_LOGOS, AI_PREDICTIONS } from "../data/mockData";
 import { useMatches, useUpcomingFixtures, useDebates, useLeaderboard } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import { SkeletonMatch } from "../components/Skeletons";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomePage() {
   const { isLoggedIn, openLoginModal } = useAuth();
@@ -17,6 +18,10 @@ export default function HomePage() {
   const { data: upcomingFixtures = [], isLoading: isLoadingUpcoming } = useUpcomingFixtures();
   const { data: debates = [] } = useDebates();
   const { data: leaderboard = [] } = useLeaderboard();
+
+  // Highlight the best match: live first, then upcoming
+  const featuredMatch = liveMatches[0] || upcomingFixtures[0] || null;
+  const isMatchLive = !!liveMatches[0];
 
   return (
     <div className="pb-12">
@@ -40,102 +45,176 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-14 md:py-20 flex flex-col md:flex-row items-center gap-10 md:gap-0">
           {/* Left — headline */}
-          <div className="flex-1">
-            <div className="inline-flex items-center gap-2 bg-[#B30000]/20 border border-[#B30000]/40 rounded-full px-4 py-1.5 mb-5">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="flex-1"
+          >
+            <div className="inline-flex items-center gap-2 bg-[#B30000]/20 border border-[#B30000]/40 rounded-full px-4 py-1.5 mb-5 shadow-[0_0_15px_rgba(179,0,0,0.2)]">
               <span className="w-2 h-2 rounded-full bg-[#B30000] animate-pulse"></span>
               <span className="text-[#B30000] font-black text-xs uppercase tracking-widest">Africa's #1 Football Hub</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black uppercase leading-none tracking-tight mb-4">
+            <h1 className="text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter mb-6">
               Predict.<br/>
-              <span className="text-[#B30000]">Debate.</span><br/>
+              <span className="text-[#B30000] drop-shadow-[0_0_30px_rgba(179,0,0,0.5)]">Debate.</span><br/>
               Dominate.
             </h1>
-            <p className="text-gray-300 text-base md:text-lg font-medium mb-8 max-w-md leading-relaxed">
-              Join thousands of African fans — call every scoreline, win every argument, climb the leaderboard.
+            <p className="text-gray-300 text-base md:text-lg font-medium mb-10 max-w-md leading-relaxed">
+              The ultimate social platform for African football fans. Call every scoreline, win every argument, and join the continent's biggest fan zones.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/predictions" className="bg-[#B30000] hover:bg-red-800 text-white font-black uppercase tracking-widest px-6 py-3 rounded-lg shadow-[0_4px_20px_rgba(179,0,0,0.5)] transition-all hover:scale-105 text-sm">
+            <div className="flex flex-wrap gap-4">
+              <Link href="/predictions" className="bg-[#B30000] hover:bg-red-800 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl shadow-[0_10px_30px_rgba(179,0,0,0.4)] transition-all hover:scale-105 active:scale-95 text-sm flex items-center gap-2 group">
                 Make Predictions
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link href="/debates" className="border border-white/30 hover:bg-white/10 text-white font-black uppercase tracking-widest px-6 py-3 rounded-lg transition-all text-sm">
+              <Link href="/debates" className="bg-white/5 border border-white/20 hover:bg-white/10 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl backdrop-blur-sm transition-all hover:scale-105 active:scale-95 text-sm">
                 Join Debates
               </Link>
             </div>
 
             {/* Stats strip */}
-            <div className="flex gap-6 mt-10">
+            <div className="flex gap-8 mt-12">
               {[
-                { icon: <Users className="w-4 h-4 text-[#B30000]" />, value: "50K+", label: "Fans" },
-                { icon: <TrendingUp className="w-4 h-4 text-[#FFD700]" />, value: "10K+", label: "Predictions" },
-                { icon: <Zap className="w-4 h-4 text-[#1E6FFF]" />, value: "Live", label: "Scores" },
+                { icon: <Users className="w-5 h-5 text-[#B30000]" />, value: "50K+", label: "Fans Online" },
+                { icon: <TrendingUp className="w-5 h-5 text-[#FFD700]" />, value: "12K+", label: "Daily Predictions" },
+                { icon: <Zap className="w-5 h-5 text-[#1E6FFF]" />, value: "LIVE", label: "Match Scores" },
               ].map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  {s.icon}
-                  <div>
-                    <span className="block font-black text-sm text-white">{s.value}</span>
-                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider">{s.label}</span>
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + (i * 0.1) }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="p-2 bg-white/5 rounded-lg border border-white/10">
+                    {s.icon}
                   </div>
-                </div>
+                  <div>
+                    <span className="block font-black text-base text-white leading-tight">{s.value}</span>
+                    <span className="block text-[10px] text-gray-500 uppercase font-extrabold tracking-widest">{s.label}</span>
+                  </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Right — featured match card */}
-          <div className="w-full md:w-[340px] shrink-0">
-            <div className="rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 border-l-4 border-l-[#B30000] shadow-2xl overflow-hidden">
-              <div className="px-5 pt-5 pb-3 flex justify-between items-center">
-                <span className="bg-[#B30000] text-white font-black text-[10px] tracking-widest uppercase px-3 py-1 rounded">Matchday 28</span>
-                <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Today 20:00 EAT</span>
-              </div>
-              <div className="px-5 py-6 flex items-center justify-between gap-4">
-                <div className="flex flex-col items-center gap-3 flex-1">
-                  <TeamLogo logo={CLUB_LOGOS["Arsenal"]} initial="A" color="#EF0107" size="xl" shadow />
-                  <span className="font-black text-lg tracking-wide uppercase">Arsenal</span>
-                </div>
-                <div className="text-center px-2">
-                  <span className="text-gray-500 font-black text-2xl">VS</span>
-                </div>
-                <div className="flex flex-col items-center gap-3 flex-1">
-                  <TeamLogo logo={CLUB_LOGOS["Chelsea"]} initial="C" color="#034694" size="xl" shadow />
-                  <span className="font-black text-lg tracking-wide uppercase">Chelsea</span>
-                </div>
-              </div>
-              <div className="px-5 pb-5">
-                <Link
-                  href="/predictions"
-                  className="block w-full text-center bg-[#B30000] hover:bg-red-800 text-white font-black uppercase tracking-widest py-3 rounded-lg shadow-[0_4px_15px_rgba(179,0,0,0.35)] transition-all text-sm"
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, rotateY: 15 }}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full md:w-[380px] shrink-0 perspektiv-lg"
+          >
+            <AnimatePresence mode="wait">
+              {featuredMatch ? (
+                <motion.div 
+                  key={featuredMatch.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="rounded-3xl bg-black/40 backdrop-blur-2xl border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden relative group"
                 >
-                  Predict Score
-                </Link>
-              </div>
-            </div>
+                  {/* Glowing edge */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#B30000]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  
+                  <div className="px-6 pt-6 pb-4 flex justify-between items-center relative z-10">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${isMatchLive ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></span>
+                      <span className="text-white font-black text-[11px] tracking-widest uppercase px-2 py-0.5 rounded bg-white/10">
+                        {isMatchLive ? 'Live Now' : 'Featured Match'}
+                      </span>
+                    </div>
+                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                      {featuredMatch.league || 'Premier League'}
+                    </span>
+                  </div>
 
-            {/* Mini fixture cards */}
-            <div className="flex flex-col gap-3 mt-3">
-              <div className="rounded-xl bg-black/50 backdrop-blur border border-white/8 p-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <TeamLogo logo={CLUB_LOGOS["Man City"]} initial="M" color="#6CABDD" size="sm" />
-                  <span className="font-bold text-xs">MCI</span>
+                  <div className="px-6 py-8 grid grid-cols-[1fr_auto_1fr] items-center gap-4 relative z-10">
+                    <div className="flex flex-col items-center gap-4 min-w-0">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-white/10 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <TeamLogo logo={featuredMatch.homeLogo || CLUB_LOGOS[featuredMatch.home]} initial={featuredMatch.homeInitial} color={featuredMatch.homeColor} size="xl" shadow />
+                      </div>
+                      <span className="font-black text-base md:text-lg tracking-wide uppercase text-center w-full px-1 break-words leading-tight">{featuredMatch.home}</span>
+                    </div>
+
+                    <div className="text-center px-1">
+                      {isMatchLive ? (
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-3xl md:text-4xl font-black text-white">{featuredMatch.homeScore}</span>
+                            <span className="text-xl md:text-2xl font-black text-gray-600">:</span>
+                            <span className="text-3xl md:text-4xl font-black text-white">{featuredMatch.awayScore}</span>
+                          </div>
+                          <span className="text-[#B30000] font-black text-[10px] tracking-widest bg-[#B30000]/10 px-3 py-1 rounded-full border border-[#B30000]/20 whitespace-nowrap">
+                            {featuredMatch.minute}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-600 font-extrabold text-2xl tracking-tighter">VS</span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center gap-4 min-w-0">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-white/10 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <TeamLogo logo={featuredMatch.awayLogo || CLUB_LOGOS[featuredMatch.away]} initial={featuredMatch.awayInitial} color={featuredMatch.awayColor} size="xl" shadow />
+                      </div>
+                      <span className="font-black text-base md:text-lg tracking-wide uppercase text-center w-full px-1 break-words leading-tight">{featuredMatch.away}</span>
+                    </div>
+                  </div>
+
+                  <div className="px-6 pb-6 relative z-10">
+                    <Link
+                      href={isMatchLive ? `/live-center/${featuredMatch.id}` : "/predictions"}
+                      className="block w-full text-center bg-white text-black hover:bg-gray-200 font-black uppercase tracking-widest py-4 rounded-xl shadow-xl transition-all active:scale-95 text-sm"
+                    >
+                      {isMatchLive ? 'Live Center' : 'Predict Scorer'}
+                    </Link>
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="rounded-3xl bg-black/40 backdrop-blur-2xl border border-white/10 p-10 text-center">
+                  <Calendar className="w-10 h-10 text-gray-700 mx-auto mb-4" />
+                  <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">No Featured Matches</p>
                 </div>
-                <span className="text-[10px] text-gray-400 font-bold">15:30 EAT</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs">LIV</span>
-                  <TeamLogo logo={CLUB_LOGOS["Liverpool"]} initial="L" color="#C8102E" size="sm" />
-                </div>
-              </div>
-              <div className="rounded-xl bg-black/50 backdrop-blur border border-white/8 p-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <TeamLogo logo={CLUB_LOGOS["Real Madrid"]} initial="R" color="#FEBE10" size="sm" />
-                  <span className="font-bold text-xs">RMA</span>
-                </div>
-                <span className="text-[10px] text-gray-400 font-bold">23:00 EAT</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs">BAR</span>
-                  <TeamLogo logo={CLUB_LOGOS["Barcelona"]} initial="B" color="#A50044" size="sm" />
-                </div>
-              </div>
+              )}
+            </AnimatePresence>
+
+            {/* Sub-fixtures */}
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              {(isMatchLive ? upcomingFixtures.slice(0, 2) : liveMatches.slice(0, 2)).map((m, idx) => (
+                <Link key={m.id} href={`/live-center/${m.id}`} className="block">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + (idx * 0.1) }}
+                    className="rounded-2xl bg-[#1A1A1A]/80 backdrop-blur-md border border-white/10 p-4 flex flex-col items-center justify-center gap-2 hover:bg-[#252525] transition-all cursor-pointer group shadow-lg hover:shadow-[#B30000]/10 hover:border-[#B30000]/30"
+                  >
+                    <div className="flex items-center justify-between w-full min-w-0 px-2">
+                      <span className="font-black text-sm text-white">{m.home.substring(0, 3).toUpperCase()}</span>
+                      <div className="bg-[#B30000] px-2 py-0.5 rounded text-[10px] font-black text-white tracking-widest animate-pulse border border-white/20">
+                        LIVE
+                      </div>
+                      <span className="font-black text-sm text-white">{m.away.substring(0, 3).toUpperCase()}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-lg font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] bg-white/5 w-full justify-center py-1 rounded-lg border border-white/5">
+                      {m.homeScore !== undefined ? (
+                        <>
+                          <span>{m.homeScore}</span>
+                          <span className="text-[#B30000]">-</span>
+                          <span>{m.awayScore}</span>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400">{m.time}</span>
+                      )}
+                    </div>
+                  </motion.div>
+                </Link>
+              ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -153,32 +232,35 @@ export default function HomePage() {
             {isLoadingMatches ? (
               [1, 2, 3].map(i => <SkeletonMatch key={i} />)
             ) : liveMatches.map((match: any) => (
-              <div key={match.id} className="snap-start shrink-0 w-[300px] rounded-xl bg-[rgba(20,20,25,0.95)] border-l-[3px] border-[#B30000] border-y border-r border-white/10 shadow-lg p-4 relative overflow-hidden hover:bg-[#1f1f25] transition-colors">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{match.league}</span>
-                  <span className="bg-[#B30000] text-white font-black text-[10px] uppercase px-2 py-0.5 rounded flex items-center gap-1">
-                    LIVE <span className="animate-pulse">{match.minute}</span>
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <TeamLogo logo={match.homeLogo} initial={match.homeInitial} color={match.homeColor} size="xs" />
-                      <span className="font-bold text-sm truncate max-w-[80px]">{match.home}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <TeamLogo logo={match.awayLogo} initial={match.awayInitial} color={match.awayColor} size="xs" />
-                      <span className="font-bold text-sm truncate max-w-[80px]">{match.away}</span>
-                    </div>
+              <Link key={match.id} href={`/live-center/${match.id}`} className="block snap-start group">
+                <div className="shrink-0 w-[300px] rounded-xl bg-[rgba(20,20,25,0.95)] border-l-[3px] border-[#B30000] border-y border-r border-white/10 shadow-lg p-4 relative overflow-hidden transition-all hover:bg-[rgba(30,30,35,0.95)] cursor-pointer">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">{match.league}</span>
+                    <span className="bg-[#B30000] text-white font-black text-[10px] uppercase px-2 py-0.5 rounded flex items-center gap-1">
+                      LIVE <span className="animate-pulse">{match.minute}</span>
+                    </span>
                   </div>
 
-                  <div className="flex flex-col gap-1 items-end">
-                    <span className="text-2xl font-black">{match.homeScore}</span>
-                    <span className="text-2xl font-black">{match.awayScore}</span>
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <TeamLogo logo={match.homeLogo} initial={match.homeInitial} color={match.homeColor} size="sm" />
+                        <span className="font-bold text-sm truncate max-w-[80px]">{match.home}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TeamLogo logo={match.awayLogo} initial={match.awayInitial} color={match.awayColor} size="sm" />
+                        <span className="font-bold text-sm truncate max-w-[80px]">{match.away}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 items-end">
+                      <span className="text-2xl font-black">{match.homeScore}</span>
+                      <span className="text-2xl font-black">{match.awayScore}</span>
+                      <span className="text-[8px] font-black text-[#B30000] tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity">Live Stats →</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -247,13 +329,13 @@ export default function HomePage() {
 
                 <div className="flex items-center justify-between mb-4 pt-1">
                   <div className="flex items-center gap-2">
-                    <TeamLogo logo={CLUB_LOGOS[pred.homeTeam]} initial={pred.homeTeam[0]} color="#555" size="sm" />
+                    <TeamLogo logo={CLUB_LOGOS[pred.homeTeam]} initial={pred.homeTeam[0]} color="#555" size="md" />
                     <span className="text-xs font-bold text-gray-300">{pred.homeTeam}</span>
                   </div>
                   <span className="text-[10px] text-gray-600 font-black">vs</span>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-300">{pred.awayTeam}</span>
-                    <TeamLogo logo={CLUB_LOGOS[pred.awayTeam]} initial={pred.awayTeam[0]} color="#555" size="sm" />
+                    <TeamLogo logo={CLUB_LOGOS[pred.awayTeam]} initial={pred.awayTeam[0]} color="#555" size="md" />
                   </div>
                 </div>
 

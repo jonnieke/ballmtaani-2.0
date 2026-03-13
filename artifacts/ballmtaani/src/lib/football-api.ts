@@ -47,7 +47,19 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
       return [];
     }
 
-    return (data.response || []).map((item: any) => ({
+    const MAJOR_LEAGUES = [
+      "Premier League",
+      "La Liga",
+      "Serie A",
+      "Bundesliga",
+      "Ligue 1",
+      "UEFA Champions League",
+      "UEFA Europa League",
+      "World Cup",
+      "Euro Championship"
+    ];
+
+    const mapped = (data.response || []).map((item: any) => ({
       id: String(item.fixture.id),
       home: item.teams.home.name,
       homeLogo: item.teams.home.logo,
@@ -64,6 +76,15 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
       possession: "N/A", // Available in statistics endpoint if needed
       scorers: "" // Available in events endpoint if needed
     }));
+
+    return mapped.sort((a: any, b: any) => {
+      const aPos = MAJOR_LEAGUES.indexOf(a.league);
+      const bPos = MAJOR_LEAGUES.indexOf(b.league);
+      if (aPos !== -1 && bPos !== -1) return aPos - bPos;
+      if (aPos !== -1) return -1;
+      if (bPos !== -1) return 1;
+      return 0;
+    });
   } catch (err) {
     console.error("Failed to fetch live matches:", err);
     return [];

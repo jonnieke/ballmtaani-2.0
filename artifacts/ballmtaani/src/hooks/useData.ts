@@ -240,3 +240,13 @@ export function useBanter(zoneId: string | null) {
 
   return query;
 }
+
+export function useStandings() {
+  return useQuery({
+    queryKey: ["standings"],
+    queryFn: async () => {
+      // Return mock standings for now
+      return mock.STANDINGS;
+    }
+  });
+}

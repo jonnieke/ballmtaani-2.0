@@ -38,53 +38,52 @@ export default function MatchesPage() {
       {activeTab === "live" ? (
         <div className="space-y-6">
           {liveMatches.map((match: any) => (
-            <div key={match.id} className="bg-[rgba(20,20,25,0.95)] rounded-xl border-l-4 border-[#B30000] border-y border-r border-white/5 p-5 md:p-6 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#B30000]/5 blur-[50px] rounded-full pointer-events-none"></div>
+            <Link key={match.id} href={`/live-center/${match.id}`} className="block group">
+              <div className="bg-[rgba(20,20,25,0.95)] rounded-xl border-l-4 border-[#B30000] border-y border-r border-white/5 p-5 md:p-6 shadow-xl relative overflow-hidden hover:bg-[#1f1f25] transition-colors cursor-pointer">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#B30000]/5 blur-[50px] rounded-full pointer-events-none"></div>
 
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{match.league}</span>
-                <span className="bg-[#B30000] text-white text-[10px] md:text-xs font-black uppercase px-2 py-1 rounded flex items-center gap-2">
-                  LIVE <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> {match.minute}
-                </span>
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{match.league}</span>
+                  <span className="bg-[#B30000] text-white text-[10px] md:text-xs font-black uppercase px-2 py-1 rounded flex items-center gap-2">
+                    LIVE <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> {match.minute}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 md:gap-4 w-1/3">
+                    <TeamLogo logo={match.homeLogo} initial={match.homeInitial} color={match.homeColor} size="lg" shadow />
+                    <span className="font-bold text-sm md:text-lg truncate">{match.home}</span>
+                  </div>
+
+                  <div className="flex items-center justify-center w-1/3 gap-3 md:gap-6">
+                    <span className="text-4xl md:text-5xl font-black">{match.homeScore}</span>
+                    <span className="text-xl md:text-2xl font-black text-gray-600">-</span>
+                    <span className="text-4xl md:text-5xl font-black">{match.awayScore}</span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 md:gap-4 w-1/3">
+                    <span className="font-bold text-sm md:text-lg truncate text-right">{match.away}</span>
+                    <TeamLogo logo={match.awayLogo} initial={match.awayInitial} color={match.awayColor} size="lg" shadow />
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                  <div className="text-center md:text-left">
+                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Possession</span>
+                    <span className="text-xs font-bold">{match.possession}</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Goals</span>
+                    <span className="text-xs font-bold text-gray-300">{match.scorers}</span>
+                  </div>
+                  <div className="text-center md:text-right">
+                    <span className="inline-block bg-[#B30000]/10 group-hover:bg-[#B30000] border border-[#B30000]/20 text-[#B30000] group-hover:text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded transition-all">
+                      Open Live Center →
+                    </span>
+                  </div>
+                </div>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 md:gap-4 w-1/3">
-                  <TeamLogo logo={match.homeLogo} initial={match.homeInitial} color={match.homeColor} size="lg" shadow />
-                  <span className="font-bold text-sm md:text-lg truncate">{match.home}</span>
-                </div>
-
-                <div className="flex items-center justify-center w-1/3 gap-3 md:gap-6">
-                  <span className="text-4xl md:text-5xl font-black">{match.homeScore}</span>
-                  <span className="text-xl md:text-2xl font-black text-gray-600">-</span>
-                  <span className="text-4xl md:text-5xl font-black">{match.awayScore}</span>
-                </div>
-
-                <div className="flex items-center justify-end gap-3 md:gap-4 w-1/3">
-                  <span className="font-bold text-sm md:text-lg truncate text-right">{match.away}</span>
-                  <TeamLogo logo={match.awayLogo} initial={match.awayInitial} color={match.awayColor} size="lg" shadow />
-                </div>
-              </div>
-
-              <div className="mt-8 pt-4 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                <div className="text-center md:text-left">
-                  <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Possession</span>
-                  <span className="text-xs font-bold">{match.possession}</span>
-                </div>
-                <div className="text-center">
-                  <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Goals</span>
-                  <span className="text-xs font-bold text-gray-300">{match.scorers}</span>
-                </div>
-                <div className="text-center md:text-right">
-                  <Link
-                    href="/predictions"
-                    className="inline-block bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded transition-colors"
-                  >
-                    Predict Final Score
-                  </Link>
-                </div>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (

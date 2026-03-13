@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 export function Navbar() {
   const [location] = useLocation();
-  const { isLoggedIn, username, openLoginModal, logout } = useAuth();
+  const { isLoggedIn, username, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const links = [
@@ -55,18 +55,18 @@ export function Navbar() {
             </Link>
           ) : (
             <>
-              <button 
-                onClick={openLoginModal}
+              <Link 
+                href="/login"
                 className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded hover:bg-white/5 transition-colors"
               >
                 Log In
-              </button>
-              <button 
-                onClick={openLoginModal}
+              </Link>
+              <Link 
+                href="/login"
                 className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-white bg-[#B30000] rounded hover:bg-red-800 transition-colors shadow-[0_0_15px_rgba(179,0,0,0.3)]"
               >
                 Sign Up
-              </button>
+              </Link>
             </>
           )}
         </div>
@@ -120,18 +120,20 @@ export function Navbar() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 mt-2">
-              <button 
-                onClick={() => { openLoginModal(); setMobileMenuOpen(false); }}
-                className="py-3 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded hover:bg-white/5 transition-colors"
+              <Link 
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-3 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded hover:bg-white/5 transition-colors text-center block w-full"
               >
                 Log In
-              </button>
-              <button 
-                onClick={() => { openLoginModal(); setMobileMenuOpen(false); }}
-                className="py-3 text-sm font-bold uppercase tracking-wider text-white bg-[#B30000] rounded hover:bg-red-800 transition-colors"
+              </Link>
+              <Link 
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-3 text-sm font-bold uppercase tracking-wider text-white bg-[#B30000] rounded hover:bg-red-800 transition-colors text-center block w-full"
               >
                 Sign Up
-              </button>
+              </Link>
             </div>
           )}
         </div>

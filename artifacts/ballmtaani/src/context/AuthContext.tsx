@@ -6,11 +6,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
   username: string;
-  login: (username: string) => Promise<void>;
   logout: () => Promise<void>;
-  isLoginModalOpen: boolean;
-  openLoginModal: () => void;
-  closeLoginModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +14,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase) return; // No Supabase client - run in offline/mock mode
@@ -38,22 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (username: string) => {
-    if (!supabase) {
-      // Offline mock login
-      setIsLoggedIn(true);
-      setIsLoginModalOpen(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email: `${username}@mock.com`,
-    });
-
-    if (error) throw error;
-    setIsLoginModalOpen(false);
-  };
-
   const logout = async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -62,20 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoggedIn(false);
   };
 
-  const openLoginModal = () => setIsLoginModalOpen(true);
-  const closeLoginModal = () => setIsLoginModalOpen(false);
+  // For phone auth, user.phone is the primary identifier if they haven't set a username
+  const displayUsername = user?.user_metadata?.username || user?.phone || user?.email?.split("@")[0] || "";
 
   return (
     <AuthContext.Provider
       value={{
         isLoggedIn,
         user,
-        username: user?.user_metadata?.username || user?.email?.split("@")[0] || "",
-        login,
+        username: displayUsername,
         logout,
-        isLoginModalOpen,
-        openLoginModal,
-        closeLoginModal,
       }}
     >
       {children}
