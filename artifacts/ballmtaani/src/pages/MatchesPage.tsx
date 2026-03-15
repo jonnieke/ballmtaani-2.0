@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
+import SEO from "../components/SEO";
 
 
 export default function MatchesPage() {
@@ -13,6 +14,10 @@ export default function MatchesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+      <SEO 
+        title="Live Football Scores & Fixtures | BallMtaani"
+        description="Stay updated with live scores, results, and upcoming fixtures from the Premier League, La Liga, and more."
+      />
       <div className="mb-8 border-b border-white/10">
         <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest mb-6 border-l-4 border-primary pl-4">
           Match Directory

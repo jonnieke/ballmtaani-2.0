@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const mockLogin = (phone: string) => {
     // Used explicitly for development bypass when SMS isn't configured
-    const mockUser = { phone, id: 'mock-user-id', app_metadata: {}, user_metadata: { streak: 3 }, aud: 'authenticated', created_at: new Date().toISOString() } as unknown as User;
+    const mockUser = { phone, id: '00000000-0000-0000-0000-000000000000', app_metadata: {}, user_metadata: { streak: 3 }, aud: 'authenticated', created_at: new Date().toISOString() } as unknown as User;
     setUser(mockUser);
     setIsLoggedIn(true);
     localStorage.setItem("mock_auth_session", JSON.stringify({ user: mockUser }));

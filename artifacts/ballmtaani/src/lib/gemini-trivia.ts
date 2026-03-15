@@ -1,6 +1,6 @@
 import { TriviaQuestion } from "../data/mockTrivia";
 
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 
 export async function fetchAiTrivia(): Promise<TriviaQuestion[] | null> {
   const apiKey = import.meta.env.VITE_GEMINI_API;
@@ -33,7 +33,8 @@ export async function fetchAiTrivia(): Promise<TriviaQuestion[] | null> {
     });
 
     if (!response.ok) {
-       console.error("AI Trivia Fetch Failed:", response.status);
+       const errBody = await response.text();
+       console.error(`AI Trivia Fetch Failed (${response.status}): ${errBody}`);
        return null;
     }
 

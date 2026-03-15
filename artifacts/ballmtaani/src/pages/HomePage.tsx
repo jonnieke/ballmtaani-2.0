@@ -8,6 +8,7 @@ import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import { SkeletonMatch } from "../components/Skeletons";
 import PremiumMatchCard from "../components/PremiumMatchCard";
+import SEO from "../components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomePage() {
@@ -28,6 +29,10 @@ export default function HomePage() {
 
   return (
     <div className="pb-12">
+      <SEO 
+        title="BallMtaani | Predict, Debate, Dominate"
+        description="Join the ultimate social football hub for African fans. Live scores, debates, and elite predictions."
+      />
 
       {/* ═══════════════════════════════════════════
           HERO SECTION

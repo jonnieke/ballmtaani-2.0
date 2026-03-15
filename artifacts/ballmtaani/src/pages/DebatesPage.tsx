@@ -7,6 +7,7 @@ import { MessageSquarePlus, Check, Loader2, ShieldAlert, Share2, Facebook, Twitt
 import AdBanner from "../components/AdBanner";
 import { SkeletonDebate } from "../components/Skeletons";
 import { UserBadge } from "../components/UserBadge";
+import SEO from "../components/SEO";
 
 export default function DebatesPage() {
   const { isLoggedIn, updateCoins } = useAuth();
@@ -86,6 +87,10 @@ export default function DebatesPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+      <SEO 
+        title="Fan Debates & Hot Takes | BallMtaani"
+        description="Vote on heated football debates, settle rivalries, and earn Mtaani Coins. The ultimate football social feed."
+      />
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white mb-2">
           FAN <span className="text-accent">DEBATE</span> ZONE

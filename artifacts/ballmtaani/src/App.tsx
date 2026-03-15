@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Navbar } from "./components/Navbar";
+import BottomNav from "./components/BottomNav";
 import { AmbientBackground } from "./components/AmbientBackground";
 import { CoinOverlay } from "./components/CoinOverlay";
 import { useState, useEffect } from "react";
@@ -62,6 +63,7 @@ export default function App() {
 
           <div className="min-h-screen bg-[#0B0B0B] text-white font-sans selection:bg-[#B30000] selection:text-white">
             <Navbar />
+            <BottomNav />
             <Switch>
               <Route path="/" component={HomePage} />
               <Route path="/login" component={LoginPage} />

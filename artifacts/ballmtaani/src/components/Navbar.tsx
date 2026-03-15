@@ -64,7 +64,7 @@ export function Navbar() {
           <img src="/logo.png" alt="BallMtaani" className="h-36 w-auto" />
         </Link>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav - Hidden on mobile */}
         <div className="hidden lg:flex items-center gap-6 mx-4">
           <Link
             href="/"
@@ -106,8 +106,8 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Desktop Auth */}
-        <div className="hidden lg:flex items-center gap-3 shrink-0">
+        {/* Global Controls (Atmosphere & Wallet) */}
+        <div className="flex items-center gap-3 shrink-0">
           {/* Atmosphere Switcher */}
           <div className="relative">
             <button 
@@ -152,8 +152,7 @@ export function Navbar() {
                 <span className={`font-black text-sm transition-colors duration-300 ${walletAnimating ? 'text-white drop-shadow-[0_0_8px_white]' : 'text-[#FFD700]'}`}>{coins.toLocaleString()}</span>
               </Link>
 
-
-              <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity ml-1">
+              <Link href="/profile" className="hidden lg:flex items-center gap-2 hover:opacity-80 transition-opacity ml-1">
                 <div className="w-10 h-10 rounded-full bg-[#1B1B1B] border border-primary flex items-center justify-center text-primary font-black text-sm">
                   {username.substring(0, 2).toUpperCase()}
                 </div>
@@ -161,7 +160,7 @@ export function Navbar() {
               </Link>
             </>
           ) : (
-            <>
+            <div className="hidden lg:flex items-center gap-3">
               <Link 
                 href="/login"
                 onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
@@ -176,17 +175,9 @@ export function Navbar() {
               >
                 Sign Up
               </Link>
-            </>
+            </div>
           )}
         </div>
-
-        {/* Mobile Toggle */}
-        <button 
-          className="lg:hidden text-white p-2 -mr-2"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
       {/* Mobile Menu */}
