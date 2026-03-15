@@ -26,6 +26,7 @@ export default function DebatesPage() {
 
   const handleVote = async (debateId: string, side: 'left' | 'right') => {
     if (!isLoggedIn) {
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
       setLocation('/login');
       return;
     }
@@ -74,6 +75,7 @@ export default function DebatesPage() {
   const handleStartDebate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn) {
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
       setLocation('/login');
       return;
     }
@@ -115,6 +117,10 @@ export default function DebatesPage() {
             Submit for Review
           </button>
         </form>
+      </div>
+
+      <div className="max-w-6xl mx-auto mb-10 w-full">
+        <AdBanner label="Debate Sponsor" type="horizontal" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">

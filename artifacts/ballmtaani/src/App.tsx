@@ -4,7 +4,9 @@ import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Navbar } from "./components/Navbar";
 import { AmbientBackground } from "./components/AmbientBackground";
+import { CoinOverlay } from "./components/CoinOverlay";
 import { useState, useEffect } from "react";
+
 import { verifyGeminiConnection, verifyFootballConnection, verifySupabaseConnection } from "./lib/api-verify";
 
 import HomePage from "./pages/HomePage";
@@ -18,6 +20,8 @@ import StorePage from "./pages/StorePage";
 import LiveCenterPage from "./pages/LiveCenterPage";
 import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
 import RivalriesPage from "./pages/RivalriesPage";
+import RapidFirePage from "./pages/RapidFirePage";
+import TriviaPage from "./pages/TriviaPage";
 import LoginPage from "./pages/auth/LoginPage";
 import VerifyOTPPage from "./pages/auth/OTPPage";
 
@@ -51,7 +55,9 @@ export default function App() {
       <AuthProvider>
         <ThemeProvider>
           <AmbientBackground />
+          <CoinOverlay />
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+
           <div className="min-h-screen bg-[#0B0B0B] text-white font-sans selection:bg-[#B30000] selection:text-white">
             <Navbar />
             <Switch>
@@ -69,6 +75,8 @@ export default function App() {
               <Route path="/live-center" component={LiveCenterIndexPage} />
               <Route path="/live-center/:id" component={LiveCenterPage} />
               <Route path="/rivalries" component={RivalriesPage} />
+              <Route path="/rapid-fire" component={RapidFirePage} />
+              <Route path="/trivia" component={TriviaPage} />
               <Route>
                 <div className="flex flex-col items-center justify-center min-h-[70vh]">
                   <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>

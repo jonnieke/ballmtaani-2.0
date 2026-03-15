@@ -29,9 +29,9 @@ export default function StorePage() {
         <Coins className="w-16 h-16 text-[#FFD700] mb-4 opacity-50" />
         <h2 className="text-2xl font-black uppercase tracking-widest mb-2">Login Required</h2>
         <p className="text-gray-400 mb-6 text-center">Log in to view the Mtaani Coin Market and purchase tokens.</p>
-        <Link href="/login" className="bg-[#B30000] hover:bg-red-800 text-white font-bold uppercase tracking-wider px-8 py-3 rounded transition-colors">
+        <button onClick={() => { sessionStorage.setItem("auth_return_url", window.location.pathname); setLocation('/login'); }} className="bg-[#B30000] hover:bg-red-800 text-white font-bold uppercase tracking-wider px-8 py-3 rounded transition-colors">
           Log In / Sign Up
-        </Link>
+        </button>
       </div>
     );
   }

@@ -19,7 +19,11 @@ export default function FanZonesPage() {
 
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoggedIn) { setLocation('/login'); return; }
+    if (!isLoggedIn) { 
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
+      setLocation('/login'); 
+      return; 
+    }
     if (!newPost.trim() || !activeZone || !user) return;
 
     setIsSubmitting(true);

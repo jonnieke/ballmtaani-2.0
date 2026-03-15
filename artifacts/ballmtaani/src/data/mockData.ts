@@ -31,9 +31,9 @@ export const UPCOMING_FIXTURES = [
 ];
 
 export const AI_PREDICTIONS = [
-  { id: "p1", match: "Arsenal vs Chelsea",       homeTeam: "Arsenal",     awayTeam: "Chelsea",    homeProb: 52, drawProb: 20, awayProb: 28, predScore: "2 - 1" },
-  { id: "p2", match: "Real Madrid vs Barcelona", homeTeam: "Real Madrid", awayTeam: "Barcelona",  homeProb: 38, drawProb: 20, awayProb: 42, predScore: "1 - 2" },
-  { id: "p3", match: "Man Utd vs Tottenham",     homeTeam: "Man Utd",     awayTeam: "Tottenham",  homeProb: 45, drawProb: 30, awayProb: 25, predScore: "1 - 1" }
+  { id: "p1", match: "Arsenal vs Chelsea",       homeTeam: "Arsenal",     awayTeam: "Chelsea",    homeProb: 52, drawProb: 20, awayProb: 28, predScore: "2 - 1", tacticalInsight: "Arsenal's wing play overloads Chelsea's exposed fullbacks." },
+  { id: "p2", match: "Real Madrid vs Barcelona", homeTeam: "Real Madrid", awayTeam: "Barcelona",  homeProb: 38, drawProb: 20, awayProb: 42, predScore: "1 - 2", tacticalInsight: "Barca's high press will force early turnovers from Madrid's double-pivot." },
+  { id: "p3", match: "Man Utd vs Tottenham",     homeTeam: "Man Utd",     awayTeam: "Tottenham",  homeProb: 45, drawProb: 30, awayProb: 25, predScore: "1 - 1", tacticalInsight: "Spurs' high line invites Rashford in behind, but United struggle to build from the back." }
 ];
 
 export const DEBATES = [

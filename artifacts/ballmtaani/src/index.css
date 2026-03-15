@@ -270,3 +270,13 @@
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
+
+@keyframes coin-fly {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -50px) scale(1.5); opacity: 1; }
+  100% { transform: translate(-50%, -200px) scale(0.5); opacity: 0; }
+}
+
+.animate-coin-fly {
+  animation: coin-fly 1.5s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}

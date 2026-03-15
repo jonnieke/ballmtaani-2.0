@@ -5,6 +5,8 @@ import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 import { CheckCircle2, Loader2, Trophy, Flame, Target, Star, ShieldAlert } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
+import AdBanner from "../components/AdBanner";
+
 
 export default function PredictionsPage() {
   const [activeTab, setActiveTab] = useState<"make" | "my" | "premium">("make");
@@ -16,7 +18,11 @@ export default function PredictionsPage() {
   const { data: fixtures = [] } = useUpcomingFixtures();
 
   const handlePredict = async (fixtureId: string) => {
-    if (!isLoggedIn || !user) { setLocation('/login'); return; }
+    if (!isLoggedIn || !user) { 
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
+      setLocation('/login'); 
+      return; 
+    }
     
     const pred = predictions[fixtureId];
     if (pred && pred.home !== "" && pred.away !== "") {
@@ -116,7 +122,11 @@ export default function PredictionsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* PREMIUM AD PLACEMENT */}
+        <AdBanner label="Betting Partner" type="horizontal" className="mb-10" />
+
         {/* ── TAB NAVIGATION ── */}
+
         <div className="flex justify-center mb-10">
           <div className="flex bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 shadow-xl w-fit">
             <button 
@@ -261,7 +271,7 @@ export default function PredictionsPage() {
               </div>
               <h2 className="text-xl font-black uppercase tracking-widest mb-2">Login Required</h2>
               <p className="text-gray-400 mb-6">You need an account to view and make predictions.</p>
-              <button onClick={() => setLocation('/login')} className="bg-primary hover:bg-red-800 text-white font-bold uppercase tracking-wider px-8 py-3 rounded transition-colors">
+              <button onClick={() => { sessionStorage.setItem("auth_return_url", window.location.pathname); setLocation('/login'); }} className="bg-primary hover:bg-red-800 text-white font-bold uppercase tracking-wider px-8 py-3 rounded transition-colors">
                 Log In / Sign Up
               </button>
             </div>

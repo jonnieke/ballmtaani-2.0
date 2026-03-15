@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
+import AdBanner from "../components/AdBanner";
+
 
 export default function MatchesPage() {
   const [activeTab, setActiveTab] = useState<"recent" | "upcoming">("recent");
@@ -15,7 +17,9 @@ export default function MatchesPage() {
         <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest mb-6 border-l-4 border-primary pl-4">
           Match Directory
         </h1>
+        <AdBanner label="Official Partner" type="thin" className="mb-6" />
         <div className="flex gap-6">
+
           <button
             onClick={() => setActiveTab("recent")}
             className={`pb-3 text-sm md:text-base font-black uppercase tracking-widest transition-colors relative ${activeTab === "recent" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}

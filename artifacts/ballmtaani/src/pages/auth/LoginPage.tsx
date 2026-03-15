@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
-import { ArrowRight, Smartphone, ShieldCheck } from "lucide-react";
+import { ArrowRight, Smartphone, ShieldCheck, Heart } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { CLUB_LOGOS } from "../../data/mockData";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -9,6 +11,17 @@ export default function LoginPage() {
   const [countryCode, setCountryCode] = useState("+254"); // Default Kenya
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { setAtmosphere } = useTheme();
+  const [favoriteClub, setFavoriteClub] = useState("");
+
+  const handleClubSelect = (club: string) => {
+    setFavoriteClub(club);
+    
+    // Map popular clubs to our custom atmospheres for the demo
+    if (club === "Arsenal" || club === "Man City") setAtmosphere("gunners-city");
+    else if (club === "Real Madrid" || club === "Barcelona") setAtmosphere("el-clasico");
+    else setAtmosphere("default");
+  };
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +128,31 @@ export default function LoginPage() {
               />
             </div>
           </div>
+
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 ml-1 flex items-center gap-1">
+              <Heart className="w-3 h-3 text-primary animate-pulse" /> Favorite Club
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {["Arsenal", "Chelsea", "Man Utd", "Real Madrid", "Barcelona", "Man City", "Liverpool", "PSG"].map(club => (
+                <button
+                  key={club}
+                  type="button"
+                  onClick={() => handleClubSelect(club)}
+                  className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all duration-300 ${
+                    favoriteClub === club 
+                      ? 'bg-primary/20 border-primary shadow-[0_0_15px_var(--theme-glow)] scale-105' 
+                      : 'bg-black/40 border-white/5 hover:border-white/20 opacity-60 hover:opacity-100 grayscale hover:grayscale-0'
+                  }`}
+                >
+                  <img src={CLUB_LOGOS[club]} alt={club} className="w-8 h-8 object-contain drop-shadow-md" />
+                  <span className="text-[8px] font-black uppercase text-center leading-tight truncate w-full text-gray-300">{club}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+
 
           <button
             type="submit"

@@ -85,7 +85,9 @@ export default function VerifyOTPPage() {
          console.log("Mock verification success!");
          mockLogin(phone);
          sessionStorage.removeItem("auth_phone");
-         setLocation("/");
+         const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
+         sessionStorage.removeItem("auth_return_url");
+         setLocation(returnUrl);
          return;
       }
 
@@ -99,7 +101,9 @@ export default function VerifyOTPPage() {
       
       // Success!
       sessionStorage.removeItem("auth_phone");
-      setLocation("/"); // Redirect to home or intended destination
+      const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
+      sessionStorage.removeItem("auth_return_url");
+      setLocation(returnUrl); // Redirect to original destination
       
     } catch (err: any) {
       console.error("Verification error:", err);
@@ -108,7 +112,9 @@ export default function VerifyOTPPage() {
         if (code === "123456") {
             mockLogin(phone);
             sessionStorage.removeItem("auth_phone");
-            setLocation("/");
+            const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
+            sessionStorage.removeItem("auth_return_url");
+            setLocation(returnUrl);
             return;
         }
       }

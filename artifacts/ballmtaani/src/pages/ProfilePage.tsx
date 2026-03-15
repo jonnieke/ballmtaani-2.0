@@ -5,11 +5,12 @@ import { Redirect } from "wouter";
 import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2 } from "lucide-react";
 import { UserBadge } from "../components/UserBadge";
 import { getUserTier } from "../lib/tiers";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { ChallengeModal } from "../components/ChallengeModal";
 
 export default function ProfilePage() {
   const [match, params] = useRoute("/profile/:id");
+  const [, setLocation] = useLocation();
   const profileId = params?.id;
   const { isLoggedIn, user, username, logout, updateCoins } = useAuth();
   const [activeTab, setActiveTab] = useState<"predictions" | "debates" | "badges">("predictions");
@@ -20,8 +21,18 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useProfile(targetId);
 
+  import { useEffect } from "react";
+  
+  // Later in the component:
+  useEffect(() => {
+    if (!isLoggedIn && !profileId && !isLoading) {
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
+      setLocation('/login');
+    }
+  }, [isLoggedIn, profileId, isLoading, setLocation]);
+
   if (!isLoggedIn && !profileId) {
-    return <Redirect to="/login" />;
+    return null; // or a loader
   }
 
   if (isLoading) {
