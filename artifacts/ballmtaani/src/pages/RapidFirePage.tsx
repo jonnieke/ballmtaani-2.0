@@ -4,14 +4,16 @@ import { useDebates } from "../hooks/useData";
 import { useLocation } from "wouter";
 import { supabase } from "../lib/supabase";
 import { Loader2, Check, Zap, ArrowDown, ChevronLeft } from "lucide-react";
+import { getRandomRapidFireSet, RapidFireDebate } from "../data/mockRapidFire";
 import { UserBadge } from "../components/UserBadge";
 import { Link } from "wouter";
 
 export default function RapidFirePage() {
   const { isLoggedIn, updateCoins } = useAuth();
   const [, setLocation] = useLocation();
-  const { data: debates = [], refetch, isLoading } = useDebates();
   
+  // Initialize with 100 random debates on every visit
+  const [debates] = useState<RapidFireDebate[]>(() => getRandomRapidFireSet(100));
   const [localVotes, setLocalVotes] = useState<Record<string, 'left' | 'right'>>({});
   const [isVoting, setIsVoting] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,27 +29,11 @@ export default function RapidFirePage() {
     setIsVoting(debateId);
     setLocalVotes(prev => ({ ...prev, [debateId]: side }));
 
-    // Update Supabase
-    const field = side === 'left' ? 'left_votes' : 'right_votes';
-    const { error } = await supabase.rpc('increment_vote', { 
-      debate_id: debateId, 
-      vote_field: field 
-    });
-
-    if (error) {
-      // Mock fallback
-      const debate = debates.find((d: any) => d.id === debateId);
-      if (debate) {
-        await supabase.from("debates").update({
-          [side === 'left' ? 'left_votes' : 'right_votes']: (side === 'left' ? debate.leftVotes : debate.rightVotes) + 1,
-          total_votes: (parseInt(debate.totalVotes.replace(',', '')) || 0) + 1
-        }).eq("id", debateId);
-      }
-    }
-
+    // For Rapid Fire arcade, we use the local state and award coins.
+    // We don't necessarily sync all 100+ mock debates to a global DB table.
+    
     setIsVoting(null);
     updateCoins(5); // +5 Coins for rapid fire
-    refetch();
 
     // Auto-scroll to next after delay
     setTimeout(() => {
@@ -59,6 +45,9 @@ export default function RapidFirePage() {
       }
     }, 1500);
   };
+
+  // Rapid Fire is now always ready with mock data
+  const isLoading = false;
 
   if (isLoading) {
     return (
