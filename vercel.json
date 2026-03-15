@@ -1,6 +1,3 @@
 {
-  "buildCommand": "cd artifacts/ballmtaani && npm install && npm run build",
-  "outputDirectory": "artifacts/ballmtaani/dist",
-  "installCommand": "echo 'skip root install'",
-  "framework": null
+  "rootDirectory": "artifacts/ballmtaani"
 }
