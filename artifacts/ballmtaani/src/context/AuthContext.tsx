@@ -43,11 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Only save to localStorage if coins > 0 OR if explicitly changed by user
-    // This prevents accidental 0-resets during the mount-sync phase
+    // AND wait for session to settle to prevent 0-reset race conditions
     if (coins > 0) {
       localStorage.setItem("mtaani_coins", coins.toString());
+      console.log(`[AuthContext] Saved ${coins} coins to storage`);
     }
-  }, [coins]);
+  }, [coins, isLoggedIn]);
 
   useEffect(() => {
     // session is already restored synchronously in useState initializer

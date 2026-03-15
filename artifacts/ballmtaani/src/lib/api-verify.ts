@@ -8,10 +8,12 @@ export async function verifyGeminiConnection() {
   if (!apiKey) return { status: 'missing', message: 'API Key missing' };
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models`, {
-      headers: {
-        'x-goog-api-key': apiKey
-      }
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: "hi" }] }]
+      })
     });
     if (response.ok) {
       return { status: 'connected', message: 'Connected to Gemini API' };
@@ -19,7 +21,7 @@ export async function verifyGeminiConnection() {
       if (response.status === 403) {
         return { 
           status: 'error', 
-          message: 'Gemini API 403 (Forbidden): Check API Key Restrictions or enablement in Google Cloud Console.' 
+          message: 'Gemini API 403: Please ensure the "Generative Language API" is enabled in your Google Cloud Console.' 
         };
       }
       const error = await response.json();

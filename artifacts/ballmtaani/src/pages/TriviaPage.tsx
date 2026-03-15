@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { getRandomTriviaSet, TriviaQuestion } from "../data/mockTrivia";
+import { fetchAiTrivia } from "../lib/gemini-trivia";
 import { ChevronLeft, HelpCircle, User, RefreshCw, Volume2, VolumeX, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 export default function TriviaPage() {
   const { isLoggedIn, updateCoins } = useAuth();
   const [, setLocation] = useLocation();
 
-  const [questions] = useState(() => getRandomTriviaSet());
+  const [questions, setQuestions] = useState<TriviaQuestion[]>(() => getRandomTriviaSet());
+  const [isLoadingAi, setIsLoadingAi] = useState(true);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isLockedIn, setIsLockedIn] = useState(false);
@@ -16,6 +18,20 @@ export default function TriviaPage() {
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [earnedCoins, setEarnedCoins] = useState(0);
+
+  useEffect(() => {
+    async function loadTrivia() {
+      setIsLoadingAi(true);
+      const aiQuestions = await fetchAiTrivia();
+      if (aiQuestions && aiQuestions.length === 15) {
+        setQuestions(aiQuestions);
+      } else {
+        console.log("Gemini AI failed - falling back to high-quality trivia pool.");
+      }
+      setIsLoadingAi(false);
+    }
+    loadTrivia();
+  }, []);
 
   // Lifelines
   const [lifeline5050, setLifeline5050] = useState(true);
@@ -113,6 +129,23 @@ export default function TriviaPage() {
     }
   };
 
+
+  if (isLoadingAi) {
+    return (
+      <div className="min-h-screen bg-[#000511] text-white flex flex-col items-center justify-center p-4">
+        <div className="relative">
+          <RefreshCw className="w-16 h-16 text-[#FFD700] animate-spin mb-6" />
+          <div className="absolute inset-0 bg-[#FFD700]/20 blur-xl animate-pulse" />
+        </div>
+        <h2 className="text-2xl font-black uppercase tracking-[0.2em] animate-pulse">
+          AI Generating Questions...
+        </h2>
+        <p className="text-gray-500 mt-2 font-bold uppercase tracking-widest text-xs">
+          Scanning Latest Headlines to Deep History
+        </p>
+      </div>
+    );
+  }
 
   if (won || gameOver) {
     return (
