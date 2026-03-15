@@ -20,9 +20,12 @@ export async function fetchAiTrivia(): Promise<TriviaQuestion[] | null> {
   Output only the valid JSON array of questions. No markdown wrapping.`;
 
   try {
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+    const response = await fetch(GEMINI_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" }
