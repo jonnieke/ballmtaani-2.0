@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useData";
-import { Redirect } from "wouter";
+
 import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2 } from "lucide-react";
 import { UserBadge } from "../components/UserBadge";
 import { getUserTier } from "../lib/tiers";
@@ -21,9 +21,7 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useProfile(targetId);
 
-  import { useEffect } from "react";
-  
-  // Later in the component:
+
   useEffect(() => {
     if (!isLoggedIn && !profileId && !isLoading) {
       sessionStorage.setItem("auth_return_url", window.location.pathname);

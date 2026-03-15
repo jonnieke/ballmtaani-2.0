@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ChevronLeft, Coins, Zap, ShieldCheck, Loader2, Info } from "lucide-react";
 
 export default function StorePage() {
   const { isLoggedIn, coins, updateCoins } = useAuth();
+  const [, setLocation] = useLocation();
   const [processingTier, setProcessingTier] = useState<number | null>(null);
 
   const coinTiers = [
