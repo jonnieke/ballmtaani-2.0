@@ -22,6 +22,8 @@ import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
 import RivalriesPage from "./pages/RivalriesPage";
 import RapidFirePage from "./pages/RapidFirePage";
 import TriviaPage from "./pages/TriviaPage";
+import DiagnosticsPage from "./pages/DiagnosticsPage";
+import { useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/auth/LoginPage";
 import VerifyOTPPage from "./pages/auth/OTPPage";
 
@@ -77,6 +79,9 @@ export default function App() {
               <Route path="/rivalries" component={RivalriesPage} />
               <Route path="/rapid-fire" component={RapidFirePage} />
               <Route path="/trivia" component={TriviaPage} />
+              <Route path="/diagnostics" component={DiagnosticsPage} />
+          
+          {/* Protected Routes */}
               <Route>
                 <div className="flex flex-col items-center justify-center min-h-[70vh]">
                   <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>

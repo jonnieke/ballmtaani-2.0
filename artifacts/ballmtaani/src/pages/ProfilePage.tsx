@@ -84,12 +84,19 @@ export default function ProfilePage() {
           </div>
           
           {isOwnProfile ? (
-            <button 
-                onClick={logout}
-                className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors md:self-start border border-transparent hover:border-white/10 px-3 py-2 rounded"
-            >
-                <LogOut className="w-4 h-4" /> Log Out
-            </button>
+            <div className="flex flex-col gap-2 md:self-start">
+              <button 
+                  onClick={logout}
+                  className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors border border-transparent hover:border-white/10 px-3 py-2 rounded"
+              >
+                  <LogOut className="w-4 h-4" /> Log Out
+              </button>
+              <Link href="/diagnostics">
+                <button className="flex items-center gap-2 text-[10px] font-bold text-primary hover:text-white uppercase tracking-wider transition-colors border border-primary/20 hover:border-primary/50 px-3 py-1.5 rounded bg-primary/5">
+                  <Activity className="w-3 h-3" /> Service Status
+                </button>
+              </Link>
+            </div>
           ) : (
             <button 
                 onClick={() => setShowChallengeModal(true)}
