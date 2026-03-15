@@ -7,6 +7,8 @@ export async function verifyGeminiConnection() {
   const apiKey = import.meta.env.VITE_GEMINI_API;
   if (!apiKey) return { status: 'missing', message: 'API Key missing' };
 
+  console.log(`[Gemini Diagnostics] Origin: ${window.location.origin}, Referrer: ${document.referrer}`);
+
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',

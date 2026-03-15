@@ -35,18 +35,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [coins, setCoins] = useState(() => {
     const saved = localStorage.getItem("mtaani_coins");
-    const val = saved ? parseInt(saved, 10) : 0;
-    const finalVal = isNaN(val) ? 0 : val;
-    console.log(`[AuthContext] Coins initialized from storage: ${finalVal}`);
-    return finalVal;
+    if (saved !== null) {
+      const val = parseInt(saved, 10);
+      const finalVal = isNaN(val) ? 0 : val;
+      console.log(`[AuthContext] Coins initialized from STORAGE: ${finalVal}`);
+      return finalVal;
+    }
+    console.log(`[AuthContext] Coins initialized from DEFAULT: 0`);
+    return 0;
   });
 
   useEffect(() => {
-    // Only save to localStorage if coins > 0 OR if explicitly changed by user
-    // AND wait for session to settle to prevent 0-reset race conditions
+    // Stickiness: Only save if coins > 0. 
+    // This protects against 0-reset race conditions during initial auth mount.
     if (coins > 0) {
       localStorage.setItem("mtaani_coins", coins.toString());
-      console.log(`[AuthContext] Saved ${coins} coins to storage`);
+      console.log(`[AuthContext] PERSISTED ${coins} coins to storage`);
+    } else if (coins === 0 && !isLoggedIn) {
+       // Explicit clear on logout
+       localStorage.removeItem("mtaani_coins");
     }
   }, [coins, isLoggedIn]);
 
