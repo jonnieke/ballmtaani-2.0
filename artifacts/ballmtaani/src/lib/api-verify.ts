@@ -10,9 +10,10 @@ export async function verifyGeminiConnection() {
   console.log(`[Gemini Diagnostics] Origin: ${window.location.origin}, Referrer: ${document.referrer}`);
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent`, {
+    const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    const response = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'x-goog-api-key': apiKey
       },
@@ -24,13 +25,15 @@ export async function verifyGeminiConnection() {
       return { status: 'connected', message: 'Connected to Gemini API' };
     } else {
       const errorData = await response.json().catch(() => ({}));
-      console.error("Gemini 403 Detailed Error:", errorData);
+      console.log(`[Gemini Error] Status: ${response.status}`, errorData);
       
-      let msg = 'Gemini API 403: Forbidden';
+      let msg = `Gemini API ${response.status}: Error`;
       if (errorData.error?.message) {
         msg = `Gemini Error: ${errorData.error.message}`;
       } else if (response.status === 403) {
         msg = 'Gemini 403: Referrer or API Restriction mismatch. Check Google Cloud Console.';
+      } else if (response.status === 404) {
+        msg = 'Gemini 404: Model or Version not found. Check endpoint.';
       }
       return { status: 'error', message: msg };
     }
