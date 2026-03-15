@@ -12,6 +12,12 @@ export async function verifyGeminiConnection() {
     if (response.ok) {
       return { status: 'connected', message: 'Connected to Gemini API' };
     } else {
+      if (response.status === 403) {
+        return { 
+          status: 'error', 
+          message: 'Gemini API 403 (Forbidden): Check API Key Restrictions or enablement in Google Cloud Console.' 
+        };
+      }
       const error = await response.json();
       return { status: 'error', message: error.error?.message || 'Gemini API Error' };
     }
