@@ -10,7 +10,8 @@ export async function verifyGeminiConnection() {
   console.log(`[Gemini Diagnostics] Origin: ${window.location.origin}, Referrer: ${document.referrer}`);
 
   try {
-    const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+    const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    console.log(`[Gemini Request] Fetching: ${GEMINI_ENDPOINT}`);
     const response = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
       headers: {
