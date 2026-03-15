@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
-import { TRIVIA_QUESTIONS, TriviaQuestion } from "../data/mockTrivia";
+import { getRandomTriviaSet, TriviaQuestion } from "../data/mockTrivia";
 import { ChevronLeft, HelpCircle, User, RefreshCw, Volume2, VolumeX, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 export default function TriviaPage() {
   const { isLoggedIn, updateCoins } = useAuth();
   const [, setLocation] = useLocation();
 
+  const [questions] = useState(() => getRandomTriviaSet());
   const [currentLevel, setCurrentLevel] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isLockedIn, setIsLockedIn] = useState(false);
@@ -22,7 +23,7 @@ export default function TriviaPage() {
   const [hiddenOptions, setHiddenOptions] = useState<number[]>([]);
   const [aiSuggestion, setAiSuggestion] = useState<number | null>(null);
 
-  const question: TriviaQuestion = TRIVIA_QUESTIONS[currentLevel];
+  const question: TriviaQuestion = questions[currentLevel];
 
   // Sounds (mocked since we don't have files, but using our audio lib if needed, or visual indicators)
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -52,8 +53,8 @@ export default function TriviaPage() {
           setGameOver(true);
           // Calculate reward based on safe havens. Level 4 (Q5) and Level 9 (Q10).
           let safeReward = 0;
-          if (currentLevel > 9) safeReward = TRIVIA_QUESTIONS[9].reward;
-          else if (currentLevel > 4) safeReward = TRIVIA_QUESTIONS[4].reward;
+          if (currentLevel > 9) safeReward = questions[9].reward;
+          else if (currentLevel > 4) safeReward = questions[4].reward;
           
           if (safeReward > 0) {
             updateCoins(safeReward);
@@ -63,7 +64,7 @@ export default function TriviaPage() {
       } else {
         // Right answer
         setTimeout(() => {
-          if (currentLevel === TRIVIA_QUESTIONS.length - 1) {
+          if (currentLevel === questions.length - 1) {
             updateCoins(question.reward);
             setEarnedCoins(question.reward);
             setWon(true);
@@ -83,7 +84,7 @@ export default function TriviaPage() {
 
   const handleWalkAway = () => {
     if (isLockedIn) return;
-    const reward = currentLevel > 0 ? TRIVIA_QUESTIONS[currentLevel - 1].reward : 0;
+    const reward = currentLevel > 0 ? questions[currentLevel - 1].reward : 0;
     if (reward > 0) updateCoins(reward);
     setEarnedCoins(reward);
     setGameOver(true);
@@ -284,7 +285,7 @@ export default function TriviaPage() {
         {/* Millionaire Ladder Sidebar */}
         <div className="w-full lg:w-72 bg-black/60 border-t lg:border-t-0 lg:border-l border-white/10 p-6 flex flex-col justify-end backdrop-blur-xl">
            <div className="flex flex-col-reverse gap-1">
-             {TRIVIA_QUESTIONS.map((q, idx) => {
+             {questions.map((q, idx) => {
                const isSafe = idx === 4 || idx === 9;
                const isActive = idx === currentLevel;
                const isPassed = idx < currentLevel;
