@@ -10,20 +10,19 @@ export async function verifyGeminiConnection() {
   console.log(`[Gemini Diagnostics] Origin: ${window.location.origin}, Referrer: ${document.referrer}`);
 
   try {
-    const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent";
     console.log(`[Gemini Request] Fetching: ${GEMINI_ENDPOINT}`);
-    const response = await fetch(GEMINI_ENDPOINT, {
+    const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: "hi" }] }]
       })
     });
     if (response.ok) {
-      return { status: 'connected', message: 'Connected to Gemini API' };
+      return { status: 'connected', message: 'Connected to Gemini API (v1)' };
     } else {
       const errorData = await response.json().catch(() => ({}));
       console.log(`[Gemini Error] Status: ${response.status}`, errorData);
@@ -34,7 +33,7 @@ export async function verifyGeminiConnection() {
       } else if (response.status === 403) {
         msg = 'Gemini 403: Referrer or API Restriction mismatch. Check Google Cloud Console.';
       } else if (response.status === 404) {
-        msg = 'Gemini 404: Model or Version not found. Check endpoint.';
+        msg = 'Gemini 404: Model or Version not found. v1 endpoint may be unavailable for this key.';
       }
       return { status: 'error', message: msg };
     }

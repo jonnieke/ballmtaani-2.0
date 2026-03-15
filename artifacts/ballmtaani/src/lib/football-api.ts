@@ -35,13 +35,15 @@ async function apiFetch(endpoint: string): Promise<any> {
     });
 
     if (!response.ok) {
+      console.error(`[Football API] HTTP Error ${response.status} for ${endpoint}`);
       throw new Error(`Football API error: ${response.status}`);
     }
 
     const data = await response.json();
 
-    if (data.errors && Object.keys(data.errors).length > 0) {
-      console.error("Football API errors:", data.errors);
+    // Check for API-Football logic errors in 200 responses
+    if (data.errors && (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0)) {
+      console.error(`[Football API] Logic Error in ${endpoint}:`, data.errors);
       return null;
     }
 
