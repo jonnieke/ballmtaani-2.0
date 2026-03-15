@@ -17,8 +17,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(() => {
+    const mockSession = localStorage.getItem("mock_auth_session");
+    if (mockSession) {
+      try {
+        const sessionData = JSON.parse(mockSession);
+        return sessionData.user;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("mock_auth_session") !== null;
+  });
   const [coins, setCoins] = useState(() => {
     const saved = localStorage.getItem("mtaani_coins");
     const val = saved ? parseInt(saved, 10) : 0;
@@ -36,15 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [coins]);
 
   useEffect(() => {
-    // Check local storage for mock session first
-    const mockSession = localStorage.getItem("mock_auth_session");
-    if (mockSession) {
-       try {
-         const sessionData = JSON.parse(mockSession);
-         setUser(sessionData.user);
-         setIsLoggedIn(true);
-       } catch (e) {}
-    }
+    // session is already restored synchronously in useState initializer
 
     if (!supabase) return; // No Supabase client - run in offline/mock mode
 
