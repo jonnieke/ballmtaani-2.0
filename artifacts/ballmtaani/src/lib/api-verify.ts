@@ -8,7 +8,11 @@ export async function verifyGeminiConnection() {
   if (!apiKey) return { status: 'missing', message: 'API Key missing' };
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models`, {
+      headers: {
+        'x-goog-api-key': apiKey
+      }
+    });
     if (response.ok) {
       return { status: 'connected', message: 'Connected to Gemini API' };
     } else {

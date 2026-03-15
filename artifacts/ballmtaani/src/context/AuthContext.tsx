@@ -28,7 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    localStorage.setItem("mtaani_coins", coins.toString());
+    // Only save to localStorage if coins > 0 OR if explicitly changed by user
+    // This prevents accidental 0-resets during the mount-sync phase
+    if (coins > 0) {
+      localStorage.setItem("mtaani_coins", coins.toString());
+    }
   }, [coins]);
 
   useEffect(() => {
