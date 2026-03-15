@@ -1,6 +1,6 @@
 import { TriviaQuestion } from "../data/mockTrivia";
 
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 export async function fetchAiTrivia(): Promise<TriviaQuestion[] | null> {
   const apiKey = import.meta.env.VITE_GEMINI_API;
