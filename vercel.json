@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd artifacts/ballmtaani && npm run build",
+  "buildCommand": "cd artifacts/ballmtaani && npm install && npm run build",
   "outputDirectory": "artifacts/ballmtaani/dist",
-  "installCommand": "cd artifacts/ballmtaani && npm install",
-  "framework": "vite"
+  "installCommand": "echo 'skip root install'",
+  "framework": null
 }
