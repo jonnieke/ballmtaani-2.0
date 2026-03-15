@@ -18,14 +18,16 @@ export async function verifyGeminiConnection() {
     if (response.ok) {
       return { status: 'connected', message: 'Connected to Gemini API' };
     } else {
-      if (response.status === 403) {
-        return { 
-          status: 'error', 
-          message: 'Gemini API 403: Please ensure the "Generative Language API" is enabled in your Google Cloud Console.' 
-        };
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Gemini 403 Detailed Error:", errorData);
+      
+      let msg = 'Gemini API 403: Forbidden';
+      if (errorData.error?.message) {
+        msg = `Gemini Error: ${errorData.error.message}`;
+      } else if (response.status === 403) {
+        msg = 'Gemini 403: Referrer or API Restriction mismatch. Check Google Cloud Console.';
       }
-      const error = await response.json();
-      return { status: 'error', message: error.error?.message || 'Gemini API Error' };
+      return { status: 'error', message: msg };
     }
   } catch (err) {
     console.error("Gemini Connection Fetch Error:", err);
