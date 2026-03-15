@@ -21,7 +21,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [coins, setCoins] = useState(() => {
     const saved = localStorage.getItem("mtaani_coins");
-    return saved ? parseInt(saved, 10) : 0;
+    const val = saved ? parseInt(saved, 10) : 0;
+    const finalVal = isNaN(val) ? 0 : val;
+    console.log(`[AuthContext] Coins initialized from storage: ${finalVal}`);
+    return finalVal;
   });
 
   useEffect(() => {
@@ -77,11 +80,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const streak = user?.user_metadata?.streak || 3;
 
   const updateCoins = (amount: number) => {
+    if (isNaN(amount)) {
+      console.warn("[AuthContext] updateCoins received NaN");
+      return;
+    }
     // Apply streak multiplier (1.0x + 0.1x per day streak)
-    const multiplier = 1 + (streak * 0.1);
+    const validStreak = isNaN(streak) ? 0 : streak;
+    const multiplier = 1 + (validStreak * 0.1);
     const finalAmount = Math.floor(amount * multiplier);
 
-    setCoins(prev => prev + finalAmount);
+    if (isNaN(finalAmount)) {
+      console.warn("[AuthContext] finalAmount calculated as NaN");
+      return;
+    }
+
+    setCoins(prev => {
+      const next = prev + finalAmount;
+      console.log(`[AuthContext] Updating coins: ${prev} + ${finalAmount} = ${next}`);
+      return isNaN(next) ? prev : next;
+    });
+
     if (finalAmount > 0) {
       playCoinSound();
       window.dispatchEvent(new CustomEvent('coinsAdded', { detail: { amount: finalAmount } }));
@@ -95,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("mock_auth_session");
     setUser(null);
     setIsLoggedIn(false);
+    console.log("[AuthContext] Resetting coins to 0 via logout");
     setCoins(0);
   };
 

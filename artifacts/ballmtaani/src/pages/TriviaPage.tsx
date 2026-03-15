@@ -173,7 +173,7 @@ export default function TriviaPage() {
             {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
           </button>
           <div className="bg-[#1B1B1B] px-4 py-1.5 rounded-full border border-white/10 shadow-[0_0_10px_rgba(255,215,0,0.1)]">
-            <span className="font-black text-[#FFD700] tracking-widest">{updateCoins.name ? "Prize Pool" : "Coins"}</span>
+            <span className="font-black text-[#FFD700] tracking-widest">Prize Pool</span>
           </div>
         </div>
       </div>
