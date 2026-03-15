@@ -1,7 +1,9 @@
 import { Route, Switch, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { Navbar } from "./components/Navbar";
+import { AmbientBackground } from "./components/AmbientBackground";
 import { useState, useEffect } from "react";
 import { verifyGeminiConnection, verifyFootballConnection, verifySupabaseConnection } from "./lib/api-verify";
 
@@ -12,7 +14,10 @@ import DebatesPage from "./pages/DebatesPage";
 import FanZonesPage from "./pages/FanZonesPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import StorePage from "./pages/StorePage";
 import LiveCenterPage from "./pages/LiveCenterPage";
+import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
+import RivalriesPage from "./pages/RivalriesPage";
 import LoginPage from "./pages/auth/LoginPage";
 import VerifyOTPPage from "./pages/auth/OTPPage";
 
@@ -44,7 +49,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <ThemeProvider>
+          <AmbientBackground />
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <div className="min-h-screen bg-[#0B0B0B] text-white font-sans selection:bg-[#B30000] selection:text-white">
             <Navbar />
             <Switch>
@@ -57,7 +64,11 @@ export default function App() {
               <Route path="/fan-zones" component={FanZonesPage} />
               <Route path="/leaderboard" component={LeaderboardPage} />
               <Route path="/profile" component={ProfilePage} />
+              <Route path="/profile/:id" component={ProfilePage} />
+              <Route path="/store" component={StorePage} />
+              <Route path="/live-center" component={LiveCenterIndexPage} />
               <Route path="/live-center/:id" component={LiveCenterPage} />
+              <Route path="/rivalries" component={RivalriesPage} />
               <Route>
                 <div className="flex flex-col items-center justify-center min-h-[70vh]">
                   <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>
@@ -101,7 +112,8 @@ export default function App() {
             )}
           </div>
         </WouterRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+      </ThemeProvider>
+    </AuthProvider>
+  </QueryClientProvider>
   );
 }

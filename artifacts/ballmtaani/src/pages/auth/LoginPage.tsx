@@ -60,14 +60,14 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0B0B0B] flex flex-col items-center justify-center p-4 relative overflow-hidden text-white">
       
       {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#B30000]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Main Card */}
       <div className="w-full max-w-md bg-[#1A1A1A]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 relative z-10 shadow-2xl">
         
         <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 bg-[#B30000]/20 rounded-2xl flex items-center justify-center border border-[#B30000]/30 shadow-[0_0_30px_rgba(179,0,0,0.2)]">
-            <Smartphone className="w-8 h-8 text-[#B30000]" />
+          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 shadow-[0_0_30px_rgba(179,0,0,0.2)]">
+            <Smartphone className="w-8 h-8 text-primary" />
           </div>
         </div>
 
@@ -91,7 +91,7 @@ export default function LoginPage() {
                 <select 
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
-                  className="appearance-none bg-black/40 border border-white/10 text-white text-sm font-bold rounded-xl pl-4 pr-10 py-4 h-full focus:outline-none focus:border-[#B30000]/50 transition-colors cursor-pointer"
+                  className="appearance-none bg-black/40 border border-white/10 text-white text-sm font-bold rounded-xl pl-4 pr-10 py-4 h-full focus:outline-none focus:border-primary/50 transition-colors cursor-pointer"
                 >
                   <option value="+254">🇰🇪 +254</option>
                   <option value="+234">🇳🇬 +234</option>
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))} // only numbers
                 placeholder="712 345 678"
-                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-lg text-white font-bold tracking-wider placeholder:text-gray-600 focus:outline-none focus:border-[#B30000]/50 focus:ring-1 focus:ring-[#B30000]/50 transition-all shadow-inner"
+                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-lg text-white font-bold tracking-wider placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-inner"
               />
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#B30000] hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(179,0,0,0.3)] hover:shadow-[0_0_30px_rgba(179,0,0,0.5)] active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full bg-primary hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black uppercase tracking-widest py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(179,0,0,0.3)] hover:shadow-[0_0_30px_rgba(179,0,0,0.5)] active:scale-[0.98] flex items-center justify-center gap-2"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />

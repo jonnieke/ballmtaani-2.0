@@ -1,90 +1,87 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import { Link } from "wouter";
-import { useMatches, useUpcomingFixtures } from "../hooks/useData";
+import { useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
 
 export default function MatchesPage() {
-  const [activeTab, setActiveTab] = useState<"live" | "fixtures">("live");
-  const { isLoggedIn, openLoginModal } = useAuth();
+  const [activeTab, setActiveTab] = useState<"recent" | "upcoming">("recent");
 
-  const { data: liveMatches = [] } = useMatches();
+  const { data: recentMatches = [] } = useRecentMatches();
   const { data: upcomingFixtures = [] } = useUpcomingFixtures();
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 md:py-12">
       <div className="mb-8 border-b border-white/10">
-        <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest mb-6 border-l-4 border-[#B30000] pl-4">
-          Match Center
+        <h1 className="text-3xl md:text-4xl font-black uppercase tracking-widest mb-6 border-l-4 border-primary pl-4">
+          Match Directory
         </h1>
         <div className="flex gap-6">
           <button
-            onClick={() => setActiveTab("live")}
-            className={`pb-3 text-sm md:text-base font-black uppercase tracking-widest transition-colors relative ${activeTab === "live" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}
+            onClick={() => setActiveTab("recent")}
+            className={`pb-3 text-sm md:text-base font-black uppercase tracking-widest transition-colors relative ${activeTab === "recent" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}
           >
-            Live Actions
-            {activeTab === "live" && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#B30000] rounded-t"></span>}
+            Recent Results
+            {activeTab === "recent" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t"></span>}
           </button>
           <button
-            onClick={() => setActiveTab("fixtures")}
-            className={`pb-3 text-sm md:text-base font-black uppercase tracking-widest transition-colors relative ${activeTab === "fixtures" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}
+            onClick={() => setActiveTab("upcoming")}
+            className={`pb-3 text-sm md:text-base font-black uppercase tracking-widest transition-colors relative ${activeTab === "upcoming" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}
           >
-            Fixtures
-            {activeTab === "fixtures" && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#B30000] rounded-t"></span>}
+            Upcoming Fixtures
+            {activeTab === "upcoming" && <span className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-t"></span>}
           </button>
         </div>
       </div>
 
-      {activeTab === "live" ? (
-        <div className="space-y-6">
-          {liveMatches.map((match: any) => (
-            <Link key={match.id} href={`/live-center/${match.id}`} className="block group">
-              <div className="bg-[rgba(20,20,25,0.95)] rounded-xl border-l-4 border-[#B30000] border-y border-r border-white/5 p-5 md:p-6 shadow-xl relative overflow-hidden hover:bg-[#1f1f25] transition-colors cursor-pointer">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#B30000]/5 blur-[50px] rounded-full pointer-events-none"></div>
+      {activeTab === "recent" ? (
+        <div className="space-y-8">
+          {recentMatches.length === 0 ? (
+            <div className="text-center text-gray-400 py-10 font-bold uppercase tracking-wider">No recent matches found.</div>
+          ) : (
+            // Group by date
+            Object.entries(
+              recentMatches.reduce((groups: Record<string, any[]>, match: any) => {
+                (groups[match.date] = groups[match.date] || []).push(match);
+                return groups;
+              }, {})
+            ).map(([date, matches]) => (
+              <div key={date}>
+                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-600"></div> {date}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(matches as any[]).map((match: any) => (
+                    <div key={match.id} className="bg-[rgba(20,20,25,0.95)] rounded-xl border border-white/5 p-4 md:p-5 shadow-xl relative overflow-hidden flex flex-col">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{match.league}</span>
+                        <span className="bg-gray-800 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1.5 shrink-0">
+                          FT
+                        </span>
+                      </div>
 
-                <div className="flex justify-between items-center mb-6">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{match.league}</span>
-                  <span className="bg-[#B30000] text-white text-[10px] md:text-xs font-black uppercase px-2 py-1 rounded flex items-center gap-2">
-                    LIVE <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> {match.minute}
-                  </span>
-                </div>
+                      <div className="flex items-center justify-between flex-1">
+                        <div className="flex flex-col items-center gap-2 w-[35%]">
+                          <TeamLogo logo={match.homeLogo} initial={match.homeInitial} color={match.homeColor} size="md" shadow />
+                          <span className="font-bold text-xs md:text-sm text-center truncate w-full">{match.home}</span>
+                        </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 md:gap-4 w-1/3">
-                    <TeamLogo logo={match.homeLogo} initial={match.homeInitial} color={match.homeColor} size="lg" shadow />
-                    <span className="font-bold text-sm md:text-lg truncate">{match.home}</span>
-                  </div>
+                        <div className="flex items-center justify-center w-[30%] gap-2 md:gap-3">
+                          <span className={`text-3xl md:text-4xl font-black ${match.homeScore > match.awayScore ? 'text-white' : 'text-gray-500'}`}>{match.homeScore}</span>
+                          <span className="text-lg md:text-xl font-black text-gray-600">-</span>
+                          <span className={`text-3xl md:text-4xl font-black ${match.awayScore > match.homeScore ? 'text-white' : 'text-gray-500'}`}>{match.awayScore}</span>
+                        </div>
 
-                  <div className="flex items-center justify-center w-1/3 gap-3 md:gap-6">
-                    <span className="text-4xl md:text-5xl font-black">{match.homeScore}</span>
-                    <span className="text-xl md:text-2xl font-black text-gray-600">-</span>
-                    <span className="text-4xl md:text-5xl font-black">{match.awayScore}</span>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-3 md:gap-4 w-1/3">
-                    <span className="font-bold text-sm md:text-lg truncate text-right">{match.away}</span>
-                    <TeamLogo logo={match.awayLogo} initial={match.awayInitial} color={match.awayColor} size="lg" shadow />
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-4 border-t border-white/5 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                  <div className="text-center md:text-left">
-                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Possession</span>
-                    <span className="text-xs font-bold">{match.possession}</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="block text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Goals</span>
-                    <span className="text-xs font-bold text-gray-300">{match.scorers}</span>
-                  </div>
-                  <div className="text-center md:text-right">
-                    <span className="inline-block bg-[#B30000]/10 group-hover:bg-[#B30000] border border-[#B30000]/20 text-[#B30000] group-hover:text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded transition-all">
-                      Open Live Center →
-                    </span>
-                  </div>
+                        <div className="flex flex-col items-center gap-2 w-[35%]">
+                          <TeamLogo logo={match.awayLogo} initial={match.awayInitial} color={match.awayColor} size="md" shadow />
+                          <span className="font-bold text-xs md:text-sm text-center truncate w-full">{match.away}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </Link>
-          ))}
+            ))
+          )}
         </div>
       ) : (
         <div className="space-y-8">
@@ -95,14 +92,14 @@ export default function MatchesPage() {
             return (
               <div key={date}>
                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-gray-600"></div> {date}
+                  <div className="w-2 h-2 rounded-full bg-primary"></div> {date}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {dateFixtures.map((fixture: any) => (
                     <div key={fixture.id} className="bg-[#1B1B1B] rounded-xl border border-white/5 p-4 shadow-lg hover:border-white/10 transition-colors flex flex-col">
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{fixture.league}</span>
-                        <span className="bg-[#0B0B0B] border border-white/10 text-gray-300 text-[10px] font-bold uppercase px-2 py-1 rounded">
+                        <span className="bg-[#0B0B0B] border border-primary/30 text-primary text-[10px] font-black uppercase px-2 py-1 rounded">
                           {fixture.time}
                         </span>
                       </div>
@@ -119,7 +116,7 @@ export default function MatchesPage() {
                         </div>
                       </div>
 
-                      <Link href="/predictions" className="block w-full text-center bg-[#B30000] hover:bg-red-800 text-white font-bold uppercase tracking-wider text-xs py-2.5 rounded transition-colors mt-auto">
+                      <Link href="/predictions" className="block w-full text-center bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-wider text-xs py-2.5 rounded transition-colors mt-auto border border-white/10">
                         Predict Score
                       </Link>
                     </div>

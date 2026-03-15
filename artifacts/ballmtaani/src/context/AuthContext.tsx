@@ -6,6 +6,9 @@ interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
   username: string;
+  coins: number;
+  updateCoins: (amount: number) => void;
+  mockLogin: (phone: string) => void;
   logout: () => Promise<void>;
 }
 
@@ -14,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [coins, setCoins] = useState(0);
 
   useEffect(() => {
     if (!supabase) return; // No Supabase client - run in offline/mock mode
@@ -33,12 +37,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const mockLogin = (phone: string) => {
+    // Used explicitly for development bypass when SMS isn't configured
+    setUser({ phone, id: 'mock-user-id', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() } as unknown as User);
+    setIsLoggedIn(true);
+  };
+
+  const updateCoins = (amount: number) => {
+    setCoins(prev => prev + amount);
+  };
+
   const logout = async () => {
     if (supabase) {
       await supabase.auth.signOut();
     }
     setUser(null);
     setIsLoggedIn(false);
+    setCoins(0);
   };
 
   // For phone auth, user.phone is the primary identifier if they haven't set a username
@@ -50,6 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         user,
         username: displayUsername,
+        coins,
+        updateCoins,
+        mockLogin,
         logout,
       }}
     >

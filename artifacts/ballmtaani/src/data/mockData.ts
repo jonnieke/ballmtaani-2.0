@@ -37,12 +37,12 @@ export const AI_PREDICTIONS = [
 ];
 
 export const DEBATES = [
-  { id: "d1", title: "Who's the GOAT?",      left: "Messi 🐐",       right: "Ronaldo 🔴",        leftVotes: 54, rightVotes: 46, totalVotes: "2,847" },
-  { id: "d2", title: "Best League",           left: "EPL 🏴󠁧󠁢󠁥󠁮󠁧󠁿",        right: "La Liga 🇪🇸",         leftVotes: 62, rightVotes: 38, totalVotes: "1,523" },
-  { id: "d3", title: "Who's better?",         left: "Haaland",        right: "Mbappé",             leftVotes: 48, rightVotes: 52, totalVotes: "3,102" },
-  { id: "d4", title: "Best African Player",   left: "Salah",          right: "Osimhen",            leftVotes: 70, rightVotes: 30, totalVotes: "1,945" },
-  { id: "d5", title: "Best Manager",          left: "Pep Guardiola",  right: "Klopp",              leftVotes: 51, rightVotes: 49, totalVotes: "2,100" },
-  { id: "d6", title: "Biggest Derby",         left: "El Clásico",     right: "North West Derby",   leftVotes: 55, rightVotes: 45, totalVotes: "1,205" }
+  { id: "d1", title: "Who's the GOAT?",      left: "Messi",       right: "Ronaldo",        leftVotes: 54, rightVotes: 46, totalVotes: "2,847", leftImage: "https://media.api-sports.io/football/players/154.png", rightImage: "https://media.api-sports.io/football/players/874.png" },
+  { id: "d2", title: "Best League",           left: "EPL",        right: "La Liga",         leftVotes: 62, rightVotes: 38, totalVotes: "1,523", leftImage: "https://media.api-sports.io/football/leagues/39.png", rightImage: "https://media.api-sports.io/football/leagues/140.png" },
+  { id: "d3", title: "Who's better?",         left: "Haaland",        right: "Mbappé",             leftVotes: 48, rightVotes: 52, totalVotes: "3,102", leftImage: "https://media.api-sports.io/football/players/1100.png", rightImage: "https://media.api-sports.io/football/players/278.png" },
+  { id: "d4", title: "Best African Player",   left: "Salah",          right: "Osimhen",            leftVotes: 70, rightVotes: 30, totalVotes: "1,945", leftImage: "https://media.api-sports.io/football/players/306.png", rightImage: "https://media.api-sports.io/football/players/1109.png" },
+  { id: "d5", title: "Best Manager",          left: "Pep Guardiola",  right: "Klopp",              leftVotes: 51, rightVotes: 49, totalVotes: "2,100", leftImage: "https://media.api-sports.io/football/teams/50.png", rightImage: "https://media.api-sports.io/football/teams/40.png" },
+  { id: "d6", title: "Biggest Derby",         left: "El Clásico",     right: "North West Derby",   leftVotes: 55, rightVotes: 45, totalVotes: "1,205", leftImage: "https://media.api-sports.io/football/teams/541.png", rightImage: "https://media.api-sports.io/football/teams/33.png" }
 ];
 
 export const BANTER_TWEETS = [
@@ -168,12 +168,8 @@ export const STANDINGS: Record<string, any[]> = {
 };
 
 export const FAN_ZONES = [
-  { id: "z1", team: "Arsenal",     logo: CLUB_LOGOS["Arsenal"],     color: "#EF0107", members: "12,450 fans", preview: "Arteta needs to start playing Trossard more..." },
-  { id: "z2", team: "Chelsea",     logo: CLUB_LOGOS["Chelsea"],     color: "#034694", members: "10,210 fans", preview: "When is Nkunku coming back?" },
-  { id: "z3", team: "Man City",    logo: CLUB_LOGOS["Man City"],    color: "#6CABDD", members: "8,900 fans",  preview: "Haaland is a robot, I'm convinced." },
-  { id: "z4", team: "Liverpool",   logo: CLUB_LOGOS["Liverpool"],   color: "#C8102E", members: "11,300 fans", preview: "We need another midfielder in Jan." },
-  { id: "z5", team: "Real Madrid", logo: CLUB_LOGOS["Real Madrid"], color: "#FEBE10", members: "15,800 fans", preview: "Bellingham for Ballon d'Or!" },
-  { id: "z6", team: "Barcelona",   logo: CLUB_LOGOS["Barcelona"],   color: "#A50044", members: "14,200 fans", preview: "Yamal is the future of this club." },
-  { id: "z7", team: "PSG",         logo: CLUB_LOGOS["PSG"],         color: "#004170", members: "6,500 fans",  preview: "Mbappe carrying us again." },
-  { id: "z8", team: "Man Utd",     logo: CLUB_LOGOS["Man Utd"],     color: "#DA291C", members: "13,900 fans", preview: "Ten Hag out? Or give him time?" }
+  { id: "arsenal", team: "Arsenal", logo: EXTENDED_LOGOS["Arsenal"], members: "1.2M", preview: "Saka is carrying us this season! What a player.", color: "#EF0107" },
+  { id: "chelsea", team: "Chelsea", logo: EXTENDED_LOGOS["Chelsea"], members: "980K", preview: "Pochettino needs more time, trust the process.", color: "#034694" },
+  { id: "man-utd", team: "Man United", logo: EXTENDED_LOGOS["Man Utd"], members: "1.5M", preview: "Ten Hag OUT or IN? Let's settle this.", color: "#DA291C" },
+  { id: "liverpool", team: "Liverpool", logo: EXTENDED_LOGOS["Liverpool"], members: "1.3M", preview: "Klopp's farewell tour. We have to win it all.", color: "#C8102E" }
 ];

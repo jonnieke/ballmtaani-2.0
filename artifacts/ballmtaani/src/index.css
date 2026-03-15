@@ -73,6 +73,20 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
+  --brand-font-sans: 'Inter', 'Arial Black', sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: Menlo, monospace;
+  --radius: .5rem;
+
+  /* Theme Tokens */
+  --brand-red: 0 100% 35%;
+  --brand-blue: 220 100% 56%;
+  --brand-gold: 45 100% 55%;
+  
+  --theme-primary: var(--brand-red);
+  --theme-secondary: var(--brand-blue);
+  --theme-glow: rgba(179, 0, 0, 0.3);
+
   --background: 0 0% 7%;
   --foreground: 0 0% 100%;
   --border: 0 0% 20%;
@@ -82,36 +96,31 @@
   --sidebar: 0 0% 9%;
   --sidebar-foreground: 0 0% 100%;
   --sidebar-border: 0 0% 18%;
-  --sidebar-primary: 0 100% 35%;
+  --sidebar-primary: var(--theme-primary);
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 0 100% 35%;
+  --sidebar-ring: var(--theme-primary);
   --popover: 0 0% 12%;
   --popover-foreground: 0 0% 100%;
   --popover-border: 0 0% 20%;
-  --primary: 0 100% 35%;
+  --primary: var(--theme-primary);
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 18%;
   --secondary-foreground: 0 0% 100%;
   --muted: 0 0% 15%;
   --muted-foreground: 0 0% 60%;
-  --accent: 220 100% 56%;
+  --accent: var(--theme-secondary);
   --accent-foreground: 0 0% 100%;
   --destructive: 0 100% 35%;
   --destructive-foreground: 0 0% 100%;
   --input: 0 0% 20%;
-  --ring: 0 100% 35%;
-  --chart-1: 0 100% 35%;
-  --chart-2: 220 100% 56%;
+  --ring: var(--theme-primary);
+  --chart-1: var(--theme-primary);
+  --chart-2: var(--theme-secondary);
   --chart-3: 45 100% 55%;
-  --chart-4: 142 72% 50%;
-  --chart-5: 280 85% 65%;
 
-  --app-font-sans: 'Inter', 'Arial Black', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
-  --radius: .5rem;
+  --app-font-sans: var(--brand-font-sans);
   --shadow-2xs: 0px 2px 8px 0px rgba(0,0,0,0.5);
   --shadow-xs: 0px 2px 8px 0px rgba(0,0,0,0.5);
   --shadow-sm: 0px 2px 8px 0px rgba(0,0,0,0.5), 0px 1px 2px -1px rgba(0,0,0,0.3);
@@ -229,6 +238,10 @@
 
   .animate-pulse-slow {
     animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .glow-theme {
+    box-shadow: 0 0 20px var(--theme-glow);
   }
 
   .glow-red {

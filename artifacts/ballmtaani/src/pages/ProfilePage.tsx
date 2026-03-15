@@ -2,31 +2,47 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useData";
 import { Redirect } from "wouter";
-import { LogOut, Trophy, Settings, Flame, Target } from "lucide-react";
+import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2 } from "lucide-react";
+import { UserBadge } from "../components/UserBadge";
+import { getUserTier } from "../lib/tiers";
+import { useRoute } from "wouter";
+import { ChallengeModal } from "../components/ChallengeModal";
 
 export default function ProfilePage() {
-  const { isLoggedIn, user, username, logout } = useAuth();
+  const [match, params] = useRoute("/profile/:id");
+  const profileId = params?.id;
+  const { isLoggedIn, user, username, logout, updateCoins } = useAuth();
   const [activeTab, setActiveTab] = useState<"predictions" | "debates" | "badges">("predictions");
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
 
-  const { data: profile } = useProfile(user?.id);
+  const targetId = profileId || user?.id;
+  const isOwnProfile = !profileId || profileId === user?.id;
 
-  if (!isLoggedIn) {
-    return <Redirect to="/" />;
+  const { data: profile, isLoading } = useProfile(targetId);
+
+  if (!isLoggedIn && !profileId) {
+    return <Redirect to="/login" />;
+  }
+
+  if (isLoading) {
+    return <div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
   }
 
   const displayUsername = profile?.username || username || "Fan";
   const points = profile?.points || 0;
   const streak = profile?.streak || 0;
   const country = profile?.country || "Kenya 🇰🇪";
+  const interactions = profile?.interactions || 0;
+  const tier = getUserTier(interactions);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
       {/* Profile Header */}
       <div className="bg-[#1B1B1B] rounded-2xl border border-white/10 shadow-2xl p-6 md:p-8 mb-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-[#B30000] via-[#FFD700] to-[#1E6FFF]"></div>
+        <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-primary via-[#FFD700] to-accent"></div>
         
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#0B0B0B] border-4 border-[#B30000] flex items-center justify-center text-4xl md:text-5xl font-black text-white shadow-[0_0_20px_rgba(179,0,0,0.4)] shrink-0">
+          <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#0B0B0B] border-4 border-primary flex items-center justify-center text-4xl md:text-5xl font-black text-white shadow-[0_0_20px_rgba(179,0,0,0.4)] shrink-0">
             {displayUsername.substring(0, 2).toUpperCase()}
           </div>
           
@@ -38,18 +54,53 @@ export default function ProfilePage() {
               <span className="bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded">
                 Joined Mar 2025
               </span>
-              <span className="bg-[#B30000]/10 border border-[#B30000]/30 text-[#B30000] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded flex items-center gap-1">
-                <Trophy className="w-3 h-3" /> Rank --
-              </span>
+              <UserBadge interactions={interactions} className="px-3 py-1.5 text-xs" />
             </div>
+
+            {/* Next Rank Progress Bar */}
+            {tier.nextThreshold && (
+              <div className="mt-5 w-full max-w-sm mx-auto md:mx-0">
+                <div className="flex justify-between items-center text-[10px] uppercase font-black text-gray-500 tracking-widest mb-1.5">
+                  <span>{interactions} / {tier.nextThreshold} Interactions</span>
+                  <span className="text-[#FFD700]">Next Rank</span>
+                </div>
+                <div className="h-2 bg-black/50 border border-white/10 rounded-full overflow-hidden shadow-[inset_0_2px_5px_rgba(0,0,0,0.5)]">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ${tier.color.split(' ')[0]} bg-opacity-100`}
+                    style={{ width: `${Math.min(100, (interactions / tier.nextThreshold) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           
-          <button 
-            onClick={logout}
-            className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors md:self-start border border-transparent hover:border-white/10 px-3 py-2 rounded"
-          >
-            <LogOut className="w-4 h-4" /> Log Out
-          </button>
+          {isOwnProfile ? (
+            <button 
+                onClick={logout}
+                className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors md:self-start border border-transparent hover:border-white/10 px-3 py-2 rounded"
+            >
+                <LogOut className="w-4 h-4" /> Log Out
+            </button>
+          ) : (
+            <button 
+                onClick={() => setShowChallengeModal(true)}
+                className="flex items-center gap-2 text-xs font-black bg-primary hover:bg-red-700 text-white uppercase tracking-widest transition-all md:self-start border border-white/10 px-4 py-2.5 rounded-xl shadow-[0_0_15px_rgba(179,0,0,0.3)] active:scale-95"
+            >
+                <Sword className="w-4 h-4" /> Challenge to Duel
+            </button>
+          )}
+
+          {showChallengeModal && (
+            <ChallengeModal 
+              rivalName={displayUsername}
+              rivalId={targetId!}
+              onClose={() => setShowChallengeModal(false)}
+              onChallenge={(matchId, stake, prediction) => {
+                alert(`Challenge sent to ${displayUsername} on match ${matchId} with ${stake} Coins!`);
+                updateCoins(-stake); // Deduct stake from challenger
+              }}
+            />
+          )}
         </div>
 
         {/* Stats Row */}
@@ -67,7 +118,7 @@ export default function ProfilePage() {
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Correct</span>
           </div>
           <div className="text-center">
-            <span className="block text-3xl font-black text-[#B30000] flex items-center justify-center gap-1">
+            <span className="block text-3xl font-black text-primary flex items-center justify-center gap-1">
               {streak} <Flame className="w-5 h-5" />
             </span>
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Current Streak</span>
@@ -89,7 +140,7 @@ export default function ProfilePage() {
               ${activeTab === tab.id ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
           >
             {tab.label}
-            {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-1 bg-[#B30000]"></div>}
+            {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-1 bg-primary"></div>}
           </button>
         ))}
       </div>

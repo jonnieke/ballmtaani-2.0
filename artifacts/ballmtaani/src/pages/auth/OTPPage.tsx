@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../context/AuthContext";
 
 export default function VerifyOTPPage() {
   const [location, setLocation] = useLocation();
@@ -65,6 +66,8 @@ export default function VerifyOTPPage() {
     inputRefs.current[focusIndex]?.focus();
   };
 
+  const { mockLogin } = useAuth();
+
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const code = otp.join("");
@@ -80,6 +83,8 @@ export default function VerifyOTPPage() {
       // If we are mocking locally because backend failed to send:
       if (code === "123456" && (import.meta.env.DEV || !supabase)) {
          console.log("Mock verification success!");
+         mockLogin(phone);
+         sessionStorage.removeItem("auth_phone");
          setLocation("/");
          return;
       }
@@ -101,6 +106,8 @@ export default function VerifyOTPPage() {
       // Fallback for UI testing
       if (err.message.includes("Database error") || !supabase) {
         if (code === "123456") {
+            mockLogin(phone);
+            sessionStorage.removeItem("auth_phone");
             setLocation("/");
             return;
         }
