@@ -16,6 +16,7 @@ export async function verifyGeminiConnection() {
       return { status: 'error', message: error.error?.message || 'Gemini API Error' };
     }
   } catch (err) {
+    console.error("Gemini Connection Fetch Error:", err);
     return { status: 'error', message: 'Network Error' };
   }
 }
