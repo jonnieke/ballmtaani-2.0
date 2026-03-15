@@ -30,6 +30,12 @@ export const UPCOMING_FIXTURES = [
   { id: "f4", home: "Inter",       homeLogo: CLUB_LOGOS["Inter"],       homeColor: "#005CA5", homeInitial: "I", away: "Juventus",  awayLogo: CLUB_LOGOS["Juventus"],  awayColor: "#000000", awayInitial: "J", time: "21:45 EAT", league: "Serie A",        date: "Tomorrow" }
 ];
 
+export const RECENT_MATCHES = [
+  { id: "r1", home: "Arsenal",     homeLogo: CLUB_LOGOS["Arsenal"],     homeColor: "#EF0107", homeInitial: "A", away: "Man City",   awayLogo: CLUB_LOGOS["Man City"],   awayColor: "#6CABDD", awayInitial: "M", homeScore: 2, awayScore: 1, status: "FT", date: "Mar 15, 2025", league: "Premier League" },
+  { id: "r2", home: "Liverpool",   homeLogo: CLUB_LOGOS["Liverpool"],   homeColor: "#C8102E", homeInitial: "L", away: "Chelsea",    awayLogo: CLUB_LOGOS["Chelsea"],    awayColor: "#034694", awayInitial: "C", homeScore: 0, awayScore: 0, status: "FT", date: "Mar 15, 2025", league: "Premier League" },
+  { id: "r3", home: "Barcelona",   homeLogo: CLUB_LOGOS["Barcelona"],   homeColor: "#A50044", homeInitial: "B", away: "Real Madrid", awayLogo: CLUB_LOGOS["Real Madrid"], awayColor: "#FEBE10", awayInitial: "R", homeScore: 3, awayScore: 2, status: "FT", date: "Mar 14, 2025", league: "La Liga" }
+];
+
 export const AI_PREDICTIONS = [
   { id: "p1", match: "Arsenal vs Chelsea",       homeTeam: "Arsenal",     awayTeam: "Chelsea",    homeProb: 52, drawProb: 20, awayProb: 28, predScore: "2 - 1", tacticalInsight: "Arsenal's wing play overloads Chelsea's exposed fullbacks." },
   { id: "p2", match: "Real Madrid vs Barcelona", homeTeam: "Real Madrid", awayTeam: "Barcelona",  homeProb: 38, drawProb: 20, awayProb: 42, predScore: "1 - 2", tacticalInsight: "Barca's high press will force early turnovers from Madrid's double-pivot." },
