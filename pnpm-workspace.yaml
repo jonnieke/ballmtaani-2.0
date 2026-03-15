@@ -28,7 +28,7 @@
 minimumReleaseAge: 1440
 
 packages:
-  - artifacts/*
+  - "artifacts/ballmtaani"
   - lib/*
   - lib/integrations/*
   - scripts
