@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useData";
 
-import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2 } from "lucide-react";
+import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2, Activity } from "lucide-react";
 import { UserBadge } from "../components/UserBadge";
 import { getUserTier } from "../lib/tiers";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import { ChallengeModal } from "../components/ChallengeModal";
 
 export default function ProfilePage() {
