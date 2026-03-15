@@ -30,7 +30,7 @@ export default function HomePage() {
   return (
     <div className="pb-12">
       <SEO 
-        title="BallMtaani | Predict, Debate, Dominate"
+        title="BallMtaani | #1 Africa Social Football Hub"
         description="Join the ultimate social football hub for African fans. Live scores, debates, and elite predictions."
       />
 

@@ -13,32 +13,36 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-4 pb-4 pointer-events-none">
-      <div className="max-w-md mx-auto h-16 bg-[#111] border border-white/10 rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl flex items-center justify-around px-2 pointer-events-auto overflow-hidden relative">
-        {/* Active Indicator Background (Optional) */}
-        
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-6 pb-6 pointer-events-none">
+      <div className="max-w-md mx-auto h-16 bg-[#111111]/90 border border-white/10 rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl flex items-center justify-between px-2 pointer-events-auto">
         {navItems.map((item) => {
           const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
           const Icon = item.icon;
 
           return (
-            <Link key={item.href} href={item.href} className="relative flex flex-col items-center justify-center w-12 h-12 transition-all group">
-              {isActive && (
-                <div className="absolute inset-0 bg-primary/10 rounded-xl animate-in fade-in zoom-in duration-300" />
-              )}
-              <Icon 
-                className={`w-5 h-5 transition-all duration-300 ${
-                  isActive ? "text-primary scale-110" : "text-gray-500 group-hover:text-white"
-                }`}
-              />
-              <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 transition-all ${
-                isActive ? "text-white opacity-100" : "text-gray-500 opacity-60 group-hover:opacity-100"
-              }`}>
-                {item.label}
-              </span>
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              className={`flex-1 relative flex flex-col items-center justify-center h-full transition-all group`}
+            >
+              <div className="relative flex flex-col items-center justify-center z-10">
+                <Icon 
+                  className={`w-5 h-5 transition-all duration-300 ${
+                    isActive ? "text-primary scale-110" : "text-gray-500 group-hover:text-white"
+                  }`}
+                />
+                <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 transition-all ${
+                  isActive ? "text-white opacity-100" : "text-gray-500 opacity-60"
+                }`}>
+                  {item.label}
+                </span>
+              </div>
               
               {isActive && (
-                <div className="absolute -top-1 w-1 h-1 rounded-full bg-primary shadow-[0_0_8px_#B30000]" />
+                <>
+                  <div className="absolute inset-x-1 inset-y-2 bg-primary/10 rounded-xl border border-primary/20 animate-in fade-in zoom-in duration-300" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-primary shadow-[0_0_10px_#B30000]" />
+                </>
               )}
             </Link>
           );
