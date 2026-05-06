@@ -1,0 +1,9 @@
+{
+  "framework": "vite",
+  "buildCommand": "cd artifacts/ballmtaani && npm run build",
+  "outputDirectory": "artifacts/ballmtaani/dist",
+  "installCommand": "npm install --legacy-peer-deps",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

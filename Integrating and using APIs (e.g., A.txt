@@ -1,0 +1,5 @@
+Integrating and using APIs (e.g., API-Football, Gemini/GenAI) for live sports data and AI features.
+Implementing up-to-date live feeds for football fixtures, standings, and player info.
+Automating date/season selection for fetching current matches and avoiding manual edits.
+Optimizing data fetching logic (e.g., always get latest matches, sort by date, filter by current season).
+Suggesting best practices for sports apps and vibrant fan communities.

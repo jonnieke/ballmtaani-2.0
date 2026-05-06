@@ -1,0 +1,19 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "workspaces": [
+    "artifacts/*",
+    "lib/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w artifacts/ballmtaani",
+    "build": "npm run typecheck -w artifacts/ballmtaani && npm run build -w artifacts/ballmtaani",
+    "typecheck": "npm run typecheck -w artifacts/ballmtaani"
+  },
+  "private": true,
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "prettier": "^3.8.1"
+  }
+}

@@ -1,0 +1,126 @@
+Build a modern, production-ready landing page and MVP interface for a football fan platform called **BallMtaani**.
+
+The design must visually match a **high-energy football stadium poster style** similar to ESPN or OneFootball promotional graphics.
+
+Use **React + TailwindCSS + Vite** for the frontend.
+
+The interface must feel **premium, energetic, and modern**, not generic.
+
+PRIMARY COLORS
+
+* Deep football red (#B30000)
+* Black (#0B0B0B)
+* Dark charcoal (#1B1B1B)
+* White (#FFFFFF)
+* Accent blue (#1E6FFF)
+
+The design should feel like a **night football stadium atmosphere with bright floodlights and fan energy**.
+
+---
+
+HERO SECTION
+
+Create a large stadium-style hero section with:
+
+Title:
+BALLMTAANI
+
+Tagline:
+Predict. Debate. Banter.
+
+Background:
+A dramatic football stadium scene with fans celebrating.
+
+Primary call-to-action buttons:
+
+Predict Matches
+Join Fan Debate
+View Leaderboard
+
+---
+
+AI MATCH PREDICTION CARD
+
+Create a card component styled like a broadcast graphic.
+
+Display:
+
+Arsenal vs Chelsea
+
+Predicted Score:
+Arsenal 2 – 1 Chelsea
+
+Win Probability:
+
+Arsenal 52%
+Chelsea 28%
+Draw 20%
+
+Include team logos and a glowing prediction badge labeled:
+
+AI Prediction
+
+Add a button:
+
+Generate Prediction
+
+This will later connect to a Gemini API endpoint.
+
+---
+
+FAN DEBATE SECTION
+
+Create a debate card with two players facing each other.
+
+Example:
+
+Who’s Better?
+
+Haaland vs Mbappe
+
+Each side has a vote button.
+
+Display live vote percentages.
+
+Add a visual “VS” graphic between the players.
+
+---
+
+LEADERBOARD SECTION
+
+Create a leaderboard card with top prediction players.
+
+Example:
+
+Leaderboard
+
+1. Kamau – 45 pts
+2. Otieno – 42 pts
+3. Aisha – 39 pts
+
+Include avatars and trophy icons.
+
+Add button:
+
+View Full Leaderboard
+
+---
+
+AI BANTER GENERATOR
+
+Create a shareable banter card.
+
+Example text:
+
+“Man United fans showed up hoping for a win…
+Left needing therapy.”
+
+Include buttons:
+
+Generate Banter
+Share to WhatsApp
+Share to Twitter
+
+Generate banter via an AI API endpoint.
+
+---

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API-Sports Widget Test</title>
+  <style>
+    body { background: #0B0B0B; color: #fff; font-family: sans-serif; padding: 20px; }
+    h1 { color: #B30000; }
+    .widget-container { margin: 20px 0; border: 1px solid #333; padding: 10px; min-height: 200px; }
+  </style>
+</head>
+<body>
+  <h1>API-Sports Widget Test Page</h1>
+  <p>This page tests the widget directly without React.</p>
+  
+  <!-- Config widget -->
+  <api-sports-widget
+    data-type="config"
+    data-host="v3.football.api-sports.io"
+    data-key="2f4b55a3f6cc4d1e13724e99c7794121"
+    data-theme="dark">
+  </api-sports-widget>
+
+  <h2>Game Widget (fixture 1380327)</h2>
+  <div class="widget-container">
+    <api-sports-widget
+      data-type="game"
+      data-id="1380327"
+      data-theme="dark"
+      data-refresh="60">
+    </api-sports-widget>
+  </div>
+
+  <h2>Game Statistics</h2>
+  <div class="widget-container">
+    <api-sports-widget
+      data-type="game-statistics"
+      data-id="1380327"
+      data-theme="dark">
+    </api-sports-widget>
+  </div>
+
+  <h2>Game Events</h2>
+  <div class="widget-container">
+    <api-sports-widget
+      data-type="game-events"
+      data-id="1380327"
+      data-theme="dark">
+    </api-sports-widget>
+  </div>
+
+  <!-- Load the widget script AFTER the custom elements are in the DOM -->
+  <script src="https://widgets.api-sports.io/3.1.0/widgets.js"></script>
+
+  <script>
+    // Debug: Log all window keys related to widgets
+    setTimeout(() => {
+      const keys = Object.keys(window).filter(k => 
+        k.toLowerCase().includes('widget') || 
+        k.toLowerCase().includes('api') || 
+        k.toLowerCase().includes('sport')
+      );
+      console.log('Widget-related window keys:', keys);
+      console.log('Custom elements defined:', !!customElements.get('api-sports-widget'));
+    }, 3000);
+  </script>
+</body>
+</html>
