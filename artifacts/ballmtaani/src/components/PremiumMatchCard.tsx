@@ -28,6 +28,7 @@ export default function PremiumMatchCard({ match }: PremiumMatchCardProps) {
   const isLive = match.status === 'LIVE' || !!match.minute;
   const isFinished = match.status === 'FT';
   const isUpcoming = !isLive && !isFinished;
+  const kenyaLean = 48 + (((match.home?.length || 6) * 5 + (match.away?.length || 5) * 3) % 18);
 
   return (
     <Link href={isUpcoming ? "/predictions" : `/live-center/${match.id}`} className="block snap-start group">
@@ -107,12 +108,12 @@ export default function PremiumMatchCard({ match }: PremiumMatchCardProps) {
             {isLive ? (
               <div className="flex items-center gap-1.5 text-[9px] font-black text-[#FFD700] uppercase tracking-widest">
                 <Zap className="w-3 h-3" />
-                Flash Bounty Active
+                Live Fan Pulse
               </div>
             ) : isUpcoming ? (
               <div className="flex items-center gap-1.5 text-[9px] font-black text-[#1E6FFF] uppercase tracking-widest">
                 <TrendingUp className="w-3 h-3" />
-                94% Predict Home
+                {kenyaLean}% Kenya Lean
               </div>
             ) : (
               <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-500 uppercase tracking-widest">
@@ -127,7 +128,7 @@ export default function PremiumMatchCard({ match }: PremiumMatchCardProps) {
             isUpcoming ? 'bg-[#1E6FFF] text-white group-hover:bg-blue-700' : 
             'bg-white/10 text-gray-400 group-hover:bg-white/20'
           }`}>
-            {isLive ? 'Join Live' : isUpcoming ? 'Predict' : 'View Stats'}
+            {isLive ? 'Join Live' : isUpcoming ? 'Make Call' : 'View Stats'}
           </div>
         </div>
       </motion.div>

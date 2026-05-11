@@ -26,6 +26,11 @@ const ALL_LEAGUE_IDS = Object.values(MAJOR_LEAGUE_IDS);
 
 // Current season (API-Football uses the year the season started)
 const CURRENT_SEASON = 2025;
+const FIXTURE_TEAM_CACHE_TTL_MS = 5 * 60 * 1000;
+const LIVE_SUMMARY_CACHE_TTL_MS = 15 * 1000;
+const fixtureTeamCache = new Map<string, { homeTeamId: number | null; awayTeamId: number | null; expiresAt: number }>();
+const liveSummaryCache = new Map<string, { value: LiveEventSummary; expiresAt: number }>();
+const liveSummaryInflight = new Map<string, Promise<LiveEventSummary>>();
 
 // ─── Shared fetch helper ────────────────────────────────────
 async function apiFetch(endpoint: string): Promise<any> {
@@ -103,6 +108,13 @@ export interface FixtureEvent {
   detail?: string;
   playerIn?: string;
   playerOut?: string;
+}
+
+export interface LiveEventSummary {
+  goals: number;
+  cards: number;
+  reds: number;
+  subs: number;
 }
 
 export interface FixtureStat {
@@ -340,6 +352,26 @@ export async function fetchFixtureEvents(fixtureId: string): Promise<FixtureEven
   const raw = await apiFetch(`/fixtures/events?fixture=${fixtureId}`);
   if (!raw || raw.length === 0) return [];
 
+  const now = Date.now();
+  const cached = fixtureTeamCache.get(fixtureId);
+  let homeTeamId: number | null = null;
+  let awayTeamId: number | null = null;
+
+  if (cached && cached.expiresAt > now) {
+    homeTeamId = cached.homeTeamId;
+    awayTeamId = cached.awayTeamId;
+  } else {
+    const fixtureDetails = await apiFetch(`/fixtures?id=${fixtureId}`);
+    const fixture = fixtureDetails && fixtureDetails.length > 0 ? fixtureDetails[0] : null;
+    homeTeamId = fixture?.teams?.home?.id ?? null;
+    awayTeamId = fixture?.teams?.away?.id ?? null;
+    fixtureTeamCache.set(fixtureId, {
+      homeTeamId,
+      awayTeamId,
+      expiresAt: now + FIXTURE_TEAM_CACHE_TTL_MS
+    });
+  }
+
   return raw.map((event: any) => {
     let type = "other";
     if (event.type === "Goal") type = "goal";
@@ -347,10 +379,18 @@ export async function fetchFixtureEvents(fixtureId: string): Promise<FixtureEven
     else if (event.type === "Card" && event.detail === "Red Card") type = "red";
     else if (event.type === "subst") type = "sub";
 
+    const eventTeamId = event.team?.id ?? null;
+    let side: 'home' | 'away' = "home";
+    if (eventTeamId !== null && awayTeamId !== null && eventTeamId === awayTeamId) side = "away";
+    if (eventTeamId !== null && homeTeamId !== null && eventTeamId === homeTeamId) side = "home";
+    if (homeTeamId === null && awayTeamId === null) {
+      side = eventTeamId === raw[0]?.team?.id ? "home" : "away";
+    }
+
     return {
       min: event.time.elapsed || 0,
       type,
-      team: event.team.id === raw[0]?.team?.id ? "home" as const : "away" as const, // Rough heuristic
+      team: side,
       player: event.player?.name || "",
       assist: event.assist?.name || "",
       detail: event.detail,
@@ -358,6 +398,49 @@ export async function fetchFixtureEvents(fixtureId: string): Promise<FixtureEven
       playerOut: type === "sub" ? event.player?.name : undefined
     };
   });
+}
+
+export async function fetchLiveEventSummary(fixtureId: string): Promise<LiveEventSummary> {
+  const now = Date.now();
+  const cached = liveSummaryCache.get(fixtureId);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  const inflight = liveSummaryInflight.get(fixtureId);
+  if (inflight) return inflight;
+
+  const job = (async () => {
+    const events = await fetchFixtureEvents(fixtureId);
+    if (!events || events.length === 0) {
+      const empty = { goals: 0, cards: 0, reds: 0, subs: 0 };
+      liveSummaryCache.set(fixtureId, { value: empty, expiresAt: now + LIVE_SUMMARY_CACHE_TTL_MS });
+      return empty;
+    }
+
+    let goals = 0;
+    let cards = 0;
+    let reds = 0;
+    let subs = 0;
+
+    for (const event of events) {
+      if (event.type === "goal") goals += 1;
+      if (event.type === "yellow") cards += 1;
+      if (event.type === "red") reds += 1;
+      if (event.type === "sub") subs += 1;
+    }
+
+    const summary = { goals, cards, reds, subs };
+    liveSummaryCache.set(fixtureId, { value: summary, expiresAt: Date.now() + LIVE_SUMMARY_CACHE_TTL_MS });
+    return summary;
+  })();
+
+  liveSummaryInflight.set(fixtureId, job);
+  try {
+    return await job;
+  } finally {
+    liveSummaryInflight.delete(fixtureId);
+  }
 }
 
 export async function fetchFixtureLineups(fixtureId: string): Promise<{ home: TeamLineup | null; away: TeamLineup | null }> {

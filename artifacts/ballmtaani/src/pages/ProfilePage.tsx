@@ -8,14 +8,16 @@ import { getUserTier } from "../lib/tiers";
 import { useRoute, useLocation, Link } from "wouter";
 import { ChallengeModal } from "../components/ChallengeModal";
 import { InviteWidget } from "../components/InviteWidget";
+import { EditProfileModal } from "../components/EditProfileModal";
 
 export default function ProfilePage() {
   const [match, params] = useRoute("/profile/:id");
   const [, setLocation] = useLocation();
   const profileId = params?.id;
-  const { isLoggedIn, user, username, logout, updateCoins } = useAuth();
-  const [activeTab, setActiveTab] = useState<"predictions" | "debates" | "badges">("predictions");
+  const { isLoggedIn, user, username, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<"calls" | "debates" | "badges">("calls");
   const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const targetId = profileId || user?.id;
   const isOwnProfile = !profileId || profileId === user?.id;
@@ -41,7 +43,7 @@ export default function ProfilePage() {
   const displayUsername = profile?.username || username || "Fan";
   const points = profile?.points || 0;
   const streak = profile?.streak || 0;
-  const country = profile?.country || "Kenya 🇰🇪";
+  const country = profile?.country || "Kenya";
   const interactions = profile?.interactions || 0;
   const tier = getUserTier(interactions);
 
@@ -58,7 +60,7 @@ export default function ProfilePage() {
           
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-widest uppercase mb-1">{displayUsername}</h1>
-            <p className="text-[#FFD700] font-bold text-sm tracking-wider uppercase mb-4">@{displayUsername.toLowerCase()} • {country}</p>
+            <p className="text-[#FFD700] font-bold text-sm tracking-wider uppercase mb-4">@{displayUsername.toLowerCase()} - {country}</p>
             
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
               <span className="bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded">
@@ -87,6 +89,12 @@ export default function ProfilePage() {
           {isOwnProfile ? (
             <div className="flex flex-col gap-2 md:self-start">
               <button 
+                  onClick={() => setShowEditModal(true)}
+                  className="flex items-center gap-2 text-xs font-bold text-white bg-white/10 hover:bg-white/20 uppercase tracking-wider transition-colors px-3 py-2 rounded"
+              >
+                  <Settings className="w-4 h-4" /> Edit Profile
+              </button>
+              <button 
                   onClick={logout}
                   className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-colors border border-transparent hover:border-white/10 px-3 py-2 rounded"
               >
@@ -112,9 +120,8 @@ export default function ProfilePage() {
               rivalName={displayUsername}
               rivalId={targetId!}
               onClose={() => setShowChallengeModal(false)}
-              onChallenge={(matchId, stake, prediction) => {
-                alert(`Challenge sent to ${displayUsername} on match ${matchId} with ${stake} Coins!`);
-                updateCoins(-stake); // Deduct stake from challenger
+              onChallenge={(matchId, prediction, bragLine) => {
+                alert(`Duel sent to ${displayUsername}: ${prediction} on match ${matchId}. ${bragLine} is on.`);
               }}
             />
           )}
@@ -128,7 +135,7 @@ export default function ProfilePage() {
           </div>
           <div className="text-center">
             <span className="block text-3xl font-black text-white">--</span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Predictions</span>
+            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Calls</span>
           </div>
           <div className="text-center">
             <span className="block text-3xl font-black text-green-500">--</span>
@@ -143,10 +150,23 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {showEditModal && (
+        <EditProfileModal 
+          currentUsername={displayUsername}
+          currentClub={profile?.favorite_team || ""}
+          onClose={() => setShowEditModal(false)}
+          onSaved={() => {
+            // Profile refetch happens automatically since query invalidation or manual refresh could be done.
+            // For now, reload window to reflect changes globally in contexts if needed, or rely on React Query refetch
+            window.location.reload();
+          }}
+        />
+      )}
+
       {/* Tabs */}
       <div className="flex border-b border-white/10 mb-6 overflow-x-auto hide-scrollbar">
         {[
-          { id: "predictions", label: "History" },
+          { id: "calls", label: "Receipts" },
           { id: "debates", label: "My Debates" },
           { id: "badges", label: "Badges" }
         ].map(tab => (
@@ -164,10 +184,10 @@ export default function ProfilePage() {
 
       {/* Tab Content */}
       <div className="min-h-[300px]">
-        {activeTab === "predictions" && (
+        {activeTab === "calls" && (
           <div className="space-y-4">
             <div className="bg-[#1B1B1B] border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 justify-between opacity-50">
-              <div className="text-gray-500 font-bold uppercase tracking-widest text-xs">No prediction history yet</div>
+              <div className="text-gray-500 font-bold uppercase tracking-widest text-xs">No matchday receipts yet</div>
             </div>
           </div>
         )}
@@ -205,7 +225,7 @@ export default function ProfilePage() {
       {isOwnProfile && (
         <div className="mt-8">
           <h2 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
-            <UserPlus className="w-4 h-4" /> Invite Friends & Earn
+            <UserPlus className="w-4 h-4" /> Invite Friends
           </h2>
           <InviteWidget />
         </div>

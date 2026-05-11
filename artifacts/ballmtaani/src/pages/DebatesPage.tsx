@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useDebates } from "../hooks/useData";
 import { useLocation } from "wouter";
@@ -20,10 +20,57 @@ export default function DebatesPage() {
   
   // Track new debate input
   const [newDebate, setNewDebate] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"hot" | "new" | "close">("hot");
+  const [unvotedOnly, setUnvotedOnly] = useState(false);
 
-  // Fan Vote Raids state
+  // Group-chat backup prompt state
   const [raidPrompt, setRaidPrompt] = useState<string | null>(null);
   const [showShareLinks, setShowShareLinks] = useState<string | null>(null);
+
+  const visibleDebates = useMemo(() => {
+    const searched = debates.filter((d: any) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        String(d.title || "").toLowerCase().includes(q) ||
+        String(d.left || "").toLowerCase().includes(q) ||
+        String(d.right || "").toLowerCase().includes(q)
+      );
+    });
+    const filtered = searched.filter((d: any) => (unvotedOnly ? !localVotes[d.id] : true));
+
+    return [...filtered].sort((a: any, b: any) => {
+      const aTotal = parseInt(String(a.totalVotes || "0").replace(",", "")) || 0;
+      const bTotal = parseInt(String(b.totalVotes || "0").replace(",", "")) || 0;
+      const aGap = Math.abs((a.leftVotes || 0) - (a.rightVotes || 0));
+      const bGap = Math.abs((b.leftVotes || 0) - (b.rightVotes || 0));
+      if (sortBy === "new") return String(b.id).localeCompare(String(a.id));
+      if (sortBy === "close") return aGap - bGap;
+      return bTotal - aTotal;
+    });
+  }, [debates, search, sortBy, unvotedOnly, localVotes]);
+
+  const debateInsights = useMemo(() => {
+    if (!visibleDebates.length) {
+      return { hotNow: "None", closestFight: "None", myVotes: 0 };
+    }
+    const hot = [...visibleDebates].sort((a: any, b: any) => {
+      const aTotal = parseInt(String(a.totalVotes || "0").replace(",", "")) || 0;
+      const bTotal = parseInt(String(b.totalVotes || "0").replace(",", "")) || 0;
+      return bTotal - aTotal;
+    })[0];
+    const close = [...visibleDebates].sort((a: any, b: any) => {
+      const aGap = Math.abs((a.leftVotes || 0) - (a.rightVotes || 0));
+      const bGap = Math.abs((b.leftVotes || 0) - (b.rightVotes || 0));
+      return aGap - bGap;
+    })[0];
+    return {
+      hotNow: hot?.title || "None",
+      closestFight: close?.title || "None",
+      myVotes: Object.keys(localVotes).length,
+    };
+  }, [visibleDebates, localVotes]);
 
   const handleVote = async (debateId: string, side: 'left' | 'right') => {
     if (!isLoggedIn) {
@@ -58,7 +105,7 @@ export default function DebatesPage() {
       }
     }
 
-    // Check if the user's chosen side is losing for Fan Vote Raid
+    // Prompt sharing when a user's side needs backup.
     const currDebate = debates.find((d: any) => d.id === debateId);
     if (currDebate) {
         const lVotes = side === 'left' ? currDebate.leftVotes + 1 : currDebate.leftVotes;
@@ -69,7 +116,7 @@ export default function DebatesPage() {
     }
 
     setIsVoting(null);
-    awardCoins('debate_vote'); // Award coins for debating (max 5/day)
+    awardCoins('debate_vote');
     refetch(); // Refresh data from server
   };
 
@@ -89,13 +136,48 @@ export default function DebatesPage() {
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
       <SEO 
         title="Fan Debates & Hot Takes | BallMtaani"
-        description="Vote on heated football debates, settle rivalries, and earn Mtaani Coins. The ultimate football social feed."
+        description="Vote on football debates, bring backup from your group chat, and keep receipts with Kenyan fans."
       />
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white mb-2">
           FAN <span className="text-accent">DEBATE</span> ZONE
         </h1>
         <p className="text-gray-400 font-bold uppercase tracking-wider">Vote. Argue. Settle It.</p>
+      </div>
+
+      <div className="mb-8 border border-white/10 bg-[#111] p-4">
+        <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search debates (Messi, Arsenal, VAR...)"
+            className="w-full md:max-w-md bg-black border border-white/10 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-accent"
+          />
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+            <button onClick={() => setSortBy("hot")} className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${sortBy === "hot" ? "bg-accent/20 border-accent text-white" : "bg-black border-white/10 text-gray-400"}`}>Hot</button>
+            <button onClick={() => setSortBy("close")} className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${sortBy === "close" ? "bg-accent/20 border-accent text-white" : "bg-black border-white/10 text-gray-400"}`}>Too Close</button>
+            <button onClick={() => setSortBy("new")} className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${sortBy === "new" ? "bg-accent/20 border-accent text-white" : "bg-black border-white/10 text-gray-400"}`}>Latest</button>
+            <button onClick={() => setUnvotedOnly((v) => !v)} className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${unvotedOnly ? "bg-primary/20 border-primary text-white" : "bg-black border-white/10 text-gray-400"}`}>Unvoted Only</button>
+            <button onClick={() => { setSearch(""); setSortBy("hot"); setUnvotedOnly(false); }} className="px-3 py-2 text-[10px] font-black uppercase tracking-widest border bg-black border-white/10 text-gray-400">
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="border border-white/10 bg-[#111] p-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Hot Now</p>
+          <p className="text-xs font-black uppercase tracking-widest text-white truncate">{debateInsights.hotNow}</p>
+        </div>
+        <div className="border border-white/10 bg-[#111] p-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Closest Fight</p>
+          <p className="text-xs font-black uppercase tracking-widest text-white truncate">{debateInsights.closestFight}</p>
+        </div>
+        <div className="border border-white/10 bg-[#111] p-3">
+          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">My Votes</p>
+          <p className="text-xs font-black uppercase tracking-widest text-accent">{debateInsights.myVotes}</p>
+        </div>
       </div>
 
       {/* Start Debate Form */}
@@ -112,7 +194,7 @@ export default function DebatesPage() {
             onChange={(e) => setNewDebate(e.target.value)}
             className="w-full bg-[#0B0B0B] border border-white/10 rounded-lg p-4 text-white focus:outline-none focus:border-accent transition-colors resize-none mb-4"
             rows={3}
-            placeholder="e.g. Is prime Yaya Touré better than prime Kevin De Bruyne?"
+            placeholder="e.g. Is prime Yaya Toure better than prime Kevin De Bruyne?"
             required
           ></textarea>
           <button 
@@ -131,7 +213,7 @@ export default function DebatesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
         {isLoading ? (
           [1, 2, 3, 4].map(i => <SkeletonDebate key={i} />)
-        ) : debates.map((debate: any, index: number) => {
+        ) : visibleDebates.map((debate: any, index: number) => {
           const userVote = localVotes[debate.id];
           
           const totalVotesRaw = parseInt(debate.totalVotes.replace(',', '')) || 0;
@@ -216,7 +298,7 @@ export default function DebatesPage() {
                     {isVoting === debate.id ? <Loader2 className="w-4 h-4 animate-spin" /> : userVote === 'left' ? <span className="flex items-center gap-1"><Check className="w-4 h-4" /> Voted</span> : (
                       <>
                         <span>Vote Left</span>
-                        <span className="text-[9px] text-[#FFD700] tracking-widest">+10 Coins</span>
+                        <span className="text-[9px] text-[#FFD700] tracking-widest">Counts for status</span>
                       </>
                     )}
                   </button>
@@ -231,7 +313,7 @@ export default function DebatesPage() {
                     {isVoting === debate.id ? <Loader2 className="w-4 h-4 animate-spin" /> : userVote === 'right' ? <span className="flex items-center gap-1"><Check className="w-4 h-4" /> Voted</span> : (
                       <>
                         <span>Vote Right</span>
-                        <span className="text-[9px] text-[#FFD700] tracking-widest">+10 Coins</span>
+                        <span className="text-[9px] text-[#FFD700] tracking-widest">Counts for status</span>
                       </>
                     )}
                   </button>
@@ -241,7 +323,7 @@ export default function DebatesPage() {
                   {totalVotesRaw} Total Votes
                 </div>
 
-                {/* FAN VOTE RAIDS UI */}
+                {/* Group-chat backup UI */}
                 {raidPrompt === debate.id && (
                   <div className="mt-6 border-t border-white/5 pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
                     {!showShareLinks || showShareLinks !== debate.id ? (

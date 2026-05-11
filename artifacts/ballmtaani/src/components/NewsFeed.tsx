@@ -13,7 +13,7 @@ export default function NewsFeed() {
   }, []);
 
   const shareToWhatsApp = (article: NewsArticle) => {
-    const text = encodeURIComponent(`⚽ ${article.title}\n\n${article.link}\n\nShared from BallMtaani — Africa's #1 Football Hub 🔥`);
+    const text = encodeURIComponent(`${article.title}\n\n${article.link}\n\nShared from BallMtaani - Kenyan fans, big match banter`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
@@ -91,7 +91,7 @@ export default function NewsFeed() {
                       title="Share to WhatsApp"
                       className="py-2 px-3 rounded-lg bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-all text-base leading-none"
                     >
-                      📲
+                      WA
                     </button>
                   </div>
                 </div>

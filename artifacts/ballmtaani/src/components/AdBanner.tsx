@@ -1,69 +1,136 @@
 import { Link } from "wouter";
-import { Coins, Zap } from "lucide-react";
+import { Megaphone, ShieldCheck } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 interface AdBannerProps {
   label?: string;
   type?: "horizontal" | "square";
 }
 
-const EARN_WAYS = [
-  { emoji: "📅", label: "Daily Login", amount: "+50 MTC" },
-  { emoji: "⚡", label: "Rapid Fire", amount: "+10 MTC" },
-  { emoji: "🏆", label: "Trivia", amount: "+15 MTC" },
-  { emoji: "🤝", label: "Invite a Friend", amount: "+500 MTC" },
-];
+declare global {
+  interface Window {
+    adsbygoogle?: unknown[];
+  }
+}
 
-export default function AdBanner({ label = "Earn Free Coins", type = "horizontal" }: AdBannerProps) {
+const ADSENSE_CLIENT = "ca-pub-3834585323769458";
+const HORIZONTAL_SLOT = import.meta.env.VITE_ADSENSE_SLOT_HORIZONTAL || "";
+const SQUARE_SLOT = import.meta.env.VITE_ADSENSE_SLOT_SQUARE || "";
+
+function AdSenseUnit({
+  slot,
+  format,
+  responsive,
+  className,
+}: {
+  slot: string;
+  format: "auto" | "rectangle";
+  responsive: boolean;
+  className: string;
+}) {
+  const adRef = useRef<HTMLModElement>(null);
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    if (!slot || initializedRef.current) return;
+    if (!adRef.current) return;
+    if (typeof window === "undefined") return;
+
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      initializedRef.current = true;
+    } catch (error) {
+      console.error("AdSense init failed:", error);
+    }
+  }, [slot]);
+
+  if (!slot) return null;
+
+  return (
+    <ins
+      className={`adsbygoogle ${className}`}
+      style={{ display: "block" }}
+      data-ad-client={ADSENSE_CLIENT}
+      data-ad-slot={slot}
+      data-ad-format={format}
+      data-full-width-responsive={responsive ? "true" : "false"}
+      data-adtest={import.meta.env.DEV ? "on" : undefined}
+      ref={adRef}
+    />
+  );
+}
+
+export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBannerProps) {
+  const slot = type === "square" ? SQUARE_SLOT : HORIZONTAL_SLOT;
+
   if (type === "square") {
     return (
-      <div className="bg-gradient-to-br from-[#FFD700]/10 to-black border border-[#FFD700]/20 rounded-2xl p-6 flex flex-col items-center text-center gap-4">
-        <Coins className="w-8 h-8 text-[#FFD700]" />
-        <div>
-          <p className="font-black text-sm uppercase tracking-widest text-white mb-1">Earn MTC Coins</p>
-          <p className="text-gray-400 text-xs">Play games, debate & invite friends to earn free coins.</p>
+      <aside className="bg-[#0F0F0F] border border-white/10 rounded-lg p-3" aria-label={`${label} advertisement`}>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">Advertisement</span>
+          <ShieldCheck className="h-3.5 w-3.5 text-gray-600" />
         </div>
-        <Link href="/store" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
-          Learn More →
-        </Link>
-      </div>
+        <div className="flex min-h-[250px] flex-col items-center justify-center border border-dashed border-white/10 bg-black/30 px-4 text-center">
+          {slot ? (
+            <AdSenseUnit
+              slot={slot}
+              format="rectangle"
+              responsive={false}
+              className="w-full min-h-[250px]"
+            />
+          ) : (
+            <>
+              <Megaphone className="mb-3 h-6 w-6 text-gray-500" />
+              <p className="text-xs font-black uppercase tracking-widest text-gray-300">{label}</p>
+              <p className="mt-2 max-w-[190px] text-[11px] leading-relaxed text-gray-500">
+                Set `VITE_ADSENSE_SLOT_SQUARE` to activate this slot.
+              </p>
+            </>
+          )}
+        </div>
+      </aside>
     );
   }
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#FFD700]/8 via-[#FFD700]/5 to-transparent border border-[#FFD700]/15 rounded-2xl overflow-hidden">
-      <div className="flex flex-col sm:flex-row items-center gap-4 p-4 sm:p-5">
-        {/* Left: headline */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-[#FFD700]" />
+    <aside className="w-full overflow-hidden rounded-lg border border-white/10 bg-[#0F0F0F]" aria-label={`${label} advertisement`}>
+      <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:p-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-white/10 bg-black/40">
+            <Megaphone className="h-5 w-5 text-gray-500" />
           </div>
-          <div>
-            <p className="font-black text-sm uppercase tracking-widest text-white">Earn Free MTC Coins</p>
-            <p className="text-gray-500 text-[10px] font-bold">No purchase required. No gambling.</p>
-          </div>
-        </div>
-
-        {/* Center: earn ways */}
-        <div className="hidden md:flex items-center gap-3 flex-1 justify-center flex-wrap">
-          {EARN_WAYS.map(w => (
-            <div key={w.label} className="flex items-center gap-1.5 bg-black/30 border border-white/5 rounded-lg px-3 py-1.5">
-              <span className="text-base">{w.emoji}</span>
-              <div>
-                <p className="text-[9px] text-gray-500 font-bold uppercase leading-none">{w.label}</p>
-                <p className="text-[#FFD700] font-black text-xs leading-none">{w.amount}</p>
-              </div>
+          <div className="min-w-0">
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">Advertisement</span>
+              <span className="h-1 w-1 rounded-full bg-gray-700" />
+              <span className="truncate text-[9px] font-black uppercase tracking-[0.18em] text-gray-500">{label}</span>
             </div>
-          ))}
+            <p className="text-xs font-bold text-gray-300 sm:text-sm">Ads help keep BallMtaani free for matchday rooms, calls, and fan receipts.</p>
+          </div>
         </div>
 
-        {/* Right: CTA */}
+        <div className="flex min-h-[64px] items-center justify-center border border-dashed border-white/10 bg-black/30 px-4 text-center sm:w-[320px]">
+          {slot ? (
+            <AdSenseUnit
+              slot={slot}
+              format="auto"
+              responsive={true}
+              className="w-full min-h-[64px]"
+            />
+          ) : (
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
+              Set `VITE_ADSENSE_SLOT_HORIZONTAL` to activate
+            </p>
+          )}
+        </div>
+
         <Link
-          href="/store"
-          className="shrink-0 bg-[#FFD700] text-black font-black uppercase tracking-widest text-xs px-5 py-2.5 rounded-xl hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] transition-all active:scale-95"
+          href="/privacy"
+          className="shrink-0 border border-white/10 px-4 py-2 text-center text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-white"
         >
-          My Wallet →
+          Ad Info
         </Link>
       </div>
-    </div>
+    </aside>
   );
 }

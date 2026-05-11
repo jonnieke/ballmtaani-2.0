@@ -14,7 +14,7 @@ export default function LiveCenterIndexPage() {
           <span className="text-primary font-black text-xs uppercase tracking-[0.2em]">Matchday Live</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">
-          Premium <span className="text-primary drop-shadow-[0_0_15px_rgba(179,0,0,0.5)]">Live Center</span>
+          Live <span className="text-primary drop-shadow-[0_0_15px_rgba(179,0,0,0.5)]">Match Center</span>
         </h1>
         <p className="text-gray-400 font-medium font-bold uppercase tracking-widest">Select a match to enter the tactical view</p>
       </div>
@@ -25,7 +25,7 @@ export default function LiveCenterIndexPage() {
         ) : liveMatches.length === 0 ? (
           <div className="col-span-full py-20 text-center">
             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
-              <span className="text-2xl opacity-50">🏟️</span>
+              <span className="text-sm font-black opacity-50">LIVE</span>
             </div>
             <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2">No Live Matches</h3>
             <p className="text-gray-500 font-bold">Check back later for live action from the major leagues.</p>
@@ -63,7 +63,7 @@ export default function LiveCenterIndexPage() {
 
                 <div className="mt-auto">
                   <button className="w-full bg-white/5 hover:bg-primary text-gray-300 hover:text-white border border-white/10 hover:border-primary font-black uppercase text-xs tracking-widest py-3 rounded-xl transition-all shadow-md group-hover:shadow-[0_0_15px_rgba(179,0,0,0.4)]">
-                    Enter Live Center →
+                    Enter Live Center
                   </button>
                 </div>
               </div>

@@ -45,31 +45,31 @@ export const AI_PREDICTIONS = [
 export const DEBATES = [
   { id: "d1", title: "Who's the GOAT?",      left: "Messi",       right: "Ronaldo",        leftVotes: 54, rightVotes: 46, totalVotes: "2,847", leftImage: "https://media.api-sports.io/football/players/154.png", rightImage: "https://media.api-sports.io/football/players/874.png" },
   { id: "d2", title: "Best League",           left: "EPL",        right: "La Liga",         leftVotes: 62, rightVotes: 38, totalVotes: "1,523", leftImage: "https://media.api-sports.io/football/leagues/39.png", rightImage: "https://media.api-sports.io/football/leagues/140.png" },
-  { id: "d3", title: "Who's better?",         left: "Haaland",        right: "Mbappé",             leftVotes: 48, rightVotes: 52, totalVotes: "3,102", leftImage: "https://media.api-sports.io/football/players/1100.png", rightImage: "https://media.api-sports.io/football/players/278.png" },
+  { id: "d3", title: "Who's better?",         left: "Haaland",        right: "Mbappe",             leftVotes: 48, rightVotes: 52, totalVotes: "3,102", leftImage: "https://media.api-sports.io/football/players/1100.png", rightImage: "https://media.api-sports.io/football/players/278.png" },
   { id: "d4", title: "Best African Player",   left: "Salah",          right: "Osimhen",            leftVotes: 70, rightVotes: 30, totalVotes: "1,945", leftImage: "https://media.api-sports.io/football/players/306.png", rightImage: "https://media.api-sports.io/football/players/1109.png" },
   { id: "d5", title: "Best Manager",          left: "Pep Guardiola",  right: "Klopp",              leftVotes: 51, rightVotes: 49, totalVotes: "2,100", leftImage: "https://media.api-sports.io/football/teams/50.png", rightImage: "https://media.api-sports.io/football/teams/40.png" },
-  { id: "d6", title: "Biggest Derby",         left: "El Clásico",     right: "North West Derby",   leftVotes: 55, rightVotes: 45, totalVotes: "1,205", leftImage: "https://media.api-sports.io/football/teams/541.png", rightImage: "https://media.api-sports.io/football/teams/33.png" }
+  { id: "d6", title: "Biggest Derby",         left: "El Clasico",     right: "North West Derby",   leftVotes: 55, rightVotes: 45, totalVotes: "1,205", leftImage: "https://media.api-sports.io/football/teams/541.png", rightImage: "https://media.api-sports.io/football/teams/33.png" }
 ];
 
 export const BANTER_TWEETS = [
-  "Man U fans showed up hoping for a win… Left needing therapy!",
+  "Man U fans showed up hoping for a win. Left needing therapy.",
   "Arsenal fans checking the league table in December like it's already May.",
-  "Chelsea's transfer window: spending €1B to finish 10th. Peak tradition.",
+  "Chelsea's transfer window: spending big to finish 10th. Peak tradition.",
   "Liverpool fans still singing 'You'll Never Walk Alone'... to an empty trophy cabinet.",
   "Tottenham: consistently inconsistent since 1882."
 ];
 
 export const LEADERBOARD = [
-  { rank: 1, name: "Ochieng",    country: "🇰🇪", correct: 24, streak: 5, pts: 120 },
-  { rank: 2, name: "Adebayo",    country: "🇳🇬", correct: 22, streak: 3, pts: 110 },
-  { rank: 3, name: "KamauFC",    country: "🇰🇪", correct: 20, streak: 4, pts: 100 },
-  { rank: 4, name: "Musa",       country: "🇬🇭", correct: 18, streak: 0, pts: 90 },
-  { rank: 5, name: "Sipho",      country: "🇿🇦", correct: 17, streak: 2, pts: 85 },
-  { rank: 6, name: "Kabelo",     country: "🇿🇦", correct: 16, streak: 1, pts: 80 },
-  { rank: 7, name: "Wanjiku",    country: "🇰🇪", correct: 15, streak: 0, pts: 75 },
-  { rank: 8, name: "Nnamdi",     country: "🇳🇬", correct: 14, streak: 3, pts: 70 },
-  { rank: 9, name: "Fatoumata",  country: "🇸🇳", correct: 13, streak: 0, pts: 65 },
-  { rank: 10, name: "Kofi",      country: "🇬🇭", correct: 12, streak: 1, pts: 60 }
+  { rank: 1, name: "Ochieng",    country: "KE", correct: 24, streak: 5, pts: 120 },
+  { rank: 2, name: "Adebayo",    country: "NG", correct: 22, streak: 3, pts: 110 },
+  { rank: 3, name: "KamauFC",    country: "KE", correct: 20, streak: 4, pts: 100 },
+  { rank: 4, name: "Musa",       country: "GH", correct: 18, streak: 0, pts: 90 },
+  { rank: 5, name: "Sipho",      country: "ZA", correct: 17, streak: 2, pts: 85 },
+  { rank: 6, name: "Kabelo",     country: "ZA", correct: 16, streak: 1, pts: 80 },
+  { rank: 7, name: "Wanjiku",    country: "KE", correct: 15, streak: 0, pts: 75 },
+  { rank: 8, name: "Nnamdi",     country: "NG", correct: 14, streak: 3, pts: 70 },
+  { rank: 9, name: "Fatoumata",  country: "SN", correct: 13, streak: 0, pts: 65 },
+  { rank: 10, name: "Kofi",      country: "GH", correct: 12, streak: 1, pts: 60 }
 ];
 
 // Extended mock logos for new teams (using ESPN CDN structured URLs similar to existing)
@@ -174,8 +174,13 @@ export const STANDINGS: Record<string, any[]> = {
 };
 
 export const FAN_ZONES = [
-  { id: "arsenal", team: "Arsenal", logo: EXTENDED_LOGOS["Arsenal"], members: "1.2M", preview: "Saka is carrying us this season! What a player.", color: "#EF0107" },
-  { id: "chelsea", team: "Chelsea", logo: EXTENDED_LOGOS["Chelsea"], members: "980K", preview: "Pochettino needs more time, trust the process.", color: "#034694" },
-  { id: "man-utd", team: "Man United", logo: EXTENDED_LOGOS["Man Utd"], members: "1.5M", preview: "Ten Hag OUT or IN? Let's settle this.", color: "#DA291C" },
-  { id: "liverpool", team: "Liverpool", logo: EXTENDED_LOGOS["Liverpool"], members: "1.3M", preview: "Klopp's farewell tour. We have to win it all.", color: "#C8102E" }
+  { id: "arsenal", team: "Arsenal", logo: EXTENDED_LOGOS["Arsenal"], members: "1.2M", preview: "Saka is carrying us this season! What a player.", color: "#EF0107", region: "Europe" },
+  { id: "chelsea", team: "Chelsea", logo: EXTENDED_LOGOS["Chelsea"], members: "980K", preview: "Pochettino needs more time, trust the process.", color: "#034694", region: "Europe" },
+  { id: "man-utd", team: "Man United", logo: EXTENDED_LOGOS["Man Utd"], members: "1.5M", preview: "Ten Hag OUT or IN? Let's settle this.", color: "#DA291C", region: "Europe" },
+  { id: "liverpool", team: "Liverpool", logo: EXTENDED_LOGOS["Liverpool"], members: "1.3M", preview: "Klopp's farewell tour. We have to win it all.", color: "#C8102E", region: "Europe" },
+  { id: "gor-mahia", team: "Gor Mahia", logo: "https://media.api-sports.io/football/teams/1063.png", members: "450K", preview: "K'Ogalo form is unmatched this season! 🟢⚪", color: "#006400", region: "Africa" },
+  { id: "afc-leopards", team: "AFC Leopards", logo: "https://media.api-sports.io/football/teams/1064.png", members: "380K", preview: "Ingwe for life! We need to step up our attack.", color: "#0000FF", region: "Africa" },
+  { id: "simba", team: "Simba SC", logo: "https://media.api-sports.io/football/teams/1077.png", members: "620K", preview: "Nguvu Moja! The CAF Champions League awaits.", color: "#ED1C24", region: "Africa" },
+  { id: "sundowns", team: "Mamelodi Sundowns", logo: "https://media.api-sports.io/football/teams/1044.png", members: "540K", preview: "Masandawana dominating the PSL as usual. 🟡", color: "#FFD700", region: "Africa" },
+  { id: "al-ahly", team: "Al Ahly", logo: "https://media.api-sports.io/football/teams/1048.png", members: "1.1M", preview: "Club of the Century. More silverware loading! 🦅", color: "#E1000F", region: "Africa" }
 ];

@@ -3,10 +3,11 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { getRandomTriviaSet, TriviaQuestion } from "../data/mockTrivia";
 import { fetchAiTrivia } from "../lib/gemini-trivia";
-import { ChevronLeft, HelpCircle, User, RefreshCw, Volume2, VolumeX, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { ChevronLeft, User, RefreshCw, Volume2, VolumeX, AlertTriangle, CheckCircle, XCircle, Flame, Timer } from "lucide-react";
+import { ShareCard } from "../components/ShareCard";
 
 export default function TriviaPage() {
-  const { isLoggedIn, awardCoins } = useAuth();
+  const { isLoggedIn, awardCoins, username } = useAuth();
   const [, setLocation] = useLocation();
 
   const [questions, setQuestions] = useState<TriviaQuestion[]>(() => getRandomTriviaSet());
@@ -17,7 +18,12 @@ export default function TriviaPage() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
-  const [earnedCoins, setEarnedCoins] = useState(0);
+  const [statusScore, setStatusScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(25);
+  const [impactBanner, setImpactBanner] = useState<"correct" | "wrong" | null>(null);
 
   useEffect(() => {
     async function loadTrivia() {
@@ -40,31 +46,80 @@ export default function TriviaPage() {
   const [aiSuggestion, setAiSuggestion] = useState<number | null>(null);
 
   const question: TriviaQuestion = questions[currentLevel];
+  const safeHavenReward = currentLevel > 9 ? questions[9]?.reward || 0 : currentLevel > 4 ? questions[4]?.reward || 0 : 0;
+  const levelBand =
+    currentLevel <= 4 ? "Now" :
+    currentLevel <= 9 ? "Modern" :
+    "Legends";
 
   // Sounds (mocked since we don't have files, but using our audio lib if needed, or visual indicators)
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  if (!isLoggedIn) {
-    sessionStorage.setItem("auth_return_url", window.location.pathname);
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoggedIn) {
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
+      setLocation("/login");
+    }
+  }, [isLoggedIn, setLocation]);
+
+  useEffect(() => {
+    if (!isLoggedIn || gameOver || won || isLockedIn) return;
+    if (timeLeft <= 0) {
+      handleLockIn(null);
+      return;
+    }
+    const timer = window.setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [timeLeft, isLoggedIn, gameOver, won, isLockedIn]);
+
+  useEffect(() => {
+    setTimeLeft(25);
+    setImpactBanner(null);
+  }, [currentLevel]);
+
+  useEffect(() => {
+    if (gameOver || won) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (isLockedIn) return;
+      const map: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+      const key = e.key.toLowerCase();
+      if (key in map) {
+        e.preventDefault();
+        const idx = map[key];
+        if (!hiddenOptions.includes(idx)) setSelectedOption(idx);
+        return;
+      }
+      if (key === "enter") {
+        e.preventDefault();
+        handleLockIn();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isLockedIn, hiddenOptions, selectedOption, gameOver, won]);
+
+  if (!isLoggedIn) return null;
 
   const handleSelect = (index: number) => {
     if (isLockedIn || hiddenOptions.includes(index)) return;
     setSelectedOption(index);
   };
 
-  const handleLockIn = () => {
-    if (selectedOption === null || isLockedIn) return;
+  const handleLockIn = (forcedChoice?: number | null) => {
+    const finalChoice = forcedChoice !== undefined ? forcedChoice : selectedOption;
+    if ((finalChoice === null || finalChoice === undefined) && forcedChoice === undefined) return;
+    if (isLockedIn) return;
     setIsLockedIn(true);
+    if (finalChoice !== null && finalChoice !== undefined) setSelectedOption(finalChoice);
     
     // Simulate tension delay
     setTimeout(() => {
       setIsRevealed(true);
       
-      if (selectedOption !== question.correctAnswer) {
+      if (finalChoice !== question.correctAnswer) {
         // Wrong answer
+        setImpactBanner("wrong");
+        setStreak(0);
         setTimeout(() => {
           setGameOver(true);
           // Calculate reward based on safe havens. Level 4 (Q5) and Level 9 (Q10).
@@ -75,15 +130,22 @@ export default function TriviaPage() {
           if (safeReward > 0) {
             awardCoins('trivia_correct');
           }
-          setEarnedCoins(safeReward);
+          setStatusScore(safeReward);
         }, 2000);
       } else {
         // Right answer
+        setImpactBanner("correct");
+        setStreak((s) => {
+          const next = s + 1;
+          setBestStreak((b) => Math.max(b, next));
+          return next;
+        });
+        setCorrectCount((c) => c + 1);
         awardCoins('trivia_correct');
         setTimeout(() => {
           if (currentLevel === questions.length - 1) {
             awardCoins('trivia_complete');
-            setEarnedCoins(question.reward);
+            setStatusScore(question.reward);
             setWon(true);
           } else {
             // Next Question
@@ -103,7 +165,7 @@ export default function TriviaPage() {
     if (isLockedIn) return;
     const reward = currentLevel > 0 ? questions[currentLevel - 1].reward : 0;
     if (reward > 0) awardCoins('trivia_correct');
-    setEarnedCoins(reward);
+    setStatusScore(reward);
     setGameOver(true);
   };
 
@@ -131,6 +193,8 @@ export default function TriviaPage() {
   };
 
 
+  const [showShare, setShowShare] = useState(false);
+
   if (isLoadingAi) {
     return (
       <div className="min-h-screen bg-[#000511] text-white flex flex-col items-center justify-center p-4">
@@ -156,7 +220,7 @@ export default function TriviaPage() {
         <div className="bg-[#111] p-8 md:p-12 rounded-3xl border border-white/10 text-center max-w-lg w-full relative z-10 shadow-2xl">
           {won ? (
              <h1 className="text-4xl md:text-6xl font-black text-[#FFD700] mb-4 drop-shadow-[0_0_15px_rgba(255,215,0,0.5)] uppercase tracking-widest">
-               Millionaire!
+               Trivia Cleared
              </h1>
           ) : (
              <h1 className="text-3xl md:text-5xl font-black text-white mb-4 uppercase tracking-widest">
@@ -169,18 +233,72 @@ export default function TriviaPage() {
           </p>
 
           <div className="text-5xl md:text-7xl font-black text-[#FFD700] mb-12 drop-shadow-md">
-            {earnedCoins.toLocaleString()} <span className="text-2xl text-gray-500">MTC</span>
+            {statusScore.toLocaleString()} <span className="text-2xl text-gray-500">MTC</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 mb-8">
+            <div className="border border-white/10 bg-black/40 p-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Accuracy</p>
+              <p className="text-sm font-black text-white">
+                {Math.round((correctCount / Math.max(1, currentLevel + (won ? 1 : 0))) * 100)}%
+              </p>
+            </div>
+            <div className="border border-white/10 bg-black/40 p-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Best Streak</p>
+              <p className="text-sm font-black text-orange-300">{bestStreak}</p>
+            </div>
+            <div className="border border-white/10 bg-black/40 p-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Level Reached</p>
+              <p className="text-sm font-black text-[#1E6FFF]">{currentLevel + (won ? 1 : 0)}</p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-4">
+            <button onClick={() => setShowShare(true)} className="bg-[#1E6FFF] hover:bg-blue-600 shadow-[0_0_15px_rgba(30,111,255,0.4)] text-white py-4 rounded-xl font-black uppercase tracking-widest transition-all w-full">
+              Share Achievement
+            </button>
             <Link href="/" className="bg-[#1B1B1B] hover:bg-white/10 border border-white/10 py-4 rounded-xl font-bold uppercase tracking-widest transition-colors w-full">
               Back to Home
             </Link>
             <button onClick={() => window.location.reload()} className="bg-primary hover:bg-red-700 shadow-[0_0_15px_rgba(179,0,0,0.5)] text-white py-4 rounded-xl font-black uppercase tracking-widest transition-all w-full">
               Play Again
             </button>
+            <button
+              onClick={() => {
+                setQuestions(getRandomTriviaSet());
+                setCurrentLevel(0);
+                setSelectedOption(null);
+                setIsLockedIn(false);
+                setIsRevealed(false);
+                setGameOver(false);
+                setWon(false);
+                setStatusScore(0);
+                setStreak(0);
+                setBestStreak(0);
+                setCorrectCount(0);
+                setLifeline5050(true);
+                setLifelineAskAI(true);
+                setHiddenOptions([]);
+                setAiSuggestion(null);
+                setImpactBanner(null);
+                setTimeLeft(25);
+              }}
+              className="bg-[#1B1B1B] hover:bg-white/10 border border-white/10 text-white py-4 rounded-xl font-black uppercase tracking-widest transition-colors w-full"
+            >
+              Another Run
+            </button>
           </div>
         </div>
+
+        {showShare && (
+          <ShareCard
+            achievement={won ? "I cleared BallMtaani Trivia!" : `I reached ${statusScore.toLocaleString()} MTC in Trivia`}
+            coinsEarned={statusScore}
+            emoji={won ? "WIN" : "QUIZ"}
+            shareUrl={`https://ballmtaani20.vercel.app/?ref=${username || 'fan'}`}
+            onClose={() => setShowShare(false)}
+          />
+        )}
       </div>
     );
   }
@@ -208,7 +326,42 @@ export default function TriviaPage() {
             {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
           </button>
           <div className="bg-[#1B1B1B] px-4 py-1.5 rounded-full border border-white/10 shadow-[0_0_10px_rgba(255,215,0,0.1)]">
-            <span className="font-black text-[#FFD700] tracking-widest">Prize Pool</span>
+            <span className="font-black text-[#FFD700] tracking-widest">Trivia Ladder</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 px-4 md:px-8 py-3 border-b border-white/5 bg-black/30">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="border border-white/10 bg-[#111] px-3 py-2">
+            <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Question</p>
+            <p className="text-sm font-black text-white">{currentLevel + 1}/{questions.length}</p>
+          </div>
+          <div className="border border-white/10 bg-[#111] px-3 py-2">
+            <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Timer</p>
+            <p className={`text-sm font-black inline-flex items-center gap-1 ${timeLeft <= 8 ? "text-red-400" : "text-white"}`}>
+              <Timer className="w-3.5 h-3.5" /> {timeLeft}s
+            </p>
+            <div className="mt-2">
+              <svg viewBox="0 0 36 36" className="w-14 h-14">
+                <path d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="3" />
+                <path
+                  d="M18 2.0845a15.9155 15.9155 0 1 1 0 31.831a15.9155 15.9155 0 1 1 0-31.831"
+                  fill="none"
+                  stroke={timeLeft <= 8 ? "#f87171" : "#1E6FFF"}
+                  strokeWidth="3"
+                  strokeDasharray={`${(timeLeft / 25) * 100}, 100`}
+                />
+              </svg>
+            </div>
+          </div>
+          <div className="border border-white/10 bg-[#111] px-3 py-2">
+            <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Streak</p>
+            <p className="text-sm font-black inline-flex items-center gap-1 text-orange-300"><Flame className="w-3.5 h-3.5" /> {streak}</p>
+          </div>
+          <div className="border border-white/10 bg-[#111] px-3 py-2">
+            <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Safe Net</p>
+            <p className="text-sm font-black text-[#FFD700]">{safeHavenReward.toLocaleString()} MTC</p>
           </div>
         </div>
       </div>
@@ -243,6 +396,16 @@ export default function TriviaPage() {
 
           {/* Question Box */}
           <div className="w-full max-w-4xl bg-gradient-to-b from-[#111] to-[#0A0A0A] border-y-2 md:border-2 border-[#1E6FFF]/50 md:rounded-full py-8 md:py-12 px-6 md:px-16 text-center shadow-[0_0_30px_rgba(30,111,255,0.2)] mb-8 relative">
+            {impactBanner && (
+              <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-[10px] font-black uppercase tracking-widest rounded-full ${
+                impactBanner === "correct" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+              }`}>
+                {impactBanner === "correct" ? "Correct" : "Wrong Answer"}
+              </div>
+            )}
+            <span className="inline-block mb-3 px-3 py-1 text-[10px] font-black uppercase tracking-widest border border-white/10 bg-black/30 text-gray-300">
+              {levelBand} Round
+            </span>
             <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-wide leading-tight drop-shadow-md">
               {question.question}
             </h2>
@@ -313,10 +476,11 @@ export default function TriviaPage() {
               Final Answer
             </button>
           </div>
+          <p className="mt-3 text-[10px] font-black uppercase tracking-widest text-gray-500">Keyboard: A/B/C/D to select • Enter to lock</p>
 
         </div>
 
-        {/* Millionaire Ladder Sidebar */}
+        {/* Trivia ladder sidebar */}
         <div className="w-full lg:w-72 bg-black/60 border-t lg:border-t-0 lg:border-l border-white/10 p-6 flex flex-col justify-end backdrop-blur-xl">
            <div className="flex flex-col-reverse gap-1">
              {questions.map((q, idx) => {
@@ -334,7 +498,7 @@ export default function TriviaPage() {
                    <span className="w-6 font-bold">{idx + 1}</span>
                    <span className="flex-1 text-right flex items-center justify-end gap-1">
                       {isSafe && !isActive && <div className="w-1.5 h-1.5 rounded-full bg-white/30 mr-1" />}
-                      🪙 {q.reward.toLocaleString()}
+                      {q.reward.toLocaleString()} MTC
                    </span>
                  </div>
                );

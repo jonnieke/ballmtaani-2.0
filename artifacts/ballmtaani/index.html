@@ -3,21 +3,70 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>BallMtaani | #1 Africa Social Football Hub</title>
-    <meta name="description" content="The ultimate social platform for African football fans. Predict matches, debate rivalries, and dominate the game." />
+    <title>BallMtaani | Kenyan Fans, Big Match Banter</title>
+    <meta name="description" content="Kenyan football fans predict, debate, and banter around the biggest matches in EPL, UCL, AFCON, CAF, and local derbies." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="BallMtaani" />
+    <meta name="application-name" content="BallMtaani" />
     <meta name="theme-color" content="#B30000" />
-    <meta property="og:title" content="BallMtaani - Africa's Social Football World" />
-    <meta property="og:description" content="Predict. Debate. Dominate. Join the elite community of football fans." />
-    <meta property="og:image" content="/og-image.jpg" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BallMtaani" />
     <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="apple-touch-startup-image" href="/logo.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="BallMtaani - Kenyan Fans, Big Match Banter" />
+    <meta property="og:description" content="Predict scores, join fan zones, collect receipts, and settle matchday arguments with Kenyan football fans." />
+    <meta property="og:image" content="/opengraph.jpg" />
+    <meta property="og:url" content="https://ballmtaani20.vercel.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BallMtaani" />
+    <meta property="og:locale" content="en_KE" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BallMtaani - Kenyan Fans, Big Match Banter" />
+    <meta name="twitter:description" content="Predict scores, join fan zones, collect receipts, and settle matchday arguments with Kenyan football fans." />
+    <meta name="twitter:image" content="https://ballmtaani20.vercel.app/opengraph.jpg" />
+    <link rel="canonical" href="https://ballmtaani20.vercel.app/" />
+
+    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <!-- Google AdSense -->
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3834585323769458"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body style="background-color:#0B0B0B;color:#fff;">
     <div id="root"></div>
 
-
-
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        const host = window.location.hostname;
+        const isLocalDev = host === 'localhost' || host === '127.0.0.1';
+
+        window.addEventListener('load', function() {
+          if (isLocalDev) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(reg) { reg.unregister(); });
+            });
+            return;
+          }
+
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(reg) { console.log('SW registered:', reg.scope); })
+            .catch(function(err) { console.log('SW registration failed:', err); });
+        });
+      }
+    </script>
   </body>
 </html>

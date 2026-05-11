@@ -1,6 +1,6 @@
 import { TriviaQuestion } from "../data/mockTrivia";
 
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 export async function fetchAiTrivia(): Promise<TriviaQuestion[] | null> {
   const apiKey = import.meta.env.VITE_GEMINI_API;
@@ -42,7 +42,13 @@ export async function fetchAiTrivia(): Promise<TriviaQuestion[] | null> {
     const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!rawJson) return null;
 
-    const parsed: any[] = JSON.parse(rawJson);
+    let cleanJson = rawJson.trim();
+    // Gemini often wraps JSON in markdown blocks
+    if (cleanJson.startsWith('```json')) {
+      cleanJson = cleanJson.replace(/^```json/, '').replace(/```$/, '').trim();
+    }
+    
+    const parsed: any[] = JSON.parse(cleanJson);
     
     // Map with fixed rewards corresponding to Millionaire ladder
     const rewards = [10, 50, 100, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 750000, 1000000];

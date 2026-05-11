@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
-import { Menu, X, Coins, Sparkles, Paintbrush } from "lucide-react";
+import { Menu, X, Coins, Paintbrush, ChevronDown } from "lucide-react";
 
 import { useTheme, ThemeAtmosphere } from "../context/ThemeContext";
 
@@ -24,10 +24,10 @@ export function Navbar() {
 
 
   const atmospheres: { id: ThemeAtmosphere; label: string; icon: string }[] = [
-    { id: "default", label: "Classic Brand", icon: "⚽" },
-    { id: "gunners-city", label: "Gunners vs City", icon: "⚔️" },
-    { id: "el-clasico", label: "El Clasico", icon: "👑" },
-    { id: "night-mtaani", label: "Night Mtaani", icon: "🌃" },
+    { id: "default", label: "Classic Brand", icon: "BM" },
+    { id: "gunners-city", label: "Gunners vs City", icon: "GC" },
+    { id: "el-clasico", label: "El Clasico", icon: "EC" },
+    { id: "night-mtaani", label: "Night Mtaani", icon: "NM" },
   ];
 
   const menuCategories = [
@@ -35,13 +35,13 @@ export function Navbar() {
       label: "Matches",
       links: [
         { href: "/matches", label: "Directory" },
-        { href: "/live-center", label: "Live Bounties" },
+        { href: "/live-center", label: "Live Pulse" },
       ]
     },
     {
       label: "Games",
       links: [
-        { href: "/predictions", label: "A.I. Predictions" },
+        { href: "/predictions", label: "Calls" },
         { href: "/rapid-fire", label: "Rapid Fire" },
         { href: "/trivia", label: "Millionaire" },
       ]
@@ -86,15 +86,17 @@ export function Navbar() {
           
           {menuCategories.map((category) => {
             const isActive = category.links.some(link => location.startsWith(link.href) && link.href !== "/");
+            const primaryHref = category.links[0]?.href || "/";
             return (
               <div key={category.label} className="relative group/nav py-6">
-                <button
+                <Link
+                  href={primaryHref}
                   className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all flex items-center gap-1 ${
                     isActive ? "text-primary border-b-2 border-primary pb-1" : "text-gray-400 hover:text-white border-b-2 border-transparent pb-1"
                   }`}
                 >
-                  {category.label}
-                </button>
+                  {category.label} <ChevronDown className="w-3.5 h-3.5 opacity-70 group-hover/nav:opacity-100 transition-opacity" />
+                </Link>
                 
                 {/* Dropdown Menu */}
                 <div className="absolute top-16 left-0 w-48 bg-[#111111]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 transform translate-y-2 group-hover/nav:translate-y-0 p-2 z-[100]">
@@ -155,7 +157,7 @@ export function Navbar() {
 
           {isLoggedIn ? (
             <>
-              {/* Coin Wallet */}
+              {/* MTC status wallet */}
               <Link href="/store" className={`flex items-center gap-1.5 bg-[#1B1B1B] border px-3 py-1.5 rounded-full transition-all group duration-300 ${walletAnimating ? 'border-[#FFD700] scale-110 shadow-[0_0_20px_rgba(255,215,0,0.6)]' : 'border-[#FFD700]/30 hover:border-[#FFD700]/60 shadow-[0_0_10px_rgba(255,215,0,0.1)] hover:shadow-[0_0_15px_rgba(255,215,0,0.2)]'}`}>
                 <Coins className={`w-4 h-4 text-[#FFD700] transition-transform duration-300 ${walletAnimating ? 'animate-bounce' : 'group-hover:scale-110'}`} />
                 <span className={`font-black text-sm transition-colors duration-300 ${walletAnimating ? 'text-white drop-shadow-[0_0_8px_white]' : 'text-[#FFD700]'}`}>{coins.toLocaleString()}</span>
@@ -253,7 +255,7 @@ export function Navbar() {
                 className="flex items-center justify-center gap-2 bg-[#1B1B1B] border border-[#FFD700]/30 py-2 rounded-lg mt-2"
               >
                 <Coins className="w-4 h-4 text-[#FFD700]" />
-                <span className="font-black text-[#FFD700] uppercase text-xs tracking-wider">{coins.toLocaleString()} Coins</span>
+                <span className="font-black text-[#FFD700] uppercase text-xs tracking-wider">{coins.toLocaleString()} MTC</span>
               </Link>
             </div>
           ) : (

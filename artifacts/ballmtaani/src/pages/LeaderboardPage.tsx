@@ -1,13 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useLeaderboard } from "../hooks/useData";
-import { Trophy, HelpCircle } from "lucide-react";
-
+import { Trophy, HelpCircle, Clock, Gift } from "lucide-react";
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<"global" | "weekly" | "country">("global");
+  const [activeTab, setActiveTab] = useState<"global" | "weekly" | "country">("weekly");
   const { isLoggedIn, username } = useAuth();
+  const [timeLeft, setTimeLeft] = useState("");
   
   const { data: records = [] } = useLeaderboard();
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      // Next Sunday at midnight
+      const nextSunday = new Date();
+      nextSunday.setDate(now.getDate() + (7 - now.getDay()) % 7);
+      if (now.getDay() === 0) nextSunday.setDate(now.getDate() + 7);
+      nextSunday.setHours(23, 59, 59, 999);
+      
+      const diff = nextSunday.getTime() - now.getTime();
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const m = Math.floor((diff / 1000 / 60) % 60);
+      
+      setTimeLeft(`${d}d ${h}h ${m}m`);
+    };
+    
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
@@ -15,13 +37,13 @@ export default function LeaderboardPage() {
         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-[#FFD700] mb-2 drop-shadow-[0_0_15px_rgba(255,215,0,0.3)] flex items-center justify-center gap-3">
           <Trophy className="w-8 h-8" /> Leaderboard <Trophy className="w-8 h-8" />
         </h1>
-        <p className="text-gray-400 font-bold uppercase tracking-wider">Top predictors across the continent</p>
+        <p className="text-gray-400 font-bold uppercase tracking-wider">Kenyan fan status for calls, debates, and matchday receipts</p>
       </div>
 
       <div className="flex justify-center gap-2 sm:gap-4 mb-8">
         {[
-          { id: "global", label: "Global Top 50" },
           { id: "weekly", label: "This Week" },
+          { id: "global", label: "Global Top 50" },
           { id: "country", label: "My Country" }
         ].map(tab => (
           <button 
@@ -34,6 +56,25 @@ export default function LeaderboardPage() {
           </button>
         ))}
       </div>
+
+      {activeTab === "weekly" && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-[#B30000]/20 border border-[#B30000]/50 rounded-xl p-4 flex items-center gap-4 justify-center md:justify-start">
+            <Clock className="w-8 h-8 text-[#FFD700] animate-pulse" />
+            <div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Tournament Ends In</div>
+              <div className="text-2xl font-black text-white">{timeLeft}</div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-[#FFD700]/20 to-amber-600/20 border border-[#FFD700]/30 rounded-xl p-4 flex items-center gap-4 justify-center md:justify-start">
+            <Gift className="w-8 h-8 text-[#FFD700]" />
+            <div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Weekly Status Boosts</div>
+              <div className="text-xl font-black text-[#FFD700]">1st 50k | 2nd 20k | 3rd 10k</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-[#1B1B1B] rounded-xl border border-white/10 shadow-2xl overflow-hidden mb-12">
         <div className="overflow-x-auto">
@@ -58,7 +99,7 @@ export default function LeaderboardPage() {
                 return (
                   <tr key={player.rank} className={`hover:bg-white/5 transition-colors ${isMe ? 'bg-[#B30000]/10 border-l-4 border-l-[#B30000]' : ''}`}>
                     <td className={`px-4 py-4 text-center ${rankStyle}`}>
-                      {player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : player.rank}
+                      {player.rank === 1 ? '1st' : player.rank === 2 ? '2nd' : player.rank === 3 ? '3rd' : player.rank}
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
@@ -82,7 +123,7 @@ export default function LeaderboardPage() {
                     <td className="px-4 py-4 text-center">
                       {player.streak > 0 ? (
                         <span className="inline-flex items-center gap-1 text-[#B30000] font-black text-xs bg-[#B30000]/10 px-2 py-1 rounded">
-                          🔥 {player.streak}
+                          Streak {player.streak}
                         </span>
                       ) : (
                         <span className="text-gray-600">-</span>

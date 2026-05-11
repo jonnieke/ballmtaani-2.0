@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Coins } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
-interface FlyingCoin {
+interface FlyingStatusPoint {
   id: number;
   amount: number;
   x: number;
@@ -9,24 +9,21 @@ interface FlyingCoin {
 }
 
 export function CoinOverlay() {
-  const [coins, setCoins] = useState<FlyingCoin[]>([]);
+  const [statusPoints, setStatusPoints] = useState<FlyingStatusPoint[]>([]);
 
   useEffect(() => {
     const handleCoinAdded = (e: CustomEvent<{ amount: number }>) => {
-      // Default origins near bottom center for generic interactions, 
-      // but ideally we'd pass mouse coordinates via the event
-      const newCoin: FlyingCoin = {
+      const newPoint: FlyingStatusPoint = {
         id: Date.now() + Math.random(),
         amount: e.detail.amount,
-        x: window.innerWidth / 2,     // Start horizontal center
-        y: window.innerHeight - 100,  // Start lower on the screen
+        x: window.innerWidth / 2,
+        y: window.innerHeight - 100,
       };
 
-      setCoins(prev => [...prev, newCoin]);
+      setStatusPoints(prev => [...prev, newPoint]);
 
-      // Remove after animation completes (1.5s)
       setTimeout(() => {
-        setCoins(prev => prev.filter(c => c.id !== newCoin.id));
+        setStatusPoints(prev => prev.filter(c => c.id !== newPoint.id));
       }, 1500);
     };
 
@@ -36,7 +33,7 @@ export function CoinOverlay() {
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[100]">
-      {coins.map(c => (
+      {statusPoints.map(c => (
         <div
           key={c.id}
           className="absolute animate-coin-fly flex items-center justify-center gap-1 font-black text-[#FFD700] text-3xl drop-shadow-[0_0_15px_rgba(255,215,0,0.8)]"
@@ -46,7 +43,7 @@ export function CoinOverlay() {
           }}
         >
           <div className="relative">
-            <Coins className="w-8 h-8 fill-[#FFD700] border-[#FFD700]" />
+            <Sparkles className="w-8 h-8 text-[#FFD700]" />
             <div className="absolute inset-0 bg-[#FFD700] blur-md opacity-50 rounded-full animate-pulse" />
           </div>
           <span className="stroke-black stroke-2">+{c.amount}</span>

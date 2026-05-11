@@ -69,23 +69,23 @@ const AWAY_LINEUP = {
 };
 
 const FAN_REACTIONS = [
-  { id: 1, user: "Ochieng 🇰🇪",   msg: "SAKA IS DIFFERENT GRAVY 🔥🔥🔥",        time: "2m ago", likes: 124, interactions: 1200, isHot: true },
-  { id: 2, user: "Adebayo 🇳🇬",   msg: "Chelsea fans leaving the stadium already 😂", time: "3m ago", likes: 18, interactions: 450 },
-  { id: 3, user: "Wanjiku 🇰🇪",   msg: "Martinelli goal was INSANE!!",                time: "5m ago", likes: 31, interactions: 85 },
-  { id: 4, user: "Sipho 🇿🇦",     msg: "Rice controlling the whole midfield 💪",      time: "6m ago", likes: 12, interactions: 12 },
-  { id: 5, user: "KamauFC 🇰🇪",   msg: "Palmer best signing of the year though 👀",   time: "8m ago", likes: 89, interactions: 320, isHot: true },
-  { id: 6, user: "Musa 🇬🇭",      msg: "This game is ELITE content 🍿",               time: "10m ago", likes: 15, interactions: 55 },
+  { id: 1, user: "Ochieng KE",   msg: "Saka is different gravy tonight.",        time: "2m ago", likes: 124, interactions: 1200, isHot: true },
+  { id: 2, user: "Adebayo NG",   msg: "Chelsea fans are already quiet.", time: "3m ago", likes: 18, interactions: 450 },
+  { id: 3, user: "Wanjiku KE",   msg: "Martinelli goal was insane.",                time: "5m ago", likes: 31, interactions: 85 },
+  { id: 4, user: "Sipho ZA",     msg: "Rice is controlling the whole midfield.",      time: "6m ago", likes: 12, interactions: 12 },
+  { id: 5, user: "KamauFC KE",   msg: "Palmer still has a strong signing-of-the-year case.",   time: "8m ago", likes: 89, interactions: 320, isHot: true },
+  { id: 6, user: "Musa GH",      msg: "This game is elite content.",               time: "10m ago", likes: 15, interactions: 55 },
 ];
 
 const SIMULATED_BANTER = [
-  { user: "Kiplagat 🇰🇪", msg: "This referee is definitely a Blue fan! 🤡", interactions: 45 },
-  { user: "Dube 🇿🇦", msg: "Imagine thinking Arsenal won't bottle this. I've seen this movie before.", interactions: 210 },
-  { user: "Mensah 🇬🇭", msg: "Saka just sent that defender back to the academy 💀", interactions: 890 },
-  { user: "Njeri 🇰🇪", msg: "WHERE IS JACKSON?? Is he even on the pitch? 😂", interactions: 12 },
-  { user: "Okafor 🇳🇬", msg: "London is Red. End of debate.", interactions: 560 },
-  { user: "Tau 🇿🇦", msg: "Chelsea need a proper #9. This is painful to watch.", interactions: 34 },
-  { user: "Zuma 🇿🇦", msg: "NFS! Mtaani we are watching history today boys!", interactions: 120 },
-  { user: "Atieno 🇰🇪", msg: "My bet is on a 90+ minute winner. COYG!! 🔴⚪", interactions: 450 },
+  { user: "Kiplagat KE", msg: "This referee is definitely leaning Blue.", interactions: 45 },
+  { user: "Dube ZA", msg: "Imagine thinking Arsenal will not drop this. I have seen this movie before.", interactions: 210 },
+  { user: "Mensah GH", msg: "Saka just sent that defender back to the academy.", interactions: 890 },
+  { user: "Njeri KE", msg: "Where is Jackson? Is he even on the pitch?", interactions: 12 },
+  { user: "Okafor NG", msg: "London is red. End of debate.", interactions: 560 },
+  { user: "Tau ZA", msg: "Chelsea need a proper number 9. This is painful to watch.", interactions: 34 },
+  { user: "Zuma ZA", msg: "Mtaani, we are watching history today.", interactions: 120 },
+  { user: "Atieno KE", msg: "My call is a 90+ minute winner. COYG!!", interactions: 450 },
 ];
 
 /* ─────────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ function StatBar({ label, home, away, unit }: { label: string; home: number; awa
 
 function EventIcon({ type }: { type: string }) {
   switch (type) {
-    case "goal":   return <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-black text-xs font-black">⚽</div>;
+    case "goal":   return <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-black text-xs font-black">G</div>;
     case "yellow": return <div className="w-5 h-7 bg-yellow-400 rounded-sm" />;
     case "red":    return <div className="w-5 h-7 bg-red-600 rounded-sm" />;
     case "sub":    return <div className="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center"><TrendingUp className="w-3.5 h-3.5 text-blue-400" /></div>;
@@ -301,32 +301,25 @@ import { useProfile } from "../hooks/useData";
 export default function LiveCenterPage() {
   const [, params] = useRoute("/live-center/:id");
   const fixtureId = params?.id;
-  const { isLoggedIn, coins, updateCoins } = useAuth();
+  const { isLoggedIn, updateCoins } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "stats" | "lineups" | "standings" | "banter">("overview");
 
-  // Flash Bounty State
-  const [bountyState, setBountyState] = useState<"active" | "placed" | "won" | "lost">("active");
+  // Live pulse check-in state
+  const [pulseState, setPulseState] = useState<"active" | "placed" | "won">("active");
   const [selectedOption, setSelectedOption] = useState<"yes" | "no" | null>(null);
-  const bountyWager = 50;
-  const bountyReward = 200;
+  const pulseReward = 25;
 
-  const handlePlaceBounty = (option: "yes" | "no") => {
+  const handlePulseVote = (option: "yes" | "no") => {
     if (!isLoggedIn) {
-      alert("Please log in to participate in Flash Bounties.");
-      return;
-    }
-    if (coins < bountyWager) {
-      alert("Not enough coins! Visit the Store to top up.");
+      alert("Please log in to join the live fan pulse.");
       return;
     }
     setSelectedOption(option);
-    updateCoins(-bountyWager);
-    setBountyState("placed");
+    setPulseState("placed");
 
-    // Simulate outcome
     setTimeout(() => {
-      setBountyState("won");
-      updateCoins(bountyReward); // Demo dopamine hit
+      setPulseState("won");
+      updateCoins(pulseReward);
     }, 5000);
   };
   const [banterInput, setBanterInput] = useState("");
@@ -339,7 +332,7 @@ export default function LiveCenterPage() {
   const banterEndRef = useRef<HTMLDivElement>(null);
 
   // Vibe state
-  const vibes = ["Toxic 🤬", "Hype 🔥", "Nervous 😰", "Elite 🍿"];
+  const vibes = ["Heated", "Hype", "Nervous", "Elite"];
   const [currentVibe, setCurrentVibe] = useState(vibes[1]);
 
   // Use real-time profiles
@@ -378,27 +371,34 @@ export default function LiveCenterPage() {
   const { data: matches = [] } = useMatches();
   const { data: standings = {} as Record<string, any[]> } = useStandings();
   
-  const match = matches.find((m: any) => m.id?.toString() === fixtureId) || matches[0];
+  const match = matches.find((m: any) => m.id?.toString() === fixtureId);
 
   // Fetch real match detail (stats, events, lineups) from API-Football
   const { data: fixtureDetail } = useFixtureDetail(fixtureId);
 
-  // Use real API data if available, otherwise fall back to mock constants
-  const matchStats = (fixtureDetail?.stats && fixtureDetail.stats.length > 0)
-    ? fixtureDetail.stats
-    : MATCH_STATS;
+  const matchStats = fixtureDetail?.stats || [];
+  const matchEvents = fixtureDetail?.events || [];
+  const homeLineup = fixtureDetail?.lineups?.home || { formation: "N/A", players: [] };
+  const awayLineup = fixtureDetail?.lineups?.away || { formation: "N/A", players: [] };
 
-  const matchEvents = (fixtureDetail?.events && fixtureDetail.events.length > 0)
-    ? fixtureDetail.events
-    : MATCH_EVENTS;
-
-  const homeLineup = (fixtureDetail?.lineups?.home)
-    ? fixtureDetail.lineups.home
-    : HOME_LINEUP;
-
-  const awayLineup = (fixtureDetail?.lineups?.away)
-    ? fixtureDetail.lineups.away
-    : AWAY_LINEUP;
+  if (!match) {
+    return (
+      <div className="min-h-screen bg-[#0B0B0B] text-white pb-20">
+        <div className="max-w-5xl mx-auto px-4 py-12">
+          <Link href="/live-center" className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-xs font-black uppercase tracking-widest mb-8">
+            <ChevronLeft className="w-4 h-4" /> Back
+          </Link>
+          <div className="bg-[#111] border border-white/10 p-8 text-center">
+            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white mb-3">No Live Match Found</h1>
+            <p className="text-gray-400 text-sm mb-6">This match is not active right now or real-time data is unavailable.</p>
+            <Link href="/matches" className="inline-flex items-center justify-center bg-primary text-white px-5 py-3 text-xs font-black uppercase tracking-widest">
+              Open Match Directory
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Simulate live minute ticking
   useEffect(() => {
@@ -420,7 +420,7 @@ export default function LiveCenterPage() {
   const handleSendBanter = () => {
     if (!banterInput.trim()) return;
     
-    // Reward Coins for first banter
+    // Reward first useful banter post.
     if (!hasEarnedBanterCoins && isLoggedIn) {
       updateCoins(5);
       setHasEarnedBanterCoins(true);
@@ -430,7 +430,7 @@ export default function LiveCenterPage() {
 
     const newMsg = {
       id: Date.now(),
-      user: profile?.username || "You 🇰🇪",
+      user: profile?.username || "You",
       msg: banterInput,
       time: "Just now",
       likes: 0,
@@ -552,7 +552,7 @@ export default function LiveCenterPage() {
       <div className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
 
         {/* ━━━━━━ FLASH BOUNTY ━━━━━━ */}
-        {bountyState !== "lost" && (
+        {(
           <div className="bg-[#111] rounded-2xl border-2 border-orange-500/50 p-1 shadow-[0_0_30px_rgba(249,115,22,0.2)] overflow-hidden relative group">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-5 mix-blend-overlay pointer-events-none" />
             <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 blur-[80px] pointer-events-none mix-blend-screen" />
@@ -562,29 +562,29 @@ export default function LiveCenterPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Zap className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)] animate-pulse" />
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Live Flash Bounty</h3>
+                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Live Fan Pulse</h3>
                 </div>
                 <div className="bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border border-white/10 text-orange-400 flex items-center gap-2">
                   <Timer className="w-3 h-3" /> Closes in 2:45
                 </div>
               </div>
 
-              {bountyState === "active" && (
+              {pulseState === "active" && (
                 <>
                   <p className="text-base md:text-lg font-bold text-gray-200 mb-6 drop-shadow-md">
-                    Will a goal be scored in the next 10 minutes?
+                    Will there be a goal in the next 10 minutes?
                   </p>
                   
                   <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="w-full md:w-auto flex items-center gap-3">
                       <button 
-                        onClick={() => handlePlaceBounty("yes")}
+                        onClick={() => handlePulseVote("yes")}
                         className="flex-1 md:flex-none bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/50 px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:-translate-y-1"
                       >
                         Yes
                       </button>
                       <button 
-                        onClick={() => handlePlaceBounty("no")}
+                        onClick={() => handlePulseVote("no")}
                         className="flex-1 md:flex-none bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/50 px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] hover:-translate-y-1"
                       >
                         No
@@ -593,32 +593,32 @@ export default function LiveCenterPage() {
 
                     <div className="flex items-center gap-6 bg-black/50 p-3 rounded-xl border border-white/5">
                       <div>
-                        <span className="block text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-1">To Win</span>
-                        <span className="font-black text-xl text-yellow-400 drop-shadow-[0_0_5px_currentColor]">{bountyReward} MTC</span>
+                        <span className="block text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-1">Check-in reward</span>
+                        <span className="font-black text-xl text-yellow-400 drop-shadow-[0_0_5px_currentColor]">+{pulseReward} MTC</span>
                       </div>
                       <div className="w-px h-8 bg-white/10" />
                       <div>
-                        <span className="block text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-1">Wager</span>
-                        <span className="font-black text-xl text-white">{bountyWager} MTC</span>
+                        <span className="block text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-1">Cost</span>
+                        <span className="font-black text-xl text-white">Free</span>
                       </div>
                     </div>
                   </div>
                 </>
               )}
 
-              {bountyState === "placed" && (
+              {pulseState === "placed" && (
                 <div className="flex flex-col items-center justify-center py-6 animate-pulse">
                   <div className="w-12 h-12 border-4 border-[#FFD700] border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(255,215,0,0.5)]" />
-                  <p className="font-black uppercase tracking-widest text-[#FFD700] drop-shadow-md">Bet Locked! Awaiting result...</p>
+                  <p className="font-black uppercase tracking-widest text-[#FFD700] drop-shadow-md">Fan pulse recorded...</p>
                   <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-widest">You chose: <span className="text-white">{selectedOption}</span></p>
                 </div>
               )}
 
-              {bountyState === "won" && (
+              {pulseState === "won" && (
                 <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-6 text-center shadow-[inset_0_0_30px_rgba(34,197,94,0.2)]">
                   <Trophy className="w-12 h-12 mx-auto text-green-400 mb-3 drop-shadow-[0_0_10px_currentColor]" />
-                  <h4 className="text-3xl font-black uppercase tracking-widest text-green-400 drop-shadow-[0_0_15px_currentColor] mb-2">Bounty Won!</h4>
-                  <p className="text-lg font-bold text-white uppercase tracking-widest">+{bountyReward} MTC Added to Wallet</p>
+                  <h4 className="text-3xl font-black uppercase tracking-widest text-green-400 drop-shadow-[0_0_15px_currentColor] mb-2">Pulse Logged</h4>
+                  <p className="text-lg font-bold text-white uppercase tracking-widest">+{pulseReward} MTC check-in reward</p>
                 </div>
               )}
             </div>
@@ -633,7 +633,7 @@ export default function LiveCenterPage() {
               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-[#B30000]/10 via-transparent to-[#1E6FFF]/10 opacity-50 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
               <div className="flex items-center gap-2 mb-6 relative z-10">
                 <Target className="w-5 h-5 text-[#B30000] drop-shadow-[0_0_8px_rgba(179,0,0,0.8)]" />
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Quick Predict</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-white">Quick Call</span>
               </div>
               <p className="text-sm text-gray-400 mb-6 font-medium relative z-10">Who wins this match?</p>
               <div className="grid grid-cols-3 gap-3 relative z-10">
@@ -741,18 +741,18 @@ export default function LiveCenterPage() {
               </div>
               <div className="flex gap-3 md:gap-4 overflow-x-auto hide-scrollbar pb-2 relative z-10">
                 {[
-                  { emoji: "🔥", label: "FIRE", count: 342, glow: "rgba(249,115,22,0.5)" },
-                  { emoji: "😤", label: "ANGRY", count: 128, glow: "rgba(239,68,68,0.5)" },
-                  { emoji: "😂", label: "LOL", count: 256, glow: "rgba(234,179,8,0.5)" },
-                  { emoji: "💀", label: "DEAD", count: 89, glow: "rgba(255,255,255,0.4)" },
-                  { emoji: "🎯", label: "CLASS", count: 201, glow: "rgba(59,130,246,0.5)" },
+                  { emoji: "FIRE", label: "FIRE", count: 342, glow: "rgba(249,115,22,0.5)" },
+                  { emoji: "MAD", label: "ANGRY", count: 128, glow: "rgba(239,68,68,0.5)" },
+                  { emoji: "LOL", label: "LOL", count: 256, glow: "rgba(234,179,8,0.5)" },
+                  { emoji: "DONE", label: "DEAD", count: 89, glow: "rgba(255,255,255,0.4)" },
+                  { emoji: "CLASS", label: "CLASS", count: 201, glow: "rgba(59,130,246,0.5)" },
                 ].map(r => (
                   <button
                     key={r.label}
                     className="flex-1 min-w-[70px] flex flex-col items-center gap-2 py-4 rounded-2xl bg-gradient-to-b from-white/[0.05] to-transparent hover:from-white/[0.1] border border-white/5 active:scale-95 transition-all duration-300 group/btn hover:-translate-y-2 shadow-lg"
                   >
                     <span 
-                      className="text-3xl md:text-4xl transition-transform duration-300 group-hover/btn:scale-125 group-hover/btn:-rotate-12"
+                      className="text-xs md:text-sm font-black tracking-widest transition-transform duration-300 group-hover/btn:scale-110"
                       style={{ filter: `drop-shadow(0 0 10px ${r.glow})` }}
                     >
                       {r.emoji}
@@ -888,7 +888,7 @@ export default function LiveCenterPage() {
                 </div>
                 <div>
                   <span className="block text-[10px] uppercase font-black text-gray-500 tracking-widest">Top Banter</span>
-                  <span className="font-black text-white text-sm">Ochieng 🇰🇪</span>
+                  <span className="font-black text-white text-sm">Ochieng KE</span>
                 </div>
               </div>
             </div>
@@ -899,7 +899,7 @@ export default function LiveCenterPage() {
                 <div className="absolute top-0 left-0 w-full h-full bg-green-500/20 backdrop-blur-sm flex items-center justify-center z-30 animate-in fade-in zoom-in duration-300">
                   <div className="flex items-center gap-3 bg-black border border-green-500/50 px-6 py-3 rounded-2xl shadow-[0_0_30px_rgba(34,197,94,0.4)]">
                     <Zap className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                    <span className="font-black text-white uppercase tracking-widest text-sm">+5 MTAANI COINS EARNED!</span>
+                    <span className="font-black text-white uppercase tracking-widest text-sm">+5 MTC status points</span>
                   </div>
                 </div>
               )}
@@ -976,13 +976,13 @@ export default function LiveCenterPage() {
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <Trophy className="w-5 h-5 md:w-6 md:h-6 text-[#B30000] drop-shadow-[0_0_5px_rgba(179,0,0,0.8)]" />
-              <h4 className="font-black uppercase tracking-[0.2em] text-sm md:text-lg">Predict & Win!</h4>
+              <h4 className="font-black uppercase tracking-[0.2em] text-sm md:text-lg">Make The Call</h4>
             </div>
-            <p className="text-xs md:text-sm text-gray-400 font-medium">Climb the leaderboard and win exclusive rewards.</p>
+            <p className="text-xs md:text-sm text-gray-400 font-medium">Make your call, climb the leaderboard, and collect matchday receipts.</p>
           </div>
           <Link href="/predictions">
             <button className="relative z-10 bg-white text-black px-6 py-3 rounded-xl font-black uppercase text-[10px] md:text-xs tracking-widest hover:bg-gray-200 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-              Predict
+              Make Call
             </button>
           </Link>
         </div>

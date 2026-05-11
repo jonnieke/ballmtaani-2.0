@@ -1,7 +1,8 @@
 import { UserBadge } from "./UserBadge";
-import { Swords, Coins, TrendingUp, Trophy } from "lucide-react";
+import { Swords, MessageCircle, TrendingUp, Trophy } from "lucide-react";
 
 interface RivalryCardProps {
+  id?: string | number;
   challenger: {
     name: string;
     interactions: number;
@@ -19,33 +20,32 @@ interface RivalryCardProps {
     awayLogo: string;
     time: string;
   };
-  stake: number;
+  bragLine: string;
   status: "pending" | "active" | "completed";
   winner?: string;
   prediction?: string;
+  onAcceptDuel?: (id?: string | number) => void;
+  onSettleDuel?: (id?: string | number) => void;
 }
 
-export function RivalryCard({ challenger, defender, match, stake, status, winner, prediction }: RivalryCardProps) {
+export function RivalryCard({ id, challenger, defender, match, bragLine, status, winner, prediction, onAcceptDuel, onSettleDuel }: RivalryCardProps) {
   return (
     <div className="bg-[#1B1B1B] rounded-2xl border border-white/10 overflow-hidden shadow-2xl relative group">
-      {/* Background Glow */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#B30000]/5 to-[#1E6FFF]/5 pointer-events-none" />
-      
-      {status === 'active' && (
+
+      {status === "active" && (
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-red-600 to-orange-500 animate-pulse" />
       )}
 
-      {/* Stake Banner */}
       <div className="bg-black/40 py-2 border-b border-white/5 flex items-center justify-center gap-2">
-        <Coins className="w-4 h-4 text-[#FFD700]" />
+        <MessageCircle className="w-4 h-4 text-[#FFD700]" />
         <span className="text-xs font-black uppercase tracking-[0.2em] text-[#FFD700]">
-          Pot: {stake * 2} MTC
+          {bragLine}
         </span>
       </div>
 
       <div className="p-6">
         <div className="flex items-center justify-between gap-4 mb-6">
-          {/* Challenger */}
           <div className="flex flex-col items-center text-center flex-1">
             <div className="w-16 h-16 rounded-full bg-[#0B0B0B] border-2 border-[#1E6FFF] flex items-center justify-center text-xl font-black mb-2 shadow-[0_0_15px_rgba(30,111,255,0.3)]">
               {challenger.name.substring(0, 1)}
@@ -54,17 +54,15 @@ export function RivalryCard({ challenger, defender, match, stake, status, winner
             <UserBadge interactions={challenger.interactions} showLabel={false} className="scale-75 mt-1" />
           </div>
 
-          {/* Versus Icon */}
           <div className="flex flex-col items-center gap-1">
-            <div className={`p-3 rounded-full ${status === 'active' ? 'bg-red-600 text-white animate-bounce' : 'bg-white/5 text-gray-500'} border border-white/10`}>
+            <div className={`p-3 rounded-full ${status === "active" ? "bg-red-600 text-white" : "bg-white/5 text-gray-500"} border border-white/10`}>
               <Swords className="w-6 h-6" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-[#B30000]">VS</span>
           </div>
 
-          {/* Defender */}
           <div className="flex flex-col items-center text-center flex-1">
-            <div className={`w-16 h-16 rounded-full bg-[#0B0B0B] border-2 border-[#B30000] flex items-center justify-center text-xl font-black mb-2 shadow-[0_0_15px_rgba(179,0,0,0.3)] ${status === 'pending' ? 'grayscale opacity-50' : ''}`}>
+            <div className={`w-16 h-16 rounded-full bg-[#0B0B0B] border-2 border-[#B30000] flex items-center justify-center text-xl font-black mb-2 shadow-[0_0_15px_rgba(179,0,0,0.3)] ${status === "pending" ? "grayscale opacity-50" : ""}`}>
               {defender.name.substring(0, 1)}
             </div>
             <span className="text-sm font-black text-white truncate w-full">{defender.name}</span>
@@ -72,7 +70,6 @@ export function RivalryCard({ challenger, defender, match, stake, status, winner
           </div>
         </div>
 
-        {/* Match Info */}
         <div className="bg-black/50 rounded-xl p-4 border border-white/5 relative">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
@@ -90,25 +87,36 @@ export function RivalryCard({ challenger, defender, match, stake, status, winner
           </div>
         </div>
 
-        {/* Prediction / Status */}
         <div className="mt-6 flex flex-col gap-3">
-          {status === 'pending' ? (
-            <button className="w-full bg-[#1E6FFF] hover:bg-blue-700 text-white font-black uppercase tracking-widest py-3 rounded-lg transition-all shadow-lg active:scale-95">
+          {status === "pending" ? (
+            <button
+              onClick={() => onAcceptDuel?.(id)}
+              className="w-full bg-[#1E6FFF] hover:bg-blue-700 text-white font-black uppercase tracking-widest py-3 rounded-lg transition-all shadow-lg active:scale-95"
+            >
               Accept Duel
             </button>
-          ) : status === 'active' ? (
-            <div className="flex items-center justify-center gap-2 text-[#FFD700] bg-[#FFD700]/10 py-3 rounded-lg border border-[#FFD700]/20">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Duel Live</span>
+          ) : status === "active" ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button className="w-full flex items-center justify-center gap-2 text-[#FFD700] bg-[#FFD700]/10 py-3 rounded-lg border border-[#FFD700]/20 hover:bg-[#FFD700]/20 transition-colors">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Open Room</span>
+              </button>
+              <button
+                onClick={() => onSettleDuel?.(id)}
+                className="w-full flex items-center justify-center gap-2 text-white bg-primary/20 py-3 rounded-lg border border-primary/30 hover:bg-primary/30 transition-colors"
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Settle</span>
+              </button>
             </div>
           ) : (
-            <div className="bg-[#B30000]/10 border border-[#B30000]/20 rounded-lg p-3 text-center">
+            <button className="w-full bg-[#B30000]/10 border border-[#B30000]/20 rounded-lg p-3 text-center hover:bg-[#B30000]/20 transition-colors">
               <div className="flex items-center justify-center gap-2 text-[#B30000] mb-1">
                 <Trophy className="w-4 h-4" />
                 <span className="text-xs font-black uppercase tracking-widest">Winner: {winner}</span>
               </div>
-              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Score: {prediction}</p>
-            </div>
+              <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">View Receipt: {prediction}</p>
+            </button>
           )}
         </div>
       </div>

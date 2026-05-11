@@ -22,46 +22,10 @@ export function useMatches() {
     queryKey: ["matches"],
     queryFn: async () => {
       try {
-        const liveMatches = await fetchLiveMatches();
-        if (liveMatches && liveMatches.length > 0) {
-          return liveMatches;
-        }
+        return (await fetchLiveMatches()) || [];
       } catch (err) {
-        console.error("Football API failed, falling back to mock:", err);
-      }
-
-      // Fallback: try Supabase, then mock
-      if (!supabase) return mock.LIVE_MATCHES;
-
-      try {
-        const { data, error } = await supabase
-          .from("matches")
-          .select(`*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)`)
-          .order("created_at", { ascending: false });
-
-        if (error || !data || data.length === 0) {
-          return mock.LIVE_MATCHES;
-        }
-
-        return data.map(m => ({
-          id: m.id,
-          home: m.home_team.name,
-          homeLogo: m.home_team.logo_url,
-          homeColor: m.home_team.color,
-          homeInitial: m.home_team.initial,
-          away: m.away_team.name,
-          awayLogo: m.away_team.logo_url,
-          awayColor: m.away_team.color,
-          awayInitial: m.away_team.initial,
-          homeScore: m.home_score,
-          awayScore: m.away_score,
-          minute: m.minute,
-          league: m.league,
-          possession: m.possession,
-          scorers: m.scorers
-        }));
-      } catch (err) {
-        return mock.LIVE_MATCHES;
+        console.error("Football API live matches failed:", err);
+        return [];
       }
     },
     refetchInterval: 30000, // Refresh every 30s for live scores
@@ -77,44 +41,10 @@ export function useUpcomingFixtures() {
     queryKey: ["upcoming-fixtures"],
     queryFn: async () => {
       try {
-        const upcoming = await apiFetchUpcoming();
-        if (upcoming && upcoming.length > 0) {
-          return upcoming;
-        }
+        return (await apiFetchUpcoming()) || [];
       } catch (err) {
-        console.error("Upcoming fixtures API failed, falling back to mock:", err);
-      }
-
-      // Fallback
-      if (!supabase) return mock.UPCOMING_FIXTURES;
-
-      try {
-        const { data, error } = await supabase
-          .from("matches")
-          .select(`*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*)`)
-          .eq("status", "upcoming")
-          .order("match_date", { ascending: true });
-
-        if (error || !data || data.length === 0) {
-          return mock.UPCOMING_FIXTURES;
-        }
-
-        return data.map(m => ({
-          id: m.id,
-          home: m.home_team.name,
-          homeLogo: m.home_team.logo_url,
-          homeColor: m.home_team.color,
-          homeInitial: m.home_team.initial,
-          away: m.away_team.name,
-          awayLogo: m.away_team.logo_url,
-          awayColor: m.away_team.color,
-          awayInitial: m.away_team.initial,
-          time: m.match_date,
-          league: m.league,
-          date: "Upcoming"
-        }));
-      } catch (err) {
-        return mock.UPCOMING_FIXTURES;
+        console.error("Upcoming fixtures API failed:", err);
+        return [];
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -129,14 +59,11 @@ export function useRecentMatches() {
     queryKey: ["recent-fixtures"],
     queryFn: async () => {
       try {
-        const recent = await apiFetchRecent();
-        if (recent && recent.length > 0) {
-          return recent;
-        }
+        return (await apiFetchRecent()) || [];
       } catch (err) {
         console.error("Recent fixtures API failed:", err);
+        return [];
       }
-      return [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes (past results don't change often)
   });
@@ -237,20 +164,25 @@ export function useLeaderboard() {
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .order("points", { ascending: false })
           .limit(10);
 
         if (error || !data || data.length === 0) {
           return mock.LEADERBOARD;
         }
 
-        return data.map((p, index) => ({
+        const sorted = [...data].sort((a, b) => {
+          const aScore = Number(a.coins ?? a.points ?? 0);
+          const bScore = Number(b.coins ?? b.points ?? 0);
+          return bScore - aScore;
+        });
+
+        return sorted.map((p, index) => ({
           rank: index + 1,
           name: p.username,
-          country: p.country || "🌍",
-          correct: Math.floor(p.points / 5),
-          streak: p.streak,
-          pts: p.points
+          country: p.country || "KEN",
+          correct: Math.floor(Number(p.coins ?? p.points ?? 0) / 25),
+          streak: p.streak || 0,
+          pts: Number(p.coins ?? p.points ?? 0)
         }));
       } catch (err) {
         return mock.LEADERBOARD;
@@ -274,7 +206,19 @@ export function useFanZones() {
           return mock.FAN_ZONES;
         }
 
-        return data;
+        return data.map(zone => ({
+          id: zone.id,
+          team: zone.team_name || zone.name,
+          team_name: zone.team_name || zone.name,
+          logo: zone.logo_url || zone.logo,
+          logo_url: zone.logo_url || zone.logo,
+          members: zone.members_count ? zone.members_count.toLocaleString() : "10K+",
+          members_count: zone.members_count || 0,
+          preview: zone.preview_text || "Matchday talk is live.",
+          preview_text: zone.preview_text || "Matchday talk is live.",
+          color: zone.color || "#1E6FFF",
+          region: zone.region || "Europe",
+        }));
       } catch (e) {
         return mock.FAN_ZONES;
       }
@@ -301,7 +245,11 @@ export function useProfile(userId: string | undefined) {
           return { username: "Fan", points: 0, streak: 0, country: "KEN", favorite_team: "None", interactions: 120 };
         }
 
-        return { ...data, interactions: data.interactions || 120 };
+        return { 
+          ...data, 
+          points: data.coins || 0, // map coins to points for legacy UI
+          interactions: data.coins ? Math.floor(data.coins / 10) : 120 
+        };
       } catch (e) {
         return { username: "Fan", points: 0, streak: 0, country: "KEN", favorite_team: "None", interactions: 120 };
       }
@@ -357,3 +305,7 @@ export function useBanter(zoneId: string | null) {
 
   return query;
 }
+
+
+
+

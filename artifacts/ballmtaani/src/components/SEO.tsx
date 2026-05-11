@@ -5,13 +5,19 @@ interface SEOProps {
   description?: string;
   image?: string;
   url?: string;
+  type?: "website" | "article";
+  noindex?: boolean;
+  structuredData?: Record<string, any> | Record<string, any>[];
 }
 
 export default function SEO({ 
-  title = "BallMtaani - Africa's #1 Social Football Hub", 
-  description = "Predict, debate, and dominate the football world. Join the ultimate community for African football fans.",
-  image = "https://ballmtaani.com/og-image.jpg", // Replace with real OG image URL
-  url = "https://ballmtaani.com"
+  title = "BallMtaani - Kenyan Fans, Big Match Banter", 
+  description = "Kenyan football fans predict, debate, and keep receipts around the biggest football matches.",
+  image = "https://ballmtaani20.vercel.app/opengraph.jpg",
+  url = "https://ballmtaani20.vercel.app",
+  type = "website",
+  noindex = false,
+  structuredData
 }: SEOProps) {
   
   useEffect(() => {
@@ -37,15 +43,57 @@ export default function SEO({
     updateMeta("og:description", description, "property");
     updateMeta("og:image", image, "property");
     updateMeta("og:url", url, "property");
-    updateMeta("og:type", "website", "property");
+    updateMeta("og:type", type, "property");
+    updateMeta("og:site_name", "BallMtaani", "property");
+    updateMeta("og:locale", "en_KE", "property");
 
     // Twitter
     updateMeta("twitter:card", "summary_large_image");
     updateMeta("twitter:title", title);
     updateMeta("twitter:description", description);
     updateMeta("twitter:image", image);
+    updateMeta("robots", noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large");
 
-  }, [title, description, image, url]);
+    // Canonical
+    let canonical = document.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", url);
+
+    // JSON-LD
+    const existingNodes = document.querySelectorAll("script[data-seo-jsonld='1']");
+    existingNodes.forEach((n) => n.remove());
+
+    const baseStructuredData = [
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "BallMtaani",
+        "url": "https://ballmtaani20.vercel.app",
+        "logo": "https://ballmtaani20.vercel.app/logo.png",
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "BallMtaani",
+        "url": "https://ballmtaani20.vercel.app",
+        "inLanguage": "en-KE",
+      }
+    ];
+
+    const custom = structuredData ? (Array.isArray(structuredData) ? structuredData : [structuredData]) : [];
+    [...baseStructuredData, ...custom].forEach((entry) => {
+      const script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.setAttribute("data-seo-jsonld", "1");
+      script.text = JSON.stringify(entry);
+      document.head.appendChild(script);
+    });
+
+  }, [title, description, image, url, type, noindex, structuredData]);
 
   return null; // Side-effect only component
 }

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Shield, Zap, Database, Activity, CheckCircle2, XCircle, Loader2, ChevronLeft } from "lucide-react";
+import { Shield, Zap, Database, Activity, CheckCircle2, XCircle, Loader2, ChevronLeft, Trophy, Bell } from "lucide-react";
 import { verifyGeminiConnection, verifyFootballConnection, verifySupabaseConnection } from "../lib/api-verify";
 import { Link } from "wouter";
+import { supabase } from "../lib/supabase";
 
 interface TestState {
   status: 'idle' | 'loading' | 'pass' | 'fail';
@@ -11,10 +12,10 @@ interface TestState {
 export default function DiagnosticsPage() {
   const [gemini, setGemini] = useState<TestState>({ status: 'idle', message: 'Not tested' });
   const [football, setFootball] = useState<TestState>({ status: 'idle', message: 'Not tested' });
-  const [supabase, setSupabase] = useState<TestState>({ status: 'idle', message: 'Not tested' });
+  const [supabaseTest, setSupabaseTest] = useState<TestState>({ status: 'idle', message: 'Not tested' });
 
   const runTest = async (key: 'gemini' | 'football' | 'supabase') => {
-    const setter = key === 'gemini' ? setGemini : key === 'football' ? setFootball : setSupabase;
+    const setter = key === 'gemini' ? setGemini : key === 'football' ? setFootball : setSupabaseTest;
     const fn = key === 'gemini' ? verifyGeminiConnection : key === 'football' ? verifyFootballConnection : verifySupabaseConnection;
 
     setter({ status: 'loading', message: 'Testing connection...' });
@@ -28,6 +29,30 @@ export default function DiagnosticsPage() {
       }
     } catch (err) {
       setter({ status: 'fail', message: 'Uncaught network error' });
+    }
+  };
+
+  const simulateEndOfWeek = async () => {
+    if (!confirm("This will reset all user points and award prizes to the top 3. Are you sure?")) return;
+    try {
+      const { error } = await supabase.rpc('process_weekly_tournament');
+      if (error) throw error;
+      alert("Weekly tournament processed successfully!");
+    } catch (err: any) {
+      alert("Failed to process tournament: " + err.message);
+    }
+  };
+
+  const testLocalPush = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      registration.showNotification("Live Match Alert", {
+        body: "Arsenal just scored! 1-0 against Chelsea.",
+        icon: "/logo.png",
+        badge: "/logo.png"
+      });
+    } catch (err) {
+      alert("Push failed. Make sure notifications are enabled in your Profile.");
     }
   };
 
@@ -70,9 +95,29 @@ export default function DiagnosticsPage() {
           title="Supabase Backend" 
           description="Authentication & User Data"
           icon={<Database className="w-6 h-6 text-[#3ECF8E]" />}
-          state={supabase}
+          state={supabaseTest}
           onTest={() => runTest('supabase')}
         />
+
+        {/* Admin Tools for Phase 5 */}
+        <div className="mt-8 p-6 rounded-3xl bg-[#1B1B1B] border border-white/10">
+          <h2 className="text-xl font-black uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+            <Shield className="w-6 h-6 text-primary" />
+            Admin Tools
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button onClick={simulateEndOfWeek} className="bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl text-left transition-colors">
+              <Trophy className="w-6 h-6 text-[#FFD700] mb-2" />
+              <h3 className="font-bold text-white uppercase text-sm">Simulate End of Week</h3>
+              <p className="text-xs text-gray-500 mt-1">Triggers tournament status rewards and resets leaderboard.</p>
+            </button>
+            <button onClick={testLocalPush} className="bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl text-left transition-colors">
+              <Bell className="w-6 h-6 text-[#00FF00] mb-2" />
+              <h3 className="font-bold text-white uppercase text-sm">Local Push Test</h3>
+              <p className="text-xs text-gray-500 mt-1">Triggers a test notification via Service Worker.</p>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="mt-12 p-6 rounded-2xl bg-white/5 border border-white/10 text-center">

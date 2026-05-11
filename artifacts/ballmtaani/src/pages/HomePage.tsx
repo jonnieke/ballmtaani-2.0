@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
-import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles } from "lucide-react";
-import { CLUB_LOGOS, RECENT_MATCHES } from "../data/mockData";
+import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2 } from "lucide-react";
+import { CLUB_LOGOS } from "../data/mockData";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useDebates, useLeaderboard } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
@@ -27,12 +27,25 @@ export default function HomePage() {
   // Highlight the best match: live first, then upcoming
   const featuredMatch = liveMatches[0] || upcomingFixtures[0] || null;
   const isMatchLive = !!liveMatches[0];
+  const pulseMatches = [...liveMatches, ...upcomingFixtures].slice(0, 3);
+  const pulseStats = [
+    { label: "Fans active today", value: "18.4K" },
+    { label: "Calls locked", value: "6.8K" },
+    { label: "Club rooms moving", value: "42" },
+  ];
+
+  const getPulseSplit = (match: any, index: number) => {
+    const seed = (match.home?.length || 6) * 7 + (match.away?.length || 5) * 3 + index * 11;
+    const home = 42 + (seed % 25);
+    const away = 100 - home;
+    return { home, away };
+  };
 
   return (
     <div className="pb-12">
       <SEO 
-        title="BallMtaani | #1 Africa Social Football Hub"
-        description="Join the ultimate social football hub for African fans. Live scores, debates, and elite predictions."
+        title="BallMtaani | Kenyan Fans, Big Match Banter"
+        description="Kenyan football fans predict, debate, and banter around the biggest matches in EPL, UCL, AFCON, CAF, and local derbies."
       />
 
       {/* ═══════════════════════════════════════════
@@ -58,19 +71,19 @@ export default function HomePage() {
           >
             <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 rounded-full px-4 py-1.5 mb-5">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span className="text-primary font-black text-xs uppercase tracking-widest">Africa's #1 Football Hub</span>
+              <span className="text-primary font-black text-xs uppercase tracking-widest">Kenyan Fans. Big Match Energy.</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter mb-6">
-              Predict.<br/>
-              <span className="text-primary">Debate.</span><br/>
-              Dominate.
+              Call It.<br/>
+              <span className="text-primary">Argue It.</span><br/>
+              Keep Receipts.
             </h1>
             <p className="text-gray-300 text-base mb-10 max-w-md leading-relaxed">
-              Join the ultimate social platform for African football fans. Win every argument and climb the hierarchy.
+              Call the biggest fixtures, see where Kenyan fans stand, and keep receipts for every matchday argument.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/trivia" className="bg-[#FFD700] text-black font-black uppercase tracking-widest px-8 py-4 rounded-xl shadow-xl flex items-center gap-2 text-sm">
-                Play & Earn MTC
+              <Link href="/predictions" className="bg-[#FFD700] text-black font-black uppercase tracking-widest px-8 py-4 rounded-xl shadow-xl flex items-center gap-2 text-sm">
+                Make Your Call
                 <ChevronRight className="w-4 h-4" />
               </Link>
               <Link href="/debates" className="bg-white/5 border border-white/20 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl text-sm">
@@ -122,7 +135,7 @@ export default function HomePage() {
                   </div>
 
                   <Link href={isMatchLive ? `/live-center/${featuredMatch.id}` : "/predictions"} className="block w-full text-center bg-white text-black font-black uppercase tracking-widest py-4 rounded-xl text-sm">
-                    {isMatchLive ? 'Join Live Center' : 'Predict Score'}
+                    {isMatchLive ? 'Join Live Center' : 'Make Call'}
                   </Link>
                 </motion.div>
               ) : (
@@ -140,6 +153,81 @@ export default function HomePage() {
       <section className="py-6 border-b border-[#1B1B1B] bg-[#0B0B0B]">
         <div className="max-w-6xl mx-auto px-4">
           <AdBanner label="Featured Partner" type="horizontal" />
+        </div>
+      </section>
+
+      {/* KENYAN FAN PULSE */}
+      <section className="py-14 bg-[#050505] border-b border-[#1B1B1B]">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1 mb-4">
+                <Radio className="w-3.5 h-3.5 text-[#FFD700]" />
+                <span className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.2em]">Kenya Fan Pulse</span>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white">
+                Who Are Kenyans Backing?
+              </h2>
+              <p className="text-gray-400 text-sm md:text-base mt-3 max-w-2xl">
+                Public matchday sentiment from BallMtaani rooms. Make your call, then come back for the receipt.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
+              {pulseStats.map(stat => (
+                <div key={stat.label} className="bg-[#111] border border-white/5 rounded-xl p-4 text-center min-w-0">
+                  <div className="text-xl md:text-2xl font-black text-white">{stat.value}</div>
+                  <div className="text-[9px] md:text-[10px] text-gray-500 font-black uppercase tracking-widest leading-tight mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(pulseMatches.length ? pulseMatches : upcomingFixtures.slice(0, 3)).map((match: any, index: number) => {
+              const split = getPulseSplit(match, index);
+              const isLive = liveMatches.some((live: any) => live.id === match.id);
+
+              return (
+                <div key={match.id || `${match.home}-${match.away}`} className="bg-[#111] border border-white/10 rounded-2xl p-5 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[70px] pointer-events-none" />
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-5">
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${isLive ? "bg-primary/15 text-primary" : "bg-[#FFD700]/10 text-[#FFD700]"}`}>
+                        {isLive ? "Live pulse" : "Next up"}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest truncate ml-3">{match.league}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 mb-5">
+                      <div className="min-w-0">
+                        <p className="font-black text-white text-sm truncate">{match.home}</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">{split.home}% Kenya lean</p>
+                      </div>
+                      <div className="text-gray-600 font-black text-xs shrink-0">VS</div>
+                      <div className="min-w-0 text-right">
+                        <p className="font-black text-white text-sm truncate">{match.away}</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">{split.away}% Kenya lean</p>
+                      </div>
+                    </div>
+
+                    <div className="h-3 bg-black rounded-full overflow-hidden border border-white/5 mb-5">
+                      <div className="h-full bg-gradient-to-r from-primary to-[#FFD700]" style={{ width: `${split.home}%` }} />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Link href="/predictions" className="flex-1 text-center bg-white text-black rounded-xl py-3 text-[10px] font-black uppercase tracking-widest">
+                        Make Call
+                      </Link>
+                      <Link href="/fan-zones" aria-label={`Open fan zones for ${match.home} vs ${match.away}`} className="w-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+                        <Share2 className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -163,14 +251,7 @@ export default function HomePage() {
               <>
                 {liveMatches.map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: 'LIVE' }} />)}
                 {upcomingFixtures.slice(0, 5).map((m: any) => <PremiumMatchCard key={m.id} match={m} />)}
-                {recentMatches.length > 0 ? recentMatches.slice(0, 5).map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: 'FT' }} />) : (
-                  // Fallback to mock in dev
-                  <>
-                    {RECENT_MATCHES.map(m => (
-                      <PremiumMatchCard key={m.id} match={m} />
-                    ))}
-                  </>
-                )}
+                {recentMatches.slice(0, 5).map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: 'FT' }} />)}
               </>
             )}
           </div>
@@ -188,20 +269,20 @@ export default function HomePage() {
             <Link href="/rapid-fire" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-blue-500/50 transition-all">
               <Zap className="w-12 h-12 text-[#1E6FFF] mb-6" />
               <h3 className="text-2xl font-black uppercase mb-3">Rapid Fire</h3>
-              <p className="text-gray-500 text-sm mb-6">Vote on heated football debates and earn coins.</p>
+              <p className="text-gray-500 text-sm mb-6">Vote on heated football debates and see where fans stand.</p>
               <span className="text-[#1E6FFF] font-black uppercase text-[10px] tracking-widest">Play Now</span>
             </Link>
             <Link href="/trivia" className="group p-8 rounded-3xl bg-[#111] border border-[#FFD700]/20 hover:border-[#FFD700]/50 transition-all">
               <Trophy className="w-12 h-12 text-[#FFD700] mb-6" />
               <h3 className="text-2xl font-black uppercase mb-3 text-[#FFD700]">Millionaire</h3>
-              <p className="text-gray-500 text-sm mb-6">Test your knowledge for the grand prize.</p>
-              <span className="text-[#FFD700] font-black uppercase text-[10px] tracking-widest">Risk it All</span>
+              <p className="text-gray-500 text-sm mb-6">Test your football knowledge and climb the weekly table.</p>
+              <span className="text-[#FFD700] font-black uppercase text-[10px] tracking-widest">Play Trivia</span>
             </Link>
             <Link href="/predictions" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-red-500/50 transition-all">
               <Sparkles className="w-12 h-12 text-primary mb-6" />
-              <h3 className="text-2xl font-black uppercase mb-3">AI Insight</h3>
-              <p className="text-gray-500 text-sm mb-6">Get premium predictions and beat the bot.</p>
-              <span className="text-primary font-black uppercase text-[10px] tracking-widest">Predict & Win</span>
+              <h3 className="text-2xl font-black uppercase mb-3">Fan Intel</h3>
+              <p className="text-gray-500 text-sm mb-6">Read the match, make your call, and stack receipts.</p>
+              <span className="text-primary font-black uppercase text-[10px] tracking-widest">Make Your Call</span>
             </Link>
           </div>
         </div>
@@ -211,10 +292,10 @@ export default function HomePage() {
       <section className="py-16 bg-[#050505] border-b border-[#1B1B1B]">
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-4xl md:text-6xl font-black uppercase leading-tight mb-6">Settle The <span className="text-primary">Score.</span></h2>
-            <p className="text-gray-400 font-bold md:text-lg mb-8">Challenge rival fans directly and defend your club's honor.</p>
+            <h2 className="text-4xl md:text-6xl font-black uppercase leading-tight mb-6">Keep The <span className="text-primary">Receipt.</span></h2>
+            <p className="text-gray-400 font-bold md:text-lg mb-8">Challenge rival fans to free scoreline duels and come back after full time.</p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/rivalries" className="px-8 py-4 bg-primary text-white font-black uppercase tracking-widest rounded-xl shadow-lg">Launch Grudge Match</Link>
+              <Link href="/rivalries" className="px-8 py-4 bg-primary text-white font-black uppercase tracking-widest rounded-xl shadow-lg">Start Fan Duel</Link>
               <Link href="/debates" className="px-8 py-4 bg-white/5 border border-white/20 text-white font-black uppercase tracking-widest rounded-xl">Join Debates</Link>
             </div>
           </div>
@@ -227,8 +308,8 @@ export default function HomePage() {
             </div>
             <div className="p-6 rounded-2xl bg-[#111] border border-white/10 mt-0 sm:mt-10">
               <MessageSquare className="w-8 h-8 text-[#1E6FFF] mb-4" />
-              <h3 className="text-lg font-black uppercase mb-2">Mtaani Banta</h3>
-              <p className="text-gray-500 text-xs mb-4">Toxic or Friendly? You decide the vibe.</p>
+              <h3 className="text-lg font-black uppercase mb-2">Mtaani Banter</h3>
+              <p className="text-gray-500 text-xs mb-4">Kenyan fan rooms for matchday takes, receipts, and banter.</p>
               <Link href="/live-center" className="text-[10px] font-black uppercase text-[#1E6FFF]">Join Feed</Link>
             </div>
           </div>

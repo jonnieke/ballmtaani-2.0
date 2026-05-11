@@ -80,9 +80,7 @@ export default function VerifyOTPPage() {
     setError("");
 
     try {
-      // If we are mocking locally because backend failed to send:
       if (code === "123456" && (import.meta.env.DEV || !supabase)) {
-         console.log("Mock verification success!");
          mockLogin(phone);
          sessionStorage.removeItem("auth_phone");
          const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
@@ -99,22 +97,19 @@ export default function VerifyOTPPage() {
 
       if (error) throw error;
       
-      // Success!
       sessionStorage.removeItem("auth_phone");
       const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
       sessionStorage.removeItem("auth_return_url");
-      setLocation(returnUrl); // Redirect to original destination
+      setLocation(returnUrl);
       
     } catch (err: any) {
       console.error("Verification error:", err);
-      // Fallback for UI testing / Missing SMS config
       const isMockableError = err.message.includes("Database error") || 
                               err.message.includes("Token has expired") ||
                               err.message.includes("invalid") ||
                               !supabase;
                               
-      if (isMockableError && code === "123456") {
-          console.warn("Bypassing auth error with mock login (123456)");
+      if (isMockableError && code === "123456" && (import.meta.env.DEV || !supabase)) {
           mockLogin(phone);
           sessionStorage.removeItem("auth_phone");
           const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
@@ -139,7 +134,6 @@ export default function VerifyOTPPage() {
         phone: phone,
       });
       if (error) throw error;
-      // Show success toast perhaps?
     } catch (err: any) {
       console.error("Resend error:", err);
       setError("Failed to resend code. Please try again later.");
@@ -235,7 +229,7 @@ export default function VerifyOTPPage() {
             )}
           </p>
           {(import.meta.env.DEV || !supabase) && (
-             <p className="text-[10px] text-gray-600 mt-4">(Dev mode: Use code 123456 to bypass)</p>
+             <p className="text-[10px] text-gray-600 mt-4">Local testing code: 123456</p>
           )}
         </div>
       </div>

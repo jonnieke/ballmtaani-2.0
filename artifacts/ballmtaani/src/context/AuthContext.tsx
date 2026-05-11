@@ -23,6 +23,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
   username: string;
+  dbProfile: any | null;
   coins: number;
   updateCoins: (amount: number) => void;
   awardCoins: (action: CoinAction) => number;
@@ -82,6 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.getItem("mock_auth_session") !== null
   );
 
+  const [dbProfile, setDbProfile] = useState<any | null>(null);
+
   const [coins, setCoins] = useState(() => {
     const saved = localStorage.getItem("mtaani_coins");
     if (saved !== null) {
@@ -93,13 +96,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [pendingLoginStreak, setPendingLoginStreak] = useState<LoginStreakInfo | null>(null);
 
+  // Sync coins to Supabase when they change
   useEffect(() => {
     if (coins > 0) {
       localStorage.setItem("mtaani_coins", coins.toString());
     } else if (coins === 0 && !isLoggedIn) {
       localStorage.removeItem("mtaani_coins");
     }
-  }, [coins, isLoggedIn]);
+
+    if (user && supabase && coins > 0) {
+      // Debounce this in a real app, but fine for now
+      supabase.from('profiles').update({ coins }).eq('id', user.id).then(({ error }) => {
+        if (error) console.error("Failed to sync coins to Supabase:", error);
+      });
+    }
+  }, [coins, isLoggedIn, user]);
+
+  // Load profile from Supabase
+  const loadProfile = async (userId: string) => {
+    if (!supabase) return;
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (data) {
+      setDbProfile(data);
+      // Sync local coins if DB has more (e.g. from another device)
+      if (data.coins > coins) {
+        setCoins(data.coins);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!supabase) return;
@@ -108,6 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) {
         setUser(session.user);
         setIsLoggedIn(true);
+        loadProfile(session.user.id);
+        
         // Award daily login on Supabase session restore
         const streakInfo = processLoginStreak();
         if (streakInfo.isNewDay) {
@@ -116,12 +142,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCoins(prev => prev + total);
             playCoinSound();
             window.dispatchEvent(new CustomEvent('coinsAdded', { detail: { amount: total } }));
-            addCoinTransaction({ action: 'daily_login', label: 'Daily Login', emoji: '📅', amount: streakInfo.coinsEarned });
+            addCoinTransaction({ action: 'daily_login', label: 'Daily Login', emoji: 'Login', amount: streakInfo.coinsEarned });
             if (streakInfo.bonusEarned > 0) {
-              addCoinTransaction({ action: 'login_streak', label: `${streakInfo.streak}-Day Streak Bonus`, emoji: '🔥', amount: streakInfo.bonusEarned });
+              addCoinTransaction({ action: 'login_streak', label: `${streakInfo.streak}-Day Streak Bonus`, emoji: 'Streak', amount: streakInfo.bonusEarned });
             }
           }
           setPendingLoginStreak(streakInfo);
+          // Also sync streak to DB
+          supabase.from('profiles').update({ streak: streakInfo.streak, last_login_date: new Date().toISOString().split('T')[0] }).eq('id', session.user.id);
         }
       }
     });
@@ -130,9 +158,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) {
         setUser(session.user);
         setIsLoggedIn(true);
+        loadProfile(session.user.id);
       } else {
         const hasMock = localStorage.getItem("mock_auth_session");
-        if (!hasMock) { setUser(null); setIsLoggedIn(false); }
+        if (!hasMock) { setUser(null); setIsLoggedIn(false); setDbProfile(null); }
       }
     });
 
@@ -161,9 +190,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCoins(prev => prev + total);
         playCoinSound();
         window.dispatchEvent(new CustomEvent('coinsAdded', { detail: { amount: total } }));
-        addCoinTransaction({ action: 'daily_login', label: 'Daily Login', emoji: '📅', amount: streakInfo.coinsEarned });
+        addCoinTransaction({ action: 'daily_login', label: 'Daily Login', emoji: 'Login', amount: streakInfo.coinsEarned });
         if (streakInfo.bonusEarned > 0) {
-          addCoinTransaction({ action: `login_streak_${streakInfo.streak}`, label: `${streakInfo.streak}-Day Streak Bonus`, emoji: '🔥', amount: streakInfo.bonusEarned });
+          addCoinTransaction({ action: `login_streak_${streakInfo.streak}`, label: `${streakInfo.streak}-Day Streak Bonus`, emoji: 'Streak', amount: streakInfo.bonusEarned });
         }
       }
       setPendingLoginStreak(streakInfo);
@@ -174,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (ref && ref !== (mockUser.phone || '')) {
       // Award referral bonus to the new user (invitee)
       setCoins(prev => prev + 500);
-      addCoinTransaction({ action: 'invite_redeemed', label: 'Joined via Invite', emoji: '🤝', amount: 500 });
+      addCoinTransaction({ action: 'invite_redeemed', label: 'Joined via Invite', emoji: 'Invite', amount: 500 });
       sessionStorage.removeItem("mtaani_referral");
     }
 
@@ -194,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Award coins for a specific engagement action.
+   * Award MTC status points for a specific engagement action.
    * Returns the amount actually awarded (0 if blocked by limits).
    */
   const awardCoins = (action: CoinAction): number => {
@@ -229,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const displayUsername =
+    dbProfile?.username ||
     user?.user_metadata?.username ||
     user?.phone ||
     user?.email?.split("@")[0] ||
@@ -240,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         user,
         username: displayUsername,
+        dbProfile,
         coins,
         updateCoins,
         awardCoins,
