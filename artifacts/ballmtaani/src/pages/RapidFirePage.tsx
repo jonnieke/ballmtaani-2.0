@@ -269,7 +269,7 @@ export default function RapidFirePage() {
   return (
     <div className="bg-black fixed inset-0 z-50 flex flex-col">
       {/* Header overlay */}
-      <div className="absolute top-0 left-0 w-full p-4 z-10 bg-gradient-to-b from-black/90 to-transparent">
+      <div className="absolute top-0 left-0 w-full p-3 md:p-4 z-10 bg-gradient-to-b from-black/90 to-transparent">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div>
             <Link href="/" className="inline-flex items-center gap-2 text-white bg-black/50 border border-white/15 backdrop-blur-md px-3 py-1.5 hover:bg-white/10 transition-colors">
@@ -277,7 +277,7 @@ export default function RapidFirePage() {
             <span className="font-bold text-sm uppercase">Exit</span>
           </Link>
           </div>
-          <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 px-3 py-1.5">
+          <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 px-2.5 py-1.5">
             <Zap className="w-4 h-4 text-primary animate-pulse" />
             <span className="font-black text-white uppercase tracking-widest text-xs">Rapid Fire</span>
           </div>
@@ -304,7 +304,7 @@ export default function RapidFirePage() {
       {/* Snap Scroll Container */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-scroll snap-y snap-mandatory hide-scrollbar relative"
+        className="flex-1 overflow-y-scroll snap-y snap-mandatory hide-scrollbar relative pt-[130px] md:pt-[150px]"
         style={{ scrollBehavior: 'smooth' }}
       >
         {debates.map((debate: any, index: number) => {
@@ -324,7 +324,7 @@ export default function RapidFirePage() {
             <div 
               key={debate.id} 
               id={`debate-${index}`}
-              className="w-full h-full snap-start snap-always flex flex-col items-center justify-center relative p-4 md:p-6 bg-[#0B0B0B]"
+              className="w-full min-h-[calc(100dvh-130px)] md:min-h-[calc(100dvh-150px)] snap-start snap-always flex flex-col items-center justify-center relative p-3 md:p-6 bg-[#0B0B0B]"
             >
               {/* Background Glow */}
               <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[500px] max-h-[500px] rounded-full blur-[100px] pointer-events-none opacity-20 transition-colors duration-1000 ${userVote === 'left' ? 'bg-[#1E6FFF]' : userVote === 'right' ? 'bg-primary' : 'bg-white/10'}`} />
@@ -333,14 +333,14 @@ export default function RapidFirePage() {
                 <div className="mb-3 border border-white/15 bg-black/50 px-2.5 py-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Debate {index + 1}</p>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-black text-center mb-6 drop-shadow-lg leading-tight">{debate.title}</h2>
+                <h2 className="text-xl md:text-3xl font-black text-center mb-4 md:mb-6 drop-shadow-lg leading-tight">{debate.title}</h2>
 
-                <div className="flex justify-between items-end mb-6 w-full">
+                <div className="flex justify-between items-end mb-4 md:mb-6 w-full">
                   <div className="flex flex-col items-center gap-4 w-[45%]">
-                    <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden bg-white/5 border border-white/10 shadow-lg shrink-0">
+                    <div className="w-20 h-20 md:w-32 md:h-32 overflow-hidden bg-white/5 border border-white/10 shadow-lg shrink-0">
                       <DebateImage label={debate.left} src={leftImage} />
                     </div>
-                    <span className={`font-black text-base md:text-lg text-center leading-tight drop-shadow-md ${userVote === 'left' ? 'text-white' : 'text-gray-300'}`}>
+                    <span className={`font-black text-sm md:text-lg text-center leading-tight drop-shadow-md ${userVote === 'left' ? 'text-white' : 'text-gray-300'}`}>
                       {debate.left}
                     </span>
                   </div>
@@ -348,17 +348,17 @@ export default function RapidFirePage() {
                   <div className="text-sm font-black text-gray-500 pb-12">VS</div>
 
                   <div className="flex flex-col items-center gap-4 w-[45%]">
-                    <div className="w-24 h-24 md:w-32 md:h-32 overflow-hidden bg-white/5 border border-white/10 shadow-lg shrink-0">
+                    <div className="w-20 h-20 md:w-32 md:h-32 overflow-hidden bg-white/5 border border-white/10 shadow-lg shrink-0">
                       <DebateImage label={debate.right} src={rightImage} />
                     </div>
-                    <span className={`font-black text-base md:text-lg text-center leading-tight drop-shadow-md ${userVote === 'right' ? 'text-white' : 'text-gray-300'}`}>
+                    <span className={`font-black text-sm md:text-lg text-center leading-tight drop-shadow-md ${userVote === 'right' ? 'text-white' : 'text-gray-300'}`}>
                       {debate.right}
                     </span>
                   </div>
                 </div>
 
                 {/* Vote Bars */}
-                <div className={`h-11 w-full bg-white/10 overflow-hidden flex relative mb-6 border border-white/5 shadow-inner backdrop-blur-md transition-all duration-500 ${pulseMap[debate.id] ? "ring-2 ring-primary/60" : ""}`}>
+                <div className={`h-10 md:h-11 w-full bg-white/10 overflow-hidden flex relative mb-4 md:mb-6 border border-white/5 shadow-inner backdrop-blur-md transition-all duration-500 ${pulseMap[debate.id] ? "ring-2 ring-primary/60" : ""}`}>
                   <div 
                     className={`h-full flex items-center px-4 transition-all duration-1000 ${userVote === 'left' ? 'bg-[#1E6FFF] shadow-[0_0_20px_rgba(30,111,255,0.6)]' : 'bg-[#1E6FFF]/50'} ${pulseMap[debate.id] ? "brightness-110" : ""}`} 
                     style={{ width: userVote ? `${finalLeft}%` : '50%' }}
@@ -376,11 +376,11 @@ export default function RapidFirePage() {
                   {!userVote && <div className="absolute top-0 left-1/2 bottom-0 w-1 bg-black/50 transform -translate-x-1/2"></div>}
                 </div>
 
-                <div className="flex gap-3 w-full">
+                <div className="flex gap-2 md:gap-3 w-full">
                   <button 
                     onClick={() => handleVote(debate.id, 'left', index)}
                     disabled={userVote !== undefined || isVoting === debate.id}
-                    className={`flex-1 py-4 md:py-5 font-black uppercase tracking-widest text-sm md:text-base transition-all flex flex-col items-center justify-center gap-1
+                    className={`flex-1 py-3 md:py-5 font-black uppercase tracking-wider md:tracking-widest text-xs md:text-base transition-all flex flex-col items-center justify-center gap-1
                       ${userVote === 'left' ? 'bg-[#1E6FFF] text-white shadow-[0_0_30px_rgba(30,111,255,0.5)] scale-105' : 
                         userVote === 'right' ? 'bg-white/5 text-gray-500 opacity-30 blur-[1px]' : 
                         'bg-white/10 hover:bg-[#1E6FFF]/30 text-white border border-white/20 hover:border-[#1E6FFF]/50 backdrop-blur-md hover:scale-105 shadow-xl'}`}
@@ -395,7 +395,7 @@ export default function RapidFirePage() {
                   <button 
                     onClick={() => handleVote(debate.id, 'right', index)}
                     disabled={userVote !== undefined || isVoting === debate.id}
-                    className={`flex-1 py-4 md:py-5 font-black uppercase tracking-widest text-sm md:text-base transition-all flex flex-col items-center justify-center gap-1
+                    className={`flex-1 py-3 md:py-5 font-black uppercase tracking-wider md:tracking-widest text-xs md:text-base transition-all flex flex-col items-center justify-center gap-1
                       ${userVote === 'right' ? 'bg-primary text-white shadow-[0_0_30px_rgba(179,0,0,0.5)] scale-105' : 
                         userVote === 'left' ? 'bg-white/5 text-gray-500 opacity-30 blur-[1px]' : 
                         'bg-white/10 hover:bg-primary/30 text-white border border-white/20 hover:border-primary/50 backdrop-blur-md hover:scale-105 shadow-xl'}`}

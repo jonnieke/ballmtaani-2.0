@@ -260,6 +260,11 @@ export default function HomePage() {
 
       {/* NEWS FEED */}
       <NewsFeed />
+      <section className="py-6 border-b border-[#1B1B1B] bg-[#0B0B0B]">
+        <div className="max-w-6xl mx-auto px-4">
+          <AdBanner label="Matchday Partner" type="horizontal" />
+        </div>
+      </section>
 
       {/* ARCADE */}
       <section className="py-16 bg-[#0B0B0B] border-b border-[#1B1B1B]">

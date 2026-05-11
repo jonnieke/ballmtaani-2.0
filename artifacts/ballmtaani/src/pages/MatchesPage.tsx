@@ -314,7 +314,7 @@ export default function MatchesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-10">
+    <div className="max-w-7xl mx-auto px-3 md:px-4 py-6 md:py-10">
       <SEO
         title="Football Data Center | BallMtaani"
         description="Live football results, fixtures, standings, and real-time match data powered by API-Football."
@@ -331,28 +331,28 @@ export default function MatchesPage() {
         <AdBanner label="Data Partner" type="horizontal" />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
+      <div className="mb-5 flex gap-2 overflow-x-auto hide-scrollbar lg:grid lg:grid-cols-4">
         <button
           onClick={() => setMode("live")}
-          className={`px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "live" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
+          className={`shrink-0 min-w-[140px] px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "live" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
         >
           <Activity className="w-4 h-4" /> Live
         </button>
         <button
           onClick={() => setMode("fixtures")}
-          className={`px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "fixtures" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
+          className={`shrink-0 min-w-[140px] px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "fixtures" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
         >
           <CalendarDays className="w-4 h-4" /> Fixtures
         </button>
         <button
           onClick={() => setMode("results")}
-          className={`px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "results" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
+          className={`shrink-0 min-w-[140px] px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "results" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
         >
           <Timer className="w-4 h-4" /> Results
         </button>
         <button
           onClick={() => setMode("standings")}
-          className={`px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "standings" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
+          className={`shrink-0 min-w-[140px] px-3 py-3 border text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 ${mode === "standings" ? "bg-primary/20 border-primary text-white" : "bg-[#111] border-white/10 text-gray-400 hover:text-white"}`}
         >
           <Table2 className="w-4 h-4" /> Standings
         </button>
@@ -424,7 +424,39 @@ export default function MatchesPage() {
           {filteredLive.length === 0 ? (
             <EmptyState message="No live matches right now." />
           ) : (
-            <div className="border border-white/10 bg-[#111] overflow-x-auto">
+            <>
+            <div className="space-y-2 md:hidden">
+              {filteredLive.map((m: any) => {
+                const matchId = String(m.id);
+                const isPinned = pinnedMatchIds.includes(matchId);
+                return (
+                  <div key={`mobile-${matchId}`} className="border border-white/10 bg-[#111] p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <span className="truncate text-[10px] font-black uppercase tracking-widest text-gray-400">{m.league}</span>
+                      <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-primary">{m.minute || "LIVE"}</span>
+                    </div>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <span className="truncate text-xs font-bold text-white">{m.home}</span>
+                      <span className="text-base font-black text-white">{m.homeScore} - {m.awayScore}</span>
+                      <span className="truncate text-right text-xs font-bold text-white">{m.away}</span>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <button
+                        onClick={() => togglePinned(matchId)}
+                        className={`inline-flex items-center justify-center border px-3 py-2 text-[10px] font-black uppercase tracking-widest ${isPinned ? "border-primary bg-primary/20 text-primary" : "border-white/10 bg-black/30 text-gray-300"}`}
+                      >
+                        <Pin className="mr-1 h-3.5 w-3.5" />
+                        {isPinned ? "Pinned" : "Pin"}
+                      </button>
+                      <Link href={`/live-center/${m.id}`} className="inline-block border border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/5 hover:text-white">
+                        Open
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden border border-white/10 bg-[#111] overflow-x-auto md:block">
               <table className="w-full min-w-[980px]">
                 <thead className="border-b border-white/10 bg-black/30">
                   <tr className="text-[10px] font-black uppercase tracking-widest text-gray-400">
@@ -571,6 +603,7 @@ export default function MatchesPage() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </>
       )}
@@ -612,6 +645,7 @@ export default function MatchesPage() {
                   </div>
                 </div>
               ))}
+              <AdBanner label="Fixture Feed Sponsor" type="horizontal" />
             </div>
           )}
         </>
@@ -651,6 +685,7 @@ export default function MatchesPage() {
                   </div>
                 </div>
               ))}
+              <AdBanner label="Results Feed Sponsor" type="horizontal" />
             </div>
           )}
         </>

@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { CheckCircle2, Loader2, Trophy, Flame, Target, Star, ShieldAlert } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
+import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 
 
 export default function PredictionsPage() {
@@ -148,7 +149,7 @@ export default function PredictionsPage() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700]/5 blur-[100px] pointer-events-none rounded-full" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 blur-[100px] pointer-events-none rounded-full" />
         
-        <div className="max-w-6xl mx-auto px-4 py-12 md:py-16 relative z-10">
+        <div className="max-w-6xl mx-auto px-3 py-7 md:px-4 md:py-12 relative z-10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between xl:gap-12">
             
             <div className="flex-1 mb-8 md:mb-0">
@@ -156,7 +157,7 @@ export default function PredictionsPage() {
                 <Star className="w-4 h-4 text-[#FFD700]" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD700]">Calls & Receipts</span>
               </div>
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter mb-4 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight mb-3 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                 Call It & <br className="hidden md:block"/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#FFA500] drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">Keep Receipts</span>
               </h1>
               <p className="text-gray-400 text-sm md:text-base font-medium max-w-lg leading-relaxed">
@@ -165,8 +166,8 @@ export default function PredictionsPage() {
             </div>
 
             {/* Gamification Benefits Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:w-1/2 shrink-0">
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/10 hover:bg-white/10 hover:border-[#FFD700]/30 transition-all duration-300 group">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:w-1/2 shrink-0">
+              <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 hover:border-[#FFD700]/30 transition-all duration-300 group">
                 <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Target className="w-5 h-5 text-[#FFD700]" />
                 </div>
@@ -174,7 +175,7 @@ export default function PredictionsPage() {
                 <p className="text-xs text-gray-500 font-medium leading-relaxed">When your scoreline lands exactly.</p>
               </div>
               
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/10 hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
+              <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Flame className="w-5 h-5 text-primary" />
                 </div>
@@ -182,7 +183,7 @@ export default function PredictionsPage() {
                 <p className="text-xs text-gray-500 font-medium leading-relaxed">When your match result call is right.</p>
               </div>
 
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-5 border border-white/10 hover:bg-white/10 hover:border-[#3B82F6]/30 transition-all duration-300 group">
+              <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 hover:border-[#3B82F6]/30 transition-all duration-300 group">
                 <div className="w-10 h-10 rounded-full bg-[#3B82F6]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Trophy className="w-5 h-5 text-[#3B82F6]" />
                 </div>
@@ -194,7 +195,7 @@ export default function PredictionsPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-3 md:px-4 py-6 md:py-8">
         {/* PREMIUM AD PLACEMENT */}
         <div className="mb-10">
           <AdBanner label="Platform Perks" type="horizontal" />
@@ -221,8 +222,8 @@ export default function PredictionsPage() {
 
         {/* ── TAB NAVIGATION ── */}
 
-        <div className="flex justify-center mb-10">
-          <div className="flex bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 shadow-xl w-fit">
+        <div className="mb-8 overflow-x-auto hide-scrollbar">
+          <div className="mx-auto flex w-max bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 shadow-xl">
             <button 
               onClick={() => setActiveTab("make")} 
               className={`px-6 md:px-10 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 relative ${
@@ -278,16 +279,16 @@ export default function PredictionsPage() {
                 </button>
               ))}
             </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
             {visibleFixtures.map((fixture: any, idx: number) => {
               const isSaved = predictions[fixture.id]?.saved;
               const hScore = predictions[fixture.id]?.home || "";
               const aScore = predictions[fixture.id]?.away || "";
 
               return (
-                <div 
-                  key={fixture.id} 
-                  className={`bg-[#111] rounded-2xl border p-4 md:p-5 shadow-2xl relative overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in ${
+                <div key={fixture.id} className="contents">
+                  <div 
+                  className={`bg-[#111] rounded-xl border p-3 md:p-4 shadow-2xl relative overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in ${
                     isSaved ? 'border-green-500/30 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)]' : 'border-white/5 hover:border-white/10 hover:shadow-[0_20px_40px_rgba(0,0,0,0.8)]'
                   }`}
                   style={{ animationDelay: `${idx * 100}ms`, animationFillMode: 'both' }}
@@ -385,8 +386,19 @@ export default function PredictionsPage() {
                     </button>
                   )}
                 </div>
+                {shouldShowFeedAd(idx, AD_STRATEGY.predictionsFeedInterval, visibleFixtures.length) ? (
+                  <div className="lg:col-span-2">
+                    <AdBanner label="Prediction Feed Sponsor" type="horizontal" />
+                  </div>
+                ) : null}
+                </div>
               );
             })}
+            {visibleFixtures.length > 0 && visibleFixtures.length < AD_STRATEGY.predictionsFeedInterval && (
+              <div className="lg:col-span-2">
+                <AdBanner label="Prediction Feed Sponsor" type="horizontal" />
+              </div>
+            )}
           </div>
           </div>
       ) : activeTab === "my" ? (

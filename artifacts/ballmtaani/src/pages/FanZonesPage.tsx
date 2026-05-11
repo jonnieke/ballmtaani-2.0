@@ -223,11 +223,15 @@ export default function FanZonesPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+    <div className="max-w-6xl mx-auto px-3 md:px-4 py-6 md:py-10">
       <div className="mb-10 text-center">
-        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-widest mb-4 bg-gradient-to-r from-red-500 via-blue-500 to-yellow-500 bg-clip-text text-transparent">Fan Zones</h1>
-        <p className="text-gray-400 font-bold uppercase tracking-wider md:text-lg">Where Kenyan fans gather, argue, and keep receipts.</p>
+        <h1 className="text-3xl md:text-5xl font-black uppercase tracking-wider mb-3 bg-gradient-to-r from-red-500 via-blue-500 to-yellow-500 bg-clip-text text-transparent">Fan Zones</h1>
+        <p className="text-gray-400 font-bold uppercase tracking-wide text-sm md:text-base">Where Kenyan fans gather, argue, and keep receipts.</p>
         <p className="text-[10px] md:text-xs text-gray-500 font-black uppercase tracking-widest mt-3">Pick a club room, drop your take, and stack status.</p>
+      </div>
+
+      <div className="mb-5 md:mb-6">
+        <AdBanner label="Fan Zone Sponsor" type="horizontal" />
       </div>
 
       <div className="mb-6 border border-white/10 bg-[#111] p-4">
@@ -303,7 +307,7 @@ export default function FanZonesPage() {
       </div>
 
       {/* Creation Gate Section */}
-      <div className="mb-12 rounded-2xl bg-gradient-to-br from-[#1B1B1B] to-[#0A0A0A] p-6 md:p-8 border border-white/10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-8 items-center justify-between">
+      <div className="mb-10 rounded-xl bg-gradient-to-br from-[#1B1B1B] to-[#0A0A0A] p-4 md:p-7 border border-white/10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row gap-6 items-center justify-between">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none"></div>
         
         <div className="relative z-10 w-full md:w-2/3">
@@ -312,11 +316,9 @@ export default function FanZonesPage() {
               Creator Status
             </span>
             {isCreator ? (
-              <span className="text-green-500 text-xs font-bold uppercase flex items-center gap-1">
-                ✓ Unlocked
-              </span>
+              <span className="text-green-500 text-xs font-bold uppercase">Unlocked</span>
             ) : (
-              <span className="text-gray-500 text-xs font-bold uppercase">🔒 Locked</span>
+              <span className="text-gray-500 text-xs font-bold uppercase">Locked</span>
             )}
           </div>
           
@@ -388,7 +390,7 @@ export default function FanZonesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {[...zones]
           .filter((z: any) => regionFilter === "All" || z.region === regionFilter)
           .filter((z: any) => !localHeatOnly || isKenyanClub(String(z.team || z.team_name || "")))
@@ -407,7 +409,7 @@ export default function FanZonesPage() {
           })
           .map((zone: any) => (
           <div key={zone.id} className="group cursor-pointer" onClick={() => setActiveZone(zone.id)}>
-            <div className="bg-[#1B1B1B] rounded-2xl border border-white/10 overflow-hidden relative transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
+            <div className="bg-[#1B1B1B] rounded-xl border border-white/10 overflow-hidden relative transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)]">
               
               {/* Dynamic Overlay Gradient */}
               <div 
@@ -416,9 +418,9 @@ export default function FanZonesPage() {
               ></div>
               
               {/* Inner content */}
-              <div className="relative z-10 p-6 flex flex-col h-full">
+              <div className="relative z-10 p-4 md:p-5 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center p-3 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border-4 border-[#1B1B1B] relative group-hover:scale-110 transition-transform duration-500 z-20">
+                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center p-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.5)] border-4 border-[#1B1B1B] relative group-hover:scale-110 transition-transform duration-500 z-20">
                     <img src={zone.logo || zone.logo_url} alt={zone.team} className="w-full h-full object-contain drop-shadow-lg" />
                   </div>
                   <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-right">
@@ -427,7 +429,7 @@ export default function FanZonesPage() {
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-black uppercase tracking-widest mb-3 font-display drop-shadow-md">{zone.team || zone.team_name}</h3>
+                <h3 className="text-lg md:text-xl font-black uppercase tracking-wide mb-3 font-display drop-shadow-md">{zone.team || zone.team_name}</h3>
                 {isKenyanClub(String(zone.team || zone.team_name || "")) && (
                   <span className="inline-block mb-2 bg-orange-500/20 border border-orange-400/40 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-orange-200">
                     Kenyan Heat

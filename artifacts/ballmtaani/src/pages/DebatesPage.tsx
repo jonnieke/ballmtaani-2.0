@@ -8,6 +8,7 @@ import AdBanner from "../components/AdBanner";
 import { SkeletonDebate } from "../components/Skeletons";
 import { UserBadge } from "../components/UserBadge";
 import SEO from "../components/SEO";
+import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 
 export default function DebatesPage() {
   const { isLoggedIn, awardCoins } = useAuth();
@@ -385,8 +386,8 @@ export default function DebatesPage() {
                 )}
               </div>
               
-              {/* AdBanner interspersed after every 2 debates */}
-              {(index + 1) % 2 === 0 && index !== debates.length - 1 && (
+              {/* AdBanner interspersed with capped density */}
+              {shouldShowFeedAd(index, AD_STRATEGY.debatesFeedInterval, visibleDebates.length) && (
                 <div className="col-span-full py-4">
                   <AdBanner label="BallMtaani Debate Sponsor" />
                 </div>

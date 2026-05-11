@@ -3,6 +3,7 @@ import { GrudgeMatchFeed, type RivalryItem } from "../components/GrudgeMatchFeed
 import { Swords, Trophy, Activity, History, MessageCircle, TrendingUp, PlayCircle, ShieldCheck, ScrollText } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
+import AdBanner from "../components/AdBanner";
 
 export default function RivalriesPage() {
   const { username, isLoggedIn } = useAuth();
@@ -167,34 +168,38 @@ export default function RivalriesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12 bg-[#1B1B1B] rounded-3xl border border-white/10 p-8 shadow-2xl relative overflow-hidden">
+    <div className="max-w-7xl mx-auto px-3 md:px-4 py-6 md:py-10">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-5 md:gap-8 mb-8 md:mb-10 bg-[#1B1B1B] rounded-xl md:rounded-2xl border border-white/10 p-4 md:p-7 shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10 pointer-events-none" />
 
         <div className="relative z-10 text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
             <Swords className="w-8 h-8 text-primary drop-shadow-[0_0_10px_rgba(179,0,0,0.5)]" />
-            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white">
+            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white">
               FAN <span className="text-[#FFD700]">DUELS</span>
             </h1>
           </div>
-          <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-xs">Call the score. Keep the receipt.</p>
+          <p className="text-gray-400 font-bold uppercase tracking-wider text-[11px] md:text-xs">Call the score. Keep the receipt.</p>
         </div>
 
-        <div className="flex gap-4 relative z-10 w-full md:w-auto">
-          <div className="bg-black/60 border border-white/10 rounded-2xl p-4 flex-1 md:min-w-[140px] text-center">
-            <span className="block text-2xl font-black text-white">12-4</span>
+        <div className="grid grid-cols-3 gap-2 md:gap-4 relative z-10 w-full md:w-auto">
+          <div className="bg-black/60 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
+            <span className="block text-lg md:text-2xl font-black text-white">12-4</span>
             <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">H2H Record</span>
           </div>
-          <div className="bg-black/60 border border-[#FFD700]/30 rounded-2xl p-4 flex-1 md:min-w-[140px] text-center shadow-[0_0_20px_rgba(255,215,0,0.1)]">
-            <span className="block text-2xl font-black text-[#FFD700]">48</span>
+          <div className="bg-black/60 border border-[#FFD700]/30 rounded-lg md:rounded-xl p-3 md:p-4 text-center shadow-[0_0_20px_rgba(255,215,0,0.1)]">
+            <span className="block text-lg md:text-2xl font-black text-[#FFD700]">48</span>
             <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Receipts Kept</span>
           </div>
-          <div className="bg-black/60 border border-accent/30 rounded-2xl p-4 flex-1 md:min-w-[140px] text-center">
-            <span className="block text-2xl font-black text-accent">1.4k</span>
+          <div className="bg-black/60 border border-accent/30 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
+            <span className="block text-lg md:text-2xl font-black text-accent">1.4k</span>
             <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Interactions</span>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6 md:mb-8">
+        <AdBanner label="Rivalry Sponsor" type="horizontal" />
       </div>
 
       <div className="mb-8 border border-white/10 bg-[#111] p-4 md:p-5">
@@ -235,7 +240,7 @@ export default function RivalriesPage() {
         )}
       </div>
 
-      <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="mb-6 md:mb-8 grid grid-cols-1 md:grid-cols-3 gap-3">
         <button className="border border-primary/30 bg-primary/10 p-4 text-left hover:bg-primary/20 transition-colors">
           <div className="flex items-center gap-2 mb-1"><PlayCircle className="w-4 h-4 text-primary" /><p className="text-xs font-black uppercase tracking-widest text-white">Start Here</p></div>
           <p className="text-[11px] font-bold text-gray-300">Accept pending duel or open one live rivalry room.</p>
@@ -300,6 +305,7 @@ export default function RivalriesPage() {
               onAcceptDuel={acceptDuel}
               onSettleDuel={openSettle}
             />
+            <AdBanner label="Duel Feed Partner" type="horizontal" />
           </div>
         ) : (
           <div className="bg-[#1B1B1B] rounded-2xl border border-white/5 p-12 text-center opacity-50 grayscale">
