@@ -42,6 +42,7 @@ export function Navbar() {
       label: "Games",
       links: [
         { href: "/predictions", label: "Calls" },
+        { href: "/war-room", label: "War Room" },
         { href: "/rapid-fire", label: "Rapid Fire" },
         { href: "/trivia", label: "Millionaire" },
       ]

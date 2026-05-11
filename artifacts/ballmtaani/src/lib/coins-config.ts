@@ -19,7 +19,8 @@ export type CoinAction =
   | 'prediction_correct'
   | 'invite_redeemed'
   | 'profile_complete'
-  | 'grudge_match_won';
+  | 'grudge_match_won'
+  | 'war_room_daily_complete';
 
 export interface CoinReward {
   action: CoinAction;
@@ -138,6 +139,13 @@ export const COIN_REWARDS: Record<CoinAction, CoinReward> = {
     label: 'Fan Duel Won',
     emoji: 'Duel',
     dailyLimit: 5,
+  },
+  war_room_daily_complete: {
+    action: 'war_room_daily_complete',
+    amount: 40,
+    label: 'War Room Daily Complete',
+    emoji: 'War',
+    dailyLimit: 1,
   },
 };
 

@@ -24,6 +24,7 @@ import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
 import RivalriesPage from "./pages/RivalriesPage";
 import RapidFirePage from "./pages/RapidFirePage";
 import TriviaPage from "./pages/TriviaPage";
+import WarRoomPage from "./pages/WarRoomPage";
 import DiagnosticsPage from "./pages/DiagnosticsPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
@@ -75,6 +76,7 @@ function AppShell() {
             <Route path="/live-center/:id" component={LiveCenterPage} />
             <Route path="/rivalries" component={RivalriesPage} />
             <Route path="/rapid-fire" component={RapidFirePage} />
+            <Route path="/war-room" component={WarRoomPage} />
             <Route path="/trivia" component={TriviaPage} />
             <Route path="/diagnostics" component={DiagnosticsPage} />
             <Route path="/terms" component={TermsPage} />

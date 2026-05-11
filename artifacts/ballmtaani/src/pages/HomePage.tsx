@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
-import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2 } from "lucide-react";
+import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2, ShieldCheck } from "lucide-react";
 import { CLUB_LOGOS } from "../data/mockData";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useDebates, useLeaderboard } from "../hooks/useData";
 import TeamLogo from "../components/TeamLogo";
@@ -270,7 +270,13 @@ export default function HomePage() {
       <section className="py-16 bg-[#0B0B0B] border-b border-[#1B1B1B]">
         <div className="max-w-6xl mx-auto px-4 text-center md:text-left">
           <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-10">The <span className="text-[#FFD700]">Arcade</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Link href="/war-room" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-green-500/50 transition-all">
+              <ShieldCheck className="w-12 h-12 text-green-400 mb-6" />
+              <h3 className="text-2xl font-black uppercase mb-3">War Room</h3>
+              <p className="text-gray-500 text-sm mb-6">Offseason daily loop: transfer rumors, lineup builds, and receipts.</p>
+              <span className="text-green-400 font-black uppercase text-[10px] tracking-widest">Enter War Room</span>
+            </Link>
             <Link href="/rapid-fire" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-blue-500/50 transition-all">
               <Zap className="w-12 h-12 text-[#1E6FFF] mb-6" />
               <h3 className="text-2xl font-black uppercase mb-3">Rapid Fire</h3>
