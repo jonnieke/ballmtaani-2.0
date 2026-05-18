@@ -10,6 +10,7 @@ import { DailyLoginModal } from "./components/DailyLoginModal";
 import { OnboardingModal } from "./components/OnboardingModal";
 import { InstallBanner } from "./components/InstallBanner";
 import { ScoreTicker } from "./components/ScoreTicker";
+import OddspediaCredit from "./components/OddspediaCredit";
 
 import HomePage from "./pages/HomePage";
 import MatchesPage from "./pages/MatchesPage";
@@ -28,6 +29,10 @@ import WarRoomPage from "./pages/WarRoomPage";
 import DiagnosticsPage from "./pages/DiagnosticsPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import LandingPage from "./pages/LandingPage";
+import WorldCup2026Page from "./pages/WorldCup2026Page";
+import MarketWatchPage from "./pages/MarketWatchPage";
+import MchambuziHalisiPage from "./pages/MchambuziHalisiPage";
 import LoginPage from "./pages/auth/LoginPage";
 import VerifyOTPPage from "./pages/auth/OTPPage";
 
@@ -37,7 +42,7 @@ function AppShell() {
   const [location] = useLocation();
   const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
-  const quietPage = ["/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation);
+  const quietPage = ["/", "/world-cup-2026", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation);
 
   return (
     <>
@@ -61,10 +66,14 @@ function AppShell() {
         {!quietPage && <OnboardingModal />}
         {!quietPage && <InstallBanner />}
         <Switch>
-            <Route path="/" component={HomePage} />
+            <Route path="/" component={LandingPage} />
+            <Route path="/home" component={HomePage} />
+            <Route path="/world-cup-2026" component={WorldCup2026Page} />
+            <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
             <Route path="/login" component={LoginPage} />
             <Route path="/verify" component={VerifyOTPPage} />
             <Route path="/matches" component={MatchesPage} />
+            <Route path="/market-watch" component={MarketWatchPage} />
             <Route path="/predictions" component={PredictionsPage} />
             <Route path="/debates" component={DebatesPage} />
             <Route path="/fan-zones" component={FanZonesPage} />
@@ -105,6 +114,9 @@ function AppShell() {
               <p className="text-gray-600 text-xs">
                 (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
               </p>
+              <div className="mt-5">
+                <OddspediaCredit />
+              </div>
             </div>
           </footer>
         )}

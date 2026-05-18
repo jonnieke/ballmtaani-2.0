@@ -323,7 +323,54 @@ function parseRssItems(xmlText: string): any[] {
   });
 }
 
-export async function fetchFootballNews(): Promise<NewsArticle[]> {
+function mapFeedItems(items: any[], feed: (typeof RSS_FEEDS)[number], sourceImageStats: Record<string, ImageTelemetry>, articles: NewsArticle[]) {
+  for (const item of items) {
+    const resolvedImage = pickBestThumbnail(item, feed.source);
+    const thumbnail = resolvedImage.thumbnail;
+    sourceImageStats[feed.source].total += 1;
+    if (resolvedImage.quality === "generic-fallback") {
+      sourceImageStats[feed.source].fallbackUsed += 1;
+    }
+
+    articles.push({
+      id: item.guid || item.link,
+      title: item.title,
+      link: normalizeArticleLink(item.link, feed.source),
+      pubDate: item.pubDate,
+      source: feed.source,
+      sourceLogo: feed.sourceLogo,
+      thumbnail,
+      imageQuality: resolvedImage.quality,
+    });
+  }
+}
+
+async function fetchFeedItems(feed: (typeof RSS_FEEDS)[number]): Promise<any[]> {
+  const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=4`;
+
+  try {
+    const res = await fetch(rss2jsonUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === "ok" && Array.isArray(data.items)) return data.items.slice(0, 4);
+    }
+  } catch {
+    // Try the XML proxy below.
+  }
+
+  try {
+    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const xmlText = await res.text();
+    return parseRssItems(xmlText).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchFootballNews(options: { network?: boolean } = {}): Promise<NewsArticle[]> {
+  const network = options.network ?? true;
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
@@ -343,38 +390,13 @@ export async function fetchFootballNews(): Promise<NewsArticle[]> {
   const articles: NewsArticle[] = [];
   const sourceImageStats: Record<string, ImageTelemetry> = {};
 
-  for (const feed of RSS_FEEDS) {
-    sourceImageStats[feed.source] = { total: 0, fallbackUsed: 0 };
-    try {
-      const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`;
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const xmlText = await res.text();
-      const items = parseRssItems(xmlText).slice(0, 4);
-
+  if (network) {
+    for (const feed of RSS_FEEDS) {
+      sourceImageStats[feed.source] = { total: 0, fallbackUsed: 0 };
+      const items = await fetchFeedItems(feed);
       if (items.length > 0) {
-        for (const item of items) {
-          const resolvedImage = pickBestThumbnail(item, feed.source);
-          const thumbnail = resolvedImage.thumbnail;
-          sourceImageStats[feed.source].total += 1;
-          if (resolvedImage.quality === "generic-fallback") {
-            sourceImageStats[feed.source].fallbackUsed += 1;
-          }
-
-          articles.push({
-            id: item.guid || item.link,
-            title: item.title,
-            link: normalizeArticleLink(item.link, feed.source),
-            pubDate: item.pubDate,
-            source: feed.source,
-            sourceLogo: feed.sourceLogo,
-            thumbnail,
-            imageQuality: resolvedImage.quality,
-          });
-        }
+        mapFeedItems(items, feed, sourceImageStats, articles);
       }
-    } catch {
-      // Feed failed, continue to next.
     }
   }
 

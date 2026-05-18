@@ -36,6 +36,9 @@ export function Navbar() {
       links: [
         { href: "/matches", label: "Directory" },
         { href: "/live-center", label: "Live Pulse" },
+        { href: "/mchambuzi-halisi", label: "Mchambuzi AI" },
+        { href: "/world-cup-2026", label: "WC26 Guide" },
+        { href: "/market-watch", label: "Market Watch" },
       ]
     },
     {
@@ -61,7 +64,7 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-[#0B0B0B]/95 backdrop-blur-md border-b border-[#1B1B1B]">
       <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
-        <Link href="/" className="flex items-center shrink-0">
+        <Link href="/home" className="flex items-center shrink-0">
           <img src="/logo.png" alt="BallMtaani" className="h-36 w-auto" />
         </Link>
 
@@ -77,9 +80,9 @@ export function Navbar() {
         {/* Desktop Nav - Hidden on mobile */}
         <div className="hidden lg:flex items-center gap-6 mx-4">
           <Link
-            href="/"
+            href="/home"
             className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-              location === "/" ? "text-primary" : "text-gray-400 hover:text-white"
+              location === "/home" ? "text-primary" : "text-gray-400 hover:text-white"
             }`}
           >
             Home
@@ -195,6 +198,17 @@ export function Navbar() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden absolute top-24 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
+          <Link
+            href="/home"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block px-4 py-3 rounded font-bold text-sm uppercase tracking-wider transition-all ${
+              location === "/home"
+                ? "bg-primary text-white"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            Home
+          </Link>
           {menuCategories.flatMap(c => c.links).map((link) => {
             const isActive = location === link.href || (link.href !== "/" && location.startsWith(link.href));
             return (

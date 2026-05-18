@@ -25,7 +25,12 @@ export const MAJOR_LEAGUE_IDS = {
 const ALL_LEAGUE_IDS = Object.values(MAJOR_LEAGUE_IDS);
 
 // Current season (API-Football uses the year the season started)
-const CURRENT_SEASON = 2025;
+function getCurrentSeasonStartYear(now = new Date()): number {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() + 1;
+  return month >= 7 ? year : year - 1;
+}
+const CURRENT_SEASON = getCurrentSeasonStartYear();
 const FIXTURE_TEAM_CACHE_TTL_MS = 5 * 60 * 1000;
 const LIVE_SUMMARY_CACHE_TTL_MS = 15 * 1000;
 const fixtureTeamCache = new Map<string, { homeTeamId: number | null; awayTeamId: number | null; expiresAt: number }>();
@@ -97,6 +102,12 @@ export interface StandingEntry {
   won: number;
   draw: number;
   lost: number;
+}
+
+export interface TournamentStandingEntry extends StandingEntry {
+  group: string;
+  goalsFor: number;
+  goalsAgainst: number;
 }
 
 export interface FixtureEvent {
@@ -188,8 +199,9 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
         awayColor: "#777",
         awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
         time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
-          hour: '2-digit',
+          hour: 'numeric',
           minute: '2-digit',
+          hour12: true,
           timeZone: 'Africa/Nairobi'
         }) + ' EAT',
         league: item.league.name,
@@ -205,6 +217,93 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
     const dateA = new Date(a.date === "Today" ? Date.now() : a.date === "Tomorrow" ? Date.now() + 86400000 : Date.now());
     return 0; // Keep API order which is already chronological
   });
+}
+
+export async function fetchLeagueFixtures(leagueId: number, season: number, next = 8): Promise<any[]> {
+  const raw = await apiFetch(`/fixtures?league=${leagueId}&season=${season}&next=${next}`);
+  if (!raw || raw.length === 0) return [];
+
+  return raw.map((item: any) => ({
+    id: String(item.fixture.id),
+    home: item.teams.home.name,
+    homeLogo: item.teams.home.logo,
+    homeColor: "#555",
+    homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
+    away: item.teams.away.name,
+    awayLogo: item.teams.away.logo,
+    awayColor: "#777",
+    awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+    time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Africa/Nairobi'
+    }),
+    league: item.league.name,
+    leagueLogo: item.league.logo,
+    date: new Date(item.fixture.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    group: item.league.round || "World Cup 2026",
+    timestamp: new Date(item.fixture.date).getTime(),
+  }));
+}
+
+export async function fetchTournamentFixtures(leagueId: number, season: number): Promise<any[]> {
+  const raw = await apiFetch(`/fixtures?league=${leagueId}&season=${season}`);
+  if (!raw || raw.length === 0) return [];
+
+  return raw.map((item: any) => ({
+    id: String(item.fixture.id),
+    home: item.teams.home.name,
+    homeLogo: item.teams.home.logo,
+    homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
+    away: item.teams.away.name,
+    awayLogo: item.teams.away.logo,
+    awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+    time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Africa/Nairobi'
+    }),
+    date: new Date(item.fixture.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    venue: item.fixture.venue?.name || "Venue TBC",
+    city: item.fixture.venue?.city || "",
+    status: item.fixture.status?.short || "NS",
+    round: item.league.round || "World Cup 2026",
+    timestamp: new Date(item.fixture.date).getTime(),
+  })).sort((a: any, b: any) => a.timestamp - b.timestamp);
+}
+
+export async function fetchTournamentStandings(leagueId: number, season: number): Promise<Record<string, TournamentStandingEntry[]>> {
+  const raw = await apiFetch(`/standings?league=${leagueId}&season=${season}`);
+  if (!raw || raw.length === 0) return {};
+
+  const groups = raw[0]?.league?.standings || [];
+  const result: Record<string, TournamentStandingEntry[]> = {};
+
+  groups.forEach((groupRows: any[]) => {
+    groupRows.forEach((entry: any) => {
+      const groupName = entry.group || "World Cup";
+      if (!result[groupName]) result[groupName] = [];
+      result[groupName].push({
+        rank: entry.rank,
+        team: entry.team.name,
+        logo: entry.team.logo,
+        points: entry.points,
+        played: entry.all.played,
+        gd: entry.goalsDiff > 0 ? `+${entry.goalsDiff}` : String(entry.goalsDiff),
+        form: (entry.form || "").split("").slice(-5),
+        won: entry.all.win,
+        draw: entry.all.draw,
+        lost: entry.all.lose,
+        group: groupName,
+        goalsFor: entry.all.goals?.for ?? 0,
+        goalsAgainst: entry.all.goals?.against ?? 0,
+      });
+    });
+  });
+
+  return result;
 }
 
 function formatRelativeDate(dateStr: string): string {
@@ -249,6 +348,12 @@ export async function fetchRecentMatches(): Promise<any[]> {
         league: item.league.name,
         leagueLogo: item.league.logo,
         date: new Date(item.fixture.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        kickoff: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'Africa/Nairobi'
+        }),
         timestamp: new Date(item.fixture.date).getTime()
       }));
       allFixtures.push(...mapped);

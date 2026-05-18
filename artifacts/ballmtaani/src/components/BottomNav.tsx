@@ -5,7 +5,7 @@ export default function BottomNav() {
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/", label: "Home", icon: Home },
+    { href: "/home", label: "Home", icon: Home },
     { href: "/matches", label: "Matches", icon: Trophy },
     { href: "/rapid-fire", label: "Arcade", icon: LayoutGrid },
     { href: "/rivalries", label: "Duels", icon: Swords },
