@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://ballmtaani20.vercel.app/sitemap.xml
+Sitemap: https://ballmtaani.com/sitemap.xml

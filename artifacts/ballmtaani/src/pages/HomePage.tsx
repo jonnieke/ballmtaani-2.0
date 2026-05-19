@@ -11,6 +11,7 @@ import PremiumMatchCard from "../components/PremiumMatchCard";
 import SEO from "../components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 import NewsFeed from "../components/NewsFeed";
+import FloatingMchambuzi from "../components/FloatingMchambuzi";
 
 export default function HomePage() {
   const { isLoggedIn } = useAuth();
@@ -44,8 +45,20 @@ export default function HomePage() {
   return (
     <div className="pb-12">
       <SEO 
-        title="BallMtaani | Kenyan Fans, Big Match Banter"
-        description="Kenyan football fans predict, debate, and banter around the biggest matches in EPL, UCL, AFCON, CAF, and local derbies."
+        title="BallMtaani Home | Kenyan Football Fans, Scores and Banter"
+        description="The BallMtaani home feed brings Kenyan football fans live matches, latest news, predictions, debates, fan rooms and matchday receipts."
+        keywords={[
+          "BallMtaani home",
+          "Kenyan football fans",
+          "football news Kenya",
+          "live football matches",
+          "football banter Kenya",
+        ]}
+        path="/home"
+        breadcrumbs={[
+          { name: "BallMtaani", url: "/" },
+          { name: "Home", url: "/home" },
+        ]}
       />
 
       {/* ═══════════════════════════════════════════
@@ -349,6 +362,7 @@ export default function HomePage() {
           <Link href="/leaderboard" className="text-xs font-black uppercase tracking-widest py-4 px-10 rounded-full border border-white/10 hover:bg-white/5 transition-all">Full Leaderboard</Link>
         </div>
       </section>
+      <FloatingMchambuzi variant="home" />
     </div>
   );
 }

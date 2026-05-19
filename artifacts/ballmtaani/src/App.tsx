@@ -11,6 +11,7 @@ import { OnboardingModal } from "./components/OnboardingModal";
 import { InstallBanner } from "./components/InstallBanner";
 import { ScoreTicker } from "./components/ScoreTicker";
 import OddspediaCredit from "./components/OddspediaCredit";
+import RouteSEO from "./components/RouteSEO";
 
 import HomePage from "./pages/HomePage";
 import MatchesPage from "./pages/MatchesPage";
@@ -65,6 +66,7 @@ function AppShell() {
         {!quietPage && <BottomNav />}
         {!quietPage && <OnboardingModal />}
         {!quietPage && <InstallBanner />}
+        <RouteSEO path={normalizedLocation} />
         <Switch>
             <Route path="/" component={LandingPage} />
             <Route path="/home" component={HomePage} />

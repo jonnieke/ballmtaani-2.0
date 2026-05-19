@@ -86,7 +86,33 @@ export default function MchambuziHalisiPage() {
     <div className="relative min-h-screen overflow-hidden bg-[#06090f] pb-24 text-white">
       <SEO
         title="Mchambuzi Halisi | BallMtaani AI Football Analyst"
-        description="Ask BallMtaani's hilarious AI football analyst about live matches, fixtures, football news, form and match context."
+        description="Ask Mchambuzi Halisi, BallMtaani's Kenyan AI football analyst, about live matches, fixtures, football news, form, transfers, WC26 and match context."
+        keywords={[
+          "Mchambuzi Halisi",
+          "AI football analyst Kenya",
+          "football AI Kenya",
+          "BallMtaani AI",
+          "football news Kenya",
+          "live football analysis",
+        ]}
+        path="/mchambuzi-halisi"
+        breadcrumbs={[
+          { name: "BallMtaani", url: "/" },
+          { name: "Mchambuzi Halisi", url: "/mchambuzi-halisi" },
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "Mchambuzi Halisi",
+          "applicationCategory": "SportsApplication",
+          "operatingSystem": "Web",
+          "description": "AI football analyst for Kenyan fans using BallMtaani football data and news context.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "KES",
+          },
+        }}
       />
 
       <div className="fixed inset-0 z-0">

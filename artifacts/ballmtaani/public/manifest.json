@@ -1,7 +1,7 @@
 {
   "name": "BallMtaani",
   "short_name": "BallMtaani",
-  "description": "Africa's #1 Social Football Hub — Predict. Debate. Dominate.",
+  "description": "Kenyan football intelligence, live scores, predictions, debates, fan zones and World Cup 2026 tracking.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0B0B0B",
@@ -27,24 +27,24 @@
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Predict Matches",
-      "short_name": "Predict",
-      "description": "Make your match predictions and earn MTC",
-      "url": "/predictions",
+      "name": "Football Data Center",
+      "short_name": "Matches",
+      "description": "Open live scores, fixtures, results and standings",
+      "url": "/matches",
       "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
     },
     {
-      "name": "Play Trivia",
-      "short_name": "Trivia",
-      "description": "Test your football knowledge",
-      "url": "/trivia",
+      "name": "Mchambuzi Halisi",
+      "short_name": "Mchambuzi",
+      "description": "Ask the BallMtaani AI football analyst",
+      "url": "/mchambuzi-halisi",
       "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
     },
     {
-      "name": "My Wallet",
-      "short_name": "Wallet",
-      "description": "Check your Mtaani Coin balance",
-      "url": "/store",
+      "name": "World Cup 2026",
+      "short_name": "WC26",
+      "description": "Track World Cup 2026 fixtures, groups and stadiums",
+      "url": "/world-cup-2026",
       "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
     }
   ]

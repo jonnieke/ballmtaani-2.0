@@ -1,26 +1,47 @@
 import { useEffect } from "react";
 
+const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://ballmtaani.com").replace(/\/$/, "");
+const DEFAULT_IMAGE = `${SITE_URL}/opengraph.jpg`;
+
 interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string[];
   image?: string;
   url?: string;
+  path?: string;
   type?: "website" | "article";
   noindex?: boolean;
+  breadcrumbs?: { name: string; url: string }[];
   structuredData?: Record<string, any> | Record<string, any>[];
 }
 
 export default function SEO({ 
-  title = "BallMtaani - Kenyan Fans, Big Match Banter", 
-  description = "Kenyan football fans predict, debate, and keep receipts around the biggest football matches.",
-  image = "https://ballmtaani20.vercel.app/opengraph.jpg",
-  url = "https://ballmtaani20.vercel.app",
+  title = "BallMtaani - Kenyan Football Intelligence, Live Scores and Fan Debate", 
+  description = "BallMtaani gives Kenyan football fans live scores, fixtures, World Cup 2026 tracking, predictions, debates, fan zones and AI-powered match intelligence.",
+  keywords = [
+    "BallMtaani",
+    "Kenyan football fans",
+    "football live scores Kenya",
+    "Premier League Kenya",
+    "World Cup 2026",
+    "football predictions",
+    "football debates",
+  ],
+  image = DEFAULT_IMAGE,
+  url,
+  path,
   type = "website",
   noindex = false,
+  breadcrumbs,
   structuredData
 }: SEOProps) {
   
   useEffect(() => {
+    const currentPath = path || window.location.pathname || "/";
+    const absoluteUrl = url || `${SITE_URL}${currentPath === "/" ? "/" : currentPath}`;
+    const absoluteImage = image.startsWith("http") ? image : `${SITE_URL}${image.startsWith("/") ? image : `/${image}`}`;
+
     // Basic Meta
     document.title = title;
     
@@ -37,12 +58,17 @@ export default function SEO({
 
     // SEO
     updateMeta("description", description);
+    updateMeta("keywords", keywords.join(", "));
+    updateMeta("application-name", "BallMtaani");
+    updateMeta("author", "BallMtaani");
+    updateMeta("theme-color", "#B30000");
     
     // OpenGraph (Facebook/WhatsApp)
     updateMeta("og:title", title, "property");
     updateMeta("og:description", description, "property");
-    updateMeta("og:image", image, "property");
-    updateMeta("og:url", url, "property");
+    updateMeta("og:image", absoluteImage, "property");
+    updateMeta("og:image:alt", "BallMtaani football live scores and fan intelligence", "property");
+    updateMeta("og:url", absoluteUrl, "property");
     updateMeta("og:type", type, "property");
     updateMeta("og:site_name", "BallMtaani", "property");
     updateMeta("og:locale", "en_KE", "property");
@@ -51,7 +77,8 @@ export default function SEO({
     updateMeta("twitter:card", "summary_large_image");
     updateMeta("twitter:title", title);
     updateMeta("twitter:description", description);
-    updateMeta("twitter:image", image);
+    updateMeta("twitter:image", absoluteImage);
+    updateMeta("twitter:image:alt", "BallMtaani football live scores and fan intelligence");
     updateMeta("robots", noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large");
 
     // Canonical
@@ -61,7 +88,7 @@ export default function SEO({
       canonical.setAttribute("rel", "canonical");
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute("href", url);
+    canonical.setAttribute("href", absoluteUrl);
 
     // JSON-LD
     const existingNodes = document.querySelectorAll("script[data-seo-jsonld='1']");
@@ -72,20 +99,56 @@ export default function SEO({
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "BallMtaani",
-        "url": "https://ballmtaani20.vercel.app",
-        "logo": "https://ballmtaani20.vercel.app/logo.png",
+        "url": SITE_URL,
+        "logo": `${SITE_URL}/logo.png`,
+        "sameAs": [
+          "https://github.com/jonnieke/ballmtaani-2.0"
+        ],
       },
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "BallMtaani",
-        "url": "https://ballmtaani20.vercel.app",
+        "url": SITE_URL,
         "inLanguage": "en-KE",
+        "description": "Kenyan football intelligence, live scores, predictions, debates, fan zones and World Cup 2026 tracking.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": `${SITE_URL}/matches?search={search_term_string}`,
+          "query-input": "required name=search_term_string"
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "BallMtaani",
+        "url": SITE_URL,
+        "applicationCategory": "SportsApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "en-KE",
+        "description": description,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KES"
+        }
       }
     ];
 
+    const breadcrumbData = breadcrumbs?.length
+      ? [{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": breadcrumbs.map((item, index) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "name": item.name,
+            "item": item.url.startsWith("http") ? item.url : `${SITE_URL}${item.url}`,
+          })),
+        }]
+      : [];
     const custom = structuredData ? (Array.isArray(structuredData) ? structuredData : [structuredData]) : [];
-    [...baseStructuredData, ...custom].forEach((entry) => {
+    [...baseStructuredData, ...breadcrumbData, ...custom].forEach((entry) => {
       const script = document.createElement("script");
       script.type = "application/ld+json";
       script.setAttribute("data-seo-jsonld", "1");
@@ -93,7 +156,7 @@ export default function SEO({
       document.head.appendChild(script);
     });
 
-  }, [title, description, image, url, type, noindex, structuredData]);
+  }, [title, description, keywords, image, url, path, type, noindex, breadcrumbs, structuredData]);
 
   return null; // Side-effect only component
 }

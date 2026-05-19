@@ -122,7 +122,35 @@ export default function WorldCup2026Page() {
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] pb-24 text-white">
       <SEO
         title="World Cup 2026 Guide | BallMtaani WC26 Tracker"
-        description="Track FIFA World Cup 2026 format, groups, fixtures, stadiums and API-Football powered data on BallMtaani."
+        description="Track FIFA World Cup 2026 format, groups, fixtures, stadiums, host cities and BallMtaani fan intelligence for Kenyan football fans."
+        keywords={[
+          "World Cup 2026",
+          "FIFA World Cup 2026 fixtures",
+          "World Cup 2026 groups",
+          "World Cup 2026 stadiums",
+          "WC26 Kenya",
+          "BallMtaani WC26",
+        ]}
+        path="/world-cup-2026"
+        breadcrumbs={[
+          { name: "BallMtaani", url: "/" },
+          { name: "World Cup 2026", url: "/world-cup-2026" },
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "SportsEvent",
+          "name": "FIFA World Cup 2026",
+          "sport": "Football",
+          "startDate": "2026-06-11",
+          "endDate": "2026-07-19",
+          "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+          "eventStatus": "https://schema.org/EventScheduled",
+          "location": STADIUMS.map((stadium) => ({
+            "@type": "Place",
+            "name": stadium.name,
+            "address": `${stadium.city}, ${stadium.country}`,
+          })),
+        }}
       />
 
       <div className="fixed inset-0 z-0">
@@ -154,7 +182,7 @@ export default function WorldCup2026Page() {
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold uppercase text-white">Next WC26 Fixtures</h2>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#FFD700]">league=1 / season=2026</p>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#FFD700]">Live tournament feed</p>
               </div>
               <Database className="h-6 w-6 text-[#FFD700]" />
             </div>

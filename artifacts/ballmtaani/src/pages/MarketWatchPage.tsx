@@ -101,7 +101,31 @@ export default function MarketWatchPage() {
     <div className="relative min-h-screen overflow-hidden bg-[#070a0f] pb-24 text-white">
       <SEO
         title="Market Watch | BallMtaani Football Intelligence"
-        description="Football market intelligence for BallMtaani fans: sentiment, movement signals, match context and fan-vs-market comparisons."
+        description="Football market intelligence for BallMtaani fans: live scores, movement signals, match context, sentiment and fan-vs-market comparisons without becoming a betting product."
+        keywords={[
+          "football market watch",
+          "football intelligence Kenya",
+          "match sentiment",
+          "odds movement football",
+          "Oddspedia football data",
+          "BallMtaani market watch",
+        ]}
+        path="/market-watch"
+        breadcrumbs={[
+          { name: "BallMtaani", url: "/" },
+          { name: "Market Watch", url: "/market-watch" },
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          "name": "BallMtaani Market Watch",
+          "description": "Football match context, live scores, market movement signals and fan intelligence for BallMtaani.",
+          "creator": {
+            "@type": "Organization",
+            "name": "BallMtaani",
+          },
+          "license": "https://oddspedia.com",
+        }}
       />
 
       <div className="fixed inset-0 z-0">

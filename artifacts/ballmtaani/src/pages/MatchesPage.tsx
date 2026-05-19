@@ -135,7 +135,7 @@ function StandingMiniTable({ league, rows }: { league: string; rows: any[] }) {
 export default function MatchesPage() {
   const [view, setView] = useState<HubView>("overview");
   const [leagueFilter, setLeagueFilter] = useState("all");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [tableLeague, setTableLeague] = useState("Premier League");
 
   const { data: liveMatches = [], isFetching: liveFetching } = useMatches();
@@ -182,8 +182,32 @@ export default function MatchesPage() {
   return (
     <div className="min-h-screen bg-[#070a0f] pb-24 text-white">
       <SEO
-        title="Football Data Center | BallMtaani"
-        description="A one-stop football hub for Kenyan fans with live matches, fixtures, results, standings and World Cup routes powered by API-Football."
+        title="Football Data Center Kenya | Live Scores, Fixtures and Tables"
+        description="BallMtaani Matches is a one-stop football data center for Kenyan fans with live matches, fixtures, results, standings, World Cup 2026 routes and match intelligence."
+        keywords={[
+          "football data center Kenya",
+          "live football scores Kenya",
+          "Premier League fixtures Kenya",
+          "football standings",
+          "World Cup 2026 fixtures",
+          "BallMtaani matches",
+        ]}
+        path="/matches"
+        breadcrumbs={[
+          { name: "BallMtaani", url: "/" },
+          { name: "Football Data Center", url: "/matches" },
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": "BallMtaani match data sections",
+          "itemListElement": navItems.map((item, index) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "name": item.label,
+            "url": "https://ballmtaani.com/matches",
+          })),
+        }}
       />
 
       <section className="relative overflow-hidden border-b border-white/10">
@@ -256,8 +280,8 @@ export default function MatchesPage() {
             })}
           </div>
 
-          <div className="flex gap-2">
-            <div className="relative min-w-0 flex-1 lg:w-64">
+          <div className="grid gap-2 sm:flex">
+            <div className="relative min-w-0 flex-1 sm:min-w-[220px] lg:w-64">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/32" />
               <input
                 value={query}
@@ -269,7 +293,7 @@ export default function MatchesPage() {
             <select
               value={leagueFilter}
               onChange={(e) => setLeagueFilter(e.target.value)}
-              className="h-10 rounded-full border border-white/10 bg-[#101721] px-3 text-xs font-bold uppercase tracking-[0.12em] text-white/70 outline-none focus:border-primary/60"
+              className="h-10 w-full rounded-full border border-white/10 bg-[#101721] px-3 text-xs font-bold uppercase tracking-[0.12em] text-white/70 outline-none focus:border-primary/60 sm:w-auto"
             >
               <option value="all">All leagues</option>
               {availableLeagues.map((league) => (

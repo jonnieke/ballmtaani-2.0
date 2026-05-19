@@ -21,6 +21,7 @@ import {
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
 import OddspediaCredit from "../components/OddspediaCredit";
+import FloatingMchambuzi from "../components/FloatingMchambuzi";
 import {
   fetchLeagueFixtures,
   fetchLiveMatches,
@@ -289,8 +290,39 @@ export default function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-black pb-24 text-white">
       <SEO
-        title="BallMtaani Live Hub | API-Football + WC26"
-        description="A data-first football landing page with live scores, Premier League standings, World Cup 2026 fixtures, and BallMtaani fan features."
+        title="BallMtaani Live Hub | Kenyan Football Intelligence"
+        description="BallMtaani Live Hub brings Kenyan fans live scores, fixtures, Premier League standings, World Cup 2026 tracking, Mchambuzi Halisi AI and football debate routes."
+        keywords={[
+          "BallMtaani live hub",
+          "Kenyan football live scores",
+          "football data center Kenya",
+          "World Cup 2026 tracker",
+          "Mchambuzi Halisi",
+          "Premier League Kenya",
+        ]}
+        path="/"
+        breadcrumbs={[{ name: "BallMtaani", url: "/" }]}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "BallMtaani football intelligence features",
+            "itemListElement": FEATURE_LINKS.map((item, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "name": item.label,
+              "url": `https://ballmtaani.com${item.href}`,
+            })),
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "SportsOrganization",
+            "name": "BallMtaani",
+            "sport": "Football",
+            "url": "https://ballmtaani.com/",
+            "areaServed": "Kenya",
+          },
+        ]}
       />
 
       <div className="fixed inset-0 z-0 bg-black">
@@ -435,6 +467,7 @@ export default function LandingPage() {
           <OddspediaCredit />
         </div>
       </footer>
+      <FloatingMchambuzi variant="landing" />
     </div>
   );
 }
