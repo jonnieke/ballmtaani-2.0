@@ -73,6 +73,8 @@ async function apiFetch(endpoint: string): Promise<any> {
 // ─── Types ──────────────────────────────────────────────────
 export interface LiveMatch {
   id: string;
+  homeTeamId?: number;
+  awayTeamId?: number;
   home: string;
   homeLogo: string;
   homeColor: string;
@@ -159,6 +161,32 @@ export interface TeamLineup {
   players: PlayerLineup[];
 }
 
+export interface TeamSeasonStats {
+  team: string;
+  logo: string;
+  league: string;
+  fixtures: {
+    played: number;
+    wins: number;
+    draws: number;
+    losses: number;
+  };
+  goals: {
+    for: number;
+    against: number;
+  };
+  cleanSheets: {
+    total: number;
+    home: number;
+    away: number;
+  };
+  failedToScore: {
+    total: number;
+    home: number;
+    away: number;
+  };
+}
+
 // ─── 1. LIVE MATCHES (filtered to major leagues) ────────────
 export async function fetchLiveMatches(): Promise<LiveMatch[]> {
   const raw = await apiFetch('/fixtures?live=all');
@@ -171,6 +199,8 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
 
   return majorLeagueMatches.map((item: any) => ({
     id: String(item.fixture.id),
+    homeTeamId: item.teams.home.id,
+    awayTeamId: item.teams.away.id,
     home: item.teams.home.name,
     homeLogo: item.teams.home.logo,
     homeColor: "#555",
@@ -204,6 +234,8 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
     if (raw && raw.length > 0) {
       const mapped = raw.map((item: any) => ({
         id: String(item.fixture.id),
+        homeTeamId: item.teams.home.id,
+        awayTeamId: item.teams.away.id,
         home: item.teams.home.name,
         homeLogo: item.teams.home.logo,
         homeColor: "#555",
@@ -219,18 +251,17 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
           timeZone: 'Africa/Nairobi'
         }) + ' EAT',
         league: item.league.name,
+        leagueId: item.league.id,
         leagueLogo: item.league.logo,
-        date: formatRelativeDate(item.fixture.date)
+        date: formatRelativeDate(item.fixture.date),
+        kickoffAt: new Date(item.fixture.date).getTime(),
       }));
       allFixtures.push(...mapped);
     }
   }
 
-  // Sort by date (soonest first)
-  return allFixtures.sort((a: any, b: any) => {
-    const dateA = new Date(a.date === "Today" ? Date.now() : a.date === "Tomorrow" ? Date.now() + 86400000 : Date.now());
-    return 0; // Keep API order which is already chronological
-  });
+  // Sort by kickoff timestamp (soonest first)
+  return allFixtures.sort((a: any, b: any) => (a.kickoffAt || 0) - (b.kickoffAt || 0));
 }
 
 export async function fetchLeagueFixtures(leagueId: number, season: number, next = 8): Promise<any[]> {
@@ -239,6 +270,8 @@ export async function fetchLeagueFixtures(leagueId: number, season: number, next
 
   return raw.map((item: any) => ({
     id: String(item.fixture.id),
+    homeTeamId: item.teams.home.id,
+    awayTeamId: item.teams.away.id,
     home: item.teams.home.name,
     homeLogo: item.teams.home.logo,
     homeColor: "#555",
@@ -254,6 +287,7 @@ export async function fetchLeagueFixtures(leagueId: number, season: number, next
       timeZone: 'Africa/Nairobi'
     }),
     league: item.league.name,
+    leagueId: item.league.id,
     leagueLogo: item.league.logo,
     date: new Date(item.fixture.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     group: item.league.round || "World Cup 2026",
@@ -323,11 +357,12 @@ export async function fetchTournamentStandings(leagueId: number, season: number)
 function formatRelativeDate(dateStr: string): string {
   const matchDate = new Date(dateStr);
   const now = new Date();
-  const diff = matchDate.getTime() - now.getTime();
-  const daysDiff = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const localNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const localMatch = new Date(matchDate.getFullYear(), matchDate.getMonth(), matchDate.getDate());
+  const diffDays = Math.round((localMatch.getTime() - localNow.getTime()) / 86400000);
 
-  if (daysDiff <= 0) return "Today";
-  if (daysDiff === 1) return "Tomorrow";
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
   return matchDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
@@ -351,6 +386,8 @@ export async function fetchRecentMatches(): Promise<any[]> {
     if (raw && raw.length > 0) {
       const mapped = raw.map((item: any) => ({
         id: String(item.fixture.id),
+        homeTeamId: item.teams.home.id,
+        awayTeamId: item.teams.away.id,
         home: item.teams.home.name,
         homeLogo: item.teams.home.logo,
         homeColor: "#555",
@@ -362,6 +399,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
         homeScore: item.goals.home ?? 0,
         awayScore: item.goals.away ?? 0,
         league: item.league.name,
+        leagueId: item.league.id,
         leagueLogo: item.league.logo,
         date: new Date(item.fixture.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
         kickoff: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
@@ -583,5 +621,47 @@ export async function fetchFixtureLineups(fixtureId: string): Promise<{ home: Te
   return {
     home: mapLineup(raw[0]),
     away: mapLineup(raw[1])
+  };
+}
+
+export async function fetchTeamSeasonStats(
+  teamId: number | string,
+  leagueId: number | string,
+  season = CURRENT_SEASON,
+): Promise<TeamSeasonStats | null> {
+  let stats: any = null;
+  for (const year of [season, CURRENT_SEASON, CURRENT_SEASON - 1]) {
+    const raw = await apiFetch(`/teams/statistics?team=${teamId}&league=${leagueId}&season=${year}`);
+    if (raw?.team && raw?.fixtures) {
+      stats = raw;
+      break;
+    }
+  }
+  if (!stats?.team || !stats?.fixtures) return null;
+
+  return {
+    team: stats.team.name,
+    logo: stats.team.logo,
+    league: stats.league?.name || "League",
+    fixtures: {
+      played: stats.fixtures?.played?.total ?? 0,
+      wins: stats.fixtures?.wins?.total ?? 0,
+      draws: stats.fixtures?.draws?.total ?? 0,
+      losses: stats.fixtures?.loses?.total ?? 0,
+    },
+    goals: {
+      for: stats.goals?.for?.total?.total ?? 0,
+      against: stats.goals?.against?.total?.total ?? 0,
+    },
+    cleanSheets: {
+      total: stats.clean_sheet?.total ?? 0,
+      home: stats.clean_sheet?.home ?? 0,
+      away: stats.clean_sheet?.away ?? 0,
+    },
+    failedToScore: {
+      total: stats.failed_to_score?.total ?? 0,
+      home: stats.failed_to_score?.home ?? 0,
+      away: stats.failed_to_score?.away ?? 0,
+    },
   };
 }

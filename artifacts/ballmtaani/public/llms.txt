@@ -1,0 +1,31 @@
+BallMtaani
+Kenyan football intelligence platform with live scores, fixtures, standings, fan debates, predictions, and World Cup 2026 tracking.
+
+Primary URL: https://ballmtaani.com/
+Coverage: Football only.
+Primary audience: Kenyan fans first, global fans second.
+
+Key sections:
+- Live Hub: https://ballmtaani.com/
+- Home feed: https://ballmtaani.com/home
+- Matches data center: https://ballmtaani.com/matches
+- Live center: https://ballmtaani.com/live-center
+- WC26 tracker: https://ballmtaani.com/world-cup-2026
+- Mchambuzi Halisi analyst: https://ballmtaani.com/mchambuzi-halisi
+- Market watch: https://ballmtaani.com/market-watch
+- Predictions: https://ballmtaani.com/predictions
+- Debates: https://ballmtaani.com/debates
+- Rapid fire: https://ballmtaani.com/rapid-fire
+- Rivalries: https://ballmtaani.com/rivalries
+- Fan zones: https://ballmtaani.com/fan-zones
+- Trivia: https://ballmtaani.com/trivia
+- War room: https://ballmtaani.com/war-room
+
+Freshness:
+- Live and fixture context is powered by API-Football.
+- News context includes BBC Sport and Goal.com feeds where available.
+
+Editorial intent:
+- Fan-first tone.
+- Data-backed football commentary.
+- No betting-first framing.

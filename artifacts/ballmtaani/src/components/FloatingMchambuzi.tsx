@@ -10,6 +10,7 @@ type ChatLine = {
   role: "fan" | "analyst";
   text: string;
   provider?: string;
+  citation?: string;
 };
 
 const QUICK_PROMPTS = [
@@ -39,7 +40,12 @@ export default function FloatingMchambuzi({ variant = "home" }: FloatingMchambuz
     setLines((prev) => [...prev, { role: "fan", text: clean }]);
 
     const result = await askMchambuziHalisi(clean);
-    setLines((prev) => [...prev, { role: "analyst", text: result.answer, provider: result.provider }]);
+    const sources = Array.isArray(result.context?.sources) && result.context.sources.length
+      ? result.context.sources.join(" | ")
+      : "API-Football | BBC Sport RSS | Goal.com RSS";
+    const updatedAt = result.context?.generatedAtLabel || "Latest timeline";
+    const citation = `${sources} • Updated: ${updatedAt}`;
+    setLines((prev) => [...prev, { role: "analyst", text: result.answer, provider: result.provider, citation }]);
     setThinking(false);
   };
 
@@ -86,6 +92,11 @@ export default function FloatingMchambuzi({ variant = "home" }: FloatingMchambuz
                 {line.provider ? (
                   <div className="mt-2 text-[9px] font-bold uppercase tracking-[0.16em] text-white/35">
                     {line.provider === "fallback" ? "Data mode" : line.provider}
+                  </div>
+                ) : null}
+                {line.citation ? (
+                  <div className="mt-2 border-t border-white/10 pt-2 text-[10px] leading-4 text-white/55">
+                    Citation: {line.citation}
                   </div>
                 ) : null}
               </div>

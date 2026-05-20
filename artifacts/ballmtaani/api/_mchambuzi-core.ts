@@ -18,6 +18,8 @@ export type MchambuziServerContext = {
   upcoming: string[];
   recent: string[];
   news: string[];
+  wc26StartDate: string;
+  sources: string[];
 };
 
 export type MchambuziServerAnswer = {
@@ -171,6 +173,8 @@ async function buildContext(env: MchambuziEnv): Promise<MchambuziServerContext> 
     upcoming: [...premierUpcoming, ...laLigaUpcoming, ...serieAUpcoming].slice(0, 12).map(matchLine),
     recent: [...premierRecent, ...laLigaRecent].slice(0, 10).map(matchLine),
     news: news.slice(0, 10),
+    wc26StartDate: "June 11, 2026",
+    sources: ["API-Football fixtures", "BBC Sport RSS", "Goal.com RSS"],
   };
 }
 
@@ -180,7 +184,15 @@ function buildPrompt(question: string, context: MchambuziServerContext) {
 Rules:
 - Answer only football questions.
 - Funny, sharp, Kenyan fan energy. Light Swahili/Sheng is okay.
+- Keep it fan-friendly, not academic.
+- Use short lines. Max 120 words total unless fan asks for deep dive.
+- Structure:
+  1) Quick take (1 line)
+  2) Why (2-3 short lines with concrete data)
+  3) Watchout (1 short line)
+- Do not write source links inside the body text.
 - Today's timeline is ${context.generatedAtLabel}. Current football season context is ${context.seasonLabel}.
+- WC26 known kickoff date is ${context.wc26StartDate}. Never invent a different kickoff date.
 - Use the supplied live data, fixture dates, recent results and BBC/Goal headlines first.
 - Do not use old model memory, old league tables, 2023/24, 2024/25 or historical results unless the fan explicitly asks for history.
 - If a league is between seasons or no current feed is available, say the current feed is thin instead of inventing form.
@@ -210,10 +222,16 @@ ${context.recent.length ? context.recent.join("\n") : "No recent results in feed
 HEADLINES:
 ${context.news.length ? context.news.join("\n") : "No BBC/Goal headlines fetched."}
 
+WC26 OFFICIAL KICKOFF:
+${context.wc26StartDate}
+
+DATA SOURCES:
+${context.sources.join(", ")}
+
 Fan question:
 ${question}
 
-Answer in 2-5 short paragraphs.`;
+Answer as punchy football chat, not an essay.`;
 }
 
 async function askOpenAi(prompt: string, env: MchambuziEnv, diagnostics: string[]) {
@@ -339,6 +357,10 @@ function buildFallbackAnswer(question: string, context: MchambuziServerContext) 
 
   if (lower.includes("live") || lower.includes("now") || lower.includes("today")) {
     return cleanText(`Sasa, live picture iko hivi: ${live}. The headline noise right now: ${news}. My read: start with the live feed, then check lineups and momentum before making loud group-chat declarations. Football loves humiliating confidence.`);
+  }
+
+  if (lower.includes("world cup") || lower.includes("wc26") || lower.includes("2026")) {
+    return cleanText(`WC26 bado inaiva, but facts first: kickoff is ${context.wc26StartDate}. Current context here is from ${context.sources.join(", ")} as of ${context.generatedAtLabel}. ${upcoming}.`);
   }
 
   if (lower.includes("predict") || lower.includes("win") || lower.includes("watch")) {

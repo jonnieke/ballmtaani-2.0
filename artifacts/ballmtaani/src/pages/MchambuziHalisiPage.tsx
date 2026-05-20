@@ -12,6 +12,7 @@ type ChatMessage = {
   text: string;
   usedAi?: boolean;
   provider?: string;
+  citation?: string;
 };
 
 const QUICK_QUESTIONS = [
@@ -68,7 +69,12 @@ export default function MchambuziHalisiPage() {
 
     const result = await askMchambuziHalisi(clean);
     setLatestContext(result.context);
-    setMessages((prev) => [...prev, { role: "mchambuzi", text: result.answer, usedAi: result.usedAi, provider: result.provider }]);
+    const sources = Array.isArray(result.context?.sources) && result.context.sources.length
+      ? result.context.sources.join(" | ")
+      : "API-Football | BBC Sport RSS | Goal.com RSS";
+    const updatedAt = result.context?.generatedAtLabel || "Latest timeline";
+    const citation = `${sources} • Updated: ${updatedAt}`;
+    setMessages((prev) => [...prev, { role: "mchambuzi", text: result.answer, usedAi: result.usedAi, provider: result.provider, citation }]);
     setIsThinking(false);
   };
 
@@ -177,6 +183,11 @@ export default function MchambuziHalisiPage() {
                       {message.role === "fan" ? "Fan" : message.provider === "openai" ? "Mchambuzi Halisi" : message.provider === "gemini" ? "Mchambuzi Halisi" : message.usedAi === false ? "Mchambuzi Halisi - data mode" : "Mchambuzi Halisi"}
                     </div>
                     {message.text}
+                    {message.role === "mchambuzi" && message.citation ? (
+                      <div className="mt-2 border-t border-white/10 pt-2 text-[11px] leading-5 text-white/55">
+                        Citation: {message.citation}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}

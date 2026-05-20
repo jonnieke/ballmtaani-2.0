@@ -1,6 +1,6 @@
-import { Link, useLocation } from "wouter";
+﻿import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2, ShieldCheck } from "lucide-react";
 import { CLUB_LOGOS } from "../data/mockData";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useDebates, useLeaderboard } from "../hooks/useData";
@@ -12,11 +12,15 @@ import SEO from "../components/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 import NewsFeed from "../components/NewsFeed";
 import FloatingMchambuzi from "../components/FloatingMchambuzi";
+import DataFreshnessChip from "../components/DataFreshnessChip";
+import { formatFreshnessLabel } from "../lib/freshness";
 
 export default function HomePage() {
   const { isLoggedIn } = useAuth();
   const [, setLocation] = useLocation();
   const [heroBannerError, setHeroBannerError] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [clockTick, setClockTick] = useState(0);
 
   // Data Hooks
   const { data: liveMatches = [], isLoading: isLoadingMatches } = useMatches();
@@ -24,6 +28,18 @@ export default function HomePage() {
   const { data: recentMatches = [], isLoading: isLoadingRecent } = useRecentMatches();
   const { data: debates = [] } = useDebates();
   const { data: leaderboard = [] } = useLeaderboard();
+
+  useEffect(() => {
+    if (liveMatches.length || upcomingFixtures.length || recentMatches.length) {
+      setLastUpdated(new Date());
+    }
+  }, [liveMatches, upcomingFixtures, recentMatches]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockTick((t) => t + 1), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const freshnessLabelSafe = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
   // Highlight the best match: live first, then upcoming
   const featuredMatch = liveMatches[0] || upcomingFixtures[0] || null;
@@ -61,10 +77,10 @@ export default function HomePage() {
         ]}
       />
 
-      {/* ═══════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           HERO SECTION
-      ═══════════════════════════════════════════ */}
-      <section className="relative w-full overflow-hidden" style={{ minHeight: 420 }}>
+      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      <section className="relative w-full overflow-hidden border-b border-white/10" style={{ minHeight: 500 }}>
         <img
           src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=80"
           alt="Football stadium"
@@ -75,32 +91,32 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0B] via-transparent to-transparent"></div>
         <div className="absolute top-0 left-1/3 w-[600px] h-[300px] bg-primary/25 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 py-14 md:py-20 flex flex-col md:flex-row items-center gap-10">
+        <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-10 px-4 py-14 md:flex-row md:items-end md:py-20">
           <motion.div 
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             className="flex-1"
           >
-            <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/40 rounded-full px-4 py-1.5 mb-5">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span className="text-primary font-black text-xs uppercase tracking-widest">Kenyan Fans. Big Match Energy.</span>
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Kenyan Football Intelligence</span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-black uppercase leading-[0.9] tracking-tighter mb-6">
-              Call It.<br/>
-              <span className="text-primary">Argue It.</span><br/>
+            <h1 className="mb-6 text-4xl font-bold leading-[0.95] tracking-tight md:text-6xl">
+              Call It Right.<br/>
+              <span className="text-primary">Back It With Data.</span><br/>
               Keep Receipts.
             </h1>
-            <p className="text-gray-300 text-base mb-10 max-w-md leading-relaxed">
-              Call the biggest fixtures, see where Kenyan fans stand, and keep receipts for every matchday argument.
+            <p className="mb-10 max-w-xl text-base leading-relaxed text-gray-300">
+              Live context, smarter fan calls, and real football timelines in one place. No noise, just matchday truth.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/predictions" className="bg-[#FFD700] text-black font-black uppercase tracking-widest px-8 py-4 rounded-xl shadow-xl flex items-center gap-2 text-sm">
+              <Link href="/predictions" className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-black shadow-xl">
                 Make Your Call
                 <ChevronRight className="w-4 h-4" />
               </Link>
-              <Link href="/debates" className="bg-white/5 border border-white/20 text-white font-black uppercase tracking-widest px-8 py-4 rounded-xl text-sm">
-                Explore Community
+              <Link href="/matches" className="rounded-xl border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-white">
+                Open Data Center
               </Link>
             </div>
           </motion.div>
@@ -112,18 +128,18 @@ export default function HomePage() {
           >
             <AnimatePresence mode="wait">
               {featuredMatch ? (
-                <motion.div 
+                <motion.div
                   key={featuredMatch.id}
-                  className="rounded-3xl bg-black/40 backdrop-blur-2xl border border-white/10 p-6 relative group overflow-hidden"
+                  className="group relative overflow-hidden rounded-3xl border border-white/12 bg-[#0e141d]/88 p-6 backdrop-blur-2xl"
                 >
                   <div className="flex justify-between items-center mb-8">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${isMatchLive ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></span>
-                      <span className="text-white font-black text-[10px] uppercase bg-white/10 px-2 py-0.5 rounded">
+                      <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
                         {isMatchLive ? 'Live Now' : 'Featured'}
                       </span>
                     </div>
-                    <span className="text-gray-500 text-[9px] font-black uppercase tracking-widest">{featuredMatch.league}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500">{featuredMatch.league}</span>
                   </div>
 
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mb-8">
@@ -134,11 +150,11 @@ export default function HomePage() {
                     <div className="text-center">
                       {isMatchLive ? (
                         <div className="flex flex-col items-center">
-                          <div className="text-3xl font-black mb-1">{featuredMatch.homeScore} : {featuredMatch.awayScore}</div>
-                          <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">{featuredMatch.minute}</span>
+                          <div className="mb-1 text-3xl font-bold">{featuredMatch.homeScore} : {featuredMatch.awayScore}</div>
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{featuredMatch.minute}</span>
                         </div>
                       ) : (
-                        <div className="text-2xl font-black text-gray-600">VS</div>
+                        <div className="text-2xl font-bold text-gray-600">VS</div>
                       )}
                     </div>
                     <div className="flex flex-col items-center gap-3">
@@ -147,7 +163,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <Link href={isMatchLive ? `/live-center/${featuredMatch.id}` : "/predictions"} className="block w-full text-center bg-white text-black font-black uppercase tracking-widest py-4 rounded-xl text-sm">
+                  <Link href={isMatchLive ? `/live-center/${featuredMatch.id}` : "/predictions"} className="block w-full rounded-xl bg-white py-3.5 text-center text-sm font-bold uppercase tracking-[0.12em] text-black">
                     {isMatchLive ? 'Join Live Center' : 'Make Call'}
                   </Link>
                 </motion.div>
@@ -170,17 +186,18 @@ export default function HomePage() {
       </section>
 
       {/* KENYAN FAN PULSE */}
-      <section className="py-14 bg-[#050505] border-b border-[#1B1B1B]">
+      <section className="border-b border-[#1B1B1B] bg-[#050505] py-12">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
             <div>
-              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1 mb-4">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
                 <Radio className="w-3.5 h-3.5 text-[#FFD700]" />
-                <span className="text-[#FFD700] text-[10px] font-black uppercase tracking-[0.2em]">Kenya Fan Pulse</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFD700]">Kenya Fan Pulse</span>
               </div>
-              <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white">
+              <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
                 Who Are Kenyans Backing?
               </h2>
+              <DataFreshnessChip label={freshnessLabelSafe} className="mt-2" />
               <p className="text-gray-400 text-sm md:text-base mt-3 max-w-2xl">
                 Public matchday sentiment from BallMtaani rooms. Make your call, then come back for the receipt.
               </p>
@@ -188,9 +205,9 @@ export default function HomePage() {
 
             <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
               {pulseStats.map(stat => (
-                <div key={stat.label} className="bg-[#111] border border-white/5 rounded-xl p-4 text-center min-w-0">
-                  <div className="text-xl md:text-2xl font-black text-white">{stat.value}</div>
-                  <div className="text-[9px] md:text-[10px] text-gray-500 font-black uppercase tracking-widest leading-tight mt-1">{stat.label}</div>
+                <div key={stat.label} className="min-w-0 rounded-xl border border-white/8 bg-[#0f141c] p-4 text-center">
+                  <div className="text-xl font-bold text-white md:text-2xl">{stat.value}</div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-500 md:text-[10px]">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -202,25 +219,25 @@ export default function HomePage() {
               const isLive = liveMatches.some((live: any) => live.id === match.id);
 
               return (
-                <div key={match.id || `${match.home}-${match.away}`} className="bg-[#111] border border-white/10 rounded-2xl p-5 overflow-hidden relative">
+                <div key={match.id || `${match.home}-${match.away}`} className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#111827] p-5">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[70px] pointer-events-none" />
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-5">
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded ${isLive ? "bg-primary/15 text-primary" : "bg-[#FFD700]/10 text-[#FFD700]"}`}>
+                      <span className={`rounded px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${isLive ? "bg-primary/15 text-primary" : "bg-[#FFD700]/10 text-[#FFD700]"}`}>
                         {isLive ? "Live pulse" : "Next up"}
                       </span>
-                      <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest truncate ml-3">{match.league}</span>
+                      <span className="ml-3 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">{match.league}</span>
                     </div>
 
                     <div className="flex items-center justify-between gap-3 mb-5">
                       <div className="min-w-0">
                         <p className="font-black text-white text-sm truncate">{match.home}</p>
-                        <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">{split.home}% Kenya lean</p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase text-gray-500">{split.home}% Kenya lean</p>
                       </div>
                       <div className="text-gray-600 font-black text-xs shrink-0">VS</div>
                       <div className="min-w-0 text-right">
                         <p className="font-black text-white text-sm truncate">{match.away}</p>
-                        <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">{split.away}% Kenya lean</p>
+                        <p className="mt-1 text-[10px] font-semibold uppercase text-gray-500">{split.away}% Kenya lean</p>
                       </div>
                     </div>
 
@@ -229,7 +246,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Link href="/predictions" className="flex-1 text-center bg-white text-black rounded-xl py-3 text-[10px] font-black uppercase tracking-widest">
+                      <Link href="/predictions" className="flex-1 rounded-xl bg-white py-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-black">
                         Make Call
                       </Link>
                       <Link href="/fan-zones" aria-label={`Open fan zones for ${match.home} vs ${match.away}`} className="w-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
@@ -245,14 +262,15 @@ export default function HomePage() {
       </section>
 
       {/* MATCH HUB */}
-      <section className="py-16 bg-[#0B0B0B] border-b border-[#1B1B1B]">
+      <section className="border-b border-[#1B1B1B] bg-[#0B0B0B] py-14">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
             <div>
-              <h2 className="text-2xl font-black uppercase tracking-widest text-white border-l-4 border-primary pl-4">Match Hub</h2>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] ml-4">Live Scores • Results • Upcoming</p>
+              <h2 className="border-l-4 border-primary pl-4 text-2xl font-bold tracking-[0.02em] text-white">Match Hub</h2>
+              <p className="ml-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">Live Scores | Results | Upcoming</p>
+              <DataFreshnessChip label={freshnessLabelSafe} className="ml-4 mt-1 text-white/50" />
             </div>
-            <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            <Link href="/matches" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
               Directory <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
@@ -366,3 +384,4 @@ export default function HomePage() {
     </div>
   );
 }
+

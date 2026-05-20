@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Activity,
@@ -18,6 +18,8 @@ import { useMatches, useRecentMatches, useUpcomingFixtures, useStandings } from 
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
+import DataFreshnessChip from "../components/DataFreshnessChip";
+import { formatFreshnessLabel } from "../lib/freshness";
 
 type HubView = "overview" | "live" | "fixtures" | "results" | "tables";
 
@@ -137,11 +139,30 @@ export default function MatchesPage() {
   const [leagueFilter, setLeagueFilter] = useState("all");
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [tableLeague, setTableLeague] = useState("Premier League");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [clockTick, setClockTick] = useState(0);
 
   const { data: liveMatches = [], isFetching: liveFetching } = useMatches();
   const { data: recentMatches = [], isFetching: recentFetching } = useRecentMatches();
   const { data: upcomingFixtures = [], isFetching: upcomingFetching } = useUpcomingFixtures();
   const { data: standings = {} as Record<string, any[]>, isFetching: standingsFetching } = useStandings();
+
+  useEffect(() => {
+    if (
+      liveMatches.length ||
+      recentMatches.length ||
+      upcomingFixtures.length ||
+      Object.keys(standings).length
+    ) {
+      setLastUpdated(new Date());
+    }
+  }, [liveMatches, recentMatches, upcomingFixtures, standings]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockTick((t) => t + 1), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const freshnessLabelSafe = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
   const availableLeagues = useMemo(() => {
     const names = [
@@ -228,6 +249,7 @@ export default function MatchesPage() {
               <p className="mt-3 max-w-2xl text-sm leading-6 text-white/66 md:text-base md:leading-7">
                 Live scores, fixtures, recent results, league tables, WC26 and match detail paths, built for fans who do not want to leave the site for basic football data.
               </p>
+              <DataFreshnessChip label={freshnessLabelSafe} className="mt-2" />
               <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -328,6 +350,7 @@ export default function MatchesPage() {
             Syncing football data
           </div>
         ) : null}
+        <DataFreshnessChip label={freshnessLabelSafe} className="mb-4" />
 
         {view === "overview" && (
           <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -496,3 +519,4 @@ export default function MatchesPage() {
     </div>
   );
 }
+

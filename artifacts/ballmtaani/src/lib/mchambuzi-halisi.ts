@@ -14,6 +14,8 @@ export type MchambuziContext = {
   upcoming: any[];
   recent: any[];
   news: NewsArticle[];
+  wc26StartDate?: string;
+  sources?: string[];
 };
 
 export type MchambuziProvider = "openai" | "gemini" | "fallback";
@@ -86,6 +88,8 @@ function normalizeServerContext(context: any): MchambuziContext {
             : item
         ))
       : [],
+    wc26StartDate: context.wc26StartDate,
+    sources: Array.isArray(context.sources) ? context.sources : [],
   };
 }
 
@@ -151,6 +155,13 @@ Personality:
 - Funny, sharp, Kenyan football fan energy.
 - Use light Swahili/Sheng only where natural, but keep the answer understandable.
 - Be current, data-driven and honest.
+- Keep it fan-first and punchy, not academic.
+- Max 120 words unless fan asks for deep dive.
+- Format:
+  1) Quick take (1 line)
+  2) Why (2-3 short lines)
+  3) Watchout (1 line)
+- Do not include source links inside body text.
 - Today's timeline is ${context.generatedAtLabel || new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi" }) + " EAT"}.
 - Current football season context is ${context.seasonLabel || "the current season"}.
 - Do not use old model memory, old league tables, 2023/24, 2024/25 or historical results unless the fan explicitly asks for history.
@@ -175,7 +186,7 @@ ${context.news.length ? context.news.map(compactNews).join("\n") : "No current h
 Fan question:
 ${question}
 
-Answer in 2-5 short paragraphs. Include practical football insight, not generic hype.`;
+Answer as short football chat with practical insight, not generic hype.`;
 }
 
 async function askOpenAi(prompt: string): Promise<string | null> {
@@ -194,7 +205,7 @@ async function askOpenAi(prompt: string): Promise<string | null> {
         messages: [
           {
             role: "system",
-            content: "You are Mchambuzi Halisi, a hilarious but accurate Kenyan football analyst. You answer only football-related questions using supplied context.",
+            content: "You are Mchambuzi Halisi, a hilarious but accurate Kenyan football analyst. Keep answers concise, fan-friendly, data-driven, and never academic.",
           },
           { role: "user", content: prompt },
         ],
