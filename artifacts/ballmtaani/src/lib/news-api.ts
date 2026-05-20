@@ -1,6 +1,6 @@
 /**
  * Football News Feed
- * Uses rss2json.com to convert RSS feeds to JSON.
+ * Uses RSS XML through a lightweight CORS proxy.
  * Falls back to curated mock headlines when API unavailable.
  */
 
@@ -346,18 +346,6 @@ function mapFeedItems(items: any[], feed: (typeof RSS_FEEDS)[number], sourceImag
 }
 
 async function fetchFeedItems(feed: (typeof RSS_FEEDS)[number]): Promise<any[]> {
-  const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=4`;
-
-  try {
-    const res = await fetch(rss2jsonUrl);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.status === "ok" && Array.isArray(data.items)) return data.items.slice(0, 4);
-    }
-  } catch {
-    // Try the XML proxy below.
-  }
-
   try {
     const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`;
     const res = await fetch(url);
@@ -365,7 +353,19 @@ async function fetchFeedItems(feed: (typeof RSS_FEEDS)[number]): Promise<any[]> 
     const xmlText = await res.text();
     return parseRssItems(xmlText).slice(0, 4);
   } catch {
-    return [];
+    // Optional fallback for local experiments only. Keep disabled by default to avoid noisy 422s in production consoles.
+    if (import.meta.env.VITE_ENABLE_RSS2JSON_FALLBACK !== "true") return [];
+
+    try {
+      const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=4`;
+      const res = await fetch(rss2jsonUrl);
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (data.status === "ok" && Array.isArray(data.items)) return data.items.slice(0, 4);
+      return [];
+    } catch {
+      return [];
+    }
   }
 }
 

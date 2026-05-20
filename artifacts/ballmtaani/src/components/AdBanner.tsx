@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Megaphone, ShieldCheck } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AdBannerProps {
   label?: string;
@@ -22,11 +22,13 @@ function AdSenseUnit({
   format,
   responsive,
   className,
+  onNoFill,
 }: {
   slot: string;
   format: "auto" | "rectangle";
   responsive: boolean;
   className: string;
+  onNoFill?: () => void;
 }) {
   const adRef = useRef<HTMLModElement>(null);
   const initializedRef = useRef(false);
@@ -43,6 +45,30 @@ function AdSenseUnit({
       console.error("AdSense init failed:", error);
     }
   }, [slot]);
+
+  useEffect(() => {
+    if (!slot || !adRef.current) return;
+    const node = adRef.current;
+    const localNoFill = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+    const checkFill = () => {
+      const status = node.getAttribute("data-ad-status");
+      const googleStatus = node.getAttribute("data-adsbygoogle-status");
+      const hasContent = node.children.length > 0 || Boolean(node.innerHTML.trim());
+      if (status === "unfilled" || (googleStatus === "done" && !hasContent) || (localNoFill && !hasContent)) {
+        onNoFill?.();
+      }
+    };
+
+    const observer = new MutationObserver(checkFill);
+    observer.observe(node, { attributes: true, childList: true, subtree: true });
+    const timer = window.setTimeout(checkFill, localNoFill ? 1800 : 4500);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [slot, onNoFill]);
 
   if (!slot) return null;
 
@@ -62,6 +88,23 @@ function AdSenseUnit({
 
 export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBannerProps) {
   const slot = type === "square" ? SQUARE_SLOT : HORIZONTAL_SLOT;
+  const [noFill, setNoFill] = useState(false);
+
+  if (slot && noFill) {
+    return (
+      <aside className="w-full rounded-lg border border-white/8 bg-[#0F0F0F]/80 px-3 py-2" aria-label={`${label} advertisement`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Megaphone className="h-4 w-4 shrink-0 text-gray-600" />
+            <span className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">Ad break</span>
+          </div>
+          <Link href="/privacy" className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 hover:text-white">
+            Ad Info
+          </Link>
+        </div>
+      </aside>
+    );
+  }
 
   if (type === "square") {
     return (
@@ -77,6 +120,7 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               format="rectangle"
               responsive={false}
               className="w-full min-h-[250px]"
+              onNoFill={() => setNoFill(true)}
             />
           ) : (
             <>
@@ -116,6 +160,7 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               format="auto"
               responsive={true}
               className="w-full min-h-[64px]"
+              onNoFill={() => setNoFill(true)}
             />
           ) : (
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
