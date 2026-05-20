@@ -10,6 +10,10 @@ const MAJOR_LEAGUE_IDS = new Set([39, 140, 135, 78, 61, 2, 3, 12, 686, 288, 332,
 type MchambuziEnv = Record<string, string | undefined>;
 
 export type MchambuziServerContext = {
+  generatedAt: string;
+  generatedAtLabel: string;
+  seasonLabel: string;
+  coverageWindow: string;
   live: string[];
   upcoming: string[];
   recent: string[];
@@ -50,6 +54,41 @@ function cleanText(value = "") {
   return decodeEntities(value).replace(/Â£/g, "£").replace(/Â/g, "").trim();
 }
 
+function eatDateTime(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "time TBC";
+  return date.toLocaleString("en-KE", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Africa/Nairobi",
+  });
+}
+
+function currentSeasonStartYear(now = new Date()) {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() + 1;
+  return month >= 7 ? year : year - 1;
+}
+
+function formatSeasonLabel(seasonStart: number) {
+  return `${seasonStart}/${String(seasonStart + 1).slice(-2)}`;
+}
+
+function timeAgo(value = "") {
+  const timestamp = new Date(value).getTime();
+  if (Number.isNaN(timestamp)) return "published recently";
+  const diff = Date.now() - timestamp;
+  const mins = Math.max(0, Math.floor(diff / 60000));
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 function pickTag(item: string, tag: string) {
   const match = item.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
   return stripTags(decodeEntities(match?.[1] || ""));
@@ -79,7 +118,8 @@ function matchLine(item: any) {
     ? `${item.goals.home ?? 0}-${item.goals.away ?? 0}`
     : "vs";
   const status = item?.fixture?.status?.short || item?.fixture?.status?.elapsed || item?.league?.round || "latest";
-  return `${home} ${score} ${away} (${league}, ${status})`;
+  const kickoff = item?.fixture?.date ? `${eatDateTime(item.fixture.date)} EAT` : "time TBC";
+  return `${home} ${score} ${away} (${league}, ${status}, ${kickoff})`;
 }
 
 async function fetchNews() {
@@ -95,7 +135,8 @@ async function fetchNews() {
       const items = Array.from(xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)).slice(0, 5);
       for (const item of items) {
         const title = pickTag(item[1], "title");
-        if (title) output.push(`${cleanText(title)} - ${feed.source}`);
+        const pubDate = pickTag(item[1], "pubDate");
+        if (title) output.push(`${cleanText(title)} - ${feed.source}, ${timeAgo(pubDate)}`);
       }
     } catch {
       // Continue to next feed.
@@ -109,7 +150,7 @@ async function buildContext(env: MchambuziEnv): Promise<MchambuziServerContext> 
   const now = new Date();
   const from = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const to = now.toISOString().slice(0, 10);
-  const season = now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+  const season = currentSeasonStartYear(now);
 
   const [live, premierUpcoming, laLigaUpcoming, serieAUpcoming, premierRecent, laLigaRecent, news] = await Promise.all([
     footballFetch("/fixtures?live=all", env),
@@ -122,6 +163,10 @@ async function buildContext(env: MchambuziEnv): Promise<MchambuziServerContext> 
   ]);
 
   return {
+    generatedAt: now.toISOString(),
+    generatedAtLabel: `${eatDateTime(now)} EAT`,
+    seasonLabel: formatSeasonLabel(season),
+    coverageWindow: `${from} to ${to}`,
     live: live.filter((item: any) => MAJOR_LEAGUE_IDS.has(item?.league?.id)).slice(0, 8).map(matchLine),
     upcoming: [...premierUpcoming, ...laLigaUpcoming, ...serieAUpcoming].slice(0, 12).map(matchLine),
     recent: [...premierRecent, ...laLigaRecent].slice(0, 10).map(matchLine),
@@ -135,11 +180,23 @@ function buildPrompt(question: string, context: MchambuziServerContext) {
 Rules:
 - Answer only football questions.
 - Funny, sharp, Kenyan fan energy. Light Swahili/Sheng is okay.
-- Use the supplied live data, fixtures, recent results and BBC/Goal headlines.
+- Today's timeline is ${context.generatedAtLabel}. Current football season context is ${context.seasonLabel}.
+- Use the supplied live data, fixture dates, recent results and BBC/Goal headlines first.
+- Do not use old model memory, old league tables, 2023/24, 2024/25 or historical results unless the fan explicitly asks for history.
+- If a league is between seasons or no current feed is available, say the current feed is thin instead of inventing form.
 - Never present rumours as confirmed.
 - Do not give betting instructions or "bet now" language.
 - If context is thin, say so clearly.
 - Be specific. Mention actual teams, fixtures, headlines or data from the context when relevant.
+
+CURRENT TIME:
+${context.generatedAtLabel}
+
+CURRENT SEASON:
+${context.seasonLabel}
+
+RECENT RESULT WINDOW:
+${context.coverageWindow}
 
 LIVE:
 ${context.live.length ? context.live.join("\n") : "No major live matches in feed."}

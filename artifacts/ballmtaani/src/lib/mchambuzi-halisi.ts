@@ -6,6 +6,10 @@ const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const OPENAI_MODEL = import.meta.env.VITE_OPENAI_MODEL || "gpt-4.1-mini";
 
 export type MchambuziContext = {
+  generatedAt?: string;
+  generatedAtLabel?: string;
+  seasonLabel?: string;
+  coverageWindow?: string;
   live: any[];
   upcoming: any[];
   recent: any[];
@@ -32,10 +36,23 @@ export async function fetchMchambuziContext(): Promise<MchambuziContext> {
     fetchLiveMatches(),
     fetchUpcomingFixtures(),
     fetchRecentMatches(),
-    fetchFootballNews({ network: false }),
+    fetchFootballNews({ network: true, fallback: false }),
   ]);
+  const now = new Date();
 
   return {
+    generatedAt: now.toISOString(),
+    generatedAtLabel: now.toLocaleString("en-KE", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Africa/Nairobi",
+    }) + " EAT",
+    seasonLabel: `${now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1}/${String((now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1) + 1).slice(-2)}`,
+    coverageWindow: "latest local browser context",
     live: live.slice(0, 8),
     upcoming: upcoming.slice(0, 10),
     recent: recent.slice(0, 8),
@@ -46,6 +63,10 @@ export async function fetchMchambuziContext(): Promise<MchambuziContext> {
 function normalizeServerContext(context: any): MchambuziContext {
   if (!context) return { live: [], upcoming: [], recent: [], news: [] };
   return {
+    generatedAt: context.generatedAt,
+    generatedAtLabel: context.generatedAtLabel,
+    seasonLabel: context.seasonLabel,
+    coverageWindow: context.coverageWindow,
     live: Array.isArray(context.live) ? context.live : [],
     upcoming: Array.isArray(context.upcoming) ? context.upcoming : [],
     recent: Array.isArray(context.recent) ? context.recent : [],
@@ -130,6 +151,9 @@ Personality:
 - Funny, sharp, Kenyan football fan energy.
 - Use light Swahili/Sheng only where natural, but keep the answer understandable.
 - Be current, data-driven and honest.
+- Today's timeline is ${context.generatedAtLabel || new Date().toLocaleString("en-KE", { timeZone: "Africa/Nairobi" }) + " EAT"}.
+- Current football season context is ${context.seasonLabel || "the current season"}.
+- Do not use old model memory, old league tables, 2023/24, 2024/25 or historical results unless the fan explicitly asks for history.
 - Never present rumours as confirmed.
 - Do not give betting instructions or "bet now" language.
 - If the available context is thin, say so clearly and answer from the data provided.

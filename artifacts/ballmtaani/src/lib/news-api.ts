@@ -369,8 +369,9 @@ async function fetchFeedItems(feed: (typeof RSS_FEEDS)[number]): Promise<any[]> 
   }
 }
 
-export async function fetchFootballNews(options: { network?: boolean } = {}): Promise<NewsArticle[]> {
+export async function fetchFootballNews(options: { network?: boolean; fallback?: boolean } = {}): Promise<NewsArticle[]> {
   const network = options.network ?? true;
+  const fallback = options.fallback ?? true;
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
@@ -399,6 +400,8 @@ export async function fetchFootballNews(options: { network?: boolean } = {}): Pr
       }
     }
   }
+
+  if (articles.length === 0 && !fallback) return [];
 
   const normalized = (articles.length > 0 ? articles : MOCK_HEADLINES).map((article) => ({
     ...article,

@@ -31,6 +31,7 @@ function getCurrentSeasonStartYear(now = new Date()): number {
   return month >= 7 ? year : year - 1;
 }
 const CURRENT_SEASON = getCurrentSeasonStartYear();
+const SEASON_CANDIDATES = [CURRENT_SEASON, CURRENT_SEASON - 1, CURRENT_SEASON + 1];
 const FIXTURE_TEAM_CACHE_TTL_MS = 5 * 60 * 1000;
 const LIVE_SUMMARY_CACHE_TTL_MS = 15 * 1000;
 const fixtureTeamCache = new Map<string, { homeTeamId: number | null; awayTeamId: number | null; expiresAt: number }>();
@@ -102,6 +103,17 @@ export interface StandingEntry {
   won: number;
   draw: number;
   lost: number;
+}
+
+async function fetchWithSeasonFallback(
+  buildEndpoint: (season: number) => string,
+  seasons: number[] = SEASON_CANDIDATES,
+): Promise<any[]> {
+  for (const season of seasons) {
+    const data = await apiFetch(buildEndpoint(season));
+    if (Array.isArray(data) && data.length > 0) return data;
+  }
+  return [];
 }
 
 export interface TournamentStandingEntry extends StandingEntry {
@@ -186,7 +198,9 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
   const allFixtures: any[] = [];
 
   for (const leagueId of leagueIds) {
-    const raw = await apiFetch(`/fixtures?league=${leagueId}&season=${CURRENT_SEASON}&next=5`);
+    const raw = await fetchWithSeasonFallback(
+      (season) => `/fixtures?league=${leagueId}&season=${season}&next=5`
+    );
     if (raw && raw.length > 0) {
       const mapped = raw.map((item: any) => ({
         id: String(item.fixture.id),
@@ -331,7 +345,9 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const toStr = toDate.toISOString().split('T')[0];
 
   for (const leagueId of leagueIds) {
-    const raw = await apiFetch(`/fixtures?league=${leagueId}&season=${CURRENT_SEASON}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`);
+    const raw = await fetchWithSeasonFallback(
+      (season) => `/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`
+    );
     if (raw && raw.length > 0) {
       const mapped = raw.map((item: any) => ({
         id: String(item.fixture.id),
@@ -366,7 +382,9 @@ export async function fetchRecentMatches(): Promise<any[]> {
 
 // ─── 3. STANDINGS (per league) ──────────────────────────────
 export async function fetchStandings(leagueId: number): Promise<StandingEntry[]> {
-  const raw = await apiFetch(`/standings?league=${leagueId}&season=${CURRENT_SEASON}`);
+  const raw = await fetchWithSeasonFallback(
+    (season) => `/standings?league=${leagueId}&season=${season}`
+  );
   if (!raw || raw.length === 0) return [];
 
   const league = raw[0]?.league;

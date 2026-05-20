@@ -248,20 +248,32 @@ export default function LandingPage() {
     let mounted = true;
     const run = async () => {
       setLoading(true);
-      const [liveData, recentData, upcomingData, tableData, wcData] = await Promise.all([
-        fetchLiveMatches(),
-        fetchRecentMatches(),
-        fetchUpcomingFixtures(),
-        fetchStandings(39),
-        fetchLeagueFixtures(1, 2026, 6),
-      ]);
-      if (!mounted) return;
-      setLive(liveData.slice(0, 8));
-      setRecent(recentData.slice(0, 5));
-      setUpcoming(upcomingData.slice(0, 12));
-      setStandings(tableData.slice(0, 4));
-      setWorldCup(wcData.slice(0, 4));
-      setLoading(false);
+      try {
+        const [liveData, recentData, upcomingData, tableData, wcData] = await Promise.all([
+          fetchLiveMatches(),
+          fetchRecentMatches(),
+          fetchUpcomingFixtures(),
+          fetchStandings(39),
+          fetchLeagueFixtures(1, 2026, 6),
+        ]);
+        if (!mounted) return;
+        setLive(Array.isArray(liveData) ? liveData.slice(0, 8) : []);
+        setRecent(Array.isArray(recentData) ? recentData.slice(0, 5) : []);
+        setUpcoming(Array.isArray(upcomingData) ? upcomingData.slice(0, 12) : []);
+        setStandings(Array.isArray(tableData) ? tableData.slice(0, 4) : []);
+        setWorldCup(Array.isArray(wcData) ? wcData.slice(0, 4) : []);
+      } catch (error) {
+        if (mounted) {
+          setLive([]);
+          setRecent([]);
+          setUpcoming([]);
+          setStandings([]);
+          setWorldCup([]);
+        }
+        console.error("Live Hub fetch failed:", error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
     run();
     const timer = window.setInterval(run, 30000);
@@ -375,18 +387,18 @@ export default function LandingPage() {
           <StatCard icon={Goal} value={live.length || displayMatches.length} label="Live Matches" sub={live.length ? "In Play Now" : "Latest Feed"} tone="border-primary/70 text-primary" />
           <StatCard icon={CalendarDays} value={upcoming.length} label="Upcoming" sub="Next 7 Days" tone="border-accent/70 text-accent" />
           <StatCard icon={Trophy} value="WC26" label="Tracker" sub="Road to 2026" tone="border-[#FFD700]/70 text-[#FFD700]" href="/world-cup-2026" />
-          <StatCard icon={Sparkles} value="100%" label="API Engine" sub="Real Time Data" tone="border-purple-400/70 text-purple-300" />
+          <StatCard icon={Sparkles} value="Live" label="Matchday Engine" sub="Now Syncing" tone="border-purple-400/70 text-purple-300" />
         </section>
 
         <div className="grid gap-3 md:grid-cols-[1.08fr_0.92fr] md:items-start">
           <Panel title={live.length ? "Live Scores" : "Latest Scores"} action="View All">
             <div className="overflow-hidden rounded-2xl border border-white/5 bg-[#111823]">
               {loading ? (
-                <div className="p-5 text-center text-xs font-bold uppercase tracking-widest text-gray-500">Loading API-Football feed...</div>
+                <div className="p-5 text-center text-xs font-bold uppercase tracking-widest text-gray-500">Syncing latest matchday feed...</div>
               ) : displayMatches.length > 0 ? (
                 displayMatches.map((match) => <MatchRow key={match.id} match={match} />)
               ) : (
-                <div className="p-5 text-center text-xs font-bold uppercase tracking-widest text-gray-500">No match feed available.</div>
+                <div className="p-5 text-center text-xs font-bold uppercase tracking-widest text-gray-500">No fresh scoreline feed right now.</div>
               )}
             </div>
           </Panel>
@@ -405,7 +417,7 @@ export default function LandingPage() {
               {standings.length > 0 ? (
                 standings.map((row) => <StandingRow key={row.team} row={row} />)
               ) : (
-                <div className="p-5 text-center text-xs font-bold uppercase tracking-widest text-gray-500">Standings unavailable.</div>
+                <div className="p-5 text-center text-xs font-bold uppercase tracking-widest text-gray-500">Table update pending. Check back shortly.</div>
               )}
             </div>
           </Panel>
