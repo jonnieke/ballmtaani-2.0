@@ -183,11 +183,24 @@ export default function MchambuziHalisiPage() {
                       {message.role === "fan" ? "Fan" : message.provider === "openai" ? "Mchambuzi Halisi" : message.provider === "gemini" ? "Mchambuzi Halisi" : message.usedAi === false ? "Mchambuzi Halisi - data mode" : "Mchambuzi Halisi"}
                     </div>
                     {message.text}
-                    {message.role === "mchambuzi" && message.citation ? (
-                      <div className="mt-2 border-t border-white/10 pt-2 text-[11px] leading-5 text-white/55">
-                        Citation: {message.citation}
+                    {message.role === "mchambuzi" && (
+                      <div className="mt-3 flex items-center justify-between border-t border-white/8 pt-2">
+                        {message.citation ? (
+                          <span className="text-[10px] leading-5 text-white/32">
+                            {message.citation}
+                          </span>
+                        ) : <span />}
+                        <button
+                          onClick={() => {
+                            const text = encodeURIComponent(`🤖 Mchambuzi Halisi says:\n\n"${message.text}"\n\nAsk your own: https://ballmtaani.com/mchambuzi-halisi`);
+                            window.open(`https://wa.me/?text=${text}`, "_blank");
+                          }}
+                          className="ml-2 shrink-0 rounded-lg bg-[#25D366]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-[#25D366] transition-all hover:bg-[#25D366]/20"
+                        >
+                          WA
+                        </button>
                       </div>
-                    ) : null}
+                    )}
                   </div>
                 </div>
               ))}

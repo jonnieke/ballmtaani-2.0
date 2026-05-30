@@ -128,9 +128,22 @@ export default function LeaderboardPage() {
                       )}
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <span className={`font-black tracking-wider ${player.rank <= 3 ? 'text-[#FFD700]' : 'text-white'}`}>
-                        {player.pts}
-                      </span>
+                      <div className="flex items-center justify-end gap-2">
+                        <span className={`font-black tracking-wider ${player.rank <= 3 ? 'text-[#FFD700]' : 'text-white'}`}>
+                          {player.pts}
+                        </span>
+                        {isMe && (
+                          <button
+                            onClick={() => {
+                              const t = encodeURIComponent(`🏆 I'm #${player.rank} on the BallMtaani leaderboard!\n\n${player.pts} MTC points · 🔥 ${player.streak} streak\n\nJoin and back your club: https://ballmtaani.com`);
+                              window.open(`https://wa.me/?text=${t}`, "_blank");
+                            }}
+                            className="rounded bg-[#25D366]/12 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[#25D366] hover:bg-[#25D366]/22 transition-all"
+                          >
+                            WA
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
