@@ -13,6 +13,7 @@ import { ScoreTicker } from "./components/ScoreTicker";
 import OddspediaCredit from "./components/OddspediaCredit";
 import AdBanner from "./components/AdBanner";
 import RouteSEO from "./components/RouteSEO";
+import FloatingNav from "./components/FloatingNav";
 
 import HomePage from "./pages/HomePage";
 import MatchesPage from "./pages/MatchesPage";
@@ -65,6 +66,9 @@ function AppShell() {
         {!quietPage && <Navbar />}
         {!quietPage && <ScoreTicker />}
         {!quietPage && <BottomNav />}
+        {quietPage && !normalizedLocation.startsWith("/login") && !normalizedLocation.startsWith("/verify") && (
+          <FloatingNav />
+        )}
         {!quietPage && <OnboardingModal />}
         {!quietPage && <InstallBanner />}
         <RouteSEO path={normalizedLocation} />
