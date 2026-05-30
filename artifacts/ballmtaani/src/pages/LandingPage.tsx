@@ -194,7 +194,7 @@ function ScoreboardList({
   if (loading && !matches.length) {
     return (
       <div className="rounded-xl border border-white/8 bg-white/[0.03] p-8 text-center">
-        <div className="text-sm font-semibold uppercase tracking-[0.14em] text-white/45">Loading today's match board...</div>
+        <div className="text-sm font-semibold uppercase tracking-[0.14em] text-white/45">Loading matches...</div>
       </div>
     );
   }
@@ -423,20 +423,23 @@ function MatchRoomCard({
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <button onClick={() => onOpenStats("match")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
-            <div className="text-lg font-semibold text-white">{loading ? "..." : stats.length}</div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Stats</div>
-          </button>
-          <button onClick={() => onOpenStats("lineups")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
-            <div className="text-lg font-semibold text-white">{loading ? "..." : events.length}</div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Events</div>
-          </button>
-          <button onClick={() => onOpenStats("season")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
-            <div className="text-lg font-semibold text-white">{lineups.home || lineups.away ? "XI" : "-"}</div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Lineups</div>
-          </button>
-        </div>
+        {/* Only show stats/events/lineups buttons when there's actual data */}
+        {(stats.length > 0 || events.length > 0 || lineups.home || lineups.away) && (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <button onClick={() => onOpenStats("match")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
+              <div className="text-lg font-semibold text-white">{loading ? "..." : stats.length}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Stats</div>
+            </button>
+            <button onClick={() => onOpenStats("lineups")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
+              <div className="text-lg font-semibold text-white">{loading ? "..." : events.length}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Events</div>
+            </button>
+            <button onClick={() => onOpenStats("season")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
+              <div className="text-lg font-semibold text-white">{lineups.home || lineups.away ? "XI" : "-"}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Lineups</div>
+            </button>
+          </div>
+        )}
 
         <div className="mt-3 space-y-2">
           {events.slice(0, 3).map((event, index) => (
@@ -993,19 +996,21 @@ export default function LandingPage() {
           </button>
         </header>
 
-        <section className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-          <div className={live.length > 0 ? "animate-pulse" : ""}>
-            <StatTile
-              label="Live Now"
-              value={live.length > 0 ? live.length : "—"}
-              icon={Activity}
-              tone={live.length > 0 ? "border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]" : "border-primary/45 text-primary"}
-            />
-          </div>
-          <StatTile label="Next Fixtures" value={upcoming.length || "—"} icon={CalendarDays} tone="border-blue-400/40 text-blue-300" />
-          <StatTile label="Final Whistles" value={recent.length || "—"} icon={Clock3} tone="border-emerald-400/40 text-emerald-300" />
-          <StatTile label="Tables Open" value={standings.length || activeLeague.short} icon={Table2} tone="border-[#ffd700]/40 text-[#ffd700]" />
-        </section>
+        {/* Only show stat tiles when we have real data */}
+        {(live.length > 0 || upcoming.length > 0 || recent.length > 0) && (
+          <section className="mb-3 grid grid-cols-3 gap-2">
+            <div className={live.length > 0 ? "animate-pulse" : ""}>
+              <StatTile
+                label="Live Now"
+                value={live.length > 0 ? live.length : "—"}
+                icon={Activity}
+                tone={live.length > 0 ? "border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]" : "border-primary/45 text-primary"}
+              />
+            </div>
+            <StatTile label="Upcoming" value={upcoming.length > 0 ? upcoming.length : "—"} icon={CalendarDays} tone="border-blue-400/40 text-blue-300" />
+            <StatTile label="Results" value={recent.length > 0 ? recent.length : "—"} icon={Clock3} tone="border-emerald-400/40 text-emerald-300" />
+          </section>
+        )}
 
         <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
           {showLeftSidebar && (
