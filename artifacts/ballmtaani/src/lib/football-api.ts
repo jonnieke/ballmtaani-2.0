@@ -221,6 +221,49 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
   }));
 }
 
+// ─── 2a. TODAY'S FIXTURES — all major league matches today by date ───────────
+// Uses /fixtures?date=YYYY-MM-DD — most reliable way to get today's matches
+export async function fetchTodaysFixtures(): Promise<any[]> {
+  const todayEAT = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Nairobi' }); // YYYY-MM-DD in EAT
+  const raw = await apiFetch(`/fixtures?date=${todayEAT}&timezone=Africa/Nairobi`);
+  if (!raw || !raw.length) return [];
+
+  // 686 excluded — returns Czech teams not KPL. 288/332 excluded until verified.
+  const majorLeagues = new Set([2, 3, 12, 39, 140, 135, 78, 61]);
+
+  return raw
+    .filter((item: any) => majorLeagues.has(item.league?.id))
+    .map((item: any) => ({
+      id: String(item.fixture.id),
+      homeTeamId: item.teams.home.id,
+      awayTeamId: item.teams.away.id,
+      home: item.teams.home.name,
+      homeLogo: item.teams.home.logo,
+      homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
+      away: item.teams.away.name,
+      awayLogo: item.teams.away.logo,
+      awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+      time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Africa/Nairobi',
+      }),
+      league: item.league.name,
+      leagueId: item.league.id,
+      leagueLogo: item.league.logo,
+      status: item.fixture.status?.short || 'NS',
+      kickoffAt: new Date(item.fixture.date).getTime(),
+    }))
+    .sort((a: any, b: any) => {
+      const priority: Record<number, number> = { 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
+      const pa = priority[a.leagueId] ?? 99;
+      const pb = priority[b.leagueId] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return a.kickoffAt - b.kickoffAt;
+    });
+}
+
 // ─── 2. UPCOMING FIXTURES (next matches from major leagues) ─
 export async function fetchUpcomingFixtures(): Promise<any[]> {
   // UCL + UEL first (cup finals happen end of season when domestics are done)
