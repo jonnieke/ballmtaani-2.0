@@ -7,7 +7,8 @@ const RSS_FEEDS = [
   { url: "https://feeds.bbci.co.uk/sport/football/rss.xml", source: "BBC Sport" },
   { url: "https://www.goal.com/feeds/en/news", source: "Goal.com" },
 ];
-const MAJOR_LEAGUE_IDS = new Set([39, 140, 135, 78, 61, 2, 3, 12, 686, 288, 332, 1]);
+// 686 (KPL) removed — API-Football returns Czech teams for this ID, not Kenya Premier League
+const MAJOR_LEAGUE_IDS = new Set([39, 140, 135, 78, 61, 2, 3, 12, 288, 332, 1]);
 
 type MchambuziEnv = Record<string, string | undefined>;
 

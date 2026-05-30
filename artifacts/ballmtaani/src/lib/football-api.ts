@@ -17,7 +17,7 @@ export const MAJOR_LEAGUE_IDS = {
   "UEFA Europa League": 3,
   // African Leagues
   "CAF Champions League": 12,
-  "Kenya Premier League": 686,
+  // "Kenya Premier League": 686,  // REMOVED — API-Football ID 686 returns Czech teams, not KPL
   "South Africa PSL": 288,
   "Nigeria NPFL": 332,
 };

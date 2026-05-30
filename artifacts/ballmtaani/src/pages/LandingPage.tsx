@@ -65,12 +65,14 @@ type DisplayMatch = {
 type MatchCenterTab = "scores" | "table" | "match" | "lineups" | "season";
 
 const DATA_LEAGUES = [
-  { id: 39, name: "Premier League", short: "EPL", season: 2025 },
-  { id: 140, name: "La Liga", short: "LaLiga", season: 2025 },
-  { id: 135, name: "Serie A", short: "Serie A", season: 2025 },
-  { id: 78, name: "Bundesliga", short: "Bundesliga", season: 2025 },
-  { id: 61, name: "Ligue 1", short: "Ligue 1", season: 2025 },
-  { id: 686, name: "Kenya Premier League", short: "KPL", season: 2025 },
+  { id: 39,  name: "Premier League", short: "EPL",       season: 2025 },
+  { id: 140, name: "La Liga",        short: "La Liga",   season: 2025 },
+  { id: 135, name: "Serie A",        short: "Serie A",   season: 2025 },
+  { id: 78,  name: "Bundesliga",     short: "Bundesliga",season: 2025 },
+  { id: 61,  name: "Ligue 1",        short: "Ligue 1",   season: 2025 },
+  { id: 2,   name: "Champions League", short: "UCL",     season: 2025 },
+  // KPL (686) removed — API-Football returns Czech teams instead of Kenya
+  // TODO: Restore when correct KPL league ID is confirmed
 ];
 
 const FEATURE_LINKS = [
