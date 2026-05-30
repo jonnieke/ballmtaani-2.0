@@ -765,8 +765,8 @@ export default function LandingPage() {
   const [live, setLive] = useState<LiveMatch[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const [upcoming, setUpcoming] = useState<any[]>([]);
-  const [standings, setStandings] = useState<StandingEntry[]>([]);
-  const [kplStandings, setKplStandings] = useState<StandingEntry[]>([]);
+  // Standings keyed by league ID — all leagues fetched upfront
+  const [allStandings, setAllStandings] = useState<Record<number, StandingEntry[]>>({});
   const [worldCup, setWorldCup] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -779,29 +779,42 @@ export default function LandingPage() {
   const [teamStats, setTeamStats] = useState<{ home: TeamSeasonStats | null; away: TeamSeasonStats | null }>({ home: null, away: null });
   const [detailsLoading, setDetailsLoading] = useState(false);
 
+  // Derived: standings for currently selected league
+  const standings = allStandings[activeLeagueId] || [];
+  // EPL standings for sidebar snapshot (always EPL)
+  const eplStandings = allStandings[39] || [];
+
   // ─── Staggered visibility for sidebars during loading ────────────────────────
   const showLeftSidebar = useDelayedVisibility(loading && !live.length && !worldCup.length, 1500);
-  const showRightSidebar = useDelayedVisibility(loading && !standings.length && !kplStandings.length, 3000);
+  const showRightSidebar = useDelayedVisibility(loading && Object.keys(allStandings).length === 0, 3000);
 
   useEffect(() => {
     let mounted = true;
     const run = async () => {
       setLoading(true);
       try {
-        const [liveData, recentData, upcomingData, tableData, kplData, wcData] = await Promise.all([
+        // Fetch standings for ALL DATA_LEAGUES in parallel — no more "empty" on switch
+        const standingsResults = await Promise.all(
+          DATA_LEAGUES.map((league) => fetchStandings(league.id))
+        );
+        const standingsMap: Record<number, StandingEntry[]> = {};
+        DATA_LEAGUES.forEach((league, idx) => {
+          if (Array.isArray(standingsResults[idx]) && standingsResults[idx].length > 0) {
+            standingsMap[league.id] = standingsResults[idx];
+          }
+        });
+
+        const [liveData, recentData, upcomingData, wcData] = await Promise.all([
           fetchLiveMatches(),
           fetchRecentMatches(),
           fetchUpcomingFixtures(),
-          fetchStandings(39),
-          fetchStandings(686),
           fetchLeagueFixtures(1, 2026, 8),
         ]);
         if (!mounted) return;
         setLive(Array.isArray(liveData) ? liveData.slice(0, 10) : []);
         setRecent(Array.isArray(recentData) ? recentData.slice(0, 8) : []);
         setUpcoming(Array.isArray(upcomingData) ? upcomingData.slice(0, 14) : []);
-        setStandings(Array.isArray(tableData) ? tableData.slice(0, 6) : []);
-        setKplStandings(Array.isArray(kplData) ? kplData.slice(0, 8) : []);
+        setAllStandings(standingsMap);
         setWorldCup(Array.isArray(wcData) ? wcData.slice(0, 4) : []);
         setLastUpdated(new Date());
       } catch (error) {
@@ -1186,21 +1199,19 @@ export default function LandingPage() {
           </section>
 
           {showRightSidebar && (
-            <aside className={`space-y-3 transition-all duration-300 ${standings.length > 0 || kplStandings.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
+            <aside className={`space-y-3 transition-all duration-300 ${eplStandings.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
             {/* KPL standings hidden — API-Football returns incorrect (Czech) data for league 686 */}
             {/* TODO: Fix KPL league ID mapping with API-Football or use alternate data source */}
 
-            <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
-              <div className="border-b border-white/10 px-3 py-2.5">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Premier League Snapshot</h2>
-                <p className="mt-0.5 text-[11px] text-white/42">Title race, form and points at a glance</p>
-              </div>
-              {standings.length ? (
-                standings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)
-              ) : (
-                <div className="px-4 py-8 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">Table loading...</div>
-              )}
-            </section>
+            {eplStandings.length > 0 && (
+              <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
+                <div className="border-b border-white/10 px-3 py-2.5">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Premier League Snapshot</h2>
+                  <p className="mt-0.5 text-[11px] text-white/42">Title race, form and points at a glance</p>
+                </div>
+                {eplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)}
+              </section>
+            )}
 
               <MatchRoomCard
                 match={selectedMatch}
