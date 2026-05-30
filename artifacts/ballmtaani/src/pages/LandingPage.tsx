@@ -600,6 +600,154 @@ function WorldCupRow({ match }: { match: DisplayMatch }) {
   );
 }
 
+// ─── League priority for featured match ordering ─────────────
+const LEAGUE_PRIORITY: Record<number, number> = {
+  2: 1,   // UEFA Champions League
+  3: 2,   // UEFA Europa League
+  39: 3,  // Premier League
+  140: 4, // La Liga
+  135: 5, // Serie A
+  78: 6,  // Bundesliga
+  61: 7,  // Ligue 1
+  12: 8,  // CAF Champions League
+};
+
+// ─── Today's Featured Match Hero ─────────────────────────────
+function TodayMatchHero({ matches }: { matches: DisplayMatch[] }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  // Filter to today + live only, prioritised by league importance
+  const todayMatches = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const candidates = matches.filter((m) => {
+      const isLive = m.status === "LIVE";
+      const isToday = m.date?.includes(todayStr) || m.kickoff?.includes(todayStr) || isLive;
+      return isLive || isToday;
+    });
+    // Sort: live first, then by league priority
+    return candidates
+      .sort((a, b) => {
+        if (a.status === "LIVE" && b.status !== "LIVE") return -1;
+        if (b.status === "LIVE" && a.status !== "LIVE") return 1;
+        const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
+        const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
+        return pa - pb;
+      })
+      .slice(0, 5);
+  }, [matches]);
+
+  // Auto-transition every 5s when multiple matches
+  useEffect(() => {
+    if (todayMatches.length <= 1) return;
+    const timer = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setActiveIdx((i) => (i + 1) % todayMatches.length);
+        setFading(false);
+      }, 300);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [todayMatches.length]);
+
+  if (!todayMatches.length) return null;
+
+  const match = todayMatches[activeIdx];
+  const isLive = match.status === "LIVE";
+  const hasScore = typeof match.homeScore === "number" && typeof match.awayScore === "number";
+
+  const goTo = (idx: number) => {
+    setFading(true);
+    setTimeout(() => { setActiveIdx(idx); setFading(false); }, 200);
+  };
+
+  return (
+    <section className={`mb-3 overflow-hidden rounded-2xl border transition-all duration-500 ${isLive ? "border-primary/40 shadow-[0_0_30px_rgba(179,0,0,0.2)]" : "border-white/12"}`}>
+      <div className={`relative transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}>
+        {/* Background gradient */}
+        <div className={`absolute inset-0 ${isLive
+          ? "bg-[radial-gradient(ellipse_at_50%_0%,rgba(179,0,0,0.18),transparent_70%),linear-gradient(180deg,#0d0608,#07090f)]"
+          : "bg-[radial-gradient(ellipse_at_50%_0%,rgba(30,111,255,0.1),transparent_70%),linear-gradient(180deg,#080c14,#05070b)]"
+        }`} />
+
+        <div className="relative z-10 px-4 py-5 md:px-6 md:py-6">
+          {/* League + status badge */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {match.leagueLogo && (
+                <img src={match.leagueLogo} alt="" className="h-5 w-5 object-contain opacity-80" />
+              )}
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/55">{match.league}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {isLive ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 border border-primary/40 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+                  Live
+                </span>
+              ) : (
+                <span className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                  {match.kickoff || match.time || match.date || match.status}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Teams + Score */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 md:gap-8">
+            {/* Home */}
+            <div className="flex flex-col items-center gap-2 text-center">
+              <TeamLogo logo={match.homeLogo} initial={match.homeInitial || match.home.slice(0, 3)} color="#182333" size="lg" className="h-14 w-14 md:h-16 md:w-16" />
+              <span className="text-sm font-bold text-white md:text-base leading-tight">{match.home}</span>
+            </div>
+
+            {/* Score / VS */}
+            <div className="flex flex-col items-center gap-1">
+              {hasScore ? (
+                <div className="flex items-center gap-3">
+                  <span className={`text-4xl font-black tabular-nums md:text-5xl ${isLive ? "text-primary" : "text-white"}`}>{match.homeScore}</span>
+                  <span className="text-2xl font-black text-white/25 md:text-3xl">–</span>
+                  <span className="text-4xl font-black tabular-nums text-white md:text-5xl">{match.awayScore}</span>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-white/12 bg-black/40 px-5 py-2 text-base font-black uppercase tracking-[0.12em] text-white/40 md:text-lg">
+                  VS
+                </div>
+              )}
+              {isLive && (match as any).minute && (
+                <span className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">{(match as any).minute}'</span>
+              )}
+            </div>
+
+            {/* Away */}
+            <div className="flex flex-col items-center gap-2 text-center">
+              <TeamLogo logo={match.awayLogo} initial={match.awayInitial || match.away.slice(0, 3)} color="#182333" size="lg" className="h-14 w-14 md:h-16 md:w-16" />
+              <span className="text-sm font-bold text-white md:text-base leading-tight">{match.away}</span>
+            </div>
+          </div>
+
+          {/* Dot navigation (only if multiple matches) */}
+          {todayMatches.length > 1 && (
+            <div className="mt-5 flex items-center justify-center gap-2">
+              {todayMatches.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => goTo(idx)}
+                  className={`rounded-full transition-all duration-300 ${
+                    idx === activeIdx
+                      ? "w-5 h-2 bg-primary"
+                      : "w-2 h-2 bg-white/25 hover:bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Visibility Control Hook ─────────────────────────────────
 // Stagger section visibility during initial load for better UX
 function useDelayedVisibility(condition: boolean, delayMs: number): boolean {
@@ -996,19 +1144,8 @@ export default function LandingPage() {
           </button>
         </header>
 
-        {/* Only show Live Now tile when there are live matches — actionable info only */}
-        {live.length > 0 && (
-          <section className="mb-3">
-            <div className="animate-pulse">
-              <StatTile
-                label="Live Now"
-                value={live.length}
-                icon={Activity}
-                tone="border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]"
-              />
-            </div>
-          </section>
-        )}
+        {/* Today's Featured Match — auto-transitions through top 5 matches */}
+        <TodayMatchHero matches={matches} />
 
         <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
           {showLeftSidebar && (
