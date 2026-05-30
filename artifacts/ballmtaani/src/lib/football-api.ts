@@ -223,8 +223,8 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
 
 // ─── 2. UPCOMING FIXTURES (next matches from major leagues) ─
 export async function fetchUpcomingFixtures(): Promise<any[]> {
-  // Fetch next 10 fixtures for each major league
-  const leagueIds = [39, 140, 135, 78, 61]; // Top 5 domestic
+  // UCL + UEL first (cup finals happen end of season when domestics are done)
+  const leagueIds = [2, 3, 12, 39, 140, 135, 78, 61];
   const allFixtures: any[] = [];
 
   for (const leagueId of leagueIds) {
