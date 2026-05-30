@@ -148,20 +148,14 @@ function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
   );
 }
 
-// ─── Today's Matches Card — upcoming only, no live (live is in LiveNowCard) ───
+// ─── Today's Matches Card — soonest upcoming fixtures ────────
 function TodaysMatchesCard({ upcoming }: { upcoming: any[] }) {
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const todayEnd = todayStart + 24 * 60 * 60 * 1000;
   const dateLabel = now.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  // Only today's upcoming fixtures — use kickoffAt timestamp for reliable filtering
-  const todayFixtures = upcoming
-    .filter((m) => {
-      const at = m.kickoffAt as number | undefined;
-      if (!at) return false;
-      return at >= todayStart && at < todayEnd;
-    })
+  // Sort by soonest kickoff, prioritise top leagues, take first 5
+  // No date arithmetic — the upcoming feed naturally returns next matches
+  const todayFixtures = [...upcoming]
     .sort((a, b) => {
       const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
       const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
