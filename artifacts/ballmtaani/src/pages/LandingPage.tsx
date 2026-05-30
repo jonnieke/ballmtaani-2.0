@@ -148,67 +148,88 @@ function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
   );
 }
 
-// ─── Today's Matches Card — shows all matches today ───────────
+// ─── Today's Matches Card — upcoming only, no live (live is in LiveNowCard) ───
 function TodaysMatchesCard({ matches }: { matches: DisplayMatch[] }) {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const today = matches
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const dateLabel = now.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  // Exclude live matches — they belong in LiveNowCard
+  const upcoming = matches
     .filter((m) => {
-      const isLive = m.status === "LIVE";
-      const isToday = m.kickoff?.slice(0, 10) === todayStr || m.date?.includes(todayStr);
-      return isLive || isToday;
+      if (m.status === "LIVE") return false;
+      return m.kickoff?.slice(0, 10) === todayStr || m.date?.includes(todayStr);
     })
     .sort((a, b) => {
-      // Live first, then by kickoff time, then by league priority
-      if (a.status === "LIVE" && b.status !== "LIVE") return -1;
-      if (b.status === "LIVE" && a.status !== "LIVE") return 1;
       const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
       const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
-      return pa - pb;
+      if (pa !== pb) return pa - pb;
+      // Sort by kickoff time within same league
+      const ta = a.kickoff || a.time || "";
+      const tb = b.kickoff || b.time || "";
+      return ta.localeCompare(tb);
     })
     .slice(0, 5);
 
-  if (!today.length) return null;
+  if (!upcoming.length) return null;
+
+  // Group by league
+  const byLeague: Record<string, DisplayMatch[]> = {};
+  for (const m of upcoming) {
+    const key = m.league || "Other";
+    if (!byLeague[key]) byLeague[key] = [];
+    byLeague[key].push(m);
+  }
 
   return (
     <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <CalendarDays className="h-3.5 w-3.5 text-white/50" />
-        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/70">Today's Matches</span>
+      {/* Header */}
+      <div className="border-b border-white/10 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-3.5 w-3.5 text-white/50" />
+          <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/70">Today's Matches</span>
+        </div>
+        <div className="mt-0.5 text-[10px] font-medium text-white/35">{dateLabel}</div>
       </div>
-      {today.map((m) => {
-        const isLive = m.status === "LIVE";
-        const hasScore = typeof m.homeScore === "number" && typeof m.awayScore === "number";
-        const time = m.kickoff?.slice(11, 16) || m.time || m.date || "TBC";
-        return (
-          <div key={m.id} className={`grid grid-cols-[44px_1fr_auto_1fr] items-center gap-2 border-b border-white/6 px-3 py-2.5 last:border-0 ${isLive ? "bg-primary/5" : ""}`}>
-            <div className="text-center">
-              {isLive ? (
-                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-primary">
-                  <span className="h-1 w-1 rounded-full bg-primary animate-ping" />Live
-                </span>
-              ) : (
-                <span className="text-xs font-bold text-white/50 tabular-nums">{time}</span>
-              )}
-              <div className="truncate text-[9px] text-white/30 mt-0.5">{m.league?.replace("UEFA ", "").replace(" League", "")}</div>
-            </div>
-            <div className="flex min-w-0 items-center gap-1.5">
-              <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0,3)} color="#182333" size="sm" />
-              <span className="truncate text-sm font-semibold text-white">{m.home}</span>
-            </div>
-            <div className="px-1 text-center">
-              {hasScore ? (
-                <span className={`text-sm font-black tabular-nums ${isLive ? "text-primary" : "text-white/70"}`}>{m.homeScore}–{m.awayScore}</span>
-              ) : (
-                <span className="text-[10px] font-bold text-white/30">vs</span>
-              )}
-            </div>
-            <div className="flex min-w-0 items-center justify-end gap-1.5">
-              <span className="truncate text-right text-sm font-semibold text-white">{m.away}</span>
-              <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0,3)} color="#182333" size="sm" />
-            </div>
+
+      {/* Matches grouped by league */}
+      {Object.entries(byLeague).map(([league, leagueMatches]) => (
+        <div key={league}>
+          {/* League sub-header */}
+          <div className="flex items-center gap-2 border-b border-white/6 bg-white/[0.02] px-3 py-1.5">
+            {leagueMatches[0].leagueLogo && (
+              <img src={leagueMatches[0].leagueLogo} alt="" className="h-4 w-4 object-contain opacity-70" />
+            )}
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">{league}</span>
           </div>
-        );
-      })}
+
+          {/* Matches in this league */}
+          {leagueMatches.map((m) => {
+            const time = m.kickoff?.slice(11, 16) || m.time || "TBC";
+            return (
+              <div key={m.id} className="grid grid-cols-[36px_1fr_32px_1fr] items-center gap-2 border-b border-white/5 px-3 py-3 last:border-0">
+                {/* Kickoff time */}
+                <span className="text-xs font-bold tabular-nums text-white/55">{time}</span>
+
+                {/* Home team */}
+                <div className="flex min-w-0 items-center gap-2">
+                  <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0, 3)} color="#182333" size="sm" />
+                  <span className="truncate text-sm font-semibold text-white">{m.home}</span>
+                </div>
+
+                {/* VS */}
+                <span className="text-center text-[10px] font-bold text-white/30">vs</span>
+
+                {/* Away team */}
+                <div className="flex min-w-0 items-center justify-end gap-2">
+                  <span className="truncate text-right text-sm font-semibold text-white">{m.away}</span>
+                  <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0, 3)} color="#182333" size="sm" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </section>
   );
 }
