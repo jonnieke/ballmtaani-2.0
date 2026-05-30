@@ -110,24 +110,106 @@ function getCurrentSeason(now = new Date()) {
   return month >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 }
 
-function StatTile({
-  label,
-  value,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string | number;
-  icon: typeof Activity;
-  tone: string;
-}) {
+// ─── Live Now Card — shows actual live matches ────────────────
+function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
+  const live = matches.filter((m) => m.status === "LIVE");
+  if (!live.length) return null;
   return (
-    <div className={`relative overflow-hidden rounded-xl border bg-[#0b1119]/92 p-3 ${tone}`}>
-      <div className="absolute -right-6 -top-8 h-20 w-20 rounded-full bg-current/10 blur-2xl" />
-      <Icon className="relative mb-2 h-4 w-4" />
-      <div className="relative text-2xl font-semibold leading-none text-white md:text-3xl">{value}</div>
-      <div className="relative mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/48">{label}</div>
-    </div>
+    <section className="overflow-hidden rounded-xl border border-primary/40 bg-[#0d0608]/95 shadow-[0_0_24px_rgba(179,0,0,0.15)]">
+      <div className="flex items-center gap-2 border-b border-primary/20 px-3 py-2">
+        <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
+        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Live Now</span>
+        <span className="ml-auto text-[10px] font-semibold text-primary/60">{live.length} match{live.length > 1 ? "es" : ""}</span>
+      </div>
+      {live.map((m) => {
+        const hasScore = typeof m.homeScore === "number" && typeof m.awayScore === "number";
+        return (
+          <div key={m.id} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/6 px-3 py-3 last:border-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0,3)} color="#1a0608" size="sm" />
+              <span className="truncate text-sm font-bold text-white">{m.home}</span>
+            </div>
+            <div className="text-center">
+              {hasScore ? (
+                <span className="text-base font-black text-primary tabular-nums">{m.homeScore} – {m.awayScore}</span>
+              ) : (
+                <span className="text-xs font-bold text-white/40">vs</span>
+              )}
+              <div className="text-[9px] font-semibold uppercase tracking-widest text-white/35 mt-0.5">{m.league}</div>
+            </div>
+            <div className="flex min-w-0 items-center justify-end gap-2">
+              <span className="truncate text-sm font-bold text-white text-right">{m.away}</span>
+              <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0,3)} color="#1a0608" size="sm" />
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+// ─── Today's Matches Card — shows all matches today ───────────
+function TodaysMatchesCard({ matches }: { matches: DisplayMatch[] }) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const today = matches
+    .filter((m) => {
+      const isLive = m.status === "LIVE";
+      const isToday = m.kickoff?.slice(0, 10) === todayStr || m.date?.includes(todayStr);
+      return isLive || isToday;
+    })
+    .sort((a, b) => {
+      // Live first, then by kickoff time, then by league priority
+      if (a.status === "LIVE" && b.status !== "LIVE") return -1;
+      if (b.status === "LIVE" && a.status !== "LIVE") return 1;
+      const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
+      const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
+      return pa - pb;
+    })
+    .slice(0, 5);
+
+  if (!today.length) return null;
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
+      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
+        <CalendarDays className="h-3.5 w-3.5 text-white/50" />
+        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/70">Today's Matches</span>
+      </div>
+      {today.map((m) => {
+        const isLive = m.status === "LIVE";
+        const hasScore = typeof m.homeScore === "number" && typeof m.awayScore === "number";
+        const time = m.kickoff?.slice(11, 16) || m.time || m.date || "TBC";
+        return (
+          <div key={m.id} className={`grid grid-cols-[44px_1fr_auto_1fr] items-center gap-2 border-b border-white/6 px-3 py-2.5 last:border-0 ${isLive ? "bg-primary/5" : ""}`}>
+            <div className="text-center">
+              {isLive ? (
+                <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-primary">
+                  <span className="h-1 w-1 rounded-full bg-primary animate-ping" />Live
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-white/50 tabular-nums">{time}</span>
+              )}
+              <div className="truncate text-[9px] text-white/30 mt-0.5">{m.league?.replace("UEFA ", "").replace(" League", "")}</div>
+            </div>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0,3)} color="#182333" size="sm" />
+              <span className="truncate text-sm font-semibold text-white">{m.home}</span>
+            </div>
+            <div className="px-1 text-center">
+              {hasScore ? (
+                <span className={`text-sm font-black tabular-nums ${isLive ? "text-primary" : "text-white/70"}`}>{m.homeScore}–{m.awayScore}</span>
+              ) : (
+                <span className="text-[10px] font-bold text-white/30">vs</span>
+              )}
+            </div>
+            <div className="flex min-w-0 items-center justify-end gap-1.5">
+              <span className="truncate text-right text-sm font-semibold text-white">{m.away}</span>
+              <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0,3)} color="#182333" size="sm" />
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 
@@ -612,141 +694,6 @@ const LEAGUE_PRIORITY: Record<number, number> = {
   12: 8,  // CAF Champions League
 };
 
-// ─── Today's Featured Match Hero ─────────────────────────────
-function TodayMatchHero({ matches }: { matches: DisplayMatch[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [fading, setFading] = useState(false);
-
-  // Filter to today + live only, prioritised by league importance
-  const todayMatches = useMemo(() => {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const candidates = matches.filter((m) => {
-      const isLive = m.status === "LIVE";
-      const isToday = m.date?.includes(todayStr) || m.kickoff?.includes(todayStr) || isLive;
-      return isLive || isToday;
-    });
-    // Sort: live first, then by league priority
-    return candidates
-      .sort((a, b) => {
-        if (a.status === "LIVE" && b.status !== "LIVE") return -1;
-        if (b.status === "LIVE" && a.status !== "LIVE") return 1;
-        const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
-        const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
-        return pa - pb;
-      })
-      .slice(0, 5);
-  }, [matches]);
-
-  // Auto-transition every 5s when multiple matches
-  useEffect(() => {
-    if (todayMatches.length <= 1) return;
-    const timer = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setActiveIdx((i) => (i + 1) % todayMatches.length);
-        setFading(false);
-      }, 300);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [todayMatches.length]);
-
-  if (!todayMatches.length) return null;
-
-  const match = todayMatches[activeIdx];
-  const isLive = match.status === "LIVE";
-  const hasScore = typeof match.homeScore === "number" && typeof match.awayScore === "number";
-
-  const goTo = (idx: number) => {
-    setFading(true);
-    setTimeout(() => { setActiveIdx(idx); setFading(false); }, 200);
-  };
-
-  return (
-    <section className={`mb-3 overflow-hidden rounded-2xl border transition-all duration-500 ${isLive ? "border-primary/40 shadow-[0_0_30px_rgba(179,0,0,0.2)]" : "border-white/12"}`}>
-      <div className={`relative transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}>
-        {/* Background gradient */}
-        <div className={`absolute inset-0 ${isLive
-          ? "bg-[radial-gradient(ellipse_at_50%_0%,rgba(179,0,0,0.18),transparent_70%),linear-gradient(180deg,#0d0608,#07090f)]"
-          : "bg-[radial-gradient(ellipse_at_50%_0%,rgba(30,111,255,0.1),transparent_70%),linear-gradient(180deg,#080c14,#05070b)]"
-        }`} />
-
-        <div className="relative z-10 px-4 py-5 md:px-6 md:py-6">
-          {/* League + status badge */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {match.leagueLogo && (
-                <img src={match.leagueLogo} alt="" className="h-5 w-5 object-contain opacity-80" />
-              )}
-              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/55">{match.league}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {isLive ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 border border-primary/40 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-                  Live
-                </span>
-              ) : (
-                <span className="rounded-full border border-white/15 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
-                  {match.kickoff || match.time || match.date || match.status}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Teams + Score */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 md:gap-8">
-            {/* Home */}
-            <div className="flex flex-col items-center gap-2 text-center">
-              <TeamLogo logo={match.homeLogo} initial={match.homeInitial || match.home.slice(0, 3)} color="#182333" size="lg" className="h-14 w-14 md:h-16 md:w-16" />
-              <span className="text-sm font-bold text-white md:text-base leading-tight">{match.home}</span>
-            </div>
-
-            {/* Score / VS */}
-            <div className="flex flex-col items-center gap-1">
-              {hasScore ? (
-                <div className="flex items-center gap-3">
-                  <span className={`text-4xl font-black tabular-nums md:text-5xl ${isLive ? "text-primary" : "text-white"}`}>{match.homeScore}</span>
-                  <span className="text-2xl font-black text-white/25 md:text-3xl">–</span>
-                  <span className="text-4xl font-black tabular-nums text-white md:text-5xl">{match.awayScore}</span>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/12 bg-black/40 px-5 py-2 text-base font-black uppercase tracking-[0.12em] text-white/40 md:text-lg">
-                  VS
-                </div>
-              )}
-              {isLive && (match as any).minute && (
-                <span className="text-[11px] font-black uppercase tracking-[0.16em] text-primary">{(match as any).minute}'</span>
-              )}
-            </div>
-
-            {/* Away */}
-            <div className="flex flex-col items-center gap-2 text-center">
-              <TeamLogo logo={match.awayLogo} initial={match.awayInitial || match.away.slice(0, 3)} color="#182333" size="lg" className="h-14 w-14 md:h-16 md:w-16" />
-              <span className="text-sm font-bold text-white md:text-base leading-tight">{match.away}</span>
-            </div>
-          </div>
-
-          {/* Dot navigation (only if multiple matches) */}
-          {todayMatches.length > 1 && (
-            <div className="mt-5 flex items-center justify-center gap-2">
-              {todayMatches.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => goTo(idx)}
-                  className={`rounded-full transition-all duration-300 ${
-                    idx === activeIdx
-                      ? "w-5 h-2 bg-primary"
-                      : "w-2 h-2 bg-white/25 hover:bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ─── Visibility Control Hook ─────────────────────────────────
 // Stagger section visibility during initial load for better UX
@@ -1144,8 +1091,11 @@ export default function LandingPage() {
           </button>
         </header>
 
-        {/* Today's Featured Match — auto-transitions through top 5 matches */}
-        <TodayMatchHero matches={matches} />
+        {/* Data-first match cards — only render when real data exists */}
+        <div className="mb-3 grid gap-3 lg:grid-cols-2">
+          <LiveNowCard matches={matches} />
+          <TodaysMatchesCard matches={matches} />
+        </div>
 
         <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
           {showLeftSidebar && (
