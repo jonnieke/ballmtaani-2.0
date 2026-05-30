@@ -617,6 +617,18 @@ function WorldCupRow({ match }: { match: DisplayMatch }) {
   );
 }
 
+// ─── Visibility Control Hook ─────────────────────────────────
+// Stagger section visibility during initial load for better UX
+function useDelayedVisibility(condition: boolean, delayMs: number): boolean {
+  const [show, setShow] = useState(!condition);
+  useEffect(() => {
+    if (!condition) { setShow(true); return; }
+    const timer = setTimeout(() => setShow(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [condition, delayMs]);
+  return show;
+}
+
 // ─── WC26 Hero ───────────────────────────────────────────────
 const WC26_START = new Date("2026-06-11T17:00:00Z"); // 8pm EAT
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
@@ -788,6 +800,10 @@ export default function LandingPage() {
   const [fixtureLineups, setFixtureLineups] = useState<{ home: TeamLineup | null; away: TeamLineup | null }>({ home: null, away: null });
   const [teamStats, setTeamStats] = useState<{ home: TeamSeasonStats | null; away: TeamSeasonStats | null }>({ home: null, away: null });
   const [detailsLoading, setDetailsLoading] = useState(false);
+
+  // ─── Staggered visibility for sidebars during loading ────────────────────────
+  const showLeftSidebar = useDelayedVisibility(loading && !live.length && !worldCup.length, 1500);
+  const showRightSidebar = useDelayedVisibility(loading && !standings.length && !kplStandings.length, 3000);
 
   useEffect(() => {
     let mounted = true;
@@ -997,9 +1013,10 @@ export default function LandingPage() {
           <StatTile label="Tables Open" value={standings.length || activeLeague.short} icon={Table2} tone="border-[#ffd700]/40 text-[#ffd700]" />
         </section>
 
-        <div className="grid gap-3 xl:grid-cols-[330px_minmax(0,1fr)_360px]">
-          <aside className="space-y-3">
-            <section className={`overflow-hidden rounded-xl border bg-[#090d14]/95 transition-all duration-700 ${live.length > 0 ? "border-primary/30 shadow-[0_0_20px_rgba(179,0,0,0.12)]" : "border-white/10"}`}>
+        <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
+          {showLeftSidebar && (
+            <aside className={`space-y-3 transition-all duration-300 ${live.length > 0 || worldCup.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
+              <section className={`overflow-hidden rounded-xl border bg-[#090d14]/95 transition-all duration-700 ${live.length > 0 ? "border-primary/30 shadow-[0_0_20px_rgba(179,0,0,0.12)]" : "border-white/10"}`}>
               <div className={`flex items-center justify-between border-b px-3 py-2.5 transition-colors duration-700 ${live.length > 0 ? "border-primary/20" : "border-white/10"}`}>
                 <div>
                   <div className="flex items-center gap-2">
@@ -1045,7 +1062,8 @@ export default function LandingPage() {
               </div>
               <div>{wcMatches.map((match) => <WorldCupRow key={match.id} match={match} />)}</div>
             </section>
-          </aside>
+            </aside>
+          )}
 
           <section className="space-y-3">
             <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
@@ -1166,8 +1184,9 @@ export default function LandingPage() {
             </section>
           </section>
 
-          <aside className="space-y-3">
-            <section className="rounded-xl border border-white/10 bg-[#090d14]/95 p-3">
+          {showRightSidebar && (
+            <aside className={`space-y-3 transition-all duration-300 ${standings.length > 0 || kplStandings.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
+              <section className="rounded-xl border border-white/10 bg-[#090d14]/95 p-3">
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">League Switchboard</h2>
@@ -1222,16 +1241,17 @@ export default function LandingPage() {
               )}
             </section>
 
-            <MatchRoomCard
-              match={selectedMatch}
-              stats={fixtureStats}
-              events={fixtureEvents}
-              lineups={fixtureLineups}
-              teamStats={teamStats}
-              loading={detailsLoading}
-              onOpenStats={setActiveTab}
-            />
-          </aside>
+              <MatchRoomCard
+                match={selectedMatch}
+                stats={fixtureStats}
+                events={fixtureEvents}
+                lineups={fixtureLineups}
+                teamStats={teamStats}
+                loading={detailsLoading}
+                onOpenStats={setActiveTab}
+              />
+            </aside>
+          )}
         </div>
 
         <section className="mt-4">
