@@ -92,30 +92,8 @@ const CENTER_TABS: { id: MatchCenterTab; label: string; icon: typeof Activity }[
   { id: "season", label: "Season", icon: ShieldCheck },
 ];
 
-const WC_FALLBACK: DisplayMatch[] = [
-  {
-    id: "wc26-opener",
-    home: "USA",
-    away: "Mexico",
-    homeLogo: "https://media.api-sports.io/flags/us.svg",
-    awayLogo: "https://media.api-sports.io/flags/mx.svg",
-    league: "FIFA World Cup",
-    date: "Jun 11 2026",
-    time: "9:00 PM",
-    status: "Group A",
-  },
-  {
-    id: "wc26-canada",
-    home: "Canada",
-    away: "Qatar",
-    homeLogo: "https://media.api-sports.io/flags/ca.svg",
-    awayLogo: "https://media.api-sports.io/flags/qa.svg",
-    league: "FIFA World Cup",
-    date: "Jun 12 2026",
-    time: "12:00 AM",
-    status: "Group A",
-  },
-];
+// Removed WC_FALLBACK — never show fake data on sports app
+// Only show real World Cup fixtures from API, or empty state
 
 function normalizeMatchStatus(status?: string) {
   const s = (status || "").toUpperCase();
@@ -860,7 +838,8 @@ export default function LandingPage() {
     () => upcoming.filter((match: any) => match.leagueId === activeLeague.id || match.league === activeLeague.name).slice(0, 8),
     [upcoming, activeLeague.id, activeLeague.name],
   );
-  const wcMatches: DisplayMatch[] = (worldCup.length > 0 ? worldCup : WC_FALLBACK).slice(0, 3);
+  // Only use real World Cup data — never fallback to fake matches
+  const wcMatches: DisplayMatch[] = (worldCup.length > 0 ? worldCup : []).slice(0, 3);
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
   const timeLabel = today.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true });
@@ -1050,18 +1029,20 @@ export default function LandingPage() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-xl border border-[#ffd700]/20 bg-[#111006]/92">
-              <div className="flex items-center justify-between border-b border-[#ffd700]/12 px-3 py-2.5">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">WC26 Watch</h2>
-                  <p className="text-[11px] text-[#ffd700]/65">World Cup route</p>
+            {wcMatches.length > 0 ? (
+              <section className="overflow-hidden rounded-xl border border-[#ffd700]/20 bg-[#111006]/92">
+                <div className="flex items-center justify-between border-b border-[#ffd700]/12 px-3 py-2.5">
+                  <div>
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">WC26 Watch</h2>
+                    <p className="text-[11px] text-[#ffd700]/65">World Cup route</p>
+                  </div>
+                  <Link href="/world-cup-2026" className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#ffd700]">
+                    Guide
+                  </Link>
                 </div>
-                <Link href="/world-cup-2026" className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#ffd700]">
-                  Guide
-                </Link>
-              </div>
-              <div>{wcMatches.map((match) => <WorldCupRow key={match.id} match={match} />)}</div>
-            </section>
+                <div>{wcMatches.map((match) => <WorldCupRow key={match.id} match={match} />)}</div>
+              </section>
+            ) : null}
             </aside>
           )}
 
@@ -1212,22 +1193,20 @@ export default function LandingPage() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-xl border border-[#008000]/30 bg-[#04100a]/95">
-              <div className="flex items-center justify-between border-b border-[#008000]/20 px-3 py-2.5">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Kenya Premier League</h2>
-                  <p className="mt-0.5 text-[11px] text-[#22c55e]/70">Home table · KPL 2025</p>
+            {kplStandings.length > 0 && (
+              <section className="overflow-hidden rounded-xl border border-[#008000]/30 bg-[#04100a]/95">
+                <div className="flex items-center justify-between border-b border-[#008000]/20 px-3 py-2.5">
+                  <div>
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Kenya Premier League</h2>
+                    <p className="mt-0.5 text-[11px] text-[#22c55e]/70">Current standings · KPL 2025/26</p>
+                  </div>
+                  <div className="h-5 w-5 overflow-hidden rounded-full border border-[#008000]/40">
+                    <div className="h-full w-full" style={{ background: "linear-gradient(to bottom, #006600 50%, #BB0000 50%)" }} />
+                  </div>
                 </div>
-                <div className="h-5 w-5 overflow-hidden rounded-full border border-[#008000]/40">
-                  <div className="h-full w-full" style={{ background: "linear-gradient(to bottom, #006600 50%, #BB0000 50%)" }} />
-                </div>
-              </div>
-              {kplStandings.length ? (
-                kplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)
-              ) : (
-                <div className="px-4 py-6 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">KPL table loading...</div>
-              )}
-            </section>
+                {kplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)}
+              </section>
+            )}
 
             <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
               <div className="border-b border-white/10 px-3 py-2.5">
