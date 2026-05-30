@@ -149,33 +149,32 @@ function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
 }
 
 // ─── Today's Matches Card — upcoming only, no live (live is in LiveNowCard) ───
-function TodaysMatchesCard({ matches }: { matches: DisplayMatch[] }) {
+function TodaysMatchesCard({ upcoming }: { upcoming: any[] }) {
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayEnd = todayStart + 24 * 60 * 60 * 1000;
   const dateLabel = now.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  // Exclude live matches — they belong in LiveNowCard
-  const upcoming = matches
+  // Only today's upcoming fixtures — use kickoffAt timestamp for reliable filtering
+  const todayFixtures = upcoming
     .filter((m) => {
-      if (m.status === "LIVE") return false;
-      return m.kickoff?.slice(0, 10) === todayStr || m.date?.includes(todayStr);
+      const at = m.kickoffAt as number | undefined;
+      if (!at) return false;
+      return at >= todayStart && at < todayEnd;
     })
     .sort((a, b) => {
       const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
       const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
       if (pa !== pb) return pa - pb;
-      // Sort by kickoff time within same league
-      const ta = a.kickoff || a.time || "";
-      const tb = b.kickoff || b.time || "";
-      return ta.localeCompare(tb);
+      return (a.kickoffAt ?? 0) - (b.kickoffAt ?? 0);
     })
     .slice(0, 5);
 
-  if (!upcoming.length) return null;
+  if (!todayFixtures.length) return null;
 
   // Group by league
-  const byLeague: Record<string, DisplayMatch[]> = {};
-  for (const m of upcoming) {
+  const byLeague: Record<string, any[]> = {};
+  for (const m of todayFixtures) {
     const key = m.league || "Other";
     if (!byLeague[key]) byLeague[key] = [];
     byLeague[key].push(m);
@@ -1115,7 +1114,7 @@ export default function LandingPage() {
         {/* Data-first match cards — only render when real data exists */}
         <div className="mb-3 grid gap-3 lg:grid-cols-2">
           <LiveNowCard matches={matches} />
-          <TodaysMatchesCard matches={matches} />
+          <TodaysMatchesCard upcoming={upcoming} />
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
