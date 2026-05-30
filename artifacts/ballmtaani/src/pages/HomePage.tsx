@@ -1,423 +1,548 @@
-﻿import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useMemo, useState } from "react";
-import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2, ShieldCheck } from "lucide-react";
-import { CLUB_LOGOS } from "../data/mockData";
-import { useMatches, useUpcomingFixtures, useRecentMatches, useDebates, useLeaderboard } from "../hooks/useData";
+import { useEffect, useState, useMemo } from "react";
+import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar, ExternalLink } from "lucide-react";
+import { useMatches, useUpcomingFixtures, useRecentMatches, useLeaderboard } from "../hooks/useData";
+import { fetchTodaysFixtures, type LiveMatch } from "../lib/football-api";
+import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
 import { supabase } from "../lib/supabase";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import { SkeletonMatch } from "../components/Skeletons";
 import PremiumMatchCard from "../components/PremiumMatchCard";
 import SEO from "../components/SEO";
-import { motion, AnimatePresence } from "framer-motion";
-import NewsFeed from "../components/NewsFeed";
 import FloatingMchambuzi from "../components/FloatingMchambuzi";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
+import { motion } from "framer-motion";
+
+const WC26_START = new Date("2026-06-11T17:00:00Z");
+const WC26_END   = new Date("2026-07-20T00:00:00Z");
+
+const WC26_KW = ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026", "world cup final", "usa host", "canada host", "mexico host", "group stage 2026", "world cup squad", "wc26 qualifier"];
+const isWC26 = (title: string) => { const t = title.toLowerCase(); return WC26_KW.some(k => t.includes(k)); };
+
+function useWC26() {
+  const [cd, setCd] = useState({ days: 0, hours: 0, mins: 0, secs: 0, isLive: false, isOver: false });
+  useEffect(() => {
+    const tick = () => {
+      const now = Date.now();
+      const over = now > WC26_END.getTime();
+      const live = !over && now >= WC26_START.getTime();
+      const diff = WC26_START.getTime() - now;
+      setCd({ days: Math.max(0, Math.floor(diff / 86400000)), hours: Math.max(0, Math.floor((diff % 86400000) / 3600000)), mins: Math.max(0, Math.floor((diff % 3600000) / 60000)), secs: Math.max(0, Math.floor((diff % 60000) / 1000)), isLive: live, isOver: over });
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, []);
+  return cd;
+}
+
+function progressPct(status: string, minute: string) {
+  const m = parseInt(minute) || 0;
+  if (status === "HT") return 50;
+  if (status === "1H") return Math.min((m / 45) * 50, 50);
+  if (status === "2H") return Math.min(50 + ((m - 45) / 45) * 50, 100);
+  if (["ET","P"].includes(status)) return 100;
+  return 0;
+}
+
+function halfLabel(status: string) {
+  return ({ "1H":"1st Half","HT":"Half Time","2H":"2nd Half","ET":"Extra Time","P":"Penalties" } as Record<string,string>)[status] || "Live";
+}
+
+function CountBox({ v, l }: { v: number; l: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="min-w-[52px] rounded-xl border border-[#FFD700]/22 bg-black/55 px-3 py-2 text-center backdrop-blur-sm">
+        <span className="block text-2xl font-black tabular-nums text-white md:text-3xl">{String(v).padStart(2,"0")}</span>
+      </div>
+      <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[#FFD700]/55">{l}</span>
+    </div>
+  );
+}
+
+function NewsCard({ article, featured }: { article: NewsArticle; featured?: boolean }) {
+  const share = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${article.title}\n\n${article.link}\n\nShared from BallMtaani`)}`, "_blank");
+  return (
+    <div className={`group flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${featured ? "border-[#FFD700]/22 bg-[#0a0900]" : "border-white/7 bg-[#0d1018]"}`}>
+      <div className="relative h-44 overflow-hidden">
+        <img src={article.thumbnail} alt={article.title} loading="lazy" decoding="async"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=50&fm=webp"; }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+        {featured && <div className="absolute inset-0 bg-[#FFD700]/5" />}
+        <div className="absolute bottom-2 left-3">
+          <span className="rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white/65 backdrop-blur-sm">{article.source}</span>
+        </div>
+      </div>
+      <div className="flex flex-1 flex-col p-4">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">{timeAgo(article.pubDate)}</p>
+        <h3 className="mb-4 flex-1 text-sm font-black leading-snug text-white line-clamp-3">{article.title}</h3>
+        <div className="flex gap-2">
+          <a href={article.link} target="_blank" rel="noopener noreferrer"
+            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-2 text-[10px] font-black uppercase tracking-widest text-white/40 transition-all hover:bg-white/10 hover:text-white">
+            <ExternalLink className="h-3 w-3" /> Read
+          </a>
+          <button onClick={share} className="rounded-lg bg-[#25D366]/10 px-3 py-2 text-sm text-[#25D366] transition-all hover:bg-[#25D366]/20" title="Share to WhatsApp">WA</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { isLoggedIn } = useAuth();
-  const [, setLocation] = useLocation();
-  const [heroBannerError, setHeroBannerError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
-  const [predCount, setPredCount] = useState<number | null>(null);
-  const [zonesCount, setZonesCount] = useState<number | null>(null);
-  const favClub = localStorage.getItem("mtaani_fav_club") || "";
+  const [todaysFixtures, setTodaysFixtures] = useState<any[]>([]);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
 
-  // Data Hooks
   const { data: liveMatches = [], isLoading: isLoadingMatches } = useMatches();
   const { data: upcomingFixtures = [], isLoading: isLoadingUpcoming } = useUpcomingFixtures();
   const { data: recentMatches = [], isLoading: isLoadingRecent } = useRecentMatches();
-  const { data: debates = [] } = useDebates();
   const { data: leaderboard = [] } = useLeaderboard();
+  const wc26 = useWC26();
 
   useEffect(() => {
-    if (liveMatches.length || upcomingFixtures.length || recentMatches.length) {
-      setLastUpdated(new Date());
-    }
+    if (liveMatches.length || upcomingFixtures.length || recentMatches.length) setLastUpdated(new Date());
   }, [liveMatches, upcomingFixtures, recentMatches]);
 
   useEffect(() => {
-
-    if (supabase) {
-      supabase.from("predictions").select("*", { count: "exact", head: true }).then(({ count }) => {
-        if (count !== null) setPredCount(count);
-      });
-      supabase.from("fan_zones").select("*", { count: "exact", head: true }).then(({ count }) => {
-        if (count !== null) setZonesCount(count);
-      });
-    }
+    fetchTodaysFixtures().then(setTodaysFixtures);
+    fetchFootballNews().then(articles => {
+      const wc = articles.filter(a => isWC26(a.title));
+      const rest = articles.filter(a => !isWC26(a.title));
+      setNews([...wc, ...rest]);
+    }).finally(() => setNewsLoading(false));
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setClockTick((t) => t + 1), 60000);
-    return () => window.clearInterval(timer);
+    const t = window.setInterval(() => setClockTick(n => n + 1), 60000);
+    return () => window.clearInterval(t);
   }, []);
-  const freshnessLabelSafe = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
-  // Highlight the best match: live first, then upcoming
+  const freshnessLabel = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
+
   const featuredMatch = liveMatches[0] || upcomingFixtures[0] || null;
-  const isMatchLive = !!liveMatches[0];
-  const pulseMatches = [...liveMatches, ...upcomingFixtures].slice(0, 3);
-  const wc26Days = Math.ceil((new Date("2026-06-11").getTime() - Date.now()) / 86400000);
-  const pulseStats = [
-    {
-      label: wc26Days > 0 ? "Days to WC26" : "WC26 Status",
-      value: wc26Days > 0 ? String(wc26Days) : "Live",
-    },
-    {
-      label: "Calls locked",
-      value: predCount !== null ? predCount.toLocaleString() : "--",
-    },
-    {
-      label: "Fan rooms",
-      value: zonesCount !== null ? String(zonesCount) : "--",
-    },
-  ];
+  const isMatchLive   = !!liveMatches[0];
 
-  const getPulseSplit = (match: any, index: number) => {
-    const seed = (match.home?.length || 6) * 7 + (match.away?.length || 5) * 3 + index * 11;
-    const home = 42 + (seed % 25);
-    const away = 100 - home;
-    return { home, away };
-  };
+  const liveStatuses = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
+  const todayUpcoming = todaysFixtures.filter(m => !liveStatuses.has(m.status)).slice(0, 6);
+
+  const wc26News   = news.filter(a => isWC26(a.title)).slice(0, 3);
+  const otherNews  = news.filter(a => !isWC26(a.title)).slice(0, 6);
+
+  // Group today's matches by league
+  const byLeague = todayUpcoming.reduce((acc: Record<string, any[]>, m) => {
+    const k = m.league || "Other";
+    if (!acc[k]) acc[k] = [];
+    acc[k].push(m);
+    return acc;
+  }, {});
 
   return (
-    <div className="pb-12">
-      <SEO 
-        title="BallMtaani Home | Kenyan Football Fans, Scores and Banter"
-        description="The BallMtaani home feed brings Kenyan football fans live matches, latest news, predictions, debates, fan rooms and matchday receipts."
-        keywords={[
-          "BallMtaani home",
-          "Kenyan football fans",
-          "football news Kenya",
-          "live football matches",
-          "football banter Kenya",
-        ]}
+    <div className="pb-24">
+      <SEO
+        title="BallMtaani | Kenyan Football Hub — WC26 Ready"
+        description="Kenya's #1 football hub: live UCL scores, World Cup 2026 countdown, today's fixtures, fan predictions and Mchambuzi AI analysis."
+        keywords={["BallMtaani","Kenyan football","World Cup 2026","live football scores","UCL final","WC26 Kenya","football predictions"]}
         path="/home"
-        breadcrumbs={[
-          { name: "BallMtaani", url: "/" },
-          { name: "Home", url: "/home" },
-        ]}
+        breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "Home", url: "/home" }]}
       />
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-          HERO SECTION
-      â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <section className="relative w-full overflow-hidden border-b border-white/10" style={{ minHeight: 500 }}>
-        <img
-          src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=80"
-          alt="Football stadium"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; setHeroBannerError(true); }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/40"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0B] via-transparent to-transparent"></div>
-        <div className="absolute top-0 left-1/3 w-[600px] h-[300px] bg-primary/25 rounded-full blur-[120px] pointer-events-none"></div>
+      {/* ─────────────────────────────── HERO ─────────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-white/8 bg-[#040508]">
+        <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=55&fm=webp"
+          alt="" loading="lazy" decoding="async"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.18]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/6 via-transparent to-[#B30000]/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-transparent to-transparent" />
 
-        <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-10 px-4 py-14 md:flex-row md:items-end md:py-20">
-          <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="flex-1"
-          >
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Kenyan Football Intelligence</span>
-              </div>
-              {favClub && (
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5">
-                  <span className="text-xs text-white/50 font-semibold">Your side:</span>
-                  <span className="text-xs font-black text-white">{favClub}</span>
+        <div className="relative z-10 mx-auto max-w-6xl px-4 py-14 md:py-20">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+
+            {/* Left — WC26 + headline */}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
+              {!wc26.isOver && (
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/28 bg-[#FFD700]/8 px-4 py-1.5">
+                  {wc26.isLive && <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />}
+                  <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+                  <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#FFD700]">
+                    {wc26.isLive ? "World Cup 2026 — Underway!" : "FIFA World Cup 2026"}
+                  </span>
                 </div>
               )}
-            </div>
-            <h1 className="mb-6 text-4xl font-bold leading-[0.95] tracking-tight md:text-6xl">
-              Call It Right.<br/>
-              <span className="text-primary">Back It With Data.</span><br/>
-              Keep Receipts.
-            </h1>
-            <p className="mb-10 max-w-xl text-base leading-relaxed text-gray-300">
-              Live context, smarter fan calls, and real football timelines in one place. No noise, just matchday truth.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/predictions" className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-black shadow-xl">
-                Make Your Call
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-              <Link href="/matches" className="rounded-xl border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-white">
-                Open Data Center
-              </Link>
-            </div>
-          </motion.div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full md:w-[380px]"
-          >
-            <AnimatePresence mode="wait">
+              <h1 className="mb-5 text-4xl font-black leading-[0.9] tracking-tight text-white md:text-6xl">
+                {wc26.isLive ? (
+                  <>The World Cup<br /><span className="text-[#FFD700]">Is Here.</span></>
+                ) : (
+                  <>Call It Right.<br /><span className="text-[#B30000]">Back It With Data.</span></>
+                )}
+              </h1>
+
+              {/* Countdown tiles */}
+              {!wc26.isLive && !wc26.isOver && (
+                <div className="mb-6 flex items-end gap-2 md:gap-3">
+                  <CountBox v={wc26.days}  l="Days" />
+                  <span className="mb-6 text-xl font-black text-[#FFD700]/30">:</span>
+                  <CountBox v={wc26.hours} l="Hrs" />
+                  <span className="mb-6 text-xl font-black text-[#FFD700]/30">:</span>
+                  <CountBox v={wc26.mins}  l="Min" />
+                  <span className="mb-6 text-xl font-black text-[#FFD700]/30">:</span>
+                  <CountBox v={wc26.secs}  l="Sec" />
+                  <span className="mb-7 text-[10px] font-bold uppercase tracking-widest text-white/30">To Kickoff</span>
+                </div>
+              )}
+
+              <div className="mb-8 flex flex-wrap gap-2">
+                {["USA","Canada","Mexico"].map(h => (
+                  <span key={h} className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-xs font-bold text-white/55">{h}</span>
+                ))}
+                <span className="rounded-full border border-white/8 bg-white/3 px-3 py-1 text-xs font-bold text-white/30">48 Nations · 104 Matches</span>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Link href="/world-cup-2026"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_24px_rgba(255,214,0,0.3)] transition-all hover:shadow-[0_0_36px_rgba(255,214,0,0.5)] active:scale-95">
+                  WC26 Hub <ChevronRight className="h-4 w-4" />
+                </Link>
+                <Link href="/predictions"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/18 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
+                  Make Your Call
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Right — Featured match */}
+            <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65, delay: 0.15 }}>
               {featuredMatch ? (
-                <motion.div
-                  key={featuredMatch.id}
-                  className="group relative overflow-hidden rounded-3xl border border-white/12 bg-[#0e141d]/88 p-6 backdrop-blur-2xl"
-                >
-                  <div className="flex justify-between items-center mb-8">
+                <div className={`overflow-hidden rounded-2xl border backdrop-blur-xl ${isMatchLive ? "border-[#B30000]/40 bg-[#0d0608]/92 shadow-[0_0_40px_rgba(179,0,0,0.22)]" : "border-white/12 bg-[#0c111a]/92"}`}>
+                  <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isMatchLive ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`}></span>
-                      <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                        {isMatchLive ? 'Live Now' : 'Featured'}
+                      {isMatchLive && <span className="h-2 w-2 rounded-full bg-[#B30000] animate-ping" />}
+                      <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${isMatchLive ? "text-[#B30000]" : "text-white/45"}`}>
+                        {isMatchLive ? "Live Now" : "Featured Match"}
                       </span>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500">{featuredMatch.league}</span>
+                    <span className="max-w-[150px] truncate text-[10px] text-white/30">{featuredMatch.league}</span>
                   </div>
-
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mb-8">
-                    <div className="flex flex-col items-center gap-3">
-                      <TeamLogo logo={featuredMatch.homeLogo || CLUB_LOGOS[featuredMatch.home]} initial={featuredMatch.homeInitial} color={featuredMatch.homeColor} size="xl" />
-                      <span className="font-black text-xs uppercase text-center leading-tight">{featuredMatch.home}</span>
+                  <div className="p-5 md:p-6">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 mb-5">
+                      <div className="flex flex-col items-center gap-2 text-center">
+                        <TeamLogo logo={featuredMatch.homeLogo} initial={featuredMatch.homeInitial} color={featuredMatch.homeColor || "#182333"} size="xl" />
+                        <span className="text-sm font-black leading-tight text-white">{featuredMatch.home}</span>
+                      </div>
+                      <div className="text-center">
+                        {isMatchLive ? (
+                          <>
+                            <div className="text-3xl font-black tabular-nums text-white">{featuredMatch.homeScore}<span className="text-white/25 mx-1">–</span>{featuredMatch.awayScore}</div>
+                            <div className="mt-1 text-[10px] font-black uppercase text-[#B30000]">{featuredMatch.minute}</div>
+                          </>
+                        ) : (
+                          <div className="rounded-xl border border-white/10 px-4 py-2 text-xl font-black text-white/22">VS</div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-center gap-2 text-center">
+                        <TeamLogo logo={featuredMatch.awayLogo} initial={featuredMatch.awayInitial} color={featuredMatch.awayColor || "#182333"} size="xl" />
+                        <span className="text-sm font-black leading-tight text-white">{featuredMatch.away}</span>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      {isMatchLive ? (
-                        <div className="flex flex-col items-center">
-                          <div className="mb-1 text-3xl font-bold">{featuredMatch.homeScore} : {featuredMatch.awayScore}</div>
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{featuredMatch.minute}</span>
+
+                    {isMatchLive && (
+                      <div className="mb-4">
+                        <div className="h-1 overflow-hidden rounded-full bg-white/8">
+                          <div className="h-full rounded-full bg-[#B30000] shadow-[0_0_8px_#B30000] transition-all duration-1000"
+                            style={{ width: `${progressPct(featuredMatch.status, featuredMatch.minute)}%` }} />
                         </div>
-                      ) : (
-                        <div className="text-2xl font-bold text-gray-600">VS</div>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-center gap-3">
-                      <TeamLogo logo={featuredMatch.awayLogo || CLUB_LOGOS[featuredMatch.away]} initial={featuredMatch.awayInitial} color={featuredMatch.awayColor} size="xl" />
-                      <span className="font-black text-xs uppercase text-center leading-tight">{featuredMatch.away}</span>
-                    </div>
-                  </div>
+                        <div className="relative mt-1 flex justify-between text-[8px] text-white/18 font-semibold">
+                          <span>0'</span><span className="absolute left-1/2 -translate-x-1/2">45'</span><span>90'</span>
+                        </div>
+                      </div>
+                    )}
 
-                  <Link href={isMatchLive ? `/live-center/${featuredMatch.id}` : "/predictions"} className="block w-full rounded-xl bg-white py-3.5 text-center text-sm font-bold uppercase tracking-[0.12em] text-black">
-                    {isMatchLive ? 'Join Live Center' : 'Make Call'}
-                  </Link>
-                </motion.div>
+                    <Link href={isMatchLive ? `/live-center/${featuredMatch.id}` : "/predictions"}
+                      className={`block w-full rounded-xl py-3.5 text-center text-sm font-black uppercase tracking-[0.12em] transition-all active:scale-[0.98] ${isMatchLive ? "bg-[#B30000] text-white shadow-[0_0_20px_rgba(179,0,0,0.4)]" : "bg-white text-black"}`}>
+                      {isMatchLive ? "Join Live Center" : "Make Your Call"}
+                    </Link>
+                  </div>
+                </div>
               ) : (
-                <div className="rounded-3xl bg-black/40 border border-white/10 p-10 text-center">
-                  <Calendar className="w-10 h-10 text-gray-700 mx-auto mb-4" />
-                  <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">No Matches scheduled</p>
+                <div className="rounded-2xl border border-white/8 bg-black/30 p-12 text-center backdrop-blur-sm">
+                  <Calendar className="mx-auto mb-4 h-10 w-10 text-white/18" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/22">Matchday check-in coming soon</p>
                 </div>
               )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* AD SECTION */}
-      <section className="py-6 border-b border-[#1B1B1B] bg-[#0B0B0B]">
-        <div className="max-w-6xl mx-auto px-4">
-          <AdBanner label="Featured Partner" type="horizontal" />
-        </div>
-      </section>
-
-      {/* KENYAN FAN PULSE */}
-      <section className="border-b border-[#1B1B1B] bg-[#050505] py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
-            <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                <Radio className="w-3.5 h-3.5 text-[#FFD700]" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFD700]">Kenya Fan Pulse</span>
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
-                Who Are Kenyans Backing?
-              </h2>
-              <DataFreshnessChip label={freshnessLabelSafe} className="mt-2" />
-              <p className="text-gray-400 text-sm md:text-base mt-3 max-w-2xl">
-                Public matchday sentiment from BallMtaani rooms. Make your call, then come back for the receipt.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
-              {pulseStats.map(stat => (
-                <div key={stat.label} className="min-w-0 rounded-xl border border-white/8 bg-[#0f141c] p-4 text-center">
-                  <div className="text-xl font-bold text-white md:text-2xl">{stat.value}</div>
-                  <div className="mt-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-500 md:text-[10px]">{stat.label}</div>
-                </div>
-              ))}
-            </div>
+            </motion.div>
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(pulseMatches.length ? pulseMatches : upcomingFixtures.slice(0, 3)).map((match: any, index: number) => {
-              const split = getPulseSplit(match, index);
-              const isLive = liveMatches.some((live: any) => live.id === match.id);
+      {/* ─────────────────────── LIVE + TODAY'S MATCHES ───────────────────────── */}
+      {(liveMatches.length > 0 || todayUpcoming.length > 0) && (
+        <section className="border-b border-white/6 bg-[#060810] py-8">
+          <div className="mx-auto max-w-6xl px-4">
+            <div className="grid gap-4 md:grid-cols-2">
 
-              return (
-                <div key={match.id || `${match.home}-${match.away}`} className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#111827] p-5">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-[70px] pointer-events-none" />
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-5">
-                      <span className={`rounded px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${isLive ? "bg-primary/15 text-primary" : "bg-[#FFD700]/10 text-[#FFD700]"}`}>
-                        {isLive ? "Live pulse" : "Next up"}
-                      </span>
-                      <span className="ml-3 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">{match.league}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 mb-5">
-                      <div className="min-w-0">
-                        <p className="font-black text-white text-sm truncate">{match.home}</p>
-                        <p className="mt-1 text-[10px] font-semibold uppercase text-gray-500">{split.home}% Kenya lean</p>
-                      </div>
-                      <div className="text-gray-600 font-black text-xs shrink-0">VS</div>
-                      <div className="min-w-0 text-right">
-                        <p className="font-black text-white text-sm truncate">{match.away}</p>
-                        <p className="mt-1 text-[10px] font-semibold uppercase text-gray-500">{split.away}% Kenya lean</p>
-                      </div>
-                    </div>
-
-                    <div className="h-3 bg-black rounded-full overflow-hidden border border-white/5 mb-5">
-                      <div className="h-full bg-gradient-to-r from-primary to-[#FFD700]" style={{ width: `${split.home}%` }} />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Link href="/predictions" className="flex-1 rounded-xl bg-white py-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-black">
-                        Make Call
-                      </Link>
-                      <Link href="/fan-zones" aria-label={`Open fan zones for ${match.home} vs ${match.away}`} className="w-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
-                        <Share2 className="w-4 h-4" />
-                      </Link>
-                    </div>
+              {/* Live Now */}
+              {liveMatches.length > 0 && (
+                <div className="overflow-hidden rounded-xl border border-[#B30000]/35 bg-[#0d0608]/96 shadow-[0_0_20px_rgba(179,0,0,0.12)]">
+                  <div className="flex items-center gap-2 border-b border-[#B30000]/18 px-3 py-2.5">
+                    <span className="h-2 w-2 rounded-full bg-[#B30000] animate-ping" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.18em] text-[#B30000]">Live Now</span>
+                    <span className="ml-auto text-[10px] text-[#B30000]/50">{liveMatches.length} match{liveMatches.length > 1 ? "es" : ""}</span>
                   </div>
+                  {liveMatches.map((m: LiveMatch) => {
+                    const pct   = progressPct(m.status, m.minute);
+                    const hl    = halfLabel(m.status);
+                    const isHT  = m.status === "HT";
+                    return (
+                      <div key={m.id} className="border-b border-white/5 last:border-0">
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-3 pt-3 pb-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <TeamLogo logo={m.homeLogo} initial={m.homeInitial} color="#1a0608" size="sm" />
+                            <span className="truncate text-sm font-bold text-white">{m.home}</span>
+                          </div>
+                          <span className="text-lg font-black tabular-nums text-[#B30000]">{m.homeScore} – {m.awayScore}</span>
+                          <div className="flex min-w-0 items-center justify-end gap-2">
+                            <span className="truncate text-right text-sm font-bold text-white">{m.away}</span>
+                            <TeamLogo logo={m.awayLogo} initial={m.awayInitial} color="#1a0608" size="sm" />
+                          </div>
+                        </div>
+                        <div className="px-3 pb-3">
+                          <div className="mb-1.5 flex justify-between">
+                            <span className="text-[9px] text-white/28 font-semibold uppercase tracking-widest">{m.league}</span>
+                            <span className={`text-[9px] font-black uppercase tracking-widest ${isHT ? "text-yellow-400" : "text-[#B30000]"}`}>
+                              {isHT ? "Half Time" : m.minute ? `${m.minute} · ${hl}` : hl}
+                            </span>
+                          </div>
+                          <div className="h-1 overflow-hidden rounded-full bg-white/8">
+                            <div className={`h-full rounded-full transition-all duration-1000 ${isHT ? "bg-yellow-400" : "bg-[#B30000]"}`}
+                              style={{ width: `${pct}%` }} />
+                          </div>
+                          <div className="relative mt-1 flex justify-between text-[8px] text-white/15 font-semibold">
+                            <span>0'</span><span className="absolute left-1/2 -translate-x-1/2">45'</span><span>90'</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+              )}
 
-      {/* MATCH HUB */}
-      <section className="border-b border-[#1B1B1B] bg-[#0B0B0B] py-14">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h2 className="border-l-4 border-primary pl-4 text-2xl font-bold tracking-[0.02em] text-white">Match Hub</h2>
-              <p className="ml-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">Live Scores | Results | Upcoming</p>
-              <DataFreshnessChip label={freshnessLabelSafe} className="ml-4 mt-1 text-white/50" />
+              {/* Today's Upcoming */}
+              {todayUpcoming.length > 0 && (
+                <div className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/96">
+                  <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5">
+                    <Calendar className="h-3.5 w-3.5 text-white/40" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/60">Today's Matches</span>
+                    <span className="ml-auto text-[10px] text-white/28">{new Date().toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })}</span>
+                  </div>
+                  {Object.entries(byLeague).map(([league, matches]) => (
+                    <div key={league}>
+                      <div className="flex items-center gap-2 border-b border-white/5 bg-white/[0.02] px-3 py-1.5">
+                        {matches[0]?.leagueLogo && <img src={matches[0].leagueLogo} alt="" className="h-3.5 w-3.5 object-contain opacity-60" loading="lazy" />}
+                        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/38">{league}</span>
+                      </div>
+                      {matches.map((m: any) => (
+                        <div key={m.id} className="grid grid-cols-[40px_1fr_28px_1fr] items-center gap-2 border-b border-white/5 px-3 py-2.5 last:border-0">
+                          <span className="text-xs font-bold tabular-nums text-white/48">{m.time || "TBC"}</span>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home?.slice(0, 3)} color="#182333" size="sm" />
+                            <span className="truncate text-sm font-semibold text-white">{m.home}</span>
+                          </div>
+                          <span className="text-center text-[10px] font-bold text-white/22">vs</span>
+                          <div className="flex min-w-0 items-center justify-end gap-1.5">
+                            <span className="truncate text-right text-sm font-semibold text-white">{m.away}</span>
+                            <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away?.slice(0, 3)} color="#182333" size="sm" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <Link href="/matches" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-              Directory <ChevronRight className="w-3 h-3" />
+          </div>
+        </section>
+      )}
+
+      {/* ─────────────────────────── MATCH HUB ───────────────────────────── */}
+      <section className="border-b border-white/6 bg-[#0B0B0B] py-12">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="border-l-4 border-[#B30000] pl-4 text-xl font-black uppercase tracking-wide text-white">Match Hub</h2>
+              <p className="ml-4 mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">Live · Results · Upcoming</p>
+              {lastUpdated && <DataFreshnessChip label={freshnessLabel} className="ml-4 mt-1" />}
+            </div>
+            <Link href="/matches" className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#B30000]">
+              Full Desk <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
-
-          <div className="flex gap-6 overflow-x-auto pb-8 snap-x hide-scrollbar">
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
             {isLoadingMatches || isLoadingUpcoming || isLoadingRecent ? (
               [1, 2, 3].map(i => <SkeletonMatch key={i} />)
             ) : (
               <>
-                {liveMatches.map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: 'LIVE' }} />)}
+                {liveMatches.map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: "LIVE" }} />)}
                 {upcomingFixtures.slice(0, 5).map((m: any) => <PremiumMatchCard key={m.id} match={m} />)}
-                {recentMatches.slice(0, 5).map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: 'FT' }} />)}
+                {recentMatches.slice(0, 5).map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: "FT" }} />)}
               </>
             )}
           </div>
         </div>
       </section>
 
-      {/* KPL section removed — API-Football league ID 686 returns Czech clubs, not Kenya Premier League. Restore when correct ID is confirmed. */}
+      {/* ─────────────────────── NEWS: WC26 FIRST ────────────────────────── */}
+      <section className="border-b border-white/6 bg-[#05070b] py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="border-l-4 border-[#FFD700] pl-4 text-xl font-black uppercase tracking-wide text-white">Latest News</h2>
+              <p className="ml-4 mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">WC26 First · Breaking Headlines</p>
+            </div>
+          </div>
 
-      {/* NEWS FEED */}
-      <NewsFeed />
-      <section className="py-6 border-b border-[#1B1B1B] bg-[#0B0B0B]">
-        <div className="max-w-6xl mx-auto px-4">
+          {newsLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-[#111]">
+                  <div className="h-44 bg-white/5" />
+                  <div className="space-y-2 p-4"><div className="h-3 w-16 rounded bg-white/10" /><div className="h-4 rounded bg-white/10" /><div className="h-4 w-3/4 rounded bg-white/10" /></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* WC26 section */}
+              {wc26News.length > 0 && (
+                <div className="mb-8">
+                  <div className="mb-4 flex items-center gap-2">
+                    <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]">World Cup 2026</span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {wc26News.map(a => <NewsCard key={a.id} article={a} featured />)}
+                  </div>
+                </div>
+              )}
+
+              {wc26News.length > 0 && otherNews.length > 0 && (
+                <div className="mb-8 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-white/8" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/22">Football Headlines</span>
+                  <div className="h-px flex-1 bg-white/8" />
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {otherNews.map(a => <NewsCard key={a.id} article={a} />)}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* ─────────────────────────── ARCADE ──────────────────────────────── */}
+      <section className="border-b border-white/6 bg-[#0B0B0B] py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-10">
+            <h2 className="text-3xl font-black uppercase tracking-widest text-white md:text-4xl">
+              The <span className="text-[#FFD700]">Arcade</span>
+            </h2>
+            <p className="mt-2 text-sm text-white/32">Make calls, win banter, stack receipts</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+            {[
+              { href: "/predictions", icon: Sparkles, label: "Fan Intel", sub: "Make your call, keep the receipt", border: "border-[#B30000]/28 hover:border-[#B30000]/55", ic: "text-[#B30000]", cta: "Make Your Call" },
+              { href: "/world-cup-2026", icon: Trophy, label: "WC26 Hub", sub: "Groups, fixtures, fan predictions", border: "border-[#FFD700]/28 hover:border-[#FFD700]/55", ic: "text-[#FFD700]", cta: "Open Hub", gold: true },
+              { href: "/rapid-fire", icon: Zap, label: "Rapid Fire", sub: "Vote on heated football takes", border: "border-blue-500/22 hover:border-blue-500/45", ic: "text-blue-400", cta: "Play Now" },
+              { href: "/trivia", icon: Radio, label: "Millionaire", sub: "Test your football knowledge", border: "border-purple-500/22 hover:border-purple-500/45", ic: "text-purple-400", cta: "Play Trivia" },
+            ].map(({ href, icon: Icon, label, sub, border, ic, cta, gold }) => (
+              <Link key={href} href={href}
+                className={`group flex flex-col rounded-2xl border bg-[#0f1118] p-5 transition-all duration-300 hover:-translate-y-0.5 lg:p-7 ${border}`}>
+                <Icon className={`mb-4 h-7 w-7 transition-transform duration-300 group-hover:scale-110 lg:h-9 lg:w-9 ${ic}`} />
+                <h3 className={`mb-2 text-sm font-black uppercase lg:text-base ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
+                <p className="mb-5 flex-1 text-xs leading-relaxed text-white/32">{sub}</p>
+                <span className={`text-[9px] font-black uppercase tracking-[0.2em] lg:text-[10px] ${ic}`}>{cta} →</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AD */}
+      <section className="border-b border-white/6 bg-[#0B0B0B] py-6">
+        <div className="mx-auto max-w-6xl px-4">
           <AdBanner label="Matchday Partner" type="horizontal" />
         </div>
       </section>
 
-      {/* ARCADE */}
-      <section className="py-16 bg-[#0B0B0B] border-b border-[#1B1B1B]">
-        <div className="max-w-6xl mx-auto px-4 text-center md:text-left">
-          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-10">The <span className="text-[#FFD700]">Arcade</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Link href="/war-room" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-green-500/50 transition-all">
-              <ShieldCheck className="w-12 h-12 text-green-400 mb-6" />
-              <h3 className="text-2xl font-black uppercase mb-3">War Room</h3>
-              <p className="text-gray-500 text-sm mb-6">Offseason daily loop: transfer rumors, lineup builds, and receipts.</p>
-              <span className="text-green-400 font-black uppercase text-[10px] tracking-widest">Enter War Room</span>
-            </Link>
-            <Link href="/rapid-fire" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-blue-500/50 transition-all">
-              <Zap className="w-12 h-12 text-[#1E6FFF] mb-6" />
-              <h3 className="text-2xl font-black uppercase mb-3">Rapid Fire</h3>
-              <p className="text-gray-500 text-sm mb-6">Vote on heated football debates and see where fans stand.</p>
-              <span className="text-[#1E6FFF] font-black uppercase text-[10px] tracking-widest">Play Now</span>
-            </Link>
-            <Link href="/trivia" className="group p-8 rounded-3xl bg-[#111] border border-[#FFD700]/20 hover:border-[#FFD700]/50 transition-all">
-              <Trophy className="w-12 h-12 text-[#FFD700] mb-6" />
-              <h3 className="text-2xl font-black uppercase mb-3 text-[#FFD700]">Millionaire</h3>
-              <p className="text-gray-500 text-sm mb-6">Test your football knowledge and climb the weekly table.</p>
-              <span className="text-[#FFD700] font-black uppercase text-[10px] tracking-widest">Play Trivia</span>
-            </Link>
-            <Link href="/predictions" className="group p-8 rounded-3xl bg-[#111] border border-white/10 hover:border-red-500/50 transition-all">
-              <Sparkles className="w-12 h-12 text-primary mb-6" />
-              <h3 className="text-2xl font-black uppercase mb-3">Fan Intel</h3>
-              <p className="text-gray-500 text-sm mb-6">Read the match, make your call, and stack receipts.</p>
-              <span className="text-primary font-black uppercase text-[10px] tracking-widest">Make Your Call</span>
-            </Link>
+      {/* ─────────────────────────── COMMUNITY ───────────────────────────── */}
+      <section className="border-b border-white/6 bg-[#04060a] py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-10">
+            <h2 className="text-3xl font-black uppercase tracking-widest text-white md:text-4xl">
+              Keep The <span className="text-[#B30000]">Receipt.</span>
+            </h2>
+            <p className="mt-2 text-sm text-white/35">Challenge rival fans. Come back after full time.</p>
           </div>
-        </div>
-      </section>
-
-      {/* SOCIAL */}
-      <section className="py-16 bg-[#050505] border-b border-[#1B1B1B]">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-4xl md:text-6xl font-black uppercase leading-tight mb-6">Keep The <span className="text-primary">Receipt.</span></h2>
-            <p className="text-gray-400 font-bold md:text-lg mb-8">Challenge rival fans to free scoreline duels and come back after full time.</p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/rivalries" className="px-8 py-4 bg-primary text-white font-black uppercase tracking-widest rounded-xl shadow-lg">Start Fan Duel</Link>
-              <Link href="/debates" className="px-8 py-4 bg-white/5 border border-white/20 text-white font-black uppercase tracking-widest rounded-xl">Join Debates</Link>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="p-6 rounded-2xl bg-[#111] border border-white/10">
-              <Users className="w-8 h-8 text-[#FFD700] mb-4" />
-              <h3 className="text-lg font-black uppercase mb-2">Fan Zones</h3>
-              <p className="text-gray-500 text-xs mb-4">Elite communities for die-hard supporters.</p>
-              <Link href="/fan-zones" className="text-[10px] font-black uppercase text-[#FFD700]">Explore Zones</Link>
-            </div>
-            <div className="p-6 rounded-2xl bg-[#111] border border-white/10 mt-0 sm:mt-10">
-              <MessageSquare className="w-8 h-8 text-[#1E6FFF] mb-4" />
-              <h3 className="text-lg font-black uppercase mb-2">Mtaani Banter</h3>
-              <p className="text-gray-500 text-xs mb-4">Kenyan fan rooms for matchday takes, receipts, and banter.</p>
-              <Link href="/live-center" className="text-[10px] font-black uppercase text-[#1E6FFF]">Join Feed</Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* LEADERBOARD */}
-      <section className="py-16 bg-[#050505]">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <Trophy className="w-12 h-12 text-[#FFD700] mx-auto mb-6" />
-          <h2 className="text-3xl font-black uppercase mb-8">Hall of <span className="text-[#FFD700]">Fame</span></h2>
-          <div className="bg-[#111] rounded-3xl border border-white/5 overflow-hidden text-left mb-8 shadow-2xl">
-            {leaderboard.slice(0, 3).map((p: any) => (
-              <div key={p.rank} className="flex items-center justify-between p-6 border-b border-white/5 last:border-0">
-                <div className="flex items-center gap-6">
-                  <span className={`text-2xl font-black ${p.rank === 1 ? 'text-[#FFD700]' : 'text-gray-500'}`}>#{p.rank}</span>
-                  <div className="flex flex-col">
-                    <span className="font-black text-lg text-white">{p.name} {p.country}</span>
-                    <span className="text-[10px] uppercase font-black text-primary tracking-widest">Level {p.streak || 1} Elite Host</span>
-                  </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              { href: "/rivalries", icon: Zap, label: "Fan Duels", sub: "Challenge a rival and settle the debate.", border: "border-[#B30000]/22 hover:border-[#B30000]/48", bg: "bg-[#0d0608]", ic: "text-[#B30000]", ibg: "bg-[#B30000]/12", cta: "Start Duel" },
+              { href: "/fan-zones", icon: Users, label: "Fan Zones", sub: "Elite communities for die-hard supporters.", border: "border-[#FFD700]/18 hover:border-[#FFD700]/42", bg: "bg-[#080700]", ic: "text-[#FFD700]", ibg: "bg-[#FFD700]/8", cta: "Explore Zones", gold: true },
+              { href: "/debates", icon: MessageSquare, label: "Debates", sub: "Football takes, receipts, and matchday banter.", border: "border-blue-500/18 hover:border-blue-500/42", bg: "bg-[#050810]", ic: "text-blue-400", ibg: "bg-blue-500/8", cta: "Join Feed" },
+            ].map(({ href, icon: Icon, label, sub, border, bg, ic, ibg, cta, gold }) => (
+              <Link key={href} href={href}
+                className={`group flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 ${bg} ${border}`}>
+                <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${ibg}`}>
+                  <Icon className={`h-5 w-5 ${ic}`} />
                 </div>
-                <span className="text-2xl font-black text-[#FFD700]">{p.pts} pts</span>
-              </div>
+                <h3 className={`mb-2 text-sm font-black uppercase ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
+                <p className="mb-5 flex-1 text-xs text-white/32">{sub}</p>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${ic}`}>{cta} →</span>
+              </Link>
             ))}
           </div>
-          <Link href="/leaderboard" className="text-xs font-black uppercase tracking-widest py-4 px-10 rounded-full border border-white/10 hover:bg-white/5 transition-all">Full Leaderboard</Link>
         </div>
       </section>
+
+      {/* ─────────────────────── LEADERBOARD PREVIEW ─────────────────────── */}
+      <section className="bg-[#04060a] py-14">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <Trophy className="mx-auto mb-4 h-10 w-10 text-[#FFD700]" />
+          <h2 className="mb-8 text-3xl font-black uppercase tracking-widest text-white">
+            Hall of <span className="text-[#FFD700]">Fame</span>
+          </h2>
+          <div className="mb-8 overflow-hidden rounded-2xl border border-white/6 bg-[#0d0f14]">
+            {leaderboard.slice(0, 3).map((p: any, i: number) => (
+              <div key={p.rank || i} className="flex items-center justify-between border-b border-white/5 px-6 py-5 last:border-0">
+                <div className="flex items-center gap-5">
+                  <span className={`text-xl font-black ${p.rank === 1 ? "text-[#FFD700]" : "text-white/28"}`}>#{p.rank}</span>
+                  <div className="text-left">
+                    <span className="font-black text-white">{p.name} {p.country}</span>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-[#B30000]">Level {p.streak || 1} Elite Host</div>
+                  </div>
+                </div>
+                <span className="text-xl font-black text-[#FFD700]">{p.pts} pts</span>
+              </div>
+            ))}
+            {!leaderboard.length && (
+              <div className="py-12 text-[10px] font-black uppercase tracking-widest text-white/18">Leaderboard loading...</div>
+            )}
+          </div>
+          <Link href="/leaderboard"
+            className="inline-block rounded-full border border-white/12 px-10 py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-white/5">
+            Full Leaderboard
+          </Link>
+        </div>
+      </section>
+
       <FloatingMchambuzi variant="home" />
     </div>
   );
 }
-
