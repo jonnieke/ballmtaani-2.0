@@ -32,6 +32,7 @@ import {
   fetchRecentMatches,
   fetchStandings,
   fetchTeamSeasonStats,
+  fetchTodaysFixtures,
   fetchUpcomingFixtures,
   type FixtureEvent,
   type FixtureStat,
@@ -148,21 +149,17 @@ function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
   );
 }
 
-// ─── Today's Matches Card — soonest upcoming fixtures ────────
-function TodaysMatchesCard({ upcoming }: { upcoming: any[] }) {
+// ─── Today's Matches Card — all today's fixtures by date ─────
+function TodaysMatchesCard({ fixtures }: { fixtures: any[] }) {
   const now = new Date();
   const dateLabel = now.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  // Sort by soonest kickoff, prioritise top leagues, take first 5
-  // No date arithmetic — the upcoming feed naturally returns next matches
-  const todayFixtures = [...upcoming]
-    .sort((a, b) => {
-      const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
-      const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
-      if (pa !== pb) return pa - pb;
-      return (a.kickoffAt ?? 0) - (b.kickoffAt ?? 0);
-    })
-    .slice(0, 5);
+  // Exclude live matches (shown in LiveNowCard), sort by kickoff time
+  const liveStatuses = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
+  const todayFixtures = fixtures
+    .filter((m) => !liveStatuses.has(m.status))
+    .sort((a, b) => (a.kickoffAt ?? 0) - (b.kickoffAt ?? 0))
+    .slice(0, 8);
 
   if (!todayFixtures.length) return null;
 
@@ -881,6 +878,7 @@ export default function LandingPage() {
   const [upcoming, setUpcoming] = useState<any[]>([]);
   // Standings keyed by league ID — all leagues fetched upfront
   const [allStandings, setAllStandings] = useState<Record<number, StandingEntry[]>>({});
+  const [todaysFixtures, setTodaysFixtures] = useState<any[]>([]);
   const [worldCup, setWorldCup] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -918,16 +916,18 @@ export default function LandingPage() {
           }
         });
 
-        const [liveData, recentData, upcomingData, wcData] = await Promise.all([
+        const [liveData, recentData, upcomingData, todaysData, wcData] = await Promise.all([
           fetchLiveMatches(),
           fetchRecentMatches(),
           fetchUpcomingFixtures(),
+          fetchTodaysFixtures(),
           fetchLeagueFixtures(1, 2026, 8),
         ]);
         if (!mounted) return;
         setLive(Array.isArray(liveData) ? liveData.slice(0, 10) : []);
         setRecent(Array.isArray(recentData) ? recentData.slice(0, 8) : []);
         setUpcoming(Array.isArray(upcomingData) ? upcomingData.slice(0, 14) : []);
+        setTodaysFixtures(Array.isArray(todaysData) ? todaysData : []);
         setAllStandings(standingsMap);
         setWorldCup(Array.isArray(wcData) ? wcData.slice(0, 4) : []);
         setLastUpdated(new Date());
@@ -1108,7 +1108,7 @@ export default function LandingPage() {
         {/* Data-first match cards — only render when real data exists */}
         <div className="mb-3 grid gap-3 lg:grid-cols-2">
           <LiveNowCard matches={matches} />
-          <TodaysMatchesCard upcoming={upcoming} />
+          <TodaysMatchesCard fixtures={todaysFixtures} />
         </div>
 
         <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
