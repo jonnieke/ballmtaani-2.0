@@ -65,12 +65,14 @@ type DisplayMatch = {
 type MatchCenterTab = "scores" | "table" | "match" | "lineups" | "season";
 
 const DATA_LEAGUES = [
-  { id: 39, name: "Premier League", short: "EPL", season: 2025 },
-  { id: 140, name: "La Liga", short: "LaLiga", season: 2025 },
-  { id: 135, name: "Serie A", short: "Serie A", season: 2025 },
-  { id: 78, name: "Bundesliga", short: "Bundesliga", season: 2025 },
-  { id: 61, name: "Ligue 1", short: "Ligue 1", season: 2025 },
-  { id: 686, name: "Kenya Premier League", short: "KPL", season: 2025 },
+  { id: 39,  name: "Premier League", short: "EPL",       season: 2025 },
+  { id: 140, name: "La Liga",        short: "La Liga",   season: 2025 },
+  { id: 135, name: "Serie A",        short: "Serie A",   season: 2025 },
+  { id: 78,  name: "Bundesliga",     short: "Bundesliga",season: 2025 },
+  { id: 61,  name: "Ligue 1",        short: "Ligue 1",   season: 2025 },
+  { id: 2,   name: "Champions League", short: "UCL",     season: 2025 },
+  // KPL (686) removed — API-Football returns Czech teams instead of Kenya
+  // TODO: Restore when correct KPL league ID is confirmed
 ];
 
 const FEATURE_LINKS = [
@@ -92,30 +94,8 @@ const CENTER_TABS: { id: MatchCenterTab; label: string; icon: typeof Activity }[
   { id: "season", label: "Season", icon: ShieldCheck },
 ];
 
-const WC_FALLBACK: DisplayMatch[] = [
-  {
-    id: "wc26-opener",
-    home: "USA",
-    away: "Mexico",
-    homeLogo: "https://media.api-sports.io/flags/us.svg",
-    awayLogo: "https://media.api-sports.io/flags/mx.svg",
-    league: "FIFA World Cup",
-    date: "Jun 11 2026",
-    time: "9:00 PM",
-    status: "Group A",
-  },
-  {
-    id: "wc26-canada",
-    home: "Canada",
-    away: "Qatar",
-    homeLogo: "https://media.api-sports.io/flags/ca.svg",
-    awayLogo: "https://media.api-sports.io/flags/qa.svg",
-    league: "FIFA World Cup",
-    date: "Jun 12 2026",
-    time: "12:00 AM",
-    status: "Group A",
-  },
-];
+// Removed WC_FALLBACK — never show fake data on sports app
+// Only show real World Cup fixtures from API, or empty state
 
 function normalizeMatchStatus(status?: string) {
   const s = (status || "").toUpperCase();
@@ -130,24 +110,126 @@ function getCurrentSeason(now = new Date()) {
   return month >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 }
 
-function StatTile({
-  label,
-  value,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string | number;
-  icon: typeof Activity;
-  tone: string;
-}) {
+// ─── Live Now Card — shows actual live matches ────────────────
+function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
+  const live = matches.filter((m) => m.status === "LIVE");
+  if (!live.length) return null;
   return (
-    <div className={`relative overflow-hidden rounded-xl border bg-[#0b1119]/92 p-3 ${tone}`}>
-      <div className="absolute -right-6 -top-8 h-20 w-20 rounded-full bg-current/10 blur-2xl" />
-      <Icon className="relative mb-2 h-4 w-4" />
-      <div className="relative text-2xl font-semibold leading-none text-white md:text-3xl">{value}</div>
-      <div className="relative mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/48">{label}</div>
-    </div>
+    <section className="overflow-hidden rounded-xl border border-primary/40 bg-[#0d0608]/95 shadow-[0_0_24px_rgba(179,0,0,0.15)]">
+      <div className="flex items-center gap-2 border-b border-primary/20 px-3 py-2">
+        <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
+        <span className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Live Now</span>
+        <span className="ml-auto text-[10px] font-semibold text-primary/60">{live.length} match{live.length > 1 ? "es" : ""}</span>
+      </div>
+      {live.map((m) => {
+        const hasScore = typeof m.homeScore === "number" && typeof m.awayScore === "number";
+        return (
+          <div key={m.id} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/6 px-3 py-3 last:border-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0,3)} color="#1a0608" size="sm" />
+              <span className="truncate text-sm font-bold text-white">{m.home}</span>
+            </div>
+            <div className="text-center">
+              {hasScore ? (
+                <span className="text-base font-black text-primary tabular-nums">{m.homeScore} – {m.awayScore}</span>
+              ) : (
+                <span className="text-xs font-bold text-white/40">vs</span>
+              )}
+              <div className="text-[9px] font-semibold uppercase tracking-widest text-white/35 mt-0.5">{m.league}</div>
+            </div>
+            <div className="flex min-w-0 items-center justify-end gap-2">
+              <span className="truncate text-sm font-bold text-white text-right">{m.away}</span>
+              <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0,3)} color="#1a0608" size="sm" />
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+// ─── Today's Matches Card — upcoming only, no live (live is in LiveNowCard) ───
+function TodaysMatchesCard({ upcoming }: { upcoming: any[] }) {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const todayEnd = todayStart + 24 * 60 * 60 * 1000;
+  const dateLabel = now.toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  // Only today's upcoming fixtures — use kickoffAt timestamp for reliable filtering
+  const todayFixtures = upcoming
+    .filter((m) => {
+      const at = m.kickoffAt as number | undefined;
+      if (!at) return false;
+      return at >= todayStart && at < todayEnd;
+    })
+    .sort((a, b) => {
+      const pa = LEAGUE_PRIORITY[a.leagueId ?? 0] ?? 99;
+      const pb = LEAGUE_PRIORITY[b.leagueId ?? 0] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return (a.kickoffAt ?? 0) - (b.kickoffAt ?? 0);
+    })
+    .slice(0, 5);
+
+  if (!todayFixtures.length) return null;
+
+  // Group by league
+  const byLeague: Record<string, any[]> = {};
+  for (const m of todayFixtures) {
+    const key = m.league || "Other";
+    if (!byLeague[key]) byLeague[key] = [];
+    byLeague[key].push(m);
+  }
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
+      {/* Header */}
+      <div className="border-b border-white/10 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <CalendarDays className="h-3.5 w-3.5 text-white/50" />
+          <span className="text-[11px] font-black uppercase tracking-[0.18em] text-white/70">Today's Matches</span>
+        </div>
+        <div className="mt-0.5 text-[10px] font-medium text-white/35">{dateLabel}</div>
+      </div>
+
+      {/* Matches grouped by league */}
+      {Object.entries(byLeague).map(([league, leagueMatches]) => (
+        <div key={league}>
+          {/* League sub-header */}
+          <div className="flex items-center gap-2 border-b border-white/6 bg-white/[0.02] px-3 py-1.5">
+            {leagueMatches[0].leagueLogo && (
+              <img src={leagueMatches[0].leagueLogo} alt="" className="h-4 w-4 object-contain opacity-70" />
+            )}
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">{league}</span>
+          </div>
+
+          {/* Matches in this league */}
+          {leagueMatches.map((m) => {
+            const time = m.kickoff?.slice(11, 16) || m.time || "TBC";
+            return (
+              <div key={m.id} className="grid grid-cols-[36px_1fr_32px_1fr] items-center gap-2 border-b border-white/5 px-3 py-3 last:border-0">
+                {/* Kickoff time */}
+                <span className="text-xs font-bold tabular-nums text-white/55">{time}</span>
+
+                {/* Home team */}
+                <div className="flex min-w-0 items-center gap-2">
+                  <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0, 3)} color="#182333" size="sm" />
+                  <span className="truncate text-sm font-semibold text-white">{m.home}</span>
+                </div>
+
+                {/* VS */}
+                <span className="text-center text-[10px] font-bold text-white/30">vs</span>
+
+                {/* Away team */}
+                <div className="flex min-w-0 items-center justify-end gap-2">
+                  <span className="truncate text-right text-sm font-semibold text-white">{m.away}</span>
+                  <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0, 3)} color="#182333" size="sm" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -214,7 +296,7 @@ function ScoreboardList({
   if (loading && !matches.length) {
     return (
       <div className="rounded-xl border border-white/8 bg-white/[0.03] p-8 text-center">
-        <div className="text-sm font-semibold uppercase tracking-[0.14em] text-white/45">Loading today's match board...</div>
+        <div className="text-sm font-semibold uppercase tracking-[0.14em] text-white/45">Loading matches...</div>
       </div>
     );
   }
@@ -443,20 +525,23 @@ function MatchRoomCard({
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <button onClick={() => onOpenStats("match")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
-            <div className="text-lg font-semibold text-white">{loading ? "..." : stats.length}</div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Stats</div>
-          </button>
-          <button onClick={() => onOpenStats("lineups")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
-            <div className="text-lg font-semibold text-white">{loading ? "..." : events.length}</div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Events</div>
-          </button>
-          <button onClick={() => onOpenStats("season")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
-            <div className="text-lg font-semibold text-white">{lineups.home || lineups.away ? "XI" : "-"}</div>
-            <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Lineups</div>
-          </button>
-        </div>
+        {/* Only show stats/events/lineups buttons when there's actual data */}
+        {(stats.length > 0 || events.length > 0 || lineups.home || lineups.away) && (
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <button onClick={() => onOpenStats("match")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
+              <div className="text-lg font-semibold text-white">{loading ? "..." : stats.length}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Stats</div>
+            </button>
+            <button onClick={() => onOpenStats("lineups")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
+              <div className="text-lg font-semibold text-white">{loading ? "..." : events.length}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Events</div>
+            </button>
+            <button onClick={() => onOpenStats("season")} className="rounded-lg border border-white/8 bg-white/[0.03] p-3 text-left hover:border-primary/40">
+              <div className="text-lg font-semibold text-white">{lineups.home || lineups.away ? "XI" : "-"}</div>
+              <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">Lineups</div>
+            </button>
+          </div>
+        )}
 
         <div className="mt-3 space-y-2">
           {events.slice(0, 3).map((event, index) => (
@@ -617,6 +702,31 @@ function WorldCupRow({ match }: { match: DisplayMatch }) {
   );
 }
 
+// ─── League priority for featured match ordering ─────────────
+const LEAGUE_PRIORITY: Record<number, number> = {
+  2: 1,   // UEFA Champions League
+  3: 2,   // UEFA Europa League
+  39: 3,  // Premier League
+  140: 4, // La Liga
+  135: 5, // Serie A
+  78: 6,  // Bundesliga
+  61: 7,  // Ligue 1
+  12: 8,  // CAF Champions League
+};
+
+
+// ─── Visibility Control Hook ─────────────────────────────────
+// Stagger section visibility during initial load for better UX
+function useDelayedVisibility(condition: boolean, delayMs: number): boolean {
+  const [show, setShow] = useState(!condition);
+  useEffect(() => {
+    if (!condition) { setShow(true); return; }
+    const timer = setTimeout(() => setShow(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [condition, delayMs]);
+  return show;
+}
+
 // ─── WC26 Hero ───────────────────────────────────────────────
 const WC26_START = new Date("2026-06-11T17:00:00Z"); // 8pm EAT
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
@@ -775,8 +885,8 @@ export default function LandingPage() {
   const [live, setLive] = useState<LiveMatch[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const [upcoming, setUpcoming] = useState<any[]>([]);
-  const [standings, setStandings] = useState<StandingEntry[]>([]);
-  const [kplStandings, setKplStandings] = useState<StandingEntry[]>([]);
+  // Standings keyed by league ID — all leagues fetched upfront
+  const [allStandings, setAllStandings] = useState<Record<number, StandingEntry[]>>({});
   const [worldCup, setWorldCup] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -789,25 +899,42 @@ export default function LandingPage() {
   const [teamStats, setTeamStats] = useState<{ home: TeamSeasonStats | null; away: TeamSeasonStats | null }>({ home: null, away: null });
   const [detailsLoading, setDetailsLoading] = useState(false);
 
+  // Derived: standings for currently selected league
+  const standings = allStandings[activeLeagueId] || [];
+  // EPL standings for sidebar snapshot (always EPL)
+  const eplStandings = allStandings[39] || [];
+
+  // ─── Staggered visibility for sidebars during loading ────────────────────────
+  const showLeftSidebar = useDelayedVisibility(loading && !live.length && !worldCup.length, 1500);
+  const showRightSidebar = useDelayedVisibility(loading && Object.keys(allStandings).length === 0, 3000);
+
   useEffect(() => {
     let mounted = true;
     const run = async () => {
       setLoading(true);
       try {
-        const [liveData, recentData, upcomingData, tableData, kplData, wcData] = await Promise.all([
+        // Fetch standings for ALL DATA_LEAGUES in parallel — no more "empty" on switch
+        const standingsResults = await Promise.all(
+          DATA_LEAGUES.map((league) => fetchStandings(league.id))
+        );
+        const standingsMap: Record<number, StandingEntry[]> = {};
+        DATA_LEAGUES.forEach((league, idx) => {
+          if (Array.isArray(standingsResults[idx]) && standingsResults[idx].length > 0) {
+            standingsMap[league.id] = standingsResults[idx];
+          }
+        });
+
+        const [liveData, recentData, upcomingData, wcData] = await Promise.all([
           fetchLiveMatches(),
           fetchRecentMatches(),
           fetchUpcomingFixtures(),
-          fetchStandings(39),
-          fetchStandings(686),
           fetchLeagueFixtures(1, 2026, 8),
         ]);
         if (!mounted) return;
         setLive(Array.isArray(liveData) ? liveData.slice(0, 10) : []);
         setRecent(Array.isArray(recentData) ? recentData.slice(0, 8) : []);
         setUpcoming(Array.isArray(upcomingData) ? upcomingData.slice(0, 14) : []);
-        setStandings(Array.isArray(tableData) ? tableData.slice(0, 6) : []);
-        setKplStandings(Array.isArray(kplData) ? kplData.slice(0, 8) : []);
+        setAllStandings(standingsMap);
         setWorldCup(Array.isArray(wcData) ? wcData.slice(0, 4) : []);
         setLastUpdated(new Date());
       } catch (error) {
@@ -844,7 +971,8 @@ export default function LandingPage() {
     () => upcoming.filter((match: any) => match.leagueId === activeLeague.id || match.league === activeLeague.name).slice(0, 8),
     [upcoming, activeLeague.id, activeLeague.name],
   );
-  const wcMatches: DisplayMatch[] = (worldCup.length > 0 ? worldCup : WC_FALLBACK).slice(0, 3);
+  // Only use real World Cup data — never fallback to fake matches
+  const wcMatches: DisplayMatch[] = (worldCup.length > 0 ? worldCup : []).slice(0, 3);
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
   const timeLabel = today.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true });
@@ -983,23 +1111,16 @@ export default function LandingPage() {
           </button>
         </header>
 
-        <section className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-          <div className={live.length > 0 ? "animate-pulse" : ""}>
-            <StatTile
-              label="Live Now"
-              value={live.length > 0 ? live.length : "—"}
-              icon={Activity}
-              tone={live.length > 0 ? "border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]" : "border-primary/45 text-primary"}
-            />
-          </div>
-          <StatTile label="Next Fixtures" value={upcoming.length || "—"} icon={CalendarDays} tone="border-blue-400/40 text-blue-300" />
-          <StatTile label="Final Whistles" value={recent.length || "—"} icon={Clock3} tone="border-emerald-400/40 text-emerald-300" />
-          <StatTile label="Tables Open" value={standings.length || activeLeague.short} icon={Table2} tone="border-[#ffd700]/40 text-[#ffd700]" />
-        </section>
+        {/* Data-first match cards — only render when real data exists */}
+        <div className="mb-3 grid gap-3 lg:grid-cols-2">
+          <LiveNowCard matches={matches} />
+          <TodaysMatchesCard upcoming={upcoming} />
+        </div>
 
-        <div className="grid gap-3 xl:grid-cols-[330px_minmax(0,1fr)_360px]">
-          <aside className="space-y-3">
-            <section className={`overflow-hidden rounded-xl border bg-[#090d14]/95 transition-all duration-700 ${live.length > 0 ? "border-primary/30 shadow-[0_0_20px_rgba(179,0,0,0.12)]" : "border-white/10"}`}>
+        <div className="grid gap-3 lg:grid-cols-[330px_minmax(0,1fr)_360px]">
+          {showLeftSidebar && (
+            <aside className={`space-y-3 transition-all duration-300 ${live.length > 0 || worldCup.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
+              <section className={`overflow-hidden rounded-xl border bg-[#090d14]/95 transition-all duration-700 ${live.length > 0 ? "border-primary/30 shadow-[0_0_20px_rgba(179,0,0,0.12)]" : "border-white/10"}`}>
               <div className={`flex items-center justify-between border-b px-3 py-2.5 transition-colors duration-700 ${live.length > 0 ? "border-primary/20" : "border-white/10"}`}>
                 <div>
                   <div className="flex items-center gap-2">
@@ -1033,19 +1154,22 @@ export default function LandingPage() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-xl border border-[#ffd700]/20 bg-[#111006]/92">
-              <div className="flex items-center justify-between border-b border-[#ffd700]/12 px-3 py-2.5">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">WC26 Watch</h2>
-                  <p className="text-[11px] text-[#ffd700]/65">World Cup route</p>
+            {wcMatches.length > 0 ? (
+              <section className="overflow-hidden rounded-xl border border-[#ffd700]/20 bg-[#111006]/92">
+                <div className="flex items-center justify-between border-b border-[#ffd700]/12 px-3 py-2.5">
+                  <div>
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">WC26 Watch</h2>
+                    <p className="text-[11px] text-[#ffd700]/65">World Cup route</p>
+                  </div>
+                  <Link href="/world-cup-2026" className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#ffd700]">
+                    Guide
+                  </Link>
                 </div>
-                <Link href="/world-cup-2026" className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#ffd700]">
-                  Guide
-                </Link>
-              </div>
-              <div>{wcMatches.map((match) => <WorldCupRow key={match.id} match={match} />)}</div>
-            </section>
-          </aside>
+                <div>{wcMatches.map((match) => <WorldCupRow key={match.id} match={match} />)}</div>
+              </section>
+            ) : null}
+            </aside>
+          )}
 
           <section className="space-y-3">
             <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
@@ -1095,27 +1219,47 @@ export default function LandingPage() {
                 ) : null}
 
                 {activeTab === "table" ? (
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
-                      <div className="mb-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Fixtures</h3>
-                        <p className="mt-1 text-[11px] text-white/44">{activeLeague.name}: today, next up and recent games.</p>
-                      </div>
-                      <FixtureBoard
-                        fixtures={activeLeagueFixtures}
-                        leagueName={activeLeague.name}
-                        selectedMatchId={selectedMatchId}
-                        onSelect={setSelectedMatchId}
-                        loading={loading}
-                      />
-                    </section>
-                    <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
-                      <div className="mb-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Standings</h3>
-                        <p className="mt-1 text-[11px] text-white/44">Table position, form, points and goal difference.</p>
-                      </div>
-                      <StandingsTable rows={standings} leagueName={activeLeague.name} loading={loading} />
-                    </section>
+                  <div className="space-y-3">
+                    {/* League Selector — inline inside Tables tab */}
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                      {DATA_LEAGUES.map((league) => (
+                        <button
+                          key={league.id}
+                          onClick={() => setActiveLeagueId(league.id)}
+                          className={`rounded-lg border px-2 py-2 text-left transition-colors ${
+                            activeLeagueId === league.id
+                              ? "border-primary bg-primary/14 text-white"
+                              : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white"
+                          }`}
+                        >
+                          <div className="text-xs font-semibold uppercase truncate">{league.short}</div>
+                          <div className="mt-0.5 truncate text-[10px] text-white/38 hidden sm:block">{league.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Fixtures + Standings for selected league */}
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
+                        <div className="mb-3">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Fixtures</h3>
+                          <p className="mt-1 text-[11px] text-white/44">{activeLeague.name}: today, next up and recent games.</p>
+                        </div>
+                        <FixtureBoard
+                          fixtures={activeLeagueFixtures}
+                          leagueName={activeLeague.name}
+                          selectedMatchId={selectedMatchId}
+                          onSelect={setSelectedMatchId}
+                          loading={loading}
+                        />
+                      </section>
+                      <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
+                        <div className="mb-3">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Standings</h3>
+                          <p className="mt-1 text-[11px] text-white/44">Table position, form, points and goal difference.</p>
+                        </div>
+                        <StandingsTable rows={standings} leagueName={activeLeague.name} loading={loading} />
+                      </section>
+                    </div>
                   </div>
                 ) : null}
 
@@ -1166,72 +1310,32 @@ export default function LandingPage() {
             </section>
           </section>
 
-          <aside className="space-y-3">
-            <section className="rounded-xl border border-white/10 bg-[#090d14]/95 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">League Switchboard</h2>
-                  <p className="mt-0.5 text-[11px] text-white/42">Pick a league</p>
-                </div>
-                <Table2 className="h-4 w-4 text-primary" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {DATA_LEAGUES.map((league) => (
-                  <button
-                    key={league.id}
-                    onClick={() => setActiveLeagueId(league.id)}
-                    className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                      activeLeagueId === league.id
-                        ? "border-primary bg-primary/14 text-white"
-                        : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white"
-                    }`}
-                  >
-                    <div className="text-xs font-semibold uppercase">{league.short}</div>
-                    <div className="mt-0.5 truncate text-[10px] text-white/38">{league.name}</div>
-                  </button>
-                ))}
-              </div>
-            </section>
+          {showRightSidebar && (
+            <aside className={`space-y-3 transition-all duration-300 ${eplStandings.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
+            {/* KPL standings hidden — API-Football returns incorrect (Czech) data for league 686 */}
+            {/* TODO: Fix KPL league ID mapping with API-Football or use alternate data source */}
 
-            <section className="overflow-hidden rounded-xl border border-[#008000]/30 bg-[#04100a]/95">
-              <div className="flex items-center justify-between border-b border-[#008000]/20 px-3 py-2.5">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Kenya Premier League</h2>
-                  <p className="mt-0.5 text-[11px] text-[#22c55e]/70">Home table · KPL 2025</p>
+            {eplStandings.length > 0 && (
+              <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
+                <div className="border-b border-white/10 px-3 py-2.5">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Premier League Snapshot</h2>
+                  <p className="mt-0.5 text-[11px] text-white/42">Title race, form and points at a glance</p>
                 </div>
-                <div className="h-5 w-5 overflow-hidden rounded-full border border-[#008000]/40">
-                  <div className="h-full w-full" style={{ background: "linear-gradient(to bottom, #006600 50%, #BB0000 50%)" }} />
-                </div>
-              </div>
-              {kplStandings.length ? (
-                kplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)
-              ) : (
-                <div className="px-4 py-6 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">KPL table loading...</div>
-              )}
-            </section>
+                {eplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)}
+              </section>
+            )}
 
-            <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
-              <div className="border-b border-white/10 px-3 py-2.5">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Premier League Snapshot</h2>
-                <p className="mt-0.5 text-[11px] text-white/42">Title race, form and points at a glance</p>
-              </div>
-              {standings.length ? (
-                standings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)
-              ) : (
-                <div className="px-4 py-8 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">Table loading...</div>
-              )}
-            </section>
-
-            <MatchRoomCard
-              match={selectedMatch}
-              stats={fixtureStats}
-              events={fixtureEvents}
-              lineups={fixtureLineups}
-              teamStats={teamStats}
-              loading={detailsLoading}
-              onOpenStats={setActiveTab}
-            />
-          </aside>
+              <MatchRoomCard
+                match={selectedMatch}
+                stats={fixtureStats}
+                events={fixtureEvents}
+                lineups={fixtureLineups}
+                teamStats={teamStats}
+                loading={detailsLoading}
+                onOpenStats={setActiveTab}
+              />
+            </aside>
+          )}
         </div>
 
         <section className="mt-4">
