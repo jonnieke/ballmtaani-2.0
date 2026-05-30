@@ -1,10 +1,9 @@
 ﻿import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2, ShieldCheck, Flag } from "lucide-react";
+import { Trophy, Users, MessageSquare, ChevronRight, Zap, Calendar, Sparkles, Radio, Share2, ShieldCheck } from "lucide-react";
 import { CLUB_LOGOS } from "../data/mockData";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useDebates, useLeaderboard } from "../hooks/useData";
-import { fetchStandings, type StandingEntry } from "../lib/football-api";
 import { supabase } from "../lib/supabase";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
@@ -23,7 +22,6 @@ export default function HomePage() {
   const [heroBannerError, setHeroBannerError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
-  const [kplTable, setKplTable] = useState<StandingEntry[]>([]);
   const [predCount, setPredCount] = useState<number | null>(null);
   const [zonesCount, setZonesCount] = useState<number | null>(null);
   const favClub = localStorage.getItem("mtaani_fav_club") || "";
@@ -42,9 +40,6 @@ export default function HomePage() {
   }, [liveMatches, upcomingFixtures, recentMatches]);
 
   useEffect(() => {
-    fetchStandings(686).then((rows) => {
-      if (Array.isArray(rows) && rows.length > 0) setKplTable(rows.slice(0, 8));
-    }).catch(() => {});
 
     if (supabase) {
       supabase.from("predictions").select("*", { count: "exact", head: true }).then(({ count }) => {
@@ -328,55 +323,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* KENYA PREMIER LEAGUE */}
-      <section className="border-b border-[#1B1B1B] bg-[#04100a] py-14">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#008000]/30 bg-[#008000]/12 px-3 py-1">
-                <Flag className="w-3.5 h-3.5 text-[#22c55e]" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#22c55e]">Local Game</span>
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">Kenya Premier League</h2>
-              <p className="text-gray-400 text-sm mt-2">Table standings · KPL 2025 season</p>
-            </div>
-            <Link href="/matches" className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#22c55e]">
-              Full Data <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {kplTable.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-[#008000]/25 bg-[#060f08]">
-              <div className="grid grid-cols-[32px_1fr_36px_36px_44px_52px] border-b border-[#008000]/15 bg-[#008000]/8 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#22c55e]/60">
-                <span>#</span>
-                <span>Club</span>
-                <span className="text-center">P</span>
-                <span className="text-center">W</span>
-                <span className="text-center">GD</span>
-                <span className="text-center">Pts</span>
-              </div>
-              {kplTable.map((row, i) => (
-                <div key={row.team} className={`grid grid-cols-[32px_1fr_36px_36px_44px_52px] items-center border-b border-white/4 px-4 py-3 text-sm last:border-0 ${i < 3 ? "bg-[#008000]/6" : ""}`}>
-                  <span className={`font-bold ${i < 3 ? "text-[#22c55e]" : "text-white/40"}`}>{row.rank}</span>
-                  <span className="flex min-w-0 items-center gap-2">
-                    <img src={row.logo} alt={row.team} className="h-5 w-5 shrink-0 object-contain" />
-                    <span className="truncate font-semibold text-white">{row.team}</span>
-                  </span>
-                  <span className="text-center text-white/45">{row.played}</span>
-                  <span className="text-center text-white/45">{row.won}</span>
-                  <span className="text-center text-white/45">{row.gd}</span>
-                  <span className="text-center font-bold text-[#22c55e]">{row.points}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-[#008000]/20 bg-[#060f08] p-10 text-center">
-              <Flag className="w-8 h-8 text-[#008000]/40 mx-auto mb-3" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">KPL standings loading...</p>
-            </div>
-          )}
-        </div>
-      </section>
+      {/* KPL section removed — API-Football league ID 686 returns Czech clubs, not Kenya Premier League. Restore when correct ID is confirmed. */}
 
       {/* NEWS FEED */}
       <NewsFeed />
