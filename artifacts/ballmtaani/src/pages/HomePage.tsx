@@ -55,10 +55,10 @@ function halfLabel(status: string) {
 function CountBox({ v, l }: { v: number; l: string }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="min-w-[52px] rounded-xl border border-[#FFD700]/22 bg-black/55 px-3 py-2 text-center backdrop-blur-sm">
-        <span className="block text-2xl font-black tabular-nums text-white md:text-3xl">{String(v).padStart(2,"0")}</span>
+      <div className="min-w-[44px] rounded-lg border border-[#FFD700]/20 bg-black/60 px-2.5 py-1.5 text-center backdrop-blur-sm">
+        <span className="block text-xl font-black tabular-nums text-white md:text-2xl">{String(v).padStart(2,"0")}</span>
       </div>
-      <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[#FFD700]/55">{l}</span>
+      <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.18em] text-[#FFD700]/50">{l}</span>
     </div>
   );
 }
@@ -66,26 +66,26 @@ function CountBox({ v, l }: { v: number; l: string }) {
 function NewsCard({ article, featured }: { article: NewsArticle; featured?: boolean }) {
   const share = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${article.title}\n\n${article.link}\n\nShared from BallMtaani`)}`, "_blank");
   return (
-    <div className={`group flex flex-col overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5 ${featured ? "border-[#FFD700]/22 bg-[#0a0900]" : "border-white/7 bg-[#0d1018]"}`}>
-      <div className="relative h-44 overflow-hidden">
+    <div className={`group flex flex-col overflow-hidden rounded-xl border transition-all duration-200 hover:-translate-y-0.5 ${featured ? "border-[#FFD700]/20 bg-[#0a0900]" : "border-white/6 bg-[#0d1018]"}`}>
+      <div className="relative h-36 overflow-hidden">
         <img src={article.thumbnail} alt={article.title} loading="lazy" decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=50&fm=webp"; }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         {featured && <div className="absolute inset-0 bg-[#FFD700]/5" />}
-        <div className="absolute bottom-2 left-3">
-          <span className="rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-white/65 backdrop-blur-sm">{article.source}</span>
+        <div className="absolute bottom-2 left-2">
+          <span className="rounded bg-black/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-white/60 backdrop-blur-sm">{article.source}</span>
         </div>
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">{timeAgo(article.pubDate)}</p>
-        <h3 className="mb-4 flex-1 text-sm font-black leading-snug text-white line-clamp-3">{article.title}</h3>
-        <div className="flex gap-2">
+      <div className="flex flex-1 flex-col p-3">
+        <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/28">{timeAgo(article.pubDate)}</p>
+        <h3 className="mb-3 flex-1 text-[13px] font-black leading-snug text-white line-clamp-2">{article.title}</h3>
+        <div className="flex gap-1.5">
           <a href={article.link} target="_blank" rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-2 text-[10px] font-black uppercase tracking-widest text-white/40 transition-all hover:bg-white/10 hover:text-white">
+            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/38 transition-all hover:bg-white/10 hover:text-white">
             <ExternalLink className="h-3 w-3" /> Read
           </a>
-          <button onClick={share} className="rounded-lg bg-[#25D366]/10 px-3 py-2 text-sm text-[#25D366] transition-all hover:bg-[#25D366]/20" title="Share to WhatsApp">WA</button>
+          <button onClick={share} className="rounded-lg bg-[#25D366]/10 px-2.5 py-1.5 text-xs text-[#25D366] transition-all hover:bg-[#25D366]/20" title="Share to WhatsApp">WA</button>
         </div>
       </div>
     </div>
@@ -155,14 +155,18 @@ export default function HomePage() {
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-white/8 bg-[#040508]">
-        <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=55&fm=webp"
-          alt="" loading="lazy" decoding="async"
-          className="absolute inset-0 h-full w-full object-cover opacity-[0.18]" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/6 via-transparent to-[#B30000]/10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-transparent to-transparent" />
+        {/* AI-generated hero — Vertex AI Imagen 3, World Cup energy */}
+        <img src="/wc26-hero.jpg" alt="" decoding="async"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-55" />
+        {/* Cinematic grade overlays */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(4,5,8,0.65)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-[#040508]/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040508]/80 via-transparent to-[#040508]/40" />
+        {/* Gold shimmer at top */}
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700]/60 to-transparent" />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-4 py-14 md:py-20">
-          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 py-10 md:py-16">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
 
             {/* Left — WC26 + headline */}
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
@@ -186,15 +190,14 @@ export default function HomePage() {
 
               {/* Countdown tiles */}
               {!wc26.isLive && !wc26.isOver && (
-                <div className="mb-6 flex items-end gap-2 md:gap-3">
+                <div className="mb-5 flex items-end gap-2">
                   <CountBox v={wc26.days}  l="Days" />
-                  <span className="mb-6 text-xl font-black text-[#FFD700]/30">:</span>
+                  <span className="mb-5 text-lg font-black text-[#FFD700]/28">:</span>
                   <CountBox v={wc26.hours} l="Hrs" />
-                  <span className="mb-6 text-xl font-black text-[#FFD700]/30">:</span>
+                  <span className="mb-5 text-lg font-black text-[#FFD700]/28">:</span>
                   <CountBox v={wc26.mins}  l="Min" />
-                  <span className="mb-6 text-xl font-black text-[#FFD700]/30">:</span>
+                  <span className="mb-5 text-lg font-black text-[#FFD700]/28">:</span>
                   <CountBox v={wc26.secs}  l="Sec" />
-                  <span className="mb-7 text-[10px] font-bold uppercase tracking-widest text-white/30">To Kickoff</span>
                 </div>
               )}
 
@@ -371,9 +374,9 @@ export default function HomePage() {
       )}
 
       {/* ─────────────────────────── MATCH HUB ───────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#0B0B0B] py-12">
+      <section className="border-b border-white/6 bg-[#0B0B0B] py-8">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="border-l-4 border-[#B30000] pl-4 text-xl font-black uppercase tracking-wide text-white">Match Hub</h2>
               <p className="ml-4 mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">Live · Results · Upcoming</p>
@@ -398,12 +401,12 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────────── NEWS: WC26 FIRST ────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#05070b] py-14">
+      <section className="border-b border-white/6 bg-[#05070b] py-10">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="border-l-4 border-[#FFD700] pl-4 text-xl font-black uppercase tracking-wide text-white">Latest News</h2>
-              <p className="ml-4 mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">WC26 First · Breaking Headlines</p>
+              <h2 className="border-l-4 border-[#FFD700] pl-3 text-lg font-black uppercase tracking-widest text-white">Latest News</h2>
+              <p className="ml-4 mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">WC26 First · Breaking Headlines</p>
             </div>
           </div>
 
@@ -448,27 +451,27 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────────────── ARCADE ──────────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#0B0B0B] py-14">
+      <section className="border-b border-white/6 bg-[#0B0B0B] py-10">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-10">
-            <h2 className="text-3xl font-black uppercase tracking-widest text-white md:text-4xl">
-              The <span className="text-[#FFD700]">Arcade</span>
-            </h2>
-            <p className="mt-2 text-sm text-white/32">Make calls, win banter, stack receipts</p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">The <span className="text-[#FFD700]">Arcade</span></h2>
+              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">Calls · Trivia · Debates</p>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
             {[
-              { href: "/predictions", icon: Sparkles, label: "Fan Intel", sub: "Make your call, keep the receipt", border: "border-[#B30000]/28 hover:border-[#B30000]/55", ic: "text-[#B30000]", cta: "Make Your Call" },
-              { href: "/world-cup-2026", icon: Trophy, label: "WC26 Hub", sub: "Groups, fixtures, fan predictions", border: "border-[#FFD700]/28 hover:border-[#FFD700]/55", ic: "text-[#FFD700]", cta: "Open Hub", gold: true },
-              { href: "/rapid-fire", icon: Zap, label: "Rapid Fire", sub: "Vote on heated football takes", border: "border-blue-500/22 hover:border-blue-500/45", ic: "text-blue-400", cta: "Play Now" },
-              { href: "/trivia", icon: Radio, label: "Millionaire", sub: "Test your football knowledge", border: "border-purple-500/22 hover:border-purple-500/45", ic: "text-purple-400", cta: "Play Trivia" },
+              { href: "/predictions", icon: Sparkles, label: "Fan Intel", sub: "Make your call, keep the receipt", border: "border-[#B30000]/22 hover:border-[#B30000]/50", ic: "text-[#B30000]", cta: "Make Call" },
+              { href: "/world-cup-2026", icon: Trophy, label: "WC26 Hub", sub: "Groups, fixtures, fan picks", border: "border-[#FFD700]/22 hover:border-[#FFD700]/50", ic: "text-[#FFD700]", cta: "Open Hub", gold: true },
+              { href: "/rapid-fire", icon: Zap, label: "Rapid Fire", sub: "Vote on heated football takes", border: "border-blue-500/18 hover:border-blue-500/42", ic: "text-blue-400", cta: "Play Now" },
+              { href: "/trivia", icon: Radio, label: "Millionaire", sub: "Test your football IQ", border: "border-purple-500/18 hover:border-purple-500/42", ic: "text-purple-400", cta: "Play Trivia" },
             ].map(({ href, icon: Icon, label, sub, border, ic, cta, gold }) => (
               <Link key={href} href={href}
-                className={`group flex flex-col rounded-2xl border bg-[#0f1118] p-5 transition-all duration-300 hover:-translate-y-0.5 lg:p-7 ${border}`}>
-                <Icon className={`mb-4 h-7 w-7 transition-transform duration-300 group-hover:scale-110 lg:h-9 lg:w-9 ${ic}`} />
-                <h3 className={`mb-2 text-sm font-black uppercase lg:text-base ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
-                <p className="mb-5 flex-1 text-xs leading-relaxed text-white/32">{sub}</p>
-                <span className={`text-[9px] font-black uppercase tracking-[0.2em] lg:text-[10px] ${ic}`}>{cta} →</span>
+                className={`group flex flex-col rounded-xl border bg-[#0d1018] p-4 transition-all duration-200 hover:-translate-y-0.5 ${border}`}>
+                <Icon className={`mb-3 h-5 w-5 ${ic}`} />
+                <h3 className={`mb-1 text-xs font-black uppercase tracking-wide ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
+                <p className="mb-3 flex-1 text-[11px] leading-relaxed text-white/30">{sub}</p>
+                <span className={`text-[9px] font-black uppercase tracking-[0.18em] ${ic}`}>{cta} →</span>
               </Link>
             ))}
           </div>
@@ -483,27 +486,25 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────────────── COMMUNITY ───────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#04060a] py-14">
+      <section className="border-b border-white/6 bg-[#04060a] py-10">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-10">
-            <h2 className="text-3xl font-black uppercase tracking-widest text-white md:text-4xl">
-              Keep The <span className="text-[#B30000]">Receipt.</span>
-            </h2>
-            <p className="mt-2 text-sm text-white/35">Challenge rival fans. Come back after full time.</p>
+          <div className="mb-6">
+            <h2 className="text-lg font-black uppercase tracking-widest text-white">Keep The <span className="text-[#B30000]">Receipt.</span></h2>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">Challenge. Debate. Come back after full time.</p>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 lg:gap-3">
             {[
-              { href: "/rivalries", icon: Zap, label: "Fan Duels", sub: "Challenge a rival and settle the debate.", border: "border-[#B30000]/22 hover:border-[#B30000]/48", bg: "bg-[#0d0608]", ic: "text-[#B30000]", ibg: "bg-[#B30000]/12", cta: "Start Duel" },
-              { href: "/fan-zones", icon: Users, label: "Fan Zones", sub: "Elite communities for die-hard supporters.", border: "border-[#FFD700]/18 hover:border-[#FFD700]/42", bg: "bg-[#080700]", ic: "text-[#FFD700]", ibg: "bg-[#FFD700]/8", cta: "Explore Zones", gold: true },
-              { href: "/debates", icon: MessageSquare, label: "Debates", sub: "Football takes, receipts, and matchday banter.", border: "border-blue-500/18 hover:border-blue-500/42", bg: "bg-[#050810]", ic: "text-blue-400", ibg: "bg-blue-500/8", cta: "Join Feed" },
+              { href: "/rivalries", icon: Zap, label: "Fan Duels", sub: "Challenge a rival, settle the debate", border: "border-[#B30000]/20 hover:border-[#B30000]/45", bg: "bg-[#0d0608]", ic: "text-[#B30000]", ibg: "bg-[#B30000]/10", cta: "Start Duel" },
+              { href: "/fan-zones", icon: Users, label: "Fan Zones", sub: "Elite communities for die-hards", border: "border-[#FFD700]/16 hover:border-[#FFD700]/38", bg: "bg-[#080700]", ic: "text-[#FFD700]", ibg: "bg-[#FFD700]/8", cta: "Explore", gold: true },
+              { href: "/debates", icon: MessageSquare, label: "Debates", sub: "Takes, receipts and matchday banter", border: "border-blue-500/16 hover:border-blue-500/38", bg: "bg-[#050810]", ic: "text-blue-400", ibg: "bg-blue-500/8", cta: "Join Feed" },
             ].map(({ href, icon: Icon, label, sub, border, bg, ic, ibg, cta, gold }) => (
               <Link key={href} href={href}
-                className={`group flex flex-col rounded-2xl border p-6 transition-all duration-300 hover:-translate-y-0.5 ${bg} ${border}`}>
-                <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${ibg}`}>
-                  <Icon className={`h-5 w-5 ${ic}`} />
+                className={`group flex flex-col rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${bg} ${border}`}>
+                <div className={`mb-3 flex h-8 w-8 items-center justify-center rounded-lg ${ibg}`}>
+                  <Icon className={`h-4 w-4 ${ic}`} />
                 </div>
-                <h3 className={`mb-2 text-sm font-black uppercase ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
-                <p className="mb-5 flex-1 text-xs text-white/32">{sub}</p>
+                <h3 className={`mb-1 text-xs font-black uppercase tracking-wide ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
+                <p className="mb-3 flex-1 text-[11px] text-white/28">{sub}</p>
                 <span className={`text-[9px] font-black uppercase tracking-widest ${ic}`}>{cta} →</span>
               </Link>
             ))}
@@ -512,31 +513,29 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────────── LEADERBOARD PREVIEW ─────────────────────── */}
-      <section className="bg-[#04060a] py-14">
-        <div className="mx-auto max-w-4xl px-4 text-center">
-          <Trophy className="mx-auto mb-4 h-10 w-10 text-[#FFD700]" />
-          <h2 className="mb-8 text-3xl font-black uppercase tracking-widest text-white">
-            Hall of <span className="text-[#FFD700]">Fame</span>
-          </h2>
-          <div className="mb-8 overflow-hidden rounded-2xl border border-white/6 bg-[#0d0f14]">
+      <section className="bg-[#04060a] py-10">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <h2 className="mb-1 text-lg font-black uppercase tracking-widest text-white">Hall of <span className="text-[#FFD700]">Fame</span></h2>
+          <p className="mb-6 text-[10px] font-semibold uppercase tracking-widest text-white/25">Top fans this week</p>
+          <div className="mb-6 overflow-hidden rounded-xl border border-white/6 bg-[#0d0f14]">
             {leaderboard.slice(0, 3).map((p: any, i: number) => (
-              <div key={p.rank || i} className="flex items-center justify-between border-b border-white/5 px-6 py-5 last:border-0">
-                <div className="flex items-center gap-5">
-                  <span className={`text-xl font-black ${p.rank === 1 ? "text-[#FFD700]" : "text-white/28"}`}>#{p.rank}</span>
+              <div key={p.rank || i} className="flex items-center justify-between border-b border-white/5 px-4 py-3.5 last:border-0">
+                <div className="flex items-center gap-4">
+                  <span className={`w-6 text-sm font-black ${p.rank === 1 ? "text-[#FFD700]" : "text-white/25"}`}>#{p.rank}</span>
                   <div className="text-left">
-                    <span className="font-black text-white">{p.name} {p.country}</span>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-[#B30000]">Level {p.streak || 1} Elite Host</div>
+                    <span className="text-sm font-black text-white">{p.name} {p.country}</span>
+                    <div className="text-[9px] font-black uppercase tracking-widest text-[#B30000]">Level {p.streak || 1} Elite Host</div>
                   </div>
                 </div>
-                <span className="text-xl font-black text-[#FFD700]">{p.pts} pts</span>
+                <span className="text-sm font-black text-[#FFD700]">{p.pts} pts</span>
               </div>
             ))}
             {!leaderboard.length && (
-              <div className="py-12 text-[10px] font-black uppercase tracking-widest text-white/18">Leaderboard loading...</div>
+              <div className="py-8 text-[10px] font-black uppercase tracking-widest text-white/18">Loading...</div>
             )}
           </div>
           <Link href="/leaderboard"
-            className="inline-block rounded-full border border-white/12 px-10 py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-white/5">
+            className="inline-block rounded-full border border-white/10 px-8 py-3 text-[10px] font-black uppercase tracking-widest text-white/60 transition-all hover:bg-white/5 hover:text-white">
             Full Leaderboard
           </Link>
         </div>
