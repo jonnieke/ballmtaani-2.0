@@ -15,7 +15,16 @@ type ChatMessage = {
   citation?: string;
 };
 
-const QUICK_QUESTIONS = [
+const WC26_QUESTIONS = [
+  "Who wins WC26 — give me your read.",
+  "Which African team goes furthest at WC26?",
+  "Who is the WC26 golden boot favourite right now?",
+  "Break down the Group of Death at WC26.",
+  "What is the biggest WC26 shock waiting to happen?",
+  "Is Morocco the African dark horse or overhyped?",
+];
+
+const GENERAL_QUESTIONS = [
   "What are the biggest football stories right now?",
   "Which upcoming match should Kenyan fans watch?",
   "Give me a funny but honest Premier League read.",
@@ -24,24 +33,17 @@ const QUICK_QUESTIONS = [
 
 function ContextStrip({ context }: { context?: MchambuziContext }) {
   if (!context) return null;
-
   return (
-    <div className="grid gap-3 md:grid-cols-3">
-      <div className="rounded-2xl border border-primary/25 bg-primary/8 p-4">
-        <Radio className="mb-2 h-5 w-5 text-primary" />
-        <div className="text-2xl font-bold text-white">{context.live.length}</div>
-        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">Live matches</div>
-      </div>
-      <div className="rounded-2xl border border-blue-400/25 bg-blue-500/8 p-4">
-        <Trophy className="mb-2 h-5 w-5 text-blue-300" />
-        <div className="text-2xl font-bold text-white">{context.upcoming.length}</div>
-        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">Upcoming feed</div>
-      </div>
-      <div className="rounded-2xl border border-[#FFD700]/25 bg-[#FFD700]/8 p-4">
-        <Newspaper className="mb-2 h-5 w-5 text-[#FFD700]" />
-        <div className="text-2xl font-bold text-white">{context.news.length}</div>
-        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/45">BBC / Goal headlines</div>
-      </div>
+    <div className="flex flex-wrap gap-2 text-[11px]">
+      <span className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/8 px-3 py-1 font-bold text-primary">
+        <Radio className="h-3 w-3" /> {context.live.length} live
+      </span>
+      <span className="flex items-center gap-1.5 rounded-full border border-blue-400/22 bg-blue-500/8 px-3 py-1 font-bold text-blue-300">
+        <Trophy className="h-3 w-3" /> {context.upcoming.length} upcoming
+      </span>
+      <span className="flex items-center gap-1.5 rounded-full border border-[#FFD700]/22 bg-[#FFD700]/8 px-3 py-1 font-bold text-[#FFD700]">
+        <Newspaper className="h-3 w-3" /> {context.news.length} headlines
+      </span>
     </div>
   );
 }
@@ -123,40 +125,35 @@ export default function MchambuziHalisiPage() {
 
       <div className="fixed inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1800&q=80"
+          src="/wc26-hero.jpg"
           alt=""
-          className="h-full w-full object-cover opacity-28"
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover object-center opacity-30"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.5),transparent_24%),radial-gradient(circle_at_16%_18%,rgba(0,177,255,0.22),transparent_30%),linear-gradient(180deg,rgba(6,9,15,0.62),#06090f_76%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.45),transparent_24%),radial-gradient(circle_at_16%_18%,rgba(0,177,255,0.18),transparent_30%),linear-gradient(180deg,rgba(6,9,15,0.55),#06090f_72%)]" />
       </div>
 
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">
-        <Link href="/" className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm font-bold text-white/75 backdrop-blur-xl transition-colors hover:border-primary/60 hover:text-primary">
+        <Link href="/home" className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm font-bold text-white/75 backdrop-blur-xl transition-colors hover:border-primary/60 hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
-          Live Hub
+          Home
         </Link>
 
-        <section className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-          <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.26em] text-primary">AI football analyst</p>
-            <h1 className="text-4xl font-bold italic leading-none md:text-6xl">Mchambuzi Halisi</h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/66">
-              Ask about live games, fixtures, transfers, headlines, form, WC26 or why your club is stressing you like rent day.
-            </p>
+        <section className="mb-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-primary">AI football analyst · WC26 ready</p>
           </div>
-
-          <div className="rounded-3xl border border-white/12 bg-[#0c121b]/88 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.38)] backdrop-blur-xl">
-            <div className="mb-3 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/35 bg-primary/12 text-primary">
-                <Bot className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold uppercase text-white">Routed To Real Feeds</h2>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-white/42">{sourceLabel}</p>
-              </div>
+          <h1 className="text-4xl font-black italic leading-none md:text-5xl">Mchambuzi Halisi</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
+            Ask about live scores, WC26 predictions, transfers, African football, or why your club is stressing you like rent day. Routed through live API feeds.
+          </p>
+          {latestContext && (
+            <div className="mt-3">
+              <ContextStrip context={latestContext} />
             </div>
-            <ContextStrip context={latestContext} />
-          </div>
+          )}
         </section>
 
         <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_320px]">
@@ -216,7 +213,7 @@ export default function MchambuziHalisiPage() {
               <input
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
-                placeholder="Ask: Is Arsenal cooking or are we dreaming again?"
+                placeholder="Ask: Who wins WC26 or why is your club stressing you..."
                 className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-black/24 px-4 py-3 text-sm text-white outline-none placeholder:text-white/28 focus:border-primary/60"
               />
               <button
@@ -231,15 +228,19 @@ export default function MchambuziHalisiPage() {
           </div>
 
           <aside className="space-y-3">
-            <div className="rounded-3xl border border-white/10 bg-[#0b1119]/88 p-4">
-              <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-white">Quick asks</h3>
-              <div className="mt-3 space-y-2">
-                {QUICK_QUESTIONS.map((item) => (
+            {/* WC26 questions — most relevant right now */}
+            <div className="overflow-hidden rounded-2xl border border-[#FFD700]/22 bg-[#0c0b02]/90">
+              <div className="flex items-center gap-2 border-b border-[#FFD700]/12 px-4 py-2.5">
+                <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-[#FFD700]">WC26 — Ask Now</h3>
+              </div>
+              <div className="divide-y divide-white/5">
+                {WC26_QUESTIONS.map((item) => (
                   <button
                     key={item}
                     onClick={() => ask(item)}
                     disabled={isThinking}
-                    className="block w-full rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3 text-left text-sm text-white/64 transition-colors hover:border-primary/45 hover:text-white disabled:opacity-40"
+                    className="block w-full px-4 py-2.5 text-left text-[12px] text-white/60 transition-colors hover:bg-[#FFD700]/5 hover:text-white disabled:opacity-40"
                   >
                     {item}
                   </button>
@@ -247,14 +248,33 @@ export default function MchambuziHalisiPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-primary/20 bg-primary/8 p-4">
-              <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-white">What it checks</h3>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-white/58">
-                <li>API-Football live scores and fixtures</li>
-                <li>Recent match receipts</li>
-                <li>BBC Sport and Goal.com headlines</li>
-                <li>BallMtaani fan-first tone</li>
-              </ul>
+            {/* General questions */}
+            <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0b1119]/90">
+              <div className="border-b border-white/6 px-4 py-2.5">
+                <h3 className="text-[11px] font-black uppercase tracking-widest text-white/55">General football</h3>
+              </div>
+              <div className="divide-y divide-white/5">
+                {GENERAL_QUESTIONS.map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => ask(item)}
+                    disabled={isThinking}
+                    className="block w-full px-4 py-2.5 text-left text-[12px] text-white/55 transition-colors hover:bg-white/[0.03] hover:text-white disabled:opacity-40"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Data sources */}
+            <div className="rounded-2xl border border-white/6 bg-[#0b1119]/80 px-4 py-3">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-white/35">Live data sources</h3>
+              <div className="space-y-1 text-[11px] text-white/35">
+                <div>API-Football · live scores + fixtures</div>
+                <div>BBC Sport · Goal.com · RSS headlines</div>
+                <div>Vertex AI Gemini 2.5 Flash · analysis</div>
+              </div>
             </div>
           </aside>
         </section>

@@ -130,7 +130,19 @@ export const RAPID_FIRE_POOL: RapidFireDebate[] = [
   { id: "rf117", title: "Best Right Winger History", left: "Best", right: "Garrincha", leftVotes: 3200, rightVotes: 3100, totalVotes: "6,300" },
   { id: "rf118", title: "Modern Tactical Genius", left: "Unai Emery", right: "Roberto De Zerbi", leftVotes: 4100, rightVotes: 3900, totalVotes: "8,000" },
   { id: "rf119", title: "Best Defensive Skill", left: "Last Man Tackle", right: "Goal Line Clearance", leftVotes: 3500, rightVotes: 3800, totalVotes: "7,300" },
-  { id: "rf120", title: "Win at any cost?", left: "Yes (Jose Mourinho)", right: "Only if we play well (Wenger)", leftVotes: 5100, rightVotes: 4200, totalVotes: "9,300" }
+  { id: "rf120", title: "Win at any cost?", left: "Yes (Jose Mourinho)", right: "Only if we play well (Wenger)", leftVotes: 5100, rightVotes: 4200, totalVotes: "9,300" },
+
+  // ── WC26 Polls ────────────────────────────────────────────────────────────
+  { id: "wc1",  title: "🏆 WC26 Winner", left: "Brazil", right: "France", leftVotes: 4800, rightVotes: 5200, totalVotes: "10,000", leftImage: "https://media.api-sports.io/football/teams/6.png", rightImage: "https://media.api-sports.io/football/teams/2.png" },
+  { id: "wc2",  title: "🌍 Best African Team at WC26", left: "Morocco", right: "Senegal", leftVotes: 5500, rightVotes: 4100, totalVotes: "9,600", leftImage: "https://media.api-sports.io/football/teams/36.png", rightImage: "https://media.api-sports.io/football/teams/29.png" },
+  { id: "wc3",  title: "👟 WC26 Golden Boot", left: "Mbappe", right: "Vinicius Jr", leftVotes: 5800, rightVotes: 4900, totalVotes: "10,700", leftImage: "https://media.api-sports.io/football/players/278.png", rightImage: "https://media.api-sports.io/football/players/209331.png" },
+  { id: "wc4",  title: "😱 Biggest WC26 Shock Exit", left: "Argentina", right: "England", leftVotes: 3900, rightVotes: 4500, totalVotes: "8,400" },
+  { id: "wc5",  title: "🔥 WC26 Dark Horse", left: "Portugal", right: "Colombia", leftVotes: 4200, rightVotes: 3100, totalVotes: "7,300" },
+  { id: "wc6",  title: "🏟️ Best WC26 Host City", left: "New York/NJ", right: "Mexico City", leftVotes: 3200, rightVotes: 4100, totalVotes: "7,300" },
+  { id: "wc7",  title: "🤔 WC26 Group of Death Survivor", left: "Spain", right: "Germany", leftVotes: 4600, rightVotes: 4800, totalVotes: "9,400" },
+  { id: "wc8",  title: "🇰🇪 Africa's Best Striker at WC26", left: "Sadio Mane", right: "Victor Osimhen", leftVotes: 5100, rightVotes: 4600, totalVotes: "9,700", leftImage: "https://media.api-sports.io/football/players/746.png", rightImage: "https://media.api-sports.io/football/players/521.png" },
+  { id: "wc9",  title: "📺 WC26 Final: Who Watches It?", left: "Brazil vs France", right: "England vs Argentina", leftVotes: 5400, rightVotes: 4300, totalVotes: "9,700" },
+  { id: "wc10", title: "⚡ WC26 Breakthrough Star", left: "Lamine Yamal", right: "Kobbie Mainoo", leftVotes: 4200, rightVotes: 3500, totalVotes: "7,700" }
 ];
 
 export function getRandomRapidFireSet(count: number): RapidFireDebate[] {
