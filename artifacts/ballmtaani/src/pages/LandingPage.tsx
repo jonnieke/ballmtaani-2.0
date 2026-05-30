@@ -111,10 +111,34 @@ function getCurrentSeason(now = new Date()) {
   return month >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
 }
 
-// ─── Live Now Card — shows actual live matches ────────────────
+// ─── Live progress helpers ────────────────────────────────────
+function getHalfLabel(status: string) {
+  switch (status) {
+    case "1H": return "1st Half";
+    case "HT": return "Half Time";
+    case "2H": return "2nd Half";
+    case "ET": return "Extra Time";
+    case "P":  return "Penalties";
+    case "BT": return "Break";
+    default:   return "Live";
+  }
+}
+
+function getProgressPct(status: string, minute: string): number {
+  const mins = parseInt(minute) || 0;
+  if (status === "HT") return 50;
+  if (status === "1H") return Math.min((mins / 45) * 50, 50);
+  if (status === "2H") return Math.min(50 + ((mins - 45) / 45) * 50, 100);
+  if (status === "ET") return 100;
+  if (status === "P")  return 100;
+  return 0;
+}
+
+// ─── Live Now Card — shows actual live matches with progress ──
 function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
   const live = matches.filter((m) => m.status === "LIVE");
   if (!live.length) return null;
+
   return (
     <section className="overflow-hidden rounded-xl border border-primary/40 bg-[#0d0608]/95 shadow-[0_0_24px_rgba(179,0,0,0.15)]">
       <div className="flex items-center gap-2 border-b border-primary/20 px-3 py-2">
@@ -123,24 +147,57 @@ function LiveNowCard({ matches }: { matches: DisplayMatch[] }) {
         <span className="ml-auto text-[10px] font-semibold text-primary/60">{live.length} match{live.length > 1 ? "es" : ""}</span>
       </div>
       {live.map((m) => {
+        const raw = m as any;
+        const statusShort = raw.fixture?.status?.short || m.status;
+        const minuteRaw: string = raw.minute || "";
+        const mins = parseInt(minuteRaw) || 0;
+        const halfLabel = getHalfLabel(statusShort);
+        const pct = getProgressPct(statusShort, minuteRaw);
+        const isHT = statusShort === "HT";
         const hasScore = typeof m.homeScore === "number" && typeof m.awayScore === "number";
+
         return (
-          <div key={m.id} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/6 px-3 py-3 last:border-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0,3)} color="#1a0608" size="sm" />
-              <span className="truncate text-sm font-bold text-white">{m.home}</span>
+          <div key={m.id} className="border-b border-white/6 last:border-0">
+            {/* Teams + Score */}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 pt-3 pb-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home.slice(0,3)} color="#1a0608" size="sm" />
+                <span className="truncate text-sm font-bold text-white">{m.home}</span>
+              </div>
+              <div className="text-center">
+                {hasScore ? (
+                  <span className="text-lg font-black text-primary tabular-nums leading-none">{m.homeScore} – {m.awayScore}</span>
+                ) : (
+                  <span className="text-xs font-bold text-white/40">vs</span>
+                )}
+              </div>
+              <div className="flex min-w-0 items-center justify-end gap-2">
+                <span className="truncate text-right text-sm font-bold text-white">{m.away}</span>
+                <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0,3)} color="#1a0608" size="sm" />
+              </div>
             </div>
-            <div className="text-center">
-              {hasScore ? (
-                <span className="text-base font-black text-primary tabular-nums">{m.homeScore} – {m.awayScore}</span>
-              ) : (
-                <span className="text-xs font-bold text-white/40">vs</span>
-              )}
-              <div className="text-[9px] font-semibold uppercase tracking-widest text-white/35 mt-0.5">{m.league}</div>
-            </div>
-            <div className="flex min-w-0 items-center justify-end gap-2">
-              <span className="truncate text-sm font-bold text-white text-right">{m.away}</span>
-              <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away.slice(0,3)} color="#1a0608" size="sm" />
+
+            {/* Progress bar + labels */}
+            <div className="px-3 pb-3">
+              <div className="mb-1.5 flex items-center justify-between">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/35">{m.league}</span>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${isHT ? "text-yellow-400" : "text-primary"}`}>
+                  {isHT ? "Half Time" : minuteRaw ? `${minuteRaw} · ${halfLabel}` : halfLabel}
+                </span>
+              </div>
+              {/* Match progress bar */}
+              <div className="h-1 overflow-hidden rounded-full bg-white/8">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${isHT ? "bg-yellow-400" : "bg-primary"} shadow-[0_0_6px_currentColor]`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              {/* Half markers */}
+              <div className="relative mt-1 flex justify-between text-[8px] text-white/20 font-semibold">
+                <span>0'</span>
+                <span className="absolute left-1/2 -translate-x-1/2">45'</span>
+                <span>90'</span>
+              </div>
             </div>
           </div>
         );
