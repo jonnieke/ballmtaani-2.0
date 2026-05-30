@@ -3,14 +3,25 @@ import { useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
-import { CheckCircle2, Loader2, Trophy, Flame, Target, Star, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
+import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
+
+const WC26_NATIONS = [
+  "Brazil","France","Argentina","England","Germany","Spain",
+  "Portugal","Netherlands","Belgium","Morocco","Senegal","USA",
+];
+
+const WC26_SPECIAL_ID = "wc26-2026-winner";
 
 
 export default function PredictionsPage() {
   const [activeTab, setActiveTab] = useState<"make" | "my" | "premium">("make");
+  const [wc26Pick, setWc26Pick]   = useState<string>("");
+  const [wc26Saved, setWc26Saved] = useState(false);
+  const [wc26Saving, setWc26Saving] = useState(false);
   const { isLoggedIn, user, coins, updateCoins, awardCoins } = useAuth();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
@@ -75,6 +86,24 @@ export default function PredictionsPage() {
         saved: false
       }
     }));
+  };
+
+  const handleWC26Winner = async () => {
+    if (!wc26Pick || wc26Saved || wc26Saving) return;
+    if (!isLoggedIn || !user) { sessionStorage.setItem("auth_return_url", window.location.pathname); setLocation('/login'); return; }
+    setWc26Saving(true);
+    await supabase.from("predictions").upsert({ user_id: user.id, match_id: WC26_SPECIAL_ID, predicted_score: wc26Pick }, { onConflict: "user_id,match_id" });
+    setWc26Saving(false);
+    setWc26Saved(true);
+    awardCoins('prediction_submitted');
+  };
+
+  const shareReceipt = (item: any) => {
+    const matchLabel = fixtureLabelMap[String(item.match_id)] || item.match_id;
+    const status = String(item.result || "pending").toLowerCase();
+    const emoji = status === "correct" ? "✅" : status === "partial" ? "🟡" : "❌";
+    const text = encodeURIComponent(`${emoji} My BallMtaani Receipt\n\n${matchLabel}\nMy call: ${item.predicted_score || "-"} | Actual: ${item.actual_score || "TBD"}\n${status === "correct" ? `+${item.coins_awarded || 0} MTC earned 🔥` : ""}\n\nMake your call: https://ballmtaani.com/predictions`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   const applyQuickScore = (fixtureId: string, score: string) => {
@@ -157,84 +186,47 @@ export default function PredictionsPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-white pb-20">
-      {/* ── PREMIUM HERO SECTION ── */}
-      <div className="relative bg-[#111] border-b border-white/5 overflow-hidden shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 via-primary/10 to-transparent pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700]/5 blur-[100px] pointer-events-none rounded-full" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/10 blur-[100px] pointer-events-none rounded-full" />
-        
-        <div className="max-w-6xl mx-auto px-3 py-7 md:px-4 md:py-12 relative z-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between xl:gap-12">
-            
-            <div className="flex-1 mb-8 md:mb-0">
-              <div className="inline-flex items-center gap-2 bg-[#FFD700]/10 border border-[#FFD700]/20 px-3 py-1 rounded-full mb-6">
-                <Star className="w-4 h-4 text-[#FFD700]" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD700]">Calls & Receipts</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight mb-3 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                Call It & <br className="hidden md:block"/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#FFA500] drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">Keep Receipts</span>
-              </h1>
-              <p className="text-gray-400 text-sm md:text-base font-medium max-w-lg leading-relaxed">
-                Make your call on the biggest fixtures, compare with Kenyan fans, and collect receipts when the scoreline backs you.
-              </p>
-              <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/35">
-                Results posted within 24 hours of final whistle
-              </p>
-            </div>
+      <SEO
+        title="Predictions | BallMtaani Fan Calls & Receipts"
+        description="Call the scoreline on the biggest football fixtures. Earn MTC status. Keep receipts. Kenya's fan prediction platform."
+        path="/predictions"
+      />
 
-            {/* Gamification Benefits Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:w-1/2 shrink-0">
-              <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 hover:border-[#FFD700]/30 transition-all duration-300 group">
-                <div className="w-10 h-10 rounded-full bg-[#FFD700]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Target className="w-5 h-5 text-[#FFD700]" />
+      {/* ── HERO ── */}
+      <div className="border-b border-white/6 bg-[#0c0e13] px-4 py-8 md:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-1 flex items-center gap-2">
+            <Star className="h-3.5 w-3.5 text-[#FFD700]" />
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]">Calls & Receipts</span>
+          </div>
+          <h1 className="mb-2 text-3xl font-black uppercase tracking-tight text-white md:text-4xl">
+            Call It. <span className="text-[#FFD700]">Keep the Receipt.</span>
+          </h1>
+          <p className="mb-5 max-w-xl text-sm text-white/45">
+            Pick the scoreline before kickoff. Earn MTC when you're right. Come back after full time — the receipt doesn't lie.
+          </p>
+          {/* MTC reward strip */}
+          <div className="flex flex-wrap gap-3">
+            {[
+              { icon: Target, label: "+50 MTC", sub: "Exact scoreline", color: "text-[#FFD700]", bg: "bg-[#FFD700]/8 border-[#FFD700]/20" },
+              { icon: Flame, label: "+20 MTC", sub: "Correct result", color: "text-[#B30000]", bg: "bg-[#B30000]/8 border-[#B30000]/20" },
+              { icon: Trophy, label: "Leaderboard", sub: "Top callers rise", color: "text-blue-400", bg: "bg-blue-500/8 border-blue-500/20" },
+            ].map(({ icon: Icon, label, sub, color, bg }) => (
+              <div key={label} className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${bg}`}>
+                <Icon className={`h-4 w-4 shrink-0 ${color}`} />
+                <div>
+                  <div className={`text-xs font-black ${color}`}>{label}</div>
+                  <div className="text-[9px] text-white/35 font-semibold">{sub}</div>
                 </div>
-                <h3 className="font-black text-white text-sm uppercase tracking-wider mb-1">+50 MTC</h3>
-                <p className="text-xs text-gray-500 font-medium leading-relaxed">When your scoreline lands exactly.</p>
               </div>
-              
-              <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Flame className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="font-black text-white text-sm uppercase tracking-wider mb-1">+20 MTC</h3>
-                <p className="text-xs text-gray-500 font-medium leading-relaxed">When your match result call is right.</p>
-              </div>
-
-              <div className="bg-white/5 backdrop-blur-md rounded-lg p-3 md:p-4 border border-white/10 hover:bg-white/10 hover:border-[#3B82F6]/30 transition-all duration-300 group">
-                <div className="w-10 h-10 rounded-full bg-[#3B82F6]/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Trophy className="w-5 h-5 text-[#3B82F6]" />
-                </div>
-                <h3 className="font-black text-white text-sm uppercase tracking-wider mb-1">Unlock</h3>
-                <p className="text-xs text-gray-500 font-medium leading-relaxed">Reach 100 XP to build Fan Zones.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-3 md:px-4 py-6 md:py-8">
-        {/* PREMIUM AD PLACEMENT */}
-        <div className="mb-10">
+      <div className="max-w-6xl mx-auto px-3 md:px-4 py-6">
+        <div className="mb-6">
           <AdBanner label="Platform Perks" type="horizontal" />
-        </div>
-
-        <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-2">
-          <div className="border border-white/10 bg-[#111] p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Upcoming</p>
-            <p className="text-sm font-black text-white">{visibleFixtures.length}</p>
-          </div>
-          <div className="border border-white/10 bg-[#111] p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Locked Calls</p>
-            <p className="text-sm font-black text-[#FFD700]">{lockedCalls}</p>
-          </div>
-          <div className="border border-white/10 bg-[#111] p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">My MTC</p>
-            <p className="text-sm font-black text-accent">{coins.toLocaleString()}</p>
-          </div>
-          <div className="border border-white/10 bg-[#111] p-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Mode</p>
-            <p className="text-sm font-black text-white">Score Calls</p>
-          </div>
         </div>
 
         {/* ── TAB NAVIGATION ── */}
@@ -279,6 +271,35 @@ export default function PredictionsPage() {
 
         {activeTab === "make" ? (
           <div className="space-y-5">
+
+            {/* WC26 Winner card */}
+            <div className="overflow-hidden rounded-2xl border border-[#FFD700]/25 bg-gradient-to-br from-[#110d00] to-[#09080d]">
+              <div className="flex items-center gap-3 border-b border-[#FFD700]/12 px-4 py-3">
+                <Trophy className="h-4 w-4 text-[#FFD700]" />
+                <div>
+                  <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">Call the WC26 Winner</div>
+                  <div className="text-[9px] text-white/30 font-semibold">Lock in your champion before June 11. Earn bonus MTC if they lift the trophy.</div>
+                </div>
+                {wc26Saved && <span className="ml-auto flex items-center gap-1 text-[10px] font-black text-green-400"><CheckCircle2 className="h-3.5 w-3.5" /> Locked</span>}
+              </div>
+              <div className="p-4">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {WC26_NATIONS.map(n => (
+                    <button key={n} onClick={() => { if (!wc26Saved) setWc26Pick(n); }}
+                      className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"}`}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={handleWC26Winner}
+                  disabled={!wc26Pick || wc26Saved || wc26Saving}
+                  className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,214,0,0.3)] disabled:opacity-40 disabled:shadow-none transition-all hover:shadow-[0_0_30px_rgba(255,214,0,0.5)]">
+                  {wc26Saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  {wc26Saved ? `${wc26Pick} locked in` : isLoggedIn ? "Lock In Pick" : "Log In to Pick"}
+                </button>
+              </div>
+            </div>
+
             <div className="flex gap-2 overflow-x-auto hide-scrollbar">
               <button
                 onClick={() => setLeagueFilter("all")}
@@ -481,21 +502,24 @@ export default function PredictionsPage() {
                     </div>
                   </div>
 
-                  <div className={`flex flex-col items-center justify-center p-3 rounded-xl border z-10 w-full md:w-40 shrink-0 ${
-                    color === "green" ? "bg-green-500/10 border-green-500/30 shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]" : 
-                    color === "yellow" ? "bg-yellow-500/10 border-yellow-500/30 shadow-[inset_0_0_20px_rgba(234,179,8,0.1)]" : 
-                    "bg-red-500/10 border-red-500/30 shadow-[inset_0_0_20px_rgba(239,68,68,0.1)]"
-                  }`}>
-                    <span className={`text-xs font-black uppercase tracking-[0.2em] mb-1 ${
-                      color === "green" ? "text-green-400 drop-shadow-[0_0_5px_rgba(34,197,94,0.8)]" : 
-                      color === "yellow" ? "text-yellow-400 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]" : 
-                      "text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]"
-                    }`}>{statusLabel}</span>
-                    <span className={`text-base font-black ${
-                      color === "green" ? "text-green-400" : 
-                      color === "yellow" ? "text-yellow-400" : 
-                      "text-red-400"
-                    }`}>{points}</span>
+                  <div className="flex flex-col items-center gap-2 z-10 w-full md:w-40 shrink-0">
+                    <div className={`w-full flex flex-col items-center justify-center p-3 rounded-xl border ${
+                      color === "green" ? "bg-green-500/10 border-green-500/30" :
+                      color === "yellow" ? "bg-yellow-500/10 border-yellow-500/30" :
+                      "bg-red-500/10 border-red-500/30"
+                    }`}>
+                      <span className={`text-xs font-black uppercase tracking-[0.2em] mb-1 ${
+                        color === "green" ? "text-green-400" : color === "yellow" ? "text-yellow-400" : "text-red-400"
+                      }`}>{statusLabel}</span>
+                      <span className={`text-base font-black ${
+                        color === "green" ? "text-green-400" : color === "yellow" ? "text-yellow-400" : "text-red-400"
+                      }`}>{points}</span>
+                    </div>
+                    {/* WhatsApp share */}
+                    <button onClick={() => shareReceipt(item)}
+                      className="w-full rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 py-2 text-[10px] font-black uppercase tracking-widest text-[#25D366] transition-all hover:bg-[#25D366]/20">
+                      Share WA
+                    </button>
                   </div>
                 </div>
               )})}
