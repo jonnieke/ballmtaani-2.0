@@ -1193,20 +1193,8 @@ export default function LandingPage() {
               </div>
             </section>
 
-            {kplStandings.length > 0 && (
-              <section className="overflow-hidden rounded-xl border border-[#008000]/30 bg-[#04100a]/95">
-                <div className="flex items-center justify-between border-b border-[#008000]/20 px-3 py-2.5">
-                  <div>
-                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Kenya Premier League</h2>
-                    <p className="mt-0.5 text-[11px] text-[#22c55e]/70">Current standings · KPL 2025/26</p>
-                  </div>
-                  <div className="h-5 w-5 overflow-hidden rounded-full border border-[#008000]/40">
-                    <div className="h-full w-full" style={{ background: "linear-gradient(to bottom, #006600 50%, #BB0000 50%)" }} />
-                  </div>
-                </div>
-                {kplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)}
-              </section>
-            )}
+            {/* KPL standings hidden — API-Football returns incorrect (Czech) data for league 686 */}
+            {/* TODO: Fix KPL league ID mapping with API-Football or use alternate data source */}
 
             <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
               <div className="border-b border-white/10 px-3 py-2.5">
