@@ -827,6 +827,8 @@ function WC26HeroBanner() {
         <img
           src="/wc26-hero.jpg"
           alt=""
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover object-center"
         />
         {/* Cinematic grade: darken edges, lift the gold centre, deepen bottom for text */}
@@ -1110,8 +1112,13 @@ export default function LandingPage() {
 
       <div className="fixed inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=85"
+          src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=60&fm=webp"
+          srcSet="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=640&q=50&fm=webp 640w, https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=60&fm=webp 1200w, https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=70&fm=webp 1920w"
+          sizes="100vw"
           alt=""
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className={`h-full w-full object-cover transition-opacity duration-1000 ${live.length > 0 ? "opacity-40" : "opacity-28"}`}
         />
         <div className={`absolute inset-0 transition-all duration-1000 ${live.length > 0 ? "bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.65),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.48),#05070b_46%,#05070b)]" : "bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.5),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.56),#05070b_46%,#05070b)]"}`} />
