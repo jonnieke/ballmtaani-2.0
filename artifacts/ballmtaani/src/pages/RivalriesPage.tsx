@@ -17,6 +17,7 @@ export default function RivalriesPage() {
   const [settleTargetId, setSettleTargetId] = useState<string | number | null>(null);
   const [settleWinner, setSettleWinner] = useState<"challenger" | "defender">("challenger");
   const [settleScore, setSettleScore] = useState("2-1");
+  const [duelStats, setDuelStats] = useState<{ total: number; completed: number } | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -50,6 +51,16 @@ export default function RivalriesPage() {
     };
 
     loadInitial();
+
+    // Fetch real duel counts for the stats panel
+    supabase.from("fan_duels").select("status").then(({ data }) => {
+      if (data && mounted) {
+        setDuelStats({
+          total: data.length,
+          completed: data.filter((d: any) => d.status === "completed").length,
+        });
+      }
+    });
 
     const channel = supabase
       .channel("fan-duels-live")
@@ -85,8 +96,8 @@ export default function RivalriesPage() {
       match: {
         home,
         away,
-        homeLogo: "https://media.api-sports.io/football/teams/42.png",
-        awayLogo: "https://media.api-sports.io/football/teams/49.png",
+        homeLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(home.slice(0, 2))}&background=1B1B1B&color=fff&size=64&bold=true`,
+        awayLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(away.slice(0, 2))}&background=1B1B1B&color=fff&size=64&bold=true`,
         time: "Pending Response",
       },
       bragLine: "Direct challenge",
@@ -101,8 +112,8 @@ export default function RivalriesPage() {
         defender_name: newDuel.defender.name,
         home_team: newDuel.match.home,
         away_team: newDuel.match.away,
-        home_logo: newDuel.match.homeLogo,
-        away_logo: newDuel.match.awayLogo,
+        home_logo: newDuel.match.homeLogo.startsWith("https://ui-avatars") ? null : newDuel.match.homeLogo,
+        away_logo: newDuel.match.awayLogo.startsWith("https://ui-avatars") ? null : newDuel.match.awayLogo,
         prediction: newDuel.prediction,
         status: "pending",
         brag_line: newDuel.bragLine,
@@ -184,16 +195,22 @@ export default function RivalriesPage() {
 
         <div className="grid grid-cols-3 gap-2 md:gap-4 relative z-10 w-full md:w-auto">
           <div className="bg-black/60 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
-            <span className="block text-lg md:text-2xl font-black text-white">12-4</span>
-            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">H2H Record</span>
+            <span className="block text-lg md:text-2xl font-black text-white">
+              {duelStats ? duelStats.total : "--"}
+            </span>
+            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Total Duels</span>
           </div>
           <div className="bg-black/60 border border-[#FFD700]/30 rounded-lg md:rounded-xl p-3 md:p-4 text-center shadow-[0_0_20px_rgba(255,215,0,0.1)]">
-            <span className="block text-lg md:text-2xl font-black text-[#FFD700]">48</span>
-            <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Receipts Kept</span>
+            <span className="block text-lg md:text-2xl font-black text-[#FFD700]">
+              {duelStats ? duelStats.completed : "--"}
+            </span>
+            <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Settled</span>
           </div>
           <div className="bg-black/60 border border-accent/30 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
-            <span className="block text-lg md:text-2xl font-black text-accent">1.4k</span>
-            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Interactions</span>
+            <span className="block text-lg md:text-2xl font-black text-accent">
+              {duelStats ? duelStats.total - duelStats.completed : "--"}
+            </span>
+            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Live / Pending</span>
           </div>
         </div>
       </div>

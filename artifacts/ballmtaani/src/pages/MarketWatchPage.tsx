@@ -7,14 +7,14 @@ import OddspediaCredit from "../components/OddspediaCredit";
 const INTELLIGENCE_CARDS = [
   {
     icon: Brain,
-    title: "Fan vs Market",
-    body: "See when fans believe harder than the numbers.",
+    title: "Fan Read vs Data",
+    body: "See when Kenyan fans read a match differently from the statistics.",
     tone: "border-primary/45 text-primary",
   },
   {
     icon: LineChart,
-    title: "Movement Signals",
-    body: "Spot late shifts before kickoff.",
+    title: "Pre-Match Context",
+    body: "Form, head-to-head and pre-kickoff storylines in one place.",
     tone: "border-blue-400/45 text-blue-300",
   },
   {
@@ -25,13 +25,13 @@ const INTELLIGENCE_CARDS = [
   },
   {
     icon: ShieldCheck,
-    title: "Clean Match Context",
-    body: "Scores, signals and storylines in one place.",
+    title: "Football Context Only",
+    body: "Scores, stats and storylines. BallMtaani does not process bets.",
     tone: "border-green-400/45 text-green-300",
   },
 ];
 
-const ODDSPEDIA_API_TOKEN = "351d6b26a32409cc0db279adb48300f55efdb08627bdd3a653c84cedd297";
+const ODDSPEDIA_API_TOKEN = import.meta.env.VITE_ODDSPEDIA_API_TOKEN || "";
 
 const footballLiveScoreConfig = {
   api_token: ODDSPEDIA_API_TOKEN,
@@ -138,19 +138,25 @@ export default function MarketWatchPage() {
       </div>
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
-        <Link href="/matches" className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm font-bold text-white/75 backdrop-blur-xl transition-colors hover:border-primary/60 hover:text-primary">
-          <ArrowLeft className="h-4 w-4" />
-          Data Center
-        </Link>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/matches" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm font-bold text-white/75 backdrop-blur-xl transition-colors hover:border-primary/60 hover:text-primary">
+            <ArrowLeft className="h-4 w-4" />
+            Data Center
+          </Link>
+          <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-green-300">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Football context only — BallMtaani does not process bets or take wagers
+          </div>
+        </div>
 
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.26em] text-primary">Football market pulse</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.26em] text-primary">Football intelligence</p>
             <h1 className="max-w-3xl text-4xl font-bold italic leading-none md:text-6xl">
-              Know the match before kickoff.
+              Read the match before kickoff.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/66">
-              Follow live scores, form signals, market movement and fan confidence across the matches that matter.
+              Live scores, pre-match context, form signals and fan confidence — everything that helps you call the game, not bet on it.
             </p>
           </div>
 

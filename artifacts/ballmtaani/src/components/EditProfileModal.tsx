@@ -7,10 +7,13 @@ import { Bell, BellOff } from "lucide-react";
 
 export function EditProfileModal({ currentUsername, currentClub, onClose, onSaved }: { currentUsername: string, currentClub: string, onClose: () => void, onSaved: () => void }) {
   const { user } = useAuth();
-  const { isSupported, isSubscribed, isLoading, subscribeToPush, unsubscribeFromPush } = usePushNotifications();
+  const { isSupported, isSubscribed, isLoading, pushError, subscribeToPush, unsubscribeFromPush } = usePushNotifications();
   const [username, setUsername] = useState(currentUsername);
-  const [club, setClub] = useState(currentClub);
+  const [club, setClub] = useState(
+    currentClub || localStorage.getItem("mtaani_fav_club") || ""
+  );
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +27,14 @@ export function EditProfileModal({ currentUsername, currentClub, onClose, onSave
 
     setSaving(false);
     if (!error) {
+      // Keep localStorage club pick in sync so hero personalisation stays current
+      if (club.trim()) {
+        localStorage.setItem("mtaani_fav_club", club.trim());
+      }
       onSaved();
       onClose();
     } else {
-      alert("Failed to update profile. " + error.message);
+      setSaveError(error.message || "Failed to update profile.");
     }
   };
 
@@ -66,14 +73,19 @@ export function EditProfileModal({ currentUsername, currentClub, onClose, onSave
             </div>
 
             {isSupported && (
-              <div className="flex items-center justify-between bg-black/50 border border-white/10 rounded-xl px-4 py-3">
-                <div>
-                  <div className="text-sm font-bold text-white flex items-center gap-2">
-                    {isSubscribed ? <Bell className="w-4 h-4 text-[#00FF00]" /> : <BellOff className="w-4 h-4 text-gray-500" />}
-                    Match Alerts
+              <div className={`rounded-xl border px-4 py-3 ${pushError ? "border-red-500/30 bg-red-500/5" : "border-white/10 bg-black/50"}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-white flex items-center gap-2">
+                      {isSubscribed ? <Bell className="w-4 h-4 text-[#00FF00]" /> : <BellOff className="w-4 h-4 text-gray-500" />}
+                      Match Alerts
+                    </div>
+                    {pushError ? (
+                      <div className="text-[10px] text-red-400 font-bold mt-0.5">{pushError}</div>
+                    ) : (
+                      <div className="text-[10px] text-gray-400">Get notified when games start</div>
+                    )}
                   </div>
-                  <div className="text-[10px] text-gray-400">Get notified when games start</div>
-                </div>
                 <button
                   type="button"
                   onClick={isSubscribed ? unsubscribeFromPush : subscribeToPush}
@@ -88,10 +100,17 @@ export function EditProfileModal({ currentUsername, currentClub, onClose, onSave
                     }`}
                   />
                 </button>
+                </div>
               </div>
             )}
 
-            <button 
+            {saveError && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/8 px-3 py-2 text-[11px] font-bold text-red-400">
+                {saveError}
+              </p>
+            )}
+
+            <button
               type="submit"
               disabled={saving}
               className="w-full bg-gradient-to-r from-red-600 to-blue-600 text-white font-black uppercase tracking-widest py-3 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 mt-4"

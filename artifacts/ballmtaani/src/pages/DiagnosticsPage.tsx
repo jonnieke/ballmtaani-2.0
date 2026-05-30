@@ -13,6 +13,9 @@ export default function DiagnosticsPage() {
   const [gemini, setGemini] = useState<TestState>({ status: 'idle', message: 'Not tested' });
   const [football, setFootball] = useState<TestState>({ status: 'idle', message: 'Not tested' });
   const [supabaseTest, setSupabaseTest] = useState<TestState>({ status: 'idle', message: 'Not tested' });
+  const [tournamentState, setTournamentState] = useState<'idle' | 'success' | 'error'>('idle');
+  const [tournamentMsg, setTournamentMsg] = useState('');
+  const [pushState, setPushState] = useState<'idle' | 'success' | 'error'>('idle');
 
   const runTest = async (key: 'gemini' | 'football' | 'supabase') => {
     const setter = key === 'gemini' ? setGemini : key === 'football' ? setFootball : setSupabaseTest;
@@ -34,25 +37,34 @@ export default function DiagnosticsPage() {
 
   const simulateEndOfWeek = async () => {
     if (!confirm("This will reset all user points and award prizes to the top 3. Are you sure?")) return;
+    setTournamentState('idle');
+    setTournamentMsg('');
     try {
       const { error } = await supabase.rpc('process_weekly_tournament');
       if (error) throw error;
-      alert("Weekly tournament processed successfully!");
+      setTournamentState('success');
+      setTournamentMsg('Weekly tournament processed. Prizes awarded to top 3.');
     } catch (err: any) {
-      alert("Failed to process tournament: " + err.message);
+      setTournamentState('error');
+      setTournamentMsg(err.message || 'RPC failed. Check that process_weekly_tournament exists.');
     }
+    setTimeout(() => setTournamentState('idle'), 6000);
   };
 
   const testLocalPush = async () => {
+    setPushState('idle');
     try {
       const registration = await navigator.serviceWorker.ready;
-      registration.showNotification("Live Match Alert", {
-        body: "Arsenal just scored! 1-0 against Chelsea.",
+      registration.showNotification("BallMtaani Match Alert 🔔", {
+        body: "Live match update — open the app to see the latest score.",
         icon: "/logo.png",
         badge: "/logo.png"
       });
+      setPushState('success');
+      setTimeout(() => setPushState('idle'), 4000);
     } catch (err) {
-      alert("Push failed. Make sure notifications are enabled in your Profile.");
+      setPushState('error');
+      setTimeout(() => setPushState('idle'), 4000);
     }
   };
 
@@ -106,16 +118,30 @@ export default function DiagnosticsPage() {
             Admin Tools
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button onClick={simulateEndOfWeek} className="bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl text-left transition-colors">
-              <Trophy className="w-6 h-6 text-[#FFD700] mb-2" />
-              <h3 className="font-bold text-white uppercase text-sm">Simulate End of Week</h3>
-              <p className="text-xs text-gray-500 mt-1">Triggers tournament status rewards and resets leaderboard.</p>
-            </button>
-            <button onClick={testLocalPush} className="bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl text-left transition-colors">
-              <Bell className="w-6 h-6 text-[#00FF00] mb-2" />
-              <h3 className="font-bold text-white uppercase text-sm">Local Push Test</h3>
-              <p className="text-xs text-gray-500 mt-1">Triggers a test notification via Service Worker.</p>
-            </button>
+            <div>
+              <button onClick={simulateEndOfWeek} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl text-left transition-colors">
+                <Trophy className="w-6 h-6 text-[#FFD700] mb-2" />
+                <h3 className="font-bold text-white uppercase text-sm">Simulate End of Week</h3>
+                <p className="text-xs text-gray-500 mt-1">Triggers tournament status rewards and resets leaderboard.</p>
+              </button>
+              {tournamentState !== 'idle' && (
+                <p className={`mt-2 text-xs font-bold px-1 ${tournamentState === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                  {tournamentMsg}
+                </p>
+              )}
+            </div>
+            <div>
+              <button onClick={testLocalPush} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl text-left transition-colors">
+                <Bell className="w-6 h-6 text-[#00FF00] mb-2" />
+                <h3 className="font-bold text-white uppercase text-sm">Local Push Test</h3>
+                <p className="text-xs text-gray-500 mt-1">Triggers a test notification via Service Worker.</p>
+              </button>
+              {pushState !== 'idle' && (
+                <p className={`mt-2 text-xs font-bold px-1 ${pushState === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                  {pushState === 'success' ? 'Test notification fired.' : 'Push failed — enable notifications in Profile first.'}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

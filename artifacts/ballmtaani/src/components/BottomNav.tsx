@@ -1,16 +1,23 @@
 import { Link, useLocation } from "wouter";
-import { Home, Trophy, Swords, User, LayoutGrid } from "lucide-react";
+import { Home, Trophy, Swords, User, LayoutGrid, Star } from "lucide-react";
 
 export default function BottomNav() {
   const [location] = useLocation();
+
+  const now = Date.now();
+  const wc26Start = new Date("2026-06-11").getTime();
+  const wc26End = new Date("2026-07-20").getTime();
+  const showWC26 = now < wc26End; // show from now until end of tournament
 
   const navItems = [
     { href: "/home", label: "Home", icon: Home },
     { href: "/matches", label: "Matches", icon: Trophy },
     { href: "/rapid-fire", label: "Arcade", icon: LayoutGrid },
-    { href: "/rivalries", label: "Duels", icon: Swords },
+    showWC26
+      ? { href: "/world-cup-2026", label: now >= wc26Start ? "WC26 Live" : "WC26", icon: Star, highlight: true }
+      : { href: "/rivalries", label: "Duels", icon: Swords },
     { href: "/profile", label: "Fan", icon: User },
-  ];
+  ] as { href: string; label: string; icon: typeof Home; highlight?: boolean }[];
 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-6 pb-6 pointer-events-none">
@@ -26,13 +33,17 @@ export default function BottomNav() {
               className={`flex-1 relative flex flex-col items-center justify-center h-full transition-all group`}
             >
               <div className="relative flex flex-col items-center justify-center z-10">
-                <Icon 
+                <Icon
                   className={`w-5 h-5 transition-all duration-300 ${
-                    isActive ? "text-primary scale-110" : "text-gray-500 group-hover:text-white"
+                    isActive
+                      ? item.highlight ? "text-[#FFD700] scale-110" : "text-primary scale-110"
+                      : item.highlight ? "text-[#FFD700]/70 group-hover:text-[#FFD700]" : "text-gray-500 group-hover:text-white"
                   }`}
                 />
                 <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 transition-all ${
-                  isActive ? "text-white opacity-100" : "text-gray-500 opacity-60"
+                  isActive
+                    ? "text-white opacity-100"
+                    : item.highlight ? "text-[#FFD700]/70 opacity-80" : "text-gray-500 opacity-60"
                 }`}>
                   {item.label}
                 </span>

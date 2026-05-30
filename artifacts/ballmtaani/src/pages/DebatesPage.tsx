@@ -21,6 +21,7 @@ export default function DebatesPage() {
   
   // Track new debate input
   const [newDebate, setNewDebate] = useState("");
+  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "done" | "error">("idle");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"hot" | "new" | "close">("hot");
   const [unvotedOnly, setUnvotedOnly] = useState(false);
@@ -28,6 +29,7 @@ export default function DebatesPage() {
   // Group-chat backup prompt state
   const [raidPrompt, setRaidPrompt] = useState<string | null>(null);
   const [showShareLinks, setShowShareLinks] = useState<string | null>(null);
+  const [copiedDebateId, setCopiedDebateId] = useState<string | null>(null);
 
   const visibleDebates = useMemo(() => {
     const searched = debates.filter((d: any) => {
@@ -121,16 +123,46 @@ export default function DebatesPage() {
     refetch(); // Refresh data from server
   };
 
-  const handleStartDebate = (e: React.FormEvent) => {
+  const handleStartDebate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn) {
       sessionStorage.setItem("auth_return_url", window.location.pathname);
       setLocation('/login');
       return;
     }
-    // Mock submit for now or connect to Supabase
+    const topic = newDebate.trim();
+    if (!topic) return;
+
+    setSubmitState("submitting");
+    const { error } = await supabase
+      .from("debate_suggestions")
+      .insert({ topic, status: "pending" })
+      .select()
+      .single()
+      // debate_suggestions may not exist yet — fall back to debates table with pending status
+      .catch(() => ({ error: { message: "fallback" }, data: null }));
+
+    if (error) {
+      // Fallback: insert into debates directly with pending_review status
+      const { error: debateError } = await supabase.from("debates").insert({
+        title: topic,
+        left: "Side A",
+        right: "Side B",
+        left_votes: 0,
+        right_votes: 0,
+        total_votes: 0,
+        status: "pending_review",
+      });
+      if (debateError) {
+        setSubmitState("error");
+        setTimeout(() => setSubmitState("idle"), 3000);
+        return;
+      }
+    }
+
     setNewDebate("");
-    alert("Debate submitted for review!");
+    setSubmitState("done");
+    setTimeout(() => setSubmitState("idle"), 4000);
   };
 
   return (
@@ -189,22 +221,41 @@ export default function DebatesPage() {
         </h3>
         <p className="text-gray-400 text-sm mb-6">Got a hot take? Drop it below and let the community decide.</p>
         
-        <form onSubmit={handleStartDebate}>
-          <textarea 
-            value={newDebate}
-            onChange={(e) => setNewDebate(e.target.value)}
-            className="w-full bg-[#0B0B0B] border border-white/10 rounded-lg p-4 text-white focus:outline-none focus:border-accent transition-colors resize-none mb-4"
-            rows={3}
-            placeholder="e.g. Is prime Yaya Toure better than prime Kevin De Bruyne?"
-            required
-          ></textarea>
-          <button 
-            type="submit"
-            className="bg-accent hover:bg-blue-700 text-white font-black uppercase tracking-widest px-6 py-3 rounded-lg transition-colors shadow-lg"
-          >
-            Submit for Review
-          </button>
-        </form>
+        {submitState === "done" ? (
+          <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-6 text-center">
+            <Check className="w-8 h-8 text-green-400 mx-auto mb-3" />
+            <p className="text-green-300 font-black uppercase tracking-widest text-sm">Debate submitted!</p>
+            <p className="text-gray-500 text-xs mt-2 font-bold">It will go live once reviewed. Keep watching this page.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleStartDebate}>
+            <textarea
+              value={newDebate}
+              onChange={(e) => setNewDebate(e.target.value)}
+              className="w-full bg-[#0B0B0B] border border-white/10 rounded-lg p-4 text-white focus:outline-none focus:border-accent transition-colors resize-none mb-4 disabled:opacity-50"
+              rows={3}
+              placeholder="e.g. Is prime Yaya Toure better than prime Kevin De Bruyne?"
+              disabled={submitState === "submitting"}
+              required
+            />
+            {submitState === "error" && (
+              <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-3">
+                Failed to submit — check your connection and try again.
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={submitState === "submitting" || !newDebate.trim()}
+              className="bg-accent hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black uppercase tracking-widest px-6 py-3 rounded-lg transition-colors shadow-lg flex items-center gap-2"
+            >
+              {submitState === "submitting" ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+              ) : (
+                "Submit for Review"
+              )}
+            </button>
+          </form>
+        )}
       </div>
 
       <div className="max-w-6xl mx-auto mb-10 w-full">
@@ -214,6 +265,13 @@ export default function DebatesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
         {isLoading ? (
           [1, 2, 3, 4].map(i => <SkeletonDebate key={i} />)
+        ) : visibleDebates.length === 0 ? (
+          <div className="col-span-full bg-[#1B1B1B] border border-white/10 rounded-xl p-12 text-center">
+            <p className="text-xl font-black uppercase tracking-widest text-white mb-3">Be First</p>
+            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+              No active debates yet. Submit your hot take above — approved debates go live here for the whole Mtaani to vote on.
+            </p>
+          </div>
         ) : visibleDebates.map((debate: any, index: number) => {
           const userVote = localVotes[debate.id];
           
@@ -349,28 +407,45 @@ export default function DebatesPage() {
                           <span className="text-gray-400 text-xs truncate max-w-[200px] select-all">
                             ballmtaani.com/debates?id={debate.id}&ref=user
                           </span>
-                          <button 
+                          <button
                             onClick={() => {
                               navigator.clipboard.writeText(`https://ballmtaani.com/debates?id=${debate.id}&ref=user`);
-                              alert('Link copied!');
+                              setCopiedDebateId(debate.id);
+                              setTimeout(() => setCopiedDebateId(null), 2000);
                             }}
-                            className="text-accent text-xs font-bold uppercase hover:text-blue-400"
+                            className={`text-xs font-bold uppercase transition-colors ${copiedDebateId === debate.id ? "text-green-400" : "text-accent hover:text-blue-400"}`}
                           >
-                            Copy
+                            {copiedDebateId === debate.id ? "Copied!" : "Copy"}
                           </button>
                         </div>
                         
                         <div className="grid grid-cols-4 gap-2">
-                          <button className="bg-[#25D366]/20 hover:bg-[#25D366]/40 text-[#25D366] p-3 rounded-lg flex justify-center transition-colors">
+                          <button
+                            onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`I'm losing this debate on BallMtaani — back me up! ${window.location.origin}/debates?id=${debate.id}`)}`, "_blank")}
+                            className="bg-[#25D366]/20 hover:bg-[#25D366]/40 text-[#25D366] p-3 rounded-lg flex justify-center transition-colors"
+                            title="Share on WhatsApp"
+                          >
                             <MessageCircle className="w-5 h-5" />
                           </button>
-                          <button className="bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/40 text-[#1DA1F2] p-3 rounded-lg flex justify-center transition-colors">
+                          <button
+                            onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`My side is losing this debate on BallMtaani 😤 Come vote! ${window.location.origin}/debates?id=${debate.id}`)}`, "_blank")}
+                            className="bg-[#1DA1F2]/20 hover:bg-[#1DA1F2]/40 text-[#1DA1F2] p-3 rounded-lg flex justify-center transition-colors"
+                            title="Share on X"
+                          >
                             <Twitter className="w-5 h-5" />
                           </button>
-                          <button className="bg-[#1877F2]/20 hover:bg-[#1877F2]/40 text-[#1877F2] p-3 rounded-lg flex justify-center transition-colors">
+                          <button
+                            onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}/debates?id=${debate.id}`)}`, "_blank")}
+                            className="bg-[#1877F2]/20 hover:bg-[#1877F2]/40 text-[#1877F2] p-3 rounded-lg flex justify-center transition-colors"
+                            title="Share on Facebook"
+                          >
                             <Facebook className="w-5 h-5" />
                           </button>
-                          <button className="bg-[#0088cc]/20 hover:bg-[#0088cc]/40 text-[#0088cc] p-3 rounded-lg flex justify-center transition-colors">
+                          <button
+                            onClick={() => navigator.share?.({ title: debate.title, url: `${window.location.origin}/debates?id=${debate.id}` }).catch(() => navigator.clipboard.writeText(`${window.location.origin}/debates?id=${debate.id}`))}
+                            className="bg-[#0088cc]/20 hover:bg-[#0088cc]/40 text-[#0088cc] p-3 rounded-lg flex justify-center transition-colors"
+                            title="Share or copy link"
+                          >
                             <Share2 className="w-5 h-5" />
                           </button>
                         </div>

@@ -22,21 +22,27 @@ export default function StorePage() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<StoreTab>("wallet");
   const [redeemedItem, setRedeemedItem] = useState<number | null>(null);
+  const [redeemSuccess, setRedeemSuccess] = useState<number | null>(null);
 
   const history = getCoinHistory();
   const todayEarned = getTodayEarnings();
 
+  const redeemed = (): number[] => {
+    try { return JSON.parse(localStorage.getItem("mtaani_redeemed_items") || "[]"); }
+    catch { return []; }
+  };
+
   const handleRedeem = (itemId: number, cost: number) => {
-    if (coins < cost) {
-      alert(`You need ${(cost - coins).toLocaleString()} more MTC to redeem this item.`);
-      return;
-    }
+    if (coins < cost) return; // button is already disabled; guard just in case
     setRedeemedItem(itemId);
     setTimeout(() => {
       updateCoins(-cost);
+      const already = redeemed();
+      localStorage.setItem("mtaani_redeemed_items", JSON.stringify([...already, itemId]));
       setRedeemedItem(null);
-      alert("Item redeemed! Check your profile for your new perk.");
-    }, 1500);
+      setRedeemSuccess(itemId);
+      setTimeout(() => setRedeemSuccess(null), 4000);
+    }, 1000);
   };
 
   if (!isLoggedIn) {
@@ -166,34 +172,52 @@ export default function StorePage() {
           <div className="space-y-6">
             <p className="text-gray-400 text-sm">Redeem earned MTC status points for platform perks. All items are cosmetic - no gambling, no cash value.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {REDEEM_ITEMS.map(item => (
-                <div key={item.id} className={`bg-[#111] border rounded-2xl p-5 flex flex-col gap-3 ${coins >= item.cost ? "border-white/10" : "border-white/5 opacity-60"}`}>
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 text-[10px] font-black uppercase tracking-widest text-[#FFD700] shrink-0">{item.emoji}</span>
-                    <div>
-                      <h3 className="font-black text-sm text-white">{item.name}</h3>
-                      <p className="text-gray-500 text-xs">{item.description}</p>
+              {REDEEM_ITEMS.map(item => {
+                const alreadyOwned = redeemed().includes(item.id);
+                const isSuccess = redeemSuccess === item.id;
+                return (
+                  <div key={item.id} className={`bg-[#111] border rounded-2xl p-5 flex flex-col gap-3 transition-all ${
+                    isSuccess ? "border-green-500/40 bg-green-500/5" :
+                    alreadyOwned ? "border-[#FFD700]/30" :
+                    coins >= item.cost ? "border-white/10" : "border-white/5 opacity-60"
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <span className="w-12 text-[10px] font-black uppercase tracking-widest text-[#FFD700] shrink-0">{item.emoji}</span>
+                      <div>
+                        <h3 className="font-black text-sm text-white">{item.name}</h3>
+                        <p className="text-gray-500 text-xs">{item.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
+                      <div className="flex items-center gap-1.5">
+                        <Coins className="w-4 h-4 text-[#FFD700]" />
+                        <span className="font-black text-[#FFD700]">{item.cost.toLocaleString()} MTC</span>
+                      </div>
+                      {isSuccess ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs font-black uppercase tracking-widest text-green-400">
+                          ✓ Redeemed
+                        </span>
+                      ) : alreadyOwned ? (
+                        <span className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-[#FFD700] border border-[#FFD700]/30 bg-[#FFD700]/8">
+                          Owned
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleRedeem(item.id, item.cost)}
+                          disabled={coins < item.cost || redeemedItem === item.id}
+                          className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                            coins >= item.cost
+                              ? "bg-[#FFD700] text-black hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] active:scale-95"
+                              : "bg-white/5 text-gray-600 cursor-not-allowed"
+                          }`}
+                        >
+                          {redeemedItem === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : coins >= item.cost ? "Redeem" : "Not Enough"}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-                    <div className="flex items-center gap-1.5">
-                      <Coins className="w-4 h-4 text-[#FFD700]" />
-                      <span className="font-black text-[#FFD700]">{item.cost.toLocaleString()} MTC</span>
-                    </div>
-                    <button
-                      onClick={() => handleRedeem(item.id, item.cost)}
-                      disabled={coins < item.cost || redeemedItem === item.id}
-                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                        coins >= item.cost
-                          ? "bg-[#FFD700] text-black hover:shadow-[0_0_15px_rgba(255,215,0,0.4)] active:scale-95"
-                          : "bg-white/5 text-gray-600 cursor-not-allowed"
-                      }`}
-                    >
-                      {redeemedItem === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : coins >= item.cost ? "Redeem" : "Not Enough"}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

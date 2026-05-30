@@ -434,7 +434,7 @@ export default function RapidFirePage() {
           subtitle="I just ran through a stack of football debates."
           coinsEarned={voteStreak * 10 + Math.floor(voteStreak / 5) * 25}
           emoji="RF"
-          shareUrl={`https://ballmtaani20.vercel.app/?ref=${username || 'fan'}`}
+          shareUrl={`https://ballmtaani.com/?ref=${username || 'fan'}`}
           onClose={() => setShowShare(false)}
         />
       )}

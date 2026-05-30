@@ -3,6 +3,12 @@
   "buildCommand": "cd artifacts/ballmtaani && npm run build",
   "outputDirectory": "artifacts/ballmtaani/dist",
   "installCommand": "npm install --legacy-peer-deps",
+  "crons": [
+    {
+      "path": "/api/settle-predictions",
+      "schedule": "0 * * * *"
+    }
+  ],
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }

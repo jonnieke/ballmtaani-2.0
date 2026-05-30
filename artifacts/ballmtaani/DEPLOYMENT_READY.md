@@ -10,13 +10,16 @@
 ## 2) Environment variables (Production)
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` — **required for prediction settlement worker** (bypasses RLS to write result/actual_score/coins_awarded and increment profiles.coins)
 - `VITE_API_FOOTBALL_KEY`
+- `CRON_SECRET` — set in Vercel dashboard; Vercel automatically sends this as `Authorization: Bearer <CRON_SECRET>` to cron routes. Keep it secret.
 - `OPENAI_API_KEY`
 - `OPENAI_MODEL` (recommended: `gpt-4.1-mini`)
 - `GEMINI_API_KEY` (optional fallback)
 - `GEMINI_MODEL` (optional)
 - `VITE_ADSENSE_SLOT_HORIZONTAL`
 - `VITE_ADSENSE_SLOT_SQUARE` (optional)
+- `VITE_VAPID_PUBLIC_KEY` — public VAPID key for Web Push notifications. Generate a keypair with `npx web-push generate-vapid-keys`. Without this, the Match Alerts toggle in Profile is gracefully disabled (no errors shown to fans).
 
 ## 3) SEO/AIO assets in this repo
 - `index.html`:

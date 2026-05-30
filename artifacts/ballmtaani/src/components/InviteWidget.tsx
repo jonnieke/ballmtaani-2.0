@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Copy, Check, Users, Coins } from "lucide-react";
 
-const BASE_URL = "https://ballmtaani20.vercel.app";
+const BASE_URL = "https://ballmtaani.com";
 
 export function InviteWidget() {
   const { username, isLoggedIn } = useAuth();

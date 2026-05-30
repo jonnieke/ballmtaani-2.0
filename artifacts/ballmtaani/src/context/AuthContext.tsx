@@ -34,6 +34,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
 function getLoginStreak(): { streak: number; lastLoginDate: string | null } {
   const lastLogin = localStorage.getItem("mtaani_last_login_date");
@@ -72,6 +73,7 @@ function processLoginStreak(): LoginStreakInfo {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
+    if (!ENABLE_MOCK_AUTH) return null;
     const mockSession = localStorage.getItem("mock_auth_session");
     if (mockSession) {
       try { return JSON.parse(mockSession).user; } catch { return null; }
@@ -79,9 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   });
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() =>
-    localStorage.getItem("mock_auth_session") !== null
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(() => ENABLE_MOCK_AUTH && localStorage.getItem("mock_auth_session") !== null);
 
   const [dbProfile, setDbProfile] = useState<any | null>(null);
 
@@ -126,6 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!ENABLE_MOCK_AUTH) {
+      localStorage.removeItem("mock_auth_session");
+    }
+
     if (!supabase) return;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -160,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoggedIn(true);
         loadProfile(session.user.id);
       } else {
-        const hasMock = localStorage.getItem("mock_auth_session");
+        const hasMock = ENABLE_MOCK_AUTH ? localStorage.getItem("mock_auth_session") : null;
         if (!hasMock) { setUser(null); setIsLoggedIn(false); setDbProfile(null); }
       }
     });
@@ -169,6 +173,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const mockLogin = (phone: string): LoginStreakInfo => {
+    if (!ENABLE_MOCK_AUTH) {
+      return { streak: 0, coinsEarned: 0, bonusEarned: 0, isNewDay: false };
+    }
+
     const mockUser = {
       phone,
       id: '00000000-0000-0000-0000-000000000000',

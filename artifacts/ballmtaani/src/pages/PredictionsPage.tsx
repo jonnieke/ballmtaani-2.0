@@ -65,18 +65,6 @@ export default function PredictionsPage() {
     }
   };
 
-  // State for Fan Intel unlock
-  const [unlockedPremium, setUnlockedPremium] = useState<string[]>([]);
-  
-  const handleUnlockPremium = (id: string, cost: number) => {
-    if (coins >= cost) {
-      updateCoins(-cost);
-      setUnlockedPremium([...unlockedPremium, id]);
-    } else {
-      setLocation('/store');
-    }
-  };
-
   const handleScoreChange = (fixtureId: string, team: 'home' | 'away', val: string) => {
     if (val !== "" && !/^\d+$/.test(val)) return;
     setPredictions(prev => ({
@@ -141,6 +129,32 @@ export default function PredictionsPage() {
     };
   }, [activeTab, isLoggedIn, user]);
 
+  // Credit MTC locally for any settled receipts not yet applied to local balance.
+  // The settlement worker updates profiles.coins server-side, but the local coin
+  // store also needs to reflect the win the moment a fan sees their receipt.
+  useEffect(() => {
+    if (!isLoggedIn || !user || myReceipts.length === 0) return;
+    const creditedKey = `mtaani_credited_predictions_${user.id}`;
+    const credited: string[] = JSON.parse(localStorage.getItem(creditedKey) || "[]");
+    let totalNewCoins = 0;
+    const newlyCredited: string[] = [];
+
+    for (const receipt of myReceipts) {
+      const id = String(receipt.id);
+      if (credited.includes(id)) continue;
+      const earned = Number(receipt.coins_awarded) || 0;
+      if (earned > 0 && receipt.result && receipt.result !== "pending") {
+        totalNewCoins += earned;
+        newlyCredited.push(id);
+      }
+    }
+
+    if (totalNewCoins > 0) {
+      localStorage.setItem(creditedKey, JSON.stringify([...credited, ...newlyCredited]));
+      updateCoins(totalNewCoins);
+    }
+  }, [myReceipts, isLoggedIn, user]);
+
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-white pb-20">
       {/* ── PREMIUM HERO SECTION ── */}
@@ -162,6 +176,9 @@ export default function PredictionsPage() {
               </h1>
               <p className="text-gray-400 text-sm md:text-base font-medium max-w-lg leading-relaxed">
                 Make your call on the biggest fixtures, compare with Kenyan fans, and collect receipts when the scoreline backs you.
+              </p>
+              <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-white/35">
+                Results posted within 24 hours of final whistle
               </p>
             </div>
 
@@ -489,68 +506,39 @@ export default function PredictionsPage() {
         <div className="space-y-6 max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-black uppercase tracking-widest text-[#FFD700] mb-2 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">Fan Intel</h2>
-            <p className="text-gray-400">Unlock community reads, tactical watch-points, and matchup context from proven BallMtaani fans.</p>
+            <p className="text-gray-400">Community reads from BallMtaani fans with a track record — tactical watch-points before you lock in your call.</p>
           </div>
-          
-          {[
-            { id: "leg1", name: "TacticsMtaani", winRate: "84%", league: "Premier League", cost: 2000, match: "Arsenal vs Man City", tip: "Watch Arsenal's rest defence against City's second balls. The first 20 minutes should show whether they can keep the game controlled." },
-            { id: "leg2", name: "TacticsDesk", winRate: "79%", league: "La Liga", cost: 2000, match: "Real Madrid vs Barcelona", tip: "Madrid's left channel is the pressure point. If Barca's fullback gets isolated early, the game tilts toward transition chances." }
-          ].map((intel, i) => {
-            const isUnlocked = unlockedPremium.includes(intel.id);
-            return (
-              <div key={i} className="bg-[#111] border border-[#FFD700]/20 rounded-2xl p-6 shadow-[0_0_30px_rgba(255,215,0,0.05)] relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD700]/5 blur-[50px] rounded-full pointer-events-none group-hover:bg-[#FFD700]/10 transition-colors"></div>
-                
-                <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-gradient-to-br from-[#FFD700] to-[#FFA500] p-[2px] rounded-full shadow-lg">
-                      <div className="w-full h-full bg-[#111] rounded-full flex items-center justify-center font-black text-[#FFD700] text-xl">
-                        {intel.name.charAt(0)}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-black text-white text-lg">{intel.name}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="bg-[#B30000]/20 text-[#B30000] text-[10px] font-black uppercase px-2 py-0.5 rounded border border-[#B30000]/30">{intel.winRate} Form Read</span>
-                        <span className="text-gray-500 text-[10px] font-bold uppercase tracking-wider">{intel.league}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <span className="block text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Match Read</span>
-                    <span className="font-black text-white">{intel.match}</span>
-                  </div>
-                </div>
 
-                {!isUnlocked ? (
-                  <div className="bg-black/50 backdrop-blur-md rounded-xl border border-white/5 p-8 text-center relative overflow-hidden">
-                    <Star className="w-8 h-8 text-[#FFD700] mx-auto mb-3 animate-pulse" />
-                    <h5 className="font-black text-white uppercase tracking-widest mb-2">Read Locked</h5>
-                    <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">This fan read is hidden. Unlock to view tactical context and what to watch before making your own call.</p>
-                    
-                    <button 
-                      onClick={() => handleUnlockPremium(intel.id, intel.cost)}
-                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] hover:from-[#FFA500] hover:to-[#FF8C00] text-black font-black uppercase tracking-[0.2em] text-xs px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105"
-                    >
-                      Unlock for {intel.cost} MTC
-                    </button>
-                    {coins < intel.cost && <p className="text-red-500 text-xs mt-3 font-bold">Not enough MTC status points</p>}
-                  </div>
-                ) : (
-                  <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-xl p-6 relative">
-                    <div className="flex items-center gap-2 mb-3">
-                      <CheckCircle2 className="w-5 h-5 text-[#FFD700]" />
-                      <h5 className="font-black text-[#FFD700] uppercase tracking-widest text-sm">Unlocked Read</h5>
-                    </div>
-                    <p className="text-white text-lg font-medium leading-relaxed">
-                      "{intel.tip}"
-                    </p>
-                  </div>
-                )}
+          <div className="bg-[#111] border border-[#FFD700]/20 rounded-2xl p-8 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/5 via-transparent to-transparent pointer-events-none" />
+            <Star className="w-10 h-10 text-[#FFD700] mx-auto mb-4 animate-pulse relative z-10" />
+            <h3 className="font-black text-white text-xl uppercase tracking-widest mb-3 relative z-10">Fan Analysts Coming for WC26</h3>
+            <p className="text-gray-400 text-sm max-w-lg mx-auto leading-relaxed mb-6 relative z-10">
+              We are onboarding the first wave of BallMtaani fan analysts ahead of the World Cup. Each one earns their badge through prediction receipts — no fake win rates, just real track records from real calls.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto mb-8 relative z-10">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="text-lg font-black text-[#FFD700]">Receipt-backed</div>
+                <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Every analyst earns their badge through verified prediction history.</p>
               </div>
-            );
-          })}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="text-lg font-black text-[#FFD700]">MTC-gated</div>
+                <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Reads cost MTC. Correct calls that you backed earn it back and more.</p>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="text-lg font-black text-[#FFD700]">Kenya-first</div>
+                <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Matchday context written in EAT, for fans who watch at the right times.</p>
+              </div>
+            </div>
+            <div className="relative z-10 space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/8 px-5 py-2.5 text-xs font-black uppercase tracking-[0.2em] text-[#FFD700]">
+                Opening with the World Cup group stage — June 11
+              </div>
+              <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">
+                In the meantime — ask <a href="/mchambuzi-halisi" className="text-primary hover:underline">Mchambuzi Halisi</a> for any tactical read you need right now
+              </p>
+            </div>
+          </div>
         </div>
       )}
       </div>

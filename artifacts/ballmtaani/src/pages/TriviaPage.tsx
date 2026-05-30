@@ -295,7 +295,7 @@ export default function TriviaPage() {
             achievement={won ? "I cleared BallMtaani Trivia!" : `I reached ${statusScore.toLocaleString()} MTC in Trivia`}
             coinsEarned={statusScore}
             emoji={won ? "WIN" : "QUIZ"}
-            shareUrl={`https://ballmtaani20.vercel.app/?ref=${username || 'fan'}`}
+            shareUrl={`https://ballmtaani.com/?ref=${username || 'fan'}`}
             onClose={() => setShowShare(false)}
           />
         )}

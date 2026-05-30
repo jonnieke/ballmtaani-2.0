@@ -83,9 +83,8 @@ export default function LeaderboardPage() {
               <tr className="bg-[#0B0B0B] border-b border-white/10 text-gray-500 text-[10px] sm:text-xs uppercase tracking-widest font-bold">
                 <th className="px-4 py-4 w-16 text-center">Rank</th>
                 <th className="px-4 py-4">Player</th>
-                <th className="px-4 py-4 text-center">Correct</th>
                 <th className="px-4 py-4 text-center">Streak</th>
-                <th className="px-4 py-4 text-right">Points</th>
+                <th className="px-4 py-4 text-right">MTC Points</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -119,11 +118,10 @@ export default function LeaderboardPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-center font-medium text-gray-300">{player.correct}</td>
                     <td className="px-4 py-4 text-center">
                       {player.streak > 0 ? (
                         <span className="inline-flex items-center gap-1 text-[#B30000] font-black text-xs bg-[#B30000]/10 px-2 py-1 rounded">
-                          Streak {player.streak}
+                          🔥 {player.streak}
                         </span>
                       ) : (
                         <span className="text-gray-600">-</span>

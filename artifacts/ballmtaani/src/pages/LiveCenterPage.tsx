@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useRoute, Link } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import {
   ChevronLeft, MessageSquare, Info, BarChart3, Users,
   Flame, Heart, Trophy, Target, Timer, Zap,
@@ -10,83 +10,15 @@ import { useMatches, useStandings, useFixtureDetail } from "../hooks/useData";
 import { useAuth } from "../context/AuthContext";
 import { UserBadge } from "../components/UserBadge";
 
-/* ─────────────────────────────────────────────────────────────
-   MOCK DATA for the match center (enriches match data)
-   ─────────────────────────────────────────────────────────────*/
-const MATCH_EVENTS = [
-  { min: 12, type: "goal",   team: "home", player: "Saka", assist: "Ødegaard" },
-  { min: 23, type: "yellow", team: "away", player: "Caicedo" },
-  { min: 34, type: "goal",   team: "away", player: "Sterling", assist: "Palmer" },
-  { min: 45, type: "sub",    team: "home", playerIn: "Trossard", playerOut: "Martinelli" },
-  { min: 51, type: "goal",   team: "home", player: "Martinelli", assist: "Saka" },
-  { min: 67, type: "yellow", team: "home", player: "Rice" },
-  { min: 72, type: "sub",    team: "away", playerIn: "Mudryk",  playerOut: "Sterling" },
-];
-
-const MATCH_STATS = [
-  { label: "Possession",     home: 58, away: 42, unit: "%" },
-  { label: "Shots",          home: 14, away: 8 },
-  { label: "Shots on Target",home: 6,  away: 3 },
-  { label: "Corners",        home: 7,  away: 4 },
-  { label: "Fouls",          home: 9,  away: 12 },
-  { label: "Passes",         home: 487,away: 356 },
-  { label: "Pass Accuracy",  home: 89, away: 82, unit: "%" },
-  { label: "Tackles",        home: 18, away: 22 },
-];
-
-const HOME_LINEUP = {
-  formation: "4-3-3",
-  players: [
-    { pos: "GK", name: "Raya", number: 22, rating: 7.2 },
-    { pos: "RB", name: "White", number: 4, rating: 7.5 },
-    { pos: "CB", name: "Saliba", number: 2, rating: 8.1 },
-    { pos: "CB", name: "Gabriel", number: 6, rating: 7.8 },
-    { pos: "LB", name: "Zinchenko", number: 35, rating: 7.0 },
-    { pos: "CM", name: "Rice", number: 41, rating: 8.3 },
-    { pos: "CM", name: "Ødegaard", number: 8, rating: 8.7 },
-    { pos: "CM", name: "Havertz", number: 29, rating: 7.4 },
-    { pos: "RW", name: "Saka", number: 7, rating: 9.1 },
-    { pos: "ST", name: "Jesus", number: 9, rating: 6.8 },
-    { pos: "LW", name: "Martinelli", number: 11, rating: 7.6 },
-  ]
+type ReactionItem = {
+  id: number;
+  user: string;
+  msg: string;
+  time: string;
+  likes: number;
+  interactions: number;
+  isHot?: boolean;
 };
-
-const AWAY_LINEUP = {
-  formation: "4-2-3-1",
-  players: [
-    { pos: "GK", name: "Sánchez", number: 1, rating: 6.5 },
-    { pos: "RB", name: "James", number: 24, rating: 7.0 },
-    { pos: "CB", name: "Silva", number: 6, rating: 7.3 },
-    { pos: "CB", name: "Colwill", number: 26, rating: 6.8 },
-    { pos: "LB", name: "Cucurella", number: 3, rating: 6.9 },
-    { pos: "CM", name: "Caicedo", number: 25, rating: 7.1 },
-    { pos: "CM", name: "Enzo", number: 8, rating: 7.4 },
-    { pos: "AM", name: "Palmer", number: 20, rating: 8.0 },
-    { pos: "RW", name: "Madueke", number: 11, rating: 6.6 },
-    { pos: "LW", name: "Sterling", number: 17, rating: 7.2 },
-    { pos: "ST", name: "Jackson", number: 15, rating: 6.3 },
-  ]
-};
-
-const FAN_REACTIONS = [
-  { id: 1, user: "Ochieng KE",   msg: "Saka is different gravy tonight.",        time: "2m ago", likes: 124, interactions: 1200, isHot: true },
-  { id: 2, user: "Adebayo NG",   msg: "Chelsea fans are already quiet.", time: "3m ago", likes: 18, interactions: 450 },
-  { id: 3, user: "Wanjiku KE",   msg: "Martinelli goal was insane.",                time: "5m ago", likes: 31, interactions: 85 },
-  { id: 4, user: "Sipho ZA",     msg: "Rice is controlling the whole midfield.",      time: "6m ago", likes: 12, interactions: 12 },
-  { id: 5, user: "KamauFC KE",   msg: "Palmer still has a strong signing-of-the-year case.",   time: "8m ago", likes: 89, interactions: 320, isHot: true },
-  { id: 6, user: "Musa GH",      msg: "This game is elite content.",               time: "10m ago", likes: 15, interactions: 55 },
-];
-
-const SIMULATED_BANTER = [
-  { user: "Kiplagat KE", msg: "This referee is definitely leaning Blue.", interactions: 45 },
-  { user: "Dube ZA", msg: "Imagine thinking Arsenal will not drop this. I have seen this movie before.", interactions: 210 },
-  { user: "Mensah GH", msg: "Saka just sent that defender back to the academy.", interactions: 890 },
-  { user: "Njeri KE", msg: "Where is Jackson? Is he even on the pitch?", interactions: 12 },
-  { user: "Okafor NG", msg: "London is red. End of debate.", interactions: 560 },
-  { user: "Tau ZA", msg: "Chelsea need a proper number 9. This is painful to watch.", interactions: 34 },
-  { user: "Zuma ZA", msg: "Mtaani, we are watching history today.", interactions: 120 },
-  { user: "Atieno KE", msg: "My call is a 90+ minute winner. COYG!!", interactions: 450 },
-];
 
 /* ─────────────────────────────────────────────────────────────
    COMPONENTS
@@ -300,6 +232,7 @@ import { useProfile } from "../hooks/useData";
 
 export default function LiveCenterPage() {
   const [, params] = useRoute("/live-center/:id");
+  const [, setLocation] = useLocation();
   const fixtureId = params?.id;
   const { isLoggedIn, updateCoins } = useAuth();
   const [activeTab, setActiveTab] = useState<"overview" | "stats" | "lineups" | "standings" | "banter">("overview");
@@ -311,7 +244,8 @@ export default function LiveCenterPage() {
 
   const handlePulseVote = (option: "yes" | "no") => {
     if (!isLoggedIn) {
-      alert("Please log in to join the live fan pulse.");
+      sessionStorage.setItem("auth_return_url", window.location.pathname);
+      setLocation("/login");
       return;
     }
     setSelectedOption(option);
@@ -323,7 +257,7 @@ export default function LiveCenterPage() {
     }, 5000);
   };
   const [banterInput, setBanterInput] = useState("");
-  const [reactions, setReactions] = useState(FAN_REACTIONS);
+  const [reactions, setReactions] = useState<ReactionItem[]>([]);
   const [userVote, setUserVote] = useState<"home" | "draw" | "away" | null>(null);
   const [pulseGoal, setPulseGoal] = useState(false);
   const [liveMinute, setLiveMinute] = useState(67);
@@ -339,33 +273,11 @@ export default function LiveCenterPage() {
   const { user } = useAuth();
   const { data: profile } = useProfile(user?.id);
 
-  // Simulated Banter Feed Implementation
   useEffect(() => {
     if (activeTab !== "banter") return;
-
-    const bannerInterval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * SIMULATED_BANTER.length);
-      const simulated = SIMULATED_BANTER[randomIndex];
-      
-      const newMsg = {
-        id: Date.now(),
-        user: simulated.user,
-        msg: simulated.msg,
-        time: "Just now",
-        likes: Math.floor(Math.random() * 20),
-        interactions: simulated.interactions,
-        isHot: Math.random() > 0.8
-      };
-
-      setReactions(prev => [newMsg, ...prev.slice(0, 15)]); // Keep feed clean
-      
-      // Occasionally shift the vibe
-      if (Math.random() > 0.7) {
-        setCurrentVibe(vibes[Math.floor(Math.random() * vibes.length)]);
-      }
-    }, 4000); // New message every 4 seconds
-
-    return () => clearInterval(bannerInterval);
+    if (Math.random() > 0.7) {
+      setCurrentVibe(vibes[Math.floor(Math.random() * vibes.length)]);
+    }
   }, [activeTab]);
 
   const { data: matches = [] } = useMatches();
@@ -447,6 +359,15 @@ export default function LiveCenterPage() {
     { id: "lineups" as const,   label: "Lineups",   icon: Users },
     { id: "standings" as const, label: "Standings", icon: ListOrdered },
     { id: "banter" as const,    label: "Banter",    icon: MessageSquare },
+  ];
+  const totalLikes = reactions.reduce((sum, r) => sum + (r.likes || 0), 0);
+  const avgInteractions = reactions.length ? Math.round(reactions.reduce((sum, r) => sum + (r.interactions || 0), 0) / reactions.length) : 0;
+  const hotTakes = reactions.filter((r) => r.isHot).length;
+  const pulseCards = [
+    { emoji: "FIRE", label: "HOT", count: hotTakes || 0, glow: "rgba(249,115,22,0.5)" },
+    { emoji: "TALK", label: "TAKES", count: reactions.length, glow: "rgba(59,130,246,0.5)" },
+    { emoji: "LIKE", label: "LIKES", count: totalLikes, glow: "rgba(234,179,8,0.5)" },
+    { emoji: "PULSE", label: "AVG", count: avgInteractions, glow: "rgba(255,255,255,0.4)" },
   ];
 
   return (
@@ -740,13 +661,7 @@ export default function LiveCenterPage() {
                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Live Reactions</span>
               </div>
               <div className="flex gap-3 md:gap-4 overflow-x-auto hide-scrollbar pb-2 relative z-10">
-                {[
-                  { emoji: "FIRE", label: "FIRE", count: 342, glow: "rgba(249,115,22,0.5)" },
-                  { emoji: "MAD", label: "ANGRY", count: 128, glow: "rgba(239,68,68,0.5)" },
-                  { emoji: "LOL", label: "LOL", count: 256, glow: "rgba(234,179,8,0.5)" },
-                  { emoji: "DONE", label: "DEAD", count: 89, glow: "rgba(255,255,255,0.4)" },
-                  { emoji: "CLASS", label: "CLASS", count: 201, glow: "rgba(59,130,246,0.5)" },
-                ].map(r => (
+                {pulseCards.map(r => (
                   <button
                     key={r.label}
                     className="flex-1 min-w-[70px] flex flex-col items-center gap-2 py-4 rounded-2xl bg-gradient-to-b from-white/[0.05] to-transparent hover:from-white/[0.1] border border-white/5 active:scale-95 transition-all duration-300 group/btn hover:-translate-y-2 shadow-lg"
@@ -761,6 +676,11 @@ export default function LiveCenterPage() {
                   </button>
                 ))}
               </div>
+              {!reactions.length ? (
+                <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
+                  Fan pulse starts when matchroom members post takes.
+                </p>
+              ) : null}
             </div>
           </>
         )}

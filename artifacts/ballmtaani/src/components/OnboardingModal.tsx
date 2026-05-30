@@ -3,18 +3,34 @@ import { useAuth } from "../context/AuthContext";
 import { useLocation } from "wouter";
 import { ChevronRight, X } from "lucide-react";
 
+const CLUBS = [
+  "Arsenal", "Chelsea", "Man Utd", "Liverpool",
+  "Man City", "Real Madrid", "Barcelona", "Bayern",
+  "Dortmund", "PSG", "Juventus", "Napoli",
+  "Gor Mahia", "AFC Leopards", "Tusker FC", "Other",
+];
+
 const STEPS = [
   {
     id: "club",
-    badge: "01",
+    badge: "⚽",
     title: "Pick Your Side",
     subtitle: "Your club powers your rooms, rivals, and matchday receipts.",
     color: "#B30000",
-    action: "Continue Setup",
+    action: "Lock It In",
+  },
+  {
+    id: "wc26",
+    badge: "🏆",
+    title: "World Cup Is Here",
+    subtitle: "Group stage kicks off June 11. Lock your first prediction before kickoff and keep the receipt.",
+    color: "#FFD700",
+    action: "Make First Call",
+    route: "/predictions",
   },
   {
     id: "fanzone",
-    badge: "02",
+    badge: "🔥",
     title: "Join The Room",
     subtitle: "Find your club room and watch Kenyan fans react in real time.",
     color: "#1E6FFF",
@@ -22,22 +38,13 @@ const STEPS = [
     route: "/fan-zones",
   },
   {
-    id: "predict",
-    badge: "03",
-    title: "Make Your First Call",
-    subtitle: "Lock a scoreline before kickoff and come back for the receipt.",
-    color: "#FFD700",
-    action: "Make First Call",
-    route: "/predictions",
-  },
-  {
     id: "invite",
-    badge: "04",
-    title: "Bring Your Group",
-    subtitle: "Your best football arguments already live in WhatsApp. Bring that crew into a room when you are ready.",
+    badge: "📲",
+    title: "Bring Your Crew",
+    subtitle: "Your best football arguments already live in WhatsApp. Bring that group into a room.",
     color: "#22c55e",
-    action: "Explore Rooms",
-    route: "/fan-zones",
+    action: "Invite & Earn 500 MTC",
+    route: "/profile",
   },
 ];
 
@@ -46,6 +53,9 @@ export function OnboardingModal() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [selectedClub, setSelectedClub] = useState<string>(() =>
+    localStorage.getItem("mtaani_fav_club") || ""
+  );
 
   useEffect(() => {
     if (!isLoggedIn) return undefined;
@@ -64,6 +74,15 @@ export function OnboardingModal() {
 
   const handleAction = () => {
     const current = STEPS[step];
+
+    if (step === 0) {
+      if (selectedClub) {
+        localStorage.setItem("mtaani_fav_club", selectedClub);
+      }
+      setStep(1);
+      return;
+    }
+
     if (current.route) {
       handleClose();
       setLocation(current.route);
@@ -77,6 +96,7 @@ export function OnboardingModal() {
   if (!visible) return null;
 
   const current = STEPS[step];
+  const canProceed = step !== 0 || selectedClub !== "";
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
@@ -101,7 +121,7 @@ export function OnboardingModal() {
 
         <div className="p-8 text-center">
           <div
-            className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-3xl font-black tracking-widest text-white animate-in zoom-in duration-300"
+            className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-3xl animate-in zoom-in duration-300"
             key={step}
             style={{ boxShadow: `0 0 30px ${current.color}30` }}
           >
@@ -115,24 +135,57 @@ export function OnboardingModal() {
           <h2 className="text-2xl font-black uppercase tracking-wider text-white mb-3">
             {current.title}
           </h2>
-          <p className="text-gray-400 text-sm leading-relaxed mb-8">
+          <p className="text-gray-400 text-sm leading-relaxed mb-6">
             {current.subtitle}
           </p>
 
           {step === 0 && (
-            <div className="bg-white/5 rounded-xl p-3 mb-6 text-sm text-gray-300">
-              Welcome, <strong className="text-white">{username || "Fan"}</strong>. Your fan wallet is active with{" "}
-              <span className="text-[#FFD700] font-black">50 MTC</span> to start.
+            <div className="mb-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">
+                Welcome, <span className="text-white">{username || "Fan"}</span> · 50 MTC in your wallet
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {CLUBS.map((club) => (
+                  <button
+                    key={club}
+                    onClick={() => setSelectedClub(club)}
+                    className={`rounded-xl border px-1 py-2.5 text-[10px] font-black uppercase tracking-wide transition-all ${
+                      selectedClub === club
+                        ? "border-[#B30000] bg-[#B30000]/20 text-white shadow-[0_0_12px_rgba(179,0,0,0.3)]"
+                        : "border-white/10 bg-white/5 text-gray-400 hover:border-white/25 hover:text-white"
+                    }`}
+                  >
+                    {club}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="mb-6 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3 text-sm text-white/80">
+              <span className="font-black text-[#FFD700]">48 teams. 104 matches.</span> Kenya watching in EAT.
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="mb-6 rounded-xl border border-green-500/25 bg-green-500/8 px-4 py-3 text-sm text-white/80">
+              Earn <span className="font-black text-green-400">+500 MTC</span> for every fan who joins through your link.
             </div>
           )}
 
           <button
             onClick={handleAction}
-            className="w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+            disabled={!canProceed}
+            className="w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{ backgroundColor: current.color, color: current.color === "#FFD700" ? "#000" : "#fff" }}
           >
             {current.action} <ChevronRight className="w-4 h-4" />
           </button>
+
+          {step === 0 && !selectedClub && (
+            <p className="mt-2 text-[10px] text-gray-600 font-bold uppercase tracking-widest">Pick a side to continue</p>
+          )}
 
           <button
             onClick={step < STEPS.length - 1 ? () => setStep((s) => s + 1) : handleClose}

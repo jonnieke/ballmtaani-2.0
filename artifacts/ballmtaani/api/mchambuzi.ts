@@ -1,4 +1,8 @@
+import { loadEnv } from "./_env-loader";
 import { answerMchambuzi } from "./_mchambuzi-core";
+
+// Load .env variables for local dev (no-op in production)
+loadEnv();
 
 function json(res: any, status: number, body: unknown) {
   res.statusCode = status;

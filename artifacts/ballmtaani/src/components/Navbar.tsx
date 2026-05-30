@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
-import { Menu, X, Coins, Paintbrush, ChevronDown } from "lucide-react";
+import { Menu, X, Coins, Paintbrush, ChevronDown, Trophy } from "lucide-react";
 
 import { useTheme, ThemeAtmosphere } from "../context/ThemeContext";
 
@@ -65,7 +65,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-[#0B0B0B]/95 backdrop-blur-md border-b border-[#1B1B1B]">
       <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
         <Link href="/home" className="flex items-center shrink-0">
-          <img src="/logo.png" alt="BallMtaani" className="h-36 w-auto" />
+          <img src="/logo.png" alt="BallMtaani" className="h-12 w-auto" />
         </Link>
 
         {/* Hamburger — mobile only */}
@@ -120,6 +120,24 @@ export function Navbar() {
             );
           })}
         </div>
+
+        {/* WC26 tournament badge — visible on desktop during tournament window */}
+        {(() => {
+          const now = Date.now();
+          const start = new Date("2026-06-11").getTime();
+          const end = new Date("2026-07-20").getTime();
+          const daysUntil = Math.ceil((start - now) / 86400000);
+          if (now > end) return null;
+          return (
+            <Link
+              href="/world-cup-2026"
+              className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/40 bg-[#FFD700]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFD700] transition-colors hover:bg-[#FFD700]/20 shrink-0"
+            >
+              <Trophy className="h-3 w-3" />
+              {now >= start ? "WC26 Live" : `WC26 · ${daysUntil}d`}
+            </Link>
+          );
+        })()}
 
         {/* Global Controls (Atmosphere & Wallet) */}
         <div className="flex items-center gap-3 shrink-0">

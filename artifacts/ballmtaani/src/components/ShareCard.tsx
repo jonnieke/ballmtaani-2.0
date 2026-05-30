@@ -15,7 +15,7 @@ export function ShareCard({ achievement, subtitle, coinsEarned, emoji = "B", sha
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Build share text
-  const refUrl = shareUrl || `https://ballmtaani20.vercel.app`;
+  const refUrl = shareUrl || `https://ballmtaani.com`;
   const shareText = `${emoji} ${achievement}\n\n${subtitle || "Playing on BallMtaani - Kenyan fans, big match banter"}${coinsEarned ? `\n\nStacked ${coinsEarned.toLocaleString()} MTC status points.` : ""}\n\nJoin me: ${refUrl}`;
 
   const shareWhatsApp = () => {
@@ -94,7 +94,7 @@ export function ShareCard({ achievement, subtitle, coinsEarned, emoji = "B", sha
             <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">
               Kenyan fans. Big match banter.
             </p>
-            <p className="text-gray-600 text-[10px] font-mono">ballmtaani20.vercel.app</p>
+            <p className="text-gray-600 text-[10px] font-mono">ballmtaani.com</p>
           </div>
         </div>
 

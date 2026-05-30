@@ -89,22 +89,10 @@ function AdSenseUnit({
 export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBannerProps) {
   const slot = type === "square" ? SQUARE_SLOT : HORIZONTAL_SLOT;
   const [noFill, setNoFill] = useState(false);
+  const showDevHint = import.meta.env.DEV;
 
-  if (slot && noFill) {
-    return (
-      <aside className="w-full rounded-lg border border-white/8 bg-[#0F0F0F]/80 px-3 py-2" aria-label={`${label} advertisement`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <Megaphone className="h-4 w-4 shrink-0 text-gray-600" />
-            <span className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">Ad break</span>
-          </div>
-          <Link href="/privacy" className="text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 hover:text-white">
-            Ad Info
-          </Link>
-        </div>
-      </aside>
-    );
-  }
+  if (slot && noFill) return null;
+  if (!slot && !showDevHint) return null;
 
   if (type === "square") {
     return (
@@ -122,7 +110,7 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               className="w-full min-h-[250px]"
               onNoFill={() => setNoFill(true)}
             />
-          ) : (
+          ) : showDevHint ? (
             <>
               <Megaphone className="mb-3 h-6 w-6 text-gray-500" />
               <p className="text-xs font-black uppercase tracking-widest text-gray-300">{label}</p>
@@ -130,7 +118,7 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
                 Set `VITE_ADSENSE_SLOT_SQUARE` to activate this slot.
               </p>
             </>
-          )}
+          ) : null}
         </div>
       </aside>
     );
@@ -162,11 +150,11 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               className="w-full min-h-[64px]"
               onNoFill={() => setNoFill(true)}
             />
-          ) : (
+          ) : showDevHint ? (
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
               Set `VITE_ADSENSE_SLOT_HORIZONTAL` to activate
             </p>
-          )}
+          ) : null}
         </div>
 
         <Link

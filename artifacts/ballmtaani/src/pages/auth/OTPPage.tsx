@@ -3,6 +3,7 @@ import { useLocation, Link } from "wouter";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
+const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
 export default function VerifyOTPPage() {
   const [location, setLocation] = useLocation();
@@ -80,7 +81,7 @@ export default function VerifyOTPPage() {
     setError("");
 
     try {
-      if (code === "123456" && (import.meta.env.DEV || !supabase)) {
+      if (code === "123456" && ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase)) {
          mockLogin(phone);
          sessionStorage.removeItem("auth_phone");
          const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
@@ -109,7 +110,7 @@ export default function VerifyOTPPage() {
                               err.message.includes("invalid") ||
                               !supabase;
                               
-      if (isMockableError && code === "123456" && (import.meta.env.DEV || !supabase)) {
+      if (isMockableError && code === "123456" && ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase)) {
           mockLogin(phone);
           sessionStorage.removeItem("auth_phone");
           const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
@@ -228,7 +229,7 @@ export default function VerifyOTPPage() {
               </button>
             )}
           </p>
-          {(import.meta.env.DEV || !supabase) && (
+          {ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase) && (
              <p className="text-[10px] text-gray-600 mt-4">Local testing code: 123456</p>
           )}
         </div>

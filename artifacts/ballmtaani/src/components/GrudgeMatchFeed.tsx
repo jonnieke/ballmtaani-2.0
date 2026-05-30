@@ -11,53 +11,6 @@ export interface RivalryItem {
   prediction?: string;
 }
 
-const MOCK_RIVALRIES: RivalryItem[] = [
-  {
-    id: 1,
-    challenger: { name: "Ochieng KE", interactions: 1250 },
-    defender: { name: "Musa GH", interactions: 2100 },
-    match: {
-      home: "Arsenal",
-      away: "Man City",
-      homeLogo: "https://media.api-sports.io/football/teams/42.png",
-      awayLogo: "https://media.api-sports.io/football/teams/50.png",
-      time: "Live in 2h",
-    },
-    bragLine: "Receipt match",
-    status: "active" as const,
-  },
-  {
-    id: 2,
-    challenger: { name: "Wanjiku KE", interactions: 450 },
-    defender: { name: "Adebayo NG", interactions: 600 },
-    match: {
-      home: "Liverpool",
-      away: "Chelsea",
-      homeLogo: "https://media.api-sports.io/football/teams/40.png",
-      awayLogo: "https://media.api-sports.io/football/teams/49.png",
-      time: "Pending Response",
-    },
-    bragLine: "Timeline brag",
-    status: "pending" as const,
-  },
-  {
-    id: 3,
-    challenger: { name: "KamauFC KE", interactions: 3200 },
-    defender: { name: "Sipho ZA", interactions: 2800 },
-    match: {
-      home: "Real Madrid",
-      away: "Barcelona",
-      homeLogo: "https://media.api-sports.io/football/teams/541.png",
-      awayLogo: "https://media.api-sports.io/football/teams/529.png",
-      time: "Final Result",
-    },
-    bragLine: "Club pride",
-    status: "completed" as const,
-    winner: "KamauFC KE",
-    prediction: "3-1",
-  },
-];
-
 type RivalryStatus = "all" | "pending" | "active" | "completed";
 
 export function GrudgeMatchFeed({
@@ -73,12 +26,21 @@ export function GrudgeMatchFeed({
   onAcceptDuel?: (id?: string | number) => void;
   onSettleDuel?: (id?: string | number) => void;
 }) {
-  const allRivalries = [...extraRivalries, ...MOCK_RIVALRIES];
+  const allRivalries = [...extraRivalries];
   const scoped = allRivalries.filter((r) => {
     if (scope === "active") return r.status === "pending" || r.status === "active";
     return true;
   });
   const filtered = scoped.filter((r) => (statusFilter === "all" ? true : r.status === statusFilter));
+
+  if (filtered.length === 0) {
+    return (
+      <div className="col-span-full rounded-2xl border border-white/10 bg-[#111] p-10 text-center">
+        <p className="text-sm font-black uppercase tracking-widest text-gray-500 mb-2">No active duels yet</p>
+        <p className="text-xs text-gray-600 font-bold uppercase tracking-widest">Challenge a fan from their profile to start the first duel.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

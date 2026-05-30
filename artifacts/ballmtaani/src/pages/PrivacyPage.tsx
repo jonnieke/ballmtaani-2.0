@@ -20,7 +20,7 @@ const sections = [
   },
   {
     title: "Advertising",
-    body: "As BallMtaani grows, ads may help fund the service. We should avoid misleading, betting-adjacent, or unsafe ad experiences where we have control over placement and policy settings.",
+    body: "BallMtaani uses advertising to keep the service free. We avoid misleading, betting-adjacent, or unsafe ad experiences. Advertising density is kept moderate and never placed around interactive fan features.",
   },
   {
     title: "Your Choices",
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
         </div>
 
         <p className="mt-8 text-xs text-gray-600">
-          Last updated: May 10, 2026. This policy is a product baseline and should be reviewed by qualified counsel before public launch.
+          Last updated: May 29, 2026.
         </p>
       </div>
     </main>

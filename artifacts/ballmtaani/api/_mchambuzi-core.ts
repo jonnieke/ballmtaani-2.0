@@ -1,3 +1,5 @@
+import { getVertexAccessToken } from "./_vertex-auth";
+
 const FOOTBALL_API_BASE = "https://v3.football.api-sports.io";
 const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
@@ -24,7 +26,7 @@ export type MchambuziServerContext = {
 
 export type MchambuziServerAnswer = {
   answer: string;
-  provider: "openai" | "gemini" | "fallback";
+  provider: "vertexai" | "openai" | "fallback";
   context: MchambuziServerContext;
   diagnostics?: string[];
   attemptedProviders?: string[];
@@ -32,7 +34,7 @@ export type MchambuziServerAnswer = {
 
 type MchambuziOptions = {
   debug?: boolean;
-  providerPreference?: "gemini-first" | "openai-first" | "gemini-only" | "openai-only";
+  providerPreference?: "vertexai-first" | "openai-first" | "openai-only" | "vertexai-only";
 };
 
 function stripTags(value = "") {
@@ -154,15 +156,20 @@ async function buildContext(env: MchambuziEnv): Promise<MchambuziServerContext> 
   const to = now.toISOString().slice(0, 10);
   const season = currentSeasonStartYear(now);
 
-  const [live, premierUpcoming, laLigaUpcoming, serieAUpcoming, premierRecent, laLigaRecent, news] = await Promise.all([
+  // Fetch from all major leagues (no hardcoding — covers any league automatically)
+  const leagueIds = Array.from(MAJOR_LEAGUE_IDS);
+
+  const results = await Promise.all([
     footballFetch("/fixtures?live=all", env),
-    footballFetch(`/fixtures?league=39&season=${season}&next=5`, env),
-    footballFetch(`/fixtures?league=140&season=${season}&next=5`, env),
-    footballFetch(`/fixtures?league=135&season=${season}&next=5`, env),
-    footballFetch(`/fixtures?league=39&season=${season}&from=${from}&to=${to}&status=FT-AET-PEN`, env),
-    footballFetch(`/fixtures?league=140&season=${season}&from=${from}&to=${to}&status=FT-AET-PEN`, env),
+    ...leagueIds.map(id => footballFetch(`/fixtures?league=${id}&season=${season}&next=5`, env)),
+    ...leagueIds.map(id => footballFetch(`/fixtures?league=${id}&season=${season}&from=${from}&to=${to}&status=FT-AET-PEN`, env)),
     fetchNews(),
   ]);
+
+  const live = results[0];
+  const upcoming = results.slice(1, 1 + leagueIds.length).flat();
+  const recent = results.slice(1 + leagueIds.length, 1 + 2 * leagueIds.length).flat();
+  const news = results[results.length - 1];
 
   return {
     generatedAt: now.toISOString(),
@@ -170,8 +177,8 @@ async function buildContext(env: MchambuziEnv): Promise<MchambuziServerContext> 
     seasonLabel: formatSeasonLabel(season),
     coverageWindow: `${from} to ${to}`,
     live: live.filter((item: any) => MAJOR_LEAGUE_IDS.has(item?.league?.id)).slice(0, 8).map(matchLine),
-    upcoming: [...premierUpcoming, ...laLigaUpcoming, ...serieAUpcoming].slice(0, 12).map(matchLine),
-    recent: [...premierRecent, ...laLigaRecent].slice(0, 10).map(matchLine),
+    upcoming: upcoming.slice(0, 12).map(matchLine),
+    recent: recent.slice(0, 10).map(matchLine),
     news: news.slice(0, 10),
     wc26StartDate: "June 11, 2026",
     sources: ["API-Football fixtures", "BBC Sport RSS", "Goal.com RSS"],
@@ -234,6 +241,59 @@ ${question}
 Answer as punchy football chat, not an essay.`;
 }
 
+// ─── Vertex AI via Workload Identity Federation (no key files) ───────────────
+async function askVertexAI(prompt: string, env: MchambuziEnv, diagnostics: string[]) {
+  const projectId = env.VERTEX_PROJECT_ID || "ball-mtaani-496717";
+  const location  = env.VERTEX_LOCATION   || "us-central1";
+  const modelName = env.VERTEX_MODEL      || "gemini-2.0-flash-001";
+
+  let tokenResult: Awaited<ReturnType<typeof getVertexAccessToken>>;
+  try {
+    tokenResult = await getVertexAccessToken(env);
+  } catch (err: any) {
+    diagnostics.push(`VertexAI auth: ${String(err?.message || err).slice(0, 220)}`);
+    return null;
+  }
+
+  if (!tokenResult) {
+    diagnostics.push("VertexAI: WIF not configured (VERCEL_OIDC_TOKEN / GCP_PROJECT_NUMBER / VERTEX_SERVICE_ACCOUNT missing)");
+    return null;
+  }
+
+  try {
+    const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${modelName}:generateContent`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization:  `Bearer ${tokenResult.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        systemInstruction: {
+          role: "system",
+          parts: [{ text: "You are Mchambuzi Halisi, BallMtaani's hilarious but accurate Kenyan football analyst." }],
+        },
+        generationConfig: { temperature: 0.75, maxOutputTokens: 700 },
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      diagnostics.push(`VertexAI: ${err?.error?.message || res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+  } catch (err: any) {
+    diagnostics.push(`VertexAI: ${String(err?.message || err).slice(0, 220)}`);
+    return null;
+  }
+}
+
+// ─── OpenAI (secondary fallback — Vertex AI is primary) ──────────────────────
 async function askOpenAi(prompt: string, env: MchambuziEnv, diagnostics: string[]) {
   const key = env.OPENAI_API_KEY || env.VITE_OPENAI_API_KEY;
   if (!key) {
@@ -271,46 +331,8 @@ async function askOpenAi(prompt: string, env: MchambuziEnv, diagnostics: string[
   }
 }
 
-async function askGemini(prompt: string, env: MchambuziEnv, diagnostics: string[]) {
-  const key = env.GEMINI_API_KEY || env.GEMINI_API || env.VITE_GEMINI_API;
-  if (!key) {
-    diagnostics.push("Gemini: missing key");
-    return null;
-  }
-  const models = [
-    env.GEMINI_MODEL,
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash-latest",
-  ].filter(Boolean) as string[];
-
-  for (const model of Array.from(new Set(models))) {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": key,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.75, maxOutputTokens: 700 },
-        }),
-      });
-
-      if (!response.ok) {
-        diagnostics.push(`Gemini ${model}: ${response.status} ${await readProviderError(response)}`);
-        continue;
-      }
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-    } catch {
-      diagnostics.push(`Gemini ${model}: network error`);
-    }
-  }
-
-  return null;
-}
+// askGemini (AI Studio) removed — all Gemini calls now go through Vertex AI.
+// This eliminates API key exposure and routes all AI usage to GCP credits.
 
 async function readProviderError(response: Response) {
   try {
@@ -327,21 +349,20 @@ function resolveProviderPreference(env: MchambuziEnv, options: MchambuziOptions)
     options.providerPreference ||
     env.MCHAMBUZI_PROVIDER_ORDER ||
     env.MCHAMBUZI_AI_PROVIDER ||
-    env.VITE_MCHAMBUZI_PROVIDER_ORDER ||
-    "gemini-first"
+    "vertexai-first"
   ).toLowerCase();
 
-  if (raw.includes("openai") && raw.includes("only")) return "openai-only" as const;
-  if (raw.includes("gemini") && raw.includes("only")) return "gemini-only" as const;
-  if (raw.includes("openai")) return "openai-first" as const;
-  return "gemini-first" as const;
+  if (raw.includes("vertexai") && raw.includes("only")) return "vertexai-only" as const;
+  if (raw.includes("openai")   && raw.includes("only")) return "openai-only"   as const;
+  if (raw.includes("openai"))  return "openai-first"  as const;
+  return "vertexai-first" as const;
 }
 
-function providerOrder(preference: ReturnType<typeof resolveProviderPreference>) {
-  if (preference === "gemini-only") return ["gemini"] as const;
-  if (preference === "openai-only") return ["openai"] as const;
-  if (preference === "openai-first") return ["openai", "gemini"] as const;
-  return ["gemini", "openai"] as const;
+function providerOrder(preference: ReturnType<typeof resolveProviderPreference>): ReadonlyArray<"vertexai" | "openai"> {
+  if (preference === "vertexai-only") return ["vertexai"];
+  if (preference === "openai-only")   return ["openai"];
+  if (preference === "openai-first")  return ["openai", "vertexai"];
+  return ["vertexai", "openai"]; // default
 }
 
 function buildFallbackAnswer(question: string, context: MchambuziServerContext) {
@@ -380,12 +401,12 @@ export async function answerMchambuzi(question: string, env: MchambuziEnv = {}, 
   for (const provider of providerOrder(preference)) {
     attemptedProviders.push(provider);
 
-    if (provider === "gemini") {
-      const gemini = await askGemini(prompt, env, diagnostics);
-      if (gemini) {
+    if (provider === "vertexai") {
+      const vertexAnswer = await askVertexAI(prompt, env, diagnostics);
+      if (vertexAnswer) {
         return {
-          answer: gemini,
-          provider: "gemini",
+          answer: vertexAnswer,
+          provider: "vertexai",
           context,
           ...(options.debug ? { diagnostics, attemptedProviders } : {}),
         };

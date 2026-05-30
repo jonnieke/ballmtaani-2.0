@@ -13,6 +13,7 @@ export default function FanZonesPage() {
   const [activeZone, setActiveZone] = useState<string | null>(null);
   const [newPost, setNewPost] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [postError, setPostError] = useState(false);
   const [regionFilter, setRegionFilter] = useState<"All" | "Europe" | "Africa">("All");
   const [localHeatOnly, setLocalHeatOnly] = useState(false);
   const [zoneSearch, setZoneSearch] = useState("");
@@ -47,9 +48,11 @@ export default function FanZonesPage() {
     });
 
     if (error) {
-      alert("Error posting banter. Please try again.");
+      setPostError(true);
+      setTimeout(() => setPostError(false), 3000);
     } else {
       setNewPost("");
+      setPostError(false);
       awardCoins('banter_posted');
     }
     setIsSubmitting(false);
@@ -199,23 +202,30 @@ export default function FanZonesPage() {
                 </button>
               ))}
             </div>
-            <form onSubmit={handlePost} className="flex gap-3 max-w-4xl mx-auto">
-              <input
-                type="text"
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
-                placeholder={isLoggedIn ? `Message ${zone.team || zone.team_name} room...` : "Log In to post"}
-                disabled={!isLoggedIn || isSubmitting}
-                className="flex-1 bg-black border border-white/10 rounded-full px-5 py-3 text-sm text-white focus:outline-none focus:border-primary transition-colors disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={(!newPost.trim() && isLoggedIn) || isSubmitting || !isLoggedIn}
-                className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform ${(!newPost.trim() || !isLoggedIn) ? 'bg-white/10 text-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-blue-600 text-white hover:scale-105 shadow-[0_0_15px_rgba(30,111,255,0.4)]'}`}
-              >
-                <Send className="w-5 h-5 ml-1" />
-              </button>
-            </form>
+            <div className="max-w-4xl mx-auto space-y-2">
+              {postError && (
+                <p className="text-red-400 text-xs font-bold uppercase tracking-widest px-1">
+                  Post failed — check your connection and try again.
+                </p>
+              )}
+              <form onSubmit={handlePost} className="flex gap-3">
+                <input
+                  type="text"
+                  value={newPost}
+                  onChange={(e) => setNewPost(e.target.value)}
+                  placeholder={isLoggedIn ? `Message ${zone.team || zone.team_name} room...` : "Log In to post"}
+                  disabled={!isLoggedIn || isSubmitting}
+                  className={`flex-1 bg-black border rounded-full px-5 py-3 text-sm text-white focus:outline-none transition-colors disabled:opacity-50 ${postError ? "border-red-500/50 focus:border-red-500" : "border-white/10 focus:border-primary"}`}
+                />
+                <button
+                  type="submit"
+                  disabled={(!newPost.trim() && isLoggedIn) || isSubmitting || !isLoggedIn}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-transform ${(!newPost.trim() || !isLoggedIn) ? 'bg-white/10 text-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-red-600 to-blue-600 text-white hover:scale-105 shadow-[0_0_15px_rgba(30,111,255,0.4)]'}`}
+                >
+                  <Send className="w-5 h-5 ml-1" />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

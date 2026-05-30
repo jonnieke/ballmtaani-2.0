@@ -4,6 +4,7 @@ import { ArrowRight, ShieldCheck, Heart, Gift, MessageCircle, Radio, Trophy, Use
 import { supabase } from "../../lib/supabase";
 import { CLUB_LOGOS } from "../../data/mockData";
 import { useTheme } from "../../context/ThemeContext";
+const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
@@ -62,7 +63,7 @@ export default function LoginPage() {
                               err.message.includes("Unsupported phone provider") || 
                               !supabase;
                               
-      if (isMissingConfig) {
+      if (isMissingConfig && ENABLE_MOCK_AUTH) {
         const mockNumber = `${countryCode}${phoneNumber.replace(/^0+/, '')}`;
         sessionStorage.setItem("auth_phone", mockNumber);
         setLocation("/verify");

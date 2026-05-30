@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useData";
+import { supabase } from "../lib/supabase";
 
-import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2, Activity, UserPlus } from "lucide-react";
+import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2, Activity, UserPlus, Check } from "lucide-react";
 import { UserBadge } from "../components/UserBadge";
 import { getUserTier } from "../lib/tiers";
 import { useRoute, useLocation, Link } from "wouter";
@@ -18,6 +19,8 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"calls" | "debates" | "badges">("calls");
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [challengeSent, setChallengeSent] = useState(false);
+  const [predStats, setPredStats] = useState<{ total: number; correct: number } | null>(null);
 
   const targetId = profileId || user?.id;
   const isOwnProfile = !profileId || profileId === user?.id;
@@ -31,6 +34,21 @@ export default function ProfilePage() {
       setLocation('/login');
     }
   }, [isLoggedIn, profileId, isLoading, setLocation]);
+
+  // Fetch real prediction stats for this profile
+  useEffect(() => {
+    if (!targetId || !supabase) return;
+    supabase
+      .from("predictions")
+      .select("result")
+      .eq("user_id", targetId)
+      .then(({ data }) => {
+        if (!data) return;
+        const correct = data.filter((p) => p.result === "correct" || p.result === "partial").length;
+        setPredStats({ total: data.length, correct });
+      })
+      .catch(() => {});
+  }, [targetId]);
 
   if (!isLoggedIn && !profileId) {
     return null; // or a loader
@@ -64,7 +82,9 @@ export default function ProfilePage() {
             
             <div className="flex flex-wrap justify-center md:justify-start gap-3">
               <span className="bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded">
-                Joined Mar 2025
+                {profile?.created_at
+                  ? "Joined " + new Date(profile.created_at).toLocaleDateString("en-KE", { month: "short", year: "numeric" })
+                  : "BallMtaani Fan"}
               </span>
               <UserBadge interactions={interactions} className="px-3 py-1.5 text-xs" />
             </div>
@@ -115,13 +135,21 @@ export default function ProfilePage() {
             </button>
           )}
 
+          {challengeSent && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-2 text-xs font-bold text-green-400 uppercase tracking-widest md:self-start">
+              <Check className="w-3.5 h-3.5" /> Duel sent to {displayUsername}
+            </div>
+          )}
+
           {showChallengeModal && (
-            <ChallengeModal 
+            <ChallengeModal
               rivalName={displayUsername}
               rivalId={targetId!}
               onClose={() => setShowChallengeModal(false)}
-              onChallenge={(matchId, prediction, bragLine) => {
-                alert(`Duel sent to ${displayUsername}: ${prediction} on match ${matchId}. ${bragLine} is on.`);
+              onChallenge={() => {
+                setShowChallengeModal(false);
+                setChallengeSent(true);
+                setTimeout(() => setChallengeSent(false), 5000);
               }}
             />
           )}
@@ -134,11 +162,15 @@ export default function ProfilePage() {
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Points</span>
           </div>
           <div className="text-center">
-            <span className="block text-3xl font-black text-white">--</span>
+            <span className="block text-3xl font-black text-white">
+              {predStats ? predStats.total : <span className="text-gray-600">--</span>}
+            </span>
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Calls</span>
           </div>
           <div className="text-center">
-            <span className="block text-3xl font-black text-green-500">--</span>
+            <span className="block text-3xl font-black text-green-500">
+              {predStats ? predStats.correct : <span className="text-gray-600">--</span>}
+            </span>
             <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Correct</span>
           </div>
           <div className="text-center">
@@ -186,9 +218,35 @@ export default function ProfilePage() {
       <div className="min-h-[300px]">
         {activeTab === "calls" && (
           <div className="space-y-4">
-            <div className="bg-[#1B1B1B] border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 justify-between opacity-50">
-              <div className="text-gray-500 font-bold uppercase tracking-widest text-xs">No matchday receipts yet</div>
-            </div>
+            {predStats && predStats.total > 0 ? (
+              <div className="bg-[#1B1B1B] border border-white/10 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-white font-black text-lg">{predStats.total} calls made</p>
+                    <p className="text-green-400 text-sm font-bold">{predStats.correct} correct or right result</p>
+                  </div>
+                  <span className="text-2xl font-black text-[#FFD700]">
+                    {predStats.total > 0 ? Math.round((predStats.correct / predStats.total) * 100) : 0}%
+                  </span>
+                </div>
+                <Link
+                  href="/predictions"
+                  className="block w-full text-center rounded-xl border border-white/10 bg-white/5 py-3 text-xs font-black uppercase tracking-widest text-white hover:bg-white/10 transition-colors"
+                >
+                  View Full Receipt Book
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-[#1B1B1B] border border-white/5 rounded-xl p-6 text-center">
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mb-4">No calls locked yet</p>
+                <Link
+                  href="/predictions"
+                  className="inline-block rounded-xl bg-[#FFD700] px-6 py-3 text-xs font-black uppercase tracking-widest text-black"
+                >
+                  Make Your First Call
+                </Link>
+              </div>
+            )}
           </div>
         )}
 

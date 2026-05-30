@@ -231,8 +231,14 @@ export default function WorldCup2026Page() {
                 {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-5 text-sm leading-6 text-white/62">
-                Group tables will render here from API-Football standings once the competition data is available for `league=1&season=2026`. Until then, fans still get the format, fixtures and stadium guide.
+              <div className="rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/6 p-6 text-center">
+                <div className="mb-2 text-2xl font-bold text-[#FFD700]">Group Stage: June 11</div>
+                <div className="text-sm font-medium text-white/70 max-w-md mx-auto leading-6">
+                  Live standings will update here automatically as matches are played. All 12 groups, 48 nations — tracked in real time.
+                </div>
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/30 bg-black/30 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#FFD700]">
+                  {(() => { const d = Math.ceil((new Date("2026-06-11").getTime() - Date.now()) / 86400000); return d > 0 ? `${d} days to kick-off` : "Tournament underway"; })()}
+                </div>
               </div>
             )}
           </div>
@@ -257,21 +263,32 @@ export default function WorldCup2026Page() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-primary/20 bg-primary/8 p-4 backdrop-blur-xl">
-          <h2 className="text-xl font-bold uppercase text-white">What BallMtaani Should Track Next</h2>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl bg-black/25 p-4">
-              <div className="font-bold text-primary">Live match center</div>
-              <p className="mt-1 text-sm text-white/60">Events, lineups, stats and player ratings every matchday.</p>
-            </div>
-            <div className="rounded-2xl bg-black/25 p-4">
-              <div className="font-bold text-primary">Fan predictions</div>
-              <p className="mt-1 text-sm text-white/60">Predict group winners, knockout brackets and daily match calls.</p>
-            </div>
-            <div className="rounded-2xl bg-black/25 p-4">
-              <div className="font-bold text-primary">Kenyan watch guide</div>
-              <p className="mt-1 text-sm text-white/60">All times in EAT, with reminders for the matches fans actually care about.</p>
-            </div>
+        <section className="mt-6 rounded-3xl border border-white/12 bg-[#080d14]/88 p-4 backdrop-blur-xl">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold uppercase text-white">Your WC26 Command Center</h2>
+            <p className="mt-1 text-sm text-white/55">Everything you need for the tournament — live, on BallMtaani.</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <Link href="/predictions" className="group rounded-2xl border border-primary/25 bg-primary/8 p-4 transition-colors hover:border-primary/55 hover:bg-primary/14">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">Live Now</div>
+              <div className="font-bold text-white">Score Predictions</div>
+              <p className="mt-1 text-sm text-white/55">Call every group match. Keep receipts. Prove you knew.</p>
+            </Link>
+            <Link href="/live-center" className="group rounded-2xl border border-blue-400/25 bg-blue-500/8 p-4 transition-colors hover:border-blue-400/55 hover:bg-blue-500/14">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-300">Live Now</div>
+              <div className="font-bold text-white">Live Match Center</div>
+              <p className="mt-1 text-sm text-white/55">Events, stats, lineups and scorelines as they happen.</p>
+            </Link>
+            <Link href="/mchambuzi-halisi" className="group rounded-2xl border border-[#FFD700]/25 bg-[#FFD700]/6 p-4 transition-colors hover:border-[#FFD700]/55 hover:bg-[#FFD700]/12">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#FFD700]">AI Analyst</div>
+              <div className="font-bold text-white">Mchambuzi Halisi</div>
+              <p className="mt-1 text-sm text-white/55">Ask anything about the tournament. Ruthless. Fan-first tone.</p>
+            </Link>
+            <Link href="/debates" className="group rounded-2xl border border-purple-400/25 bg-purple-500/8 p-4 transition-colors hover:border-purple-400/55 hover:bg-purple-500/14">
+              <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-purple-300">Community</div>
+              <div className="font-bold text-white">Debates Room</div>
+              <p className="mt-1 text-sm text-white/55">Hot takes, group of death arguments and knockout bracket wars.</p>
+            </Link>
           </div>
         </section>
 

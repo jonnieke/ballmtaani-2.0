@@ -6,6 +6,7 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -26,24 +27,26 @@ export function usePushNotifications() {
   };
 
   const subscribeToPush = async () => {
+    setPushError(null);
     if (!user) {
-      alert("Please sign in to enable notifications.");
+      setPushError("Sign in to enable match alerts.");
       return;
     }
-    
+
+    const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+    if (!publicVapidKey) {
+      setPushError("Push notifications are not configured yet.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const registration = await navigator.serviceWorker.ready;
-      
-      // Request permission
+
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        throw new Error("Notification permission denied");
+        throw new Error("Notification permission denied — enable them in browser settings.");
       }
-
-      // Generate a dummy VAPID key for local testing if you don't have a real one
-      // In production, this MUST be your actual public VAPID key from Supabase Edge Functions
-      const publicVapidKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuB-5bXByNXjJvCsv-DdEv2gOU';
       
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -75,7 +78,7 @@ export function usePushNotifications() {
 
     } catch (err) {
       console.error("Failed to subscribe:", err);
-      alert("Failed to enable notifications. " + (err as Error).message);
+      setPushError((err as Error).message || "Failed to enable notifications.");
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +113,7 @@ export function usePushNotifications() {
     isSupported,
     isSubscribed,
     isLoading,
+    pushError,
     subscribeToPush,
     unsubscribeFromPush
   };

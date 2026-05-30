@@ -15,12 +15,15 @@ export function ChallengeModal({ rivalName, onClose, onChallenge }: ChallengeMod
   const [prediction, setPrediction] = useState("");
   const [bragLine, setBragLine] = useState("Receipt match");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState(false);
 
   const handleSubmit = () => {
     if (!selectedMatch || !prediction) {
-      alert("Please select a match and enter your scoreline call.");
+      setValidationError(true);
+      setTimeout(() => setValidationError(false), 3000);
       return;
     }
+    setValidationError(false);
     setIsSubmitting(true);
     setTimeout(() => {
       onChallenge(selectedMatch, prediction, bragLine);
@@ -101,6 +104,12 @@ export function ChallengeModal({ rivalName, onClose, onChallenge }: ChallengeMod
                 className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white font-bold placeholder:text-gray-700 focus:outline-none focus:border-[#B30000] transition-colors"
               />
             </div>
+
+            {validationError && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-bold uppercase tracking-widest text-red-400">
+                Pick a match and enter your scoreline call first.
+              </p>
+            )}
 
             <button
               onClick={handleSubmit}

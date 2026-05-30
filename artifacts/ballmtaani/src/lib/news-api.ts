@@ -346,26 +346,19 @@ function mapFeedItems(items: any[], feed: (typeof RSS_FEEDS)[number], sourceImag
 }
 
 async function fetchFeedItems(feed: (typeof RSS_FEEDS)[number]): Promise<any[]> {
-  try {
-    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(feed.url)}`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const xmlText = await res.text();
-    return parseRssItems(xmlText).slice(0, 4);
-  } catch {
-    // Optional fallback for local experiments only. Keep disabled by default to avoid noisy 422s in production consoles.
-    if (import.meta.env.VITE_ENABLE_RSS2JSON_FALLBACK !== "true") return [];
+  // Client should rely on the same-origin `/api/news` endpoint in production.
+  // Keep this path as an explicit no-op fallback to avoid external proxy dependencies.
+  return [];
+}
 
-    try {
-      const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=4`;
-      const res = await fetch(rss2jsonUrl);
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (data.status === "ok" && Array.isArray(data.items)) return data.items.slice(0, 4);
-      return [];
-    } catch {
-      return [];
-    }
+async function fetchServerNewsItems(): Promise<any[]> {
+  try {
+    const res = await fetch("/api/news");
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data?.articles) ? data.articles : [];
+  } catch {
+    return [];
   }
 }
 
@@ -392,7 +385,17 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
   const sourceImageStats: Record<string, ImageTelemetry> = {};
 
   if (network) {
+    const serverItems = await fetchServerNewsItems();
+    if (serverItems.length > 0) {
+      for (const feed of RSS_FEEDS) {
+        sourceImageStats[feed.source] = { total: 0, fallbackUsed: 0 };
+        const feedItems = serverItems.filter((item) => item.source === feed.source);
+        if (feedItems.length > 0) mapFeedItems(feedItems, feed, sourceImageStats, articles);
+      }
+    }
+
     for (const feed of RSS_FEEDS) {
+      if (articles.some((article) => article.source === feed.source)) continue;
       sourceImageStats[feed.source] = { total: 0, fallbackUsed: 0 };
       const items = await fetchFeedItems(feed);
       if (items.length > 0) {

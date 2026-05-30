@@ -1,9 +1,10 @@
 import { fetchLiveMatches, fetchRecentMatches, fetchUpcomingFixtures } from "./football-api";
 import { fetchFootballNews, timeAgo, type NewsArticle } from "./news-api";
 
-const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
-const OPENAI_MODEL = import.meta.env.VITE_OPENAI_MODEL || "gpt-4.1-mini";
+// All AI calls go through the Vercel serverless function /api/mchambuzi.
+// VITE_ prefixed AI keys are intentionally absent — they would be visible in
+// the browser bundle and expose credentials to any visitor.
+// Server-side keys (GEMINI_API_KEY, OPENAI_API_KEY) live in Vercel env vars only.
 
 export type MchambuziContext = {
   generatedAt?: string;
@@ -20,7 +21,6 @@ export type MchambuziContext = {
 
 export type MchambuziProvider = "openai" | "gemini" | "fallback";
 
-const CLIENT_PROVIDER_ORDER = (import.meta.env.VITE_MCHAMBUZI_PROVIDER_ORDER || "gemini-first").toLowerCase();
 
 function compactMatch(match: any) {
   const score = typeof match.homeScore === "number" && typeof match.awayScore === "number"
@@ -189,71 +189,19 @@ ${question}
 Answer as short football chat with practical insight, not generic hype.`;
 }
 
-async function askOpenAi(prompt: string): Promise<string | null> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const response = await fetch(OPENAI_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: [
-          {
-            role: "system",
-            content: "You are Mchambuzi Halisi, a hilarious but accurate Kenyan football analyst. Keep answers concise, fan-friendly, data-driven, and never academic.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.75,
-        max_tokens: 700,
-      }),
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || null;
-  } catch {
-    return null;
-  }
-}
-
-async function askGemini(prompt: string): Promise<string | null> {
-  const apiKey = import.meta.env.VITE_GEMINI_API;
-  if (!apiKey) return null;
-
-  try {
-    const response = await fetch(GEMINI_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.75,
-          maxOutputTokens: 700,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
-  } catch {
-    return null;
-  }
-}
-
-export async function askMchambuziHalisi(question: string): Promise<{ answer: string; context: MchambuziContext; usedAi: boolean; provider: MchambuziProvider }> {
+/**
+ * Public entry point — always tries the secure serverless endpoint first.
+ * If the endpoint is unavailable (e.g. missing API keys on Vercel, network error),
+ * falls back to a data-only text answer built from the live football context.
+ * No AI keys ever touch the browser bundle.
+ */
+export async function askMchambuziHalisi(question: string): Promise<{
+  answer: string;
+  context: MchambuziContext;
+  usedAi: boolean;
+  provider: MchambuziProvider;
+}> {
+  // ── 1. Secure serverless path (/api/mchambuzi on Vercel) ──────────────────
   const serverAnswer = await askServerMchambuzi(question);
   if (serverAnswer) {
     return {
@@ -262,39 +210,8 @@ export async function askMchambuziHalisi(question: string): Promise<{ answer: st
     };
   }
 
+  // ── 2. Graceful data-only fallback (no AI keys in browser) ───────────────
   const context = await fetchMchambuziContext();
-  const prompt = buildMchambuziPrompt(question, context);
-
-  const clientProviders = CLIENT_PROVIDER_ORDER.includes("openai")
-    ? (["openai", "gemini"] as const)
-    : (["gemini", "openai"] as const);
-
-  for (const provider of clientProviders) {
-    if (provider === "gemini") {
-      const geminiAnswer = await askGemini(prompt);
-      if (geminiAnswer) {
-        return {
-          answer: geminiAnswer,
-          context,
-          usedAi: true,
-          provider: "gemini",
-        };
-      }
-    }
-
-    if (provider === "openai") {
-      const openAiAnswer = await askOpenAi(prompt);
-      if (openAiAnswer) {
-        return {
-          answer: openAiAnswer,
-          context,
-          usedAi: true,
-          provider: "openai",
-        };
-      }
-    }
-  }
-
   return {
     answer: buildFallbackAnswer(question, context),
     context,

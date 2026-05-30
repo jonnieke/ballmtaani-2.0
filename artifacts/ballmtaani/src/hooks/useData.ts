@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import * as mock from "../data/mockData";
+const ENABLE_CONTENT_MOCKS = import.meta.env.VITE_ENABLE_CONTENT_MOCKS === "true";
 
 import {
   fetchLiveMatches,
@@ -82,10 +83,10 @@ export function useStandings() {
           return standings;
         }
       } catch (err) {
-        console.error("Standings API failed, falling back to mock:", err);
+        console.error("Standings API failed:", err);
       }
 
-      return mock.STANDINGS;
+      return {};
     },
     staleTime: 5 * 60 * 1000, // 5 minutes — standings don't change mid-match
   });
@@ -121,34 +122,32 @@ export function useDebates() {
   return useQuery({
     queryKey: ["debates"],
     queryFn: async () => {
-      if (!supabase) return mock.DEBATES;
+      if (!supabase) return [];
 
       try {
         const { data, error } = await supabase
           .from("debates")
           .select("*")
-          .order("created_at", { ascending: false });
+          .in("status", ["active", "live"])
+          .order("total_votes", { ascending: false });
 
-        if (error || !data || data.length === 0) {
-          return mock.DEBATES;
-        }
+        if (error || !data) return [];
 
-        return data.map(d => {
-          const fallback = mock.DEBATES.find(m => m.id === d.id);
-          return {
-            id: d.id,
-            title: d.title,
-            left: d.left_option,
-            right: d.right_option,
-            leftImage: d.left_image || fallback?.leftImage,
-            rightImage: d.right_image || fallback?.rightImage,
-            leftVotes: d.left_votes,
-            rightVotes: d.right_votes,
-            totalVotes: d.total_votes.toLocaleString()
-          };
-        });
-      } catch (err) {
-        return mock.DEBATES;
+        return data.map(d => ({
+          id: d.id,
+          title: d.title,
+          left: d.left_option || d.left,
+          right: d.right_option || d.right,
+          leftImage: d.left_image,
+          rightImage: d.right_image,
+          leftVotes: d.left_votes || 0,
+          rightVotes: d.right_votes || 0,
+          totalVotes: (d.total_votes || 0).toLocaleString(),
+          author: d.author || "BallMtaani",
+          interactionCount: d.interaction_count || 0,
+        }));
+      } catch {
+        return [];
       }
     }
   });
@@ -158,7 +157,7 @@ export function useLeaderboard() {
   return useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      if (!supabase) return mock.LEADERBOARD;
+      if (!supabase) return ENABLE_CONTENT_MOCKS ? mock.LEADERBOARD : [];
 
       try {
         const { data, error } = await supabase
@@ -167,7 +166,7 @@ export function useLeaderboard() {
           .limit(10);
 
         if (error || !data || data.length === 0) {
-          return mock.LEADERBOARD;
+          return ENABLE_CONTENT_MOCKS ? mock.LEADERBOARD : [];
         }
 
         const sorted = [...data].sort((a, b) => {
@@ -180,12 +179,11 @@ export function useLeaderboard() {
           rank: index + 1,
           name: p.username,
           country: p.country || "KEN",
-          correct: Math.floor(Number(p.coins ?? p.points ?? 0) / 25),
           streak: p.streak || 0,
           pts: Number(p.coins ?? p.points ?? 0)
         }));
       } catch (err) {
-        return mock.LEADERBOARD;
+        return ENABLE_CONTENT_MOCKS ? mock.LEADERBOARD : [];
       }
     }
   });
@@ -195,7 +193,7 @@ export function useFanZones() {
   return useQuery({
     queryKey: ["fan-zones"],
     queryFn: async () => {
-      if (!supabase) return mock.FAN_ZONES;
+      if (!supabase) return ENABLE_CONTENT_MOCKS ? mock.FAN_ZONES : [];
 
       try {
         const { data, error } = await supabase
@@ -203,7 +201,7 @@ export function useFanZones() {
           .select("*");
 
         if (error || !data || data.length === 0) {
-          return mock.FAN_ZONES;
+          return ENABLE_CONTENT_MOCKS ? mock.FAN_ZONES : [];
         }
 
         return data.map(zone => ({
@@ -220,7 +218,7 @@ export function useFanZones() {
           region: zone.region || "Europe",
         }));
       } catch (e) {
-        return mock.FAN_ZONES;
+        return ENABLE_CONTENT_MOCKS ? mock.FAN_ZONES : [];
       }
     }
   });

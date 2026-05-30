@@ -617,11 +617,166 @@ function WorldCupRow({ match }: { match: DisplayMatch }) {
   );
 }
 
+// ─── WC26 Hero ───────────────────────────────────────────────
+const WC26_START = new Date("2026-06-11T17:00:00Z"); // 8pm EAT
+const WC26_END   = new Date("2026-07-20T00:00:00Z");
+
+function getWC26Countdown() {
+  const diff = WC26_START.getTime() - Date.now();
+  if (diff <= 0) return null;
+  return {
+    days:  Math.floor(diff / 86400000),
+    hours: Math.floor((diff % 86400000) / 3600000),
+    mins:  Math.floor((diff % 3600000) / 60000),
+    secs:  Math.floor((diff % 60000) / 1000),
+  };
+}
+
+function CountBlock({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div
+        key={value}
+        className="relative overflow-hidden rounded-xl border border-[#FFD700]/25 bg-black/55 px-3 py-2.5 min-w-[58px] text-center shadow-[inset_0_1px_0_rgba(255,214,0,0.12)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150"
+      >
+        <span className="block text-3xl font-black tabular-nums leading-none text-white md:text-5xl">
+          {String(value).padStart(2, "0")}
+        </span>
+      </div>
+      <span className="text-[9px] font-black uppercase tracking-[0.22em] text-[#FFD700]/65">{label}</span>
+    </div>
+  );
+}
+
+function WC26HeroBanner() {
+  const now = Date.now();
+  const isOver = now > WC26_END.getTime();
+  const isActive = now >= WC26_START.getTime();
+  const [cd, setCd] = useState(getWC26Countdown());
+
+  useEffect(() => {
+    if (isActive || isOver) return;
+    const tick = setInterval(() => setCd(getWC26Countdown()), 1000);
+    return () => clearInterval(tick);
+  }, [isActive, isOver]);
+
+  if (isOver) return null;
+
+  return (
+    <section className="relative mb-4 overflow-hidden rounded-2xl border border-[#FFD700]/18">
+      {/* ── Gemini Imagen 3 generated hero ── */}
+      <div className="absolute inset-0">
+        <img
+          src="/wc26-hero.jpg"
+          alt=""
+          className="h-full w-full object-cover object-center"
+        />
+        {/* Cinematic grade: darken edges, lift the gold centre, deepen bottom for text */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(3,7,16,0.55)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-[#05070b]" />
+        {/* Live pulse overlay */}
+        {isActive && (
+          <div className="absolute inset-0 animate-pulse bg-[radial-gradient(ellipse_at_50%_50%,rgba(179,0,0,0.06),transparent_70%)]" />
+        )}
+        {/* Top gold shimmer */}
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700] to-transparent" />
+        {/* Host nation strip */}
+        <div className="absolute bottom-0 left-0 right-0 flex h-[3px]">
+          <div className="flex-1 bg-[#3C3B6E]" />
+          <div className="flex-1 bg-white/30" />
+          <div className="flex-1 bg-[#B22234]" />
+          <div className="flex-1 bg-[#B22234]" />
+          <div className="flex-1 bg-white/30" />
+          <div className="flex-1 bg-[#B22234]" />
+          <div className="flex-1 bg-[#006847]" />
+          <div className="flex-1 bg-white/30" />
+          <div className="flex-1 bg-[#CE1126]" />
+        </div>
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center px-4 py-8 text-center md:py-12">
+        {/* Badge */}
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-4 py-1.5 backdrop-blur-sm">
+          {isActive && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+          <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+          <span className="text-[10px] font-black uppercase tracking-[0.26em] text-[#FFD700]">
+            {isActive ? "World Cup 2026 — Underway" : "FIFA World Cup 2026 · USA · Canada · Mexico"}
+          </span>
+          <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+        </div>
+
+        {/* Headline — 3D extruded gold */}
+        <h2
+          className="mb-3 max-w-3xl text-5xl font-black italic leading-[0.88] tracking-tight md:text-7xl lg:text-8xl"
+          style={{
+            color: "#FFE033",
+            WebkitTextStroke: "1.5px #C47200",
+            textShadow: [
+              "0 -1px 0 #FFF9C4",       // bright top-edge highlight
+              "1px  1px 0 #EAA800",     // extrusion step 1
+              "2px  2px 0 #D09000",     // step 2
+              "3px  3px 0 #B87800",     // step 3
+              "4px  4px 0 #A06200",     // step 4
+              "5px  5px 0 #884E00",     // step 5
+              "6px  6px 0 #703C00",     // step 6
+              "7px  7px 0 #582A00",     // step 7
+              "8px  8px 0 #401A00",     // step 8
+              "9px  9px 16px rgba(0,0,0,0.95)", // deep black base shadow
+              "0 0 50px rgba(255,215,0,0.35)",  // golden halo glow
+            ].join(", "),
+            filter: "drop-shadow(0 6px 24px rgba(255,180,0,0.5))",
+          }}
+        >
+          {isActive ? (
+            <>THE WORLD CUP<br />IS LIVE</>
+          ) : (
+            <>THE BIGGEST<br />WORLD CUP EVER</>
+          )}
+        </h2>
+        <p className="mb-7 rounded-full border border-white/20 bg-black/65 px-5 py-2 text-sm font-bold text-white backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.7)] md:text-base">
+          48 nations · 104 matches · {isActive ? "Running until Jul 19 · All times EAT" : "Jun 11 – Jul 19 · All times EAT"}
+        </p>
+
+        {/* Countdown */}
+        {cd && (
+          <div className="mb-8 flex items-end gap-2 md:gap-4">
+            <CountBlock value={cd.days}  label="Days" />
+            <span className="mb-7 text-2xl font-black text-[#FFD700]/50 md:text-4xl">:</span>
+            <CountBlock value={cd.hours} label="Hours" />
+            <span className="mb-7 text-2xl font-black text-[#FFD700]/50 md:text-4xl">:</span>
+            <CountBlock value={cd.mins}  label="Min" />
+            <span className="mb-7 text-2xl font-black text-[#FFD700]/50 md:text-4xl">:</span>
+            <CountBlock value={cd.secs}  label="Sec" />
+          </div>
+        )}
+
+        {/* CTAs */}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/predictions"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-3 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_28px_rgba(255,214,0,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,214,0,0.7)] active:scale-95"
+          >
+            {isActive ? "Call the Scoreline" : "Make Your Group Stage Call"}
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/world-cup-2026"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-5 py-3 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10"
+          >
+            {isActive ? "Live Groups & Scores" : "Groups & Fixtures"}
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function LandingPage() {
   const [live, setLive] = useState<LiveMatch[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const [upcoming, setUpcoming] = useState<any[]>([]);
   const [standings, setStandings] = useState<StandingEntry[]>([]);
+  const [kplStandings, setKplStandings] = useState<StandingEntry[]>([]);
   const [worldCup, setWorldCup] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -639,11 +794,12 @@ export default function LandingPage() {
     const run = async () => {
       setLoading(true);
       try {
-        const [liveData, recentData, upcomingData, tableData, wcData] = await Promise.all([
+        const [liveData, recentData, upcomingData, tableData, kplData, wcData] = await Promise.all([
           fetchLiveMatches(),
           fetchRecentMatches(),
           fetchUpcomingFixtures(),
           fetchStandings(39),
+          fetchStandings(686),
           fetchLeagueFixtures(1, 2026, 8),
         ]);
         if (!mounted) return;
@@ -651,6 +807,7 @@ export default function LandingPage() {
         setRecent(Array.isArray(recentData) ? recentData.slice(0, 8) : []);
         setUpcoming(Array.isArray(upcomingData) ? upcomingData.slice(0, 14) : []);
         setStandings(Array.isArray(tableData) ? tableData.slice(0, 6) : []);
+        setKplStandings(Array.isArray(kplData) ? kplData.slice(0, 8) : []);
         setWorldCup(Array.isArray(wcData) ? wcData.slice(0, 4) : []);
         setLastUpdated(new Date());
       } catch (error) {
@@ -776,22 +933,35 @@ export default function LandingPage() {
         <img
           src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=85"
           alt=""
-          className="h-full w-full object-cover opacity-28"
+          className={`h-full w-full object-cover transition-opacity duration-1000 ${live.length > 0 ? "opacity-40" : "opacity-28"}`}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.5),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.56),#05070b_46%,#05070b)]" />
+        <div className={`absolute inset-0 transition-all duration-1000 ${live.length > 0 ? "bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.65),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.48),#05070b_46%,#05070b)]" : "bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.5),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.56),#05070b_46%,#05070b)]"}`} />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:56px_56px] opacity-35" />
+        {live.length > 0 && (
+          <div className="absolute inset-0 animate-pulse bg-[radial-gradient(ellipse_at_50%_0%,rgba(179,0,0,0.12),transparent_60%)]" />
+        )}
       </div>
 
       <main className="relative z-10 mx-auto max-w-[1480px] px-3 py-3 md:px-5 md:py-5">
-        <header className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/38 px-3 py-2.5 backdrop-blur-xl">
+        <WC26HeroBanner />
+
+        <header className={`mb-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 backdrop-blur-xl transition-all duration-700 ${live.length > 0 ? "border-primary/30 bg-black/50 shadow-[0_0_30px_rgba(179,0,0,0.15)]" : "border-white/10 bg-black/38"}`}>
           <div className="flex items-center gap-2">
             <Link href="/home" aria-label="Open home" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/70 hover:text-white">
               <Home className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-semibold italic tracking-tight md:text-3xl">
-                BallMtaani <span className="text-primary">Live Hub</span>
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-semibold italic tracking-tight md:text-3xl">
+                  BallMtaani <span className="text-primary">Live Hub</span>
+                </h1>
+                {live.length > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/20 border border-primary/40 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary shadow-[0_0_12px_rgba(179,0,0,0.4)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                    {live.length} Live
+                  </span>
+                )}
+              </div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-medium text-white/48">
                 <span>Football match center</span>
                 <span>|</span>
@@ -814,18 +984,33 @@ export default function LandingPage() {
         </header>
 
         <section className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-          <StatTile label="Live Now" value={live.length || "Live"} icon={Activity} tone="border-primary/45 text-primary" />
-          <StatTile label="Next Fixtures" value={upcoming.length} icon={CalendarDays} tone="border-blue-400/40 text-blue-300" />
-          <StatTile label="Final Whistles" value={recent.length} icon={Clock3} tone="border-emerald-400/40 text-emerald-300" />
+          <div className={live.length > 0 ? "animate-pulse" : ""}>
+            <StatTile
+              label="Live Now"
+              value={live.length > 0 ? live.length : "—"}
+              icon={Activity}
+              tone={live.length > 0 ? "border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]" : "border-primary/45 text-primary"}
+            />
+          </div>
+          <StatTile label="Next Fixtures" value={upcoming.length || "—"} icon={CalendarDays} tone="border-blue-400/40 text-blue-300" />
+          <StatTile label="Final Whistles" value={recent.length || "—"} icon={Clock3} tone="border-emerald-400/40 text-emerald-300" />
           <StatTile label="Tables Open" value={standings.length || activeLeague.short} icon={Table2} tone="border-[#ffd700]/40 text-[#ffd700]" />
         </section>
 
         <div className="grid gap-3 xl:grid-cols-[330px_minmax(0,1fr)_360px]">
           <aside className="space-y-3">
-            <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
-              <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5">
+            <section className={`overflow-hidden rounded-xl border bg-[#090d14]/95 transition-all duration-700 ${live.length > 0 ? "border-primary/30 shadow-[0_0_20px_rgba(179,0,0,0.12)]" : "border-white/10"}`}>
+              <div className={`flex items-center justify-between border-b px-3 py-2.5 transition-colors duration-700 ${live.length > 0 ? "border-primary/20" : "border-white/10"}`}>
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Match Queue</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Match Queue</h2>
+                    {live.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
+                        <span className="h-1 w-1 rounded-full bg-primary animate-ping" />
+                        {live.length} live
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-0.5 text-[11px] text-white/42">Live, finished and upcoming</p>
                 </div>
                 <Search className="h-4 w-4 text-white/35" />
@@ -1008,6 +1193,23 @@ export default function LandingPage() {
               </div>
             </section>
 
+            <section className="overflow-hidden rounded-xl border border-[#008000]/30 bg-[#04100a]/95">
+              <div className="flex items-center justify-between border-b border-[#008000]/20 px-3 py-2.5">
+                <div>
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Kenya Premier League</h2>
+                  <p className="mt-0.5 text-[11px] text-[#22c55e]/70">Home table · KPL 2025</p>
+                </div>
+                <div className="h-5 w-5 overflow-hidden rounded-full border border-[#008000]/40">
+                  <div className="h-full w-full" style={{ background: "linear-gradient(to bottom, #006600 50%, #BB0000 50%)" }} />
+                </div>
+              </div>
+              {kplStandings.length ? (
+                kplStandings.slice(0, 6).map((row) => <StandingMiniRow key={row.team} row={row} />)
+              ) : (
+                <div className="px-4 py-6 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">KPL table loading...</div>
+              )}
+            </section>
+
             <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
               <div className="border-b border-white/10 px-3 py-2.5">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">Premier League Snapshot</h2>
@@ -1032,21 +1234,37 @@ export default function LandingPage() {
           </aside>
         </div>
 
-        <section className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
-          {FEATURE_LINKS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-xl border border-white/10 bg-[#0b1119]/92 p-3 transition-colors hover:border-primary/45 hover:bg-[#101827]"
-              >
-                <Icon className="mb-2 h-5 w-5 text-primary" />
-                <div className="text-xs font-semibold uppercase tracking-[0.06em] text-white">{item.label}</div>
-                <div className="mt-1 text-[11px] leading-4 text-white/42">{item.sub}</div>
-              </Link>
-            );
-          })}
+        <section className="mt-4">
+          <div className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
+            Your matchday tools
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
+            {FEATURE_LINKS.map((item, idx) => {
+              const Icon = item.icon;
+              // WC26 gets gold treatment; first item (Data Center) gets a subtle blue; rest are standard
+              const isWC = item.href === "/world-cup-2026";
+              const isPrimary = idx === 0;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+                    isWC
+                      ? "border-[#FFD700]/30 bg-[#111006]/92 hover:border-[#FFD700]/70 hover:shadow-[#FFD700]/15"
+                      : isPrimary
+                      ? "border-primary/25 bg-[#0f0a0a]/92 hover:border-primary/55 hover:shadow-primary/15"
+                      : "border-white/10 bg-[#0b1119]/92 hover:border-primary/45 hover:shadow-primary/10"
+                  }`}
+                >
+                  {/* glow spot */}
+                  <div className={`absolute -right-4 -top-4 h-12 w-12 rounded-full blur-xl transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${isWC ? "bg-[#FFD700]/20" : "bg-primary/20"}`} />
+                  <Icon className={`relative mb-2.5 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${isWC ? "text-[#FFD700]" : "text-primary"}`} />
+                  <div className="relative text-xs font-bold uppercase tracking-[0.06em] text-white">{item.label}</div>
+                  <div className="relative mt-0.5 text-[11px] leading-4 text-white/40 group-hover:text-white/60 transition-colors">{item.sub}</div>
+                </Link>
+              );
+            })}
+          </div>
         </section>
       </main>
 
