@@ -1094,27 +1094,47 @@ export default function LandingPage() {
                 ) : null}
 
                 {activeTab === "table" ? (
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
-                      <div className="mb-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Fixtures</h3>
-                        <p className="mt-1 text-[11px] text-white/44">{activeLeague.name}: today, next up and recent games.</p>
-                      </div>
-                      <FixtureBoard
-                        fixtures={activeLeagueFixtures}
-                        leagueName={activeLeague.name}
-                        selectedMatchId={selectedMatchId}
-                        onSelect={setSelectedMatchId}
-                        loading={loading}
-                      />
-                    </section>
-                    <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
-                      <div className="mb-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Standings</h3>
-                        <p className="mt-1 text-[11px] text-white/44">Table position, form, points and goal difference.</p>
-                      </div>
-                      <StandingsTable rows={standings} leagueName={activeLeague.name} loading={loading} />
-                    </section>
+                  <div className="space-y-3">
+                    {/* League Selector — inline inside Tables tab */}
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                      {DATA_LEAGUES.map((league) => (
+                        <button
+                          key={league.id}
+                          onClick={() => setActiveLeagueId(league.id)}
+                          className={`rounded-lg border px-2 py-2 text-left transition-colors ${
+                            activeLeagueId === league.id
+                              ? "border-primary bg-primary/14 text-white"
+                              : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white"
+                          }`}
+                        >
+                          <div className="text-xs font-semibold uppercase truncate">{league.short}</div>
+                          <div className="mt-0.5 truncate text-[10px] text-white/38 hidden sm:block">{league.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Fixtures + Standings for selected league */}
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
+                        <div className="mb-3">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Fixtures</h3>
+                          <p className="mt-1 text-[11px] text-white/44">{activeLeague.name}: today, next up and recent games.</p>
+                        </div>
+                        <FixtureBoard
+                          fixtures={activeLeagueFixtures}
+                          leagueName={activeLeague.name}
+                          selectedMatchId={selectedMatchId}
+                          onSelect={setSelectedMatchId}
+                          loading={loading}
+                        />
+                      </section>
+                      <section className="rounded-xl border border-white/10 bg-[#090d14] p-3">
+                        <div className="mb-3">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">{activeLeague.short} Standings</h3>
+                          <p className="mt-1 text-[11px] text-white/44">Table position, form, points and goal difference.</p>
+                        </div>
+                        <StandingsTable rows={standings} leagueName={activeLeague.name} loading={loading} />
+                      </section>
+                    </div>
                   </div>
                 ) : null}
 
@@ -1167,32 +1187,6 @@ export default function LandingPage() {
 
           {showRightSidebar && (
             <aside className={`space-y-3 transition-all duration-300 ${standings.length > 0 || kplStandings.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
-              <section className="rounded-xl border border-white/10 bg-[#090d14]/95 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">League Switchboard</h2>
-                  <p className="mt-0.5 text-[11px] text-white/42">Pick a league</p>
-                </div>
-                <Table2 className="h-4 w-4 text-primary" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {DATA_LEAGUES.map((league) => (
-                  <button
-                    key={league.id}
-                    onClick={() => setActiveLeagueId(league.id)}
-                    className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                      activeLeagueId === league.id
-                        ? "border-primary bg-primary/14 text-white"
-                        : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white"
-                    }`}
-                  >
-                    <div className="text-xs font-semibold uppercase">{league.short}</div>
-                    <div className="mt-0.5 truncate text-[10px] text-white/38">{league.name}</div>
-                  </button>
-                ))}
-              </div>
-            </section>
-
             {/* KPL standings hidden — API-Football returns incorrect (Czech) data for league 686 */}
             {/* TODO: Fix KPL league ID mapping with API-Football or use alternate data source */}
 
