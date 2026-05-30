@@ -91,31 +91,52 @@ export default function LoginPage() {
             <Link href="/" className="text-2xl font-black uppercase tracking-widest">
               Ball<span className="text-primary">Mtaani</span>
             </Link>
-            <div className="mt-16">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">Kenyan Fans First</p>
-              <h1 className="mt-4 text-5xl font-black uppercase leading-[0.95] tracking-tight">
-                Call the match before the group chat does.
+            {/* WC26 urgency */}
+            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/8 px-4 py-1.5">
+              <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD700]">WC26 in {Math.ceil((new Date("2026-06-11").getTime() - Date.now()) / 86400000)} days</span>
+            </div>
+            <div className="mt-4">
+              <h1 className="text-5xl font-black uppercase leading-[0.92] tracking-tight">
+                Call the match<br/>before the<br/><span className="text-primary">group chat does.</span>
               </h1>
-              <p className="mt-6 max-w-md text-sm leading-relaxed text-gray-400">
-                Pick your side once, then jump into calls, live pulse, fan rooms, and receipts around the fixtures Kenyans are already arguing about.
+              <p className="mt-5 max-w-md text-sm leading-relaxed text-gray-400">
+                Phone login takes 30 seconds. Pick your club, make your WC26 calls, and come back after full time for your receipts.
               </p>
+              {/* Social proof */}
+              <div className="mt-5 flex items-center gap-3">
+                <div className="flex -space-x-1.5">
+                  {["#B30000","#1E6FFF","#FFD700","#22c55e","#9333ea"].map(c => (
+                    <div key={c} className="h-6 w-6 rounded-full border-2 border-black" style={{ background: c }} />
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-white/40">18,000+ fans already calling it</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { icon: Radio, label: "Live Pulse" },
-              { icon: Trophy, label: "Receipts" },
-              { icon: Users, label: "Fan Rooms" },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className="border border-white/10 bg-white/[0.03] p-4">
-                  <Icon className="mb-3 h-5 w-5 text-primary" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">{item.label}</p>
+          <div>
+            {/* Welcome bonus — everyone gets it */}
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
+              <Gift className="h-5 w-5 shrink-0 text-[#FFD700]" />
+              <div>
+                <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">500 MTC Welcome Bonus</div>
+                <div className="text-[10px] text-white/40">Free on signup — start on the leaderboard right away</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { icon: Radio, label: "Live Pulse", sub: "Match by match" },
+                { icon: Trophy, label: "Receipts", sub: "Earn MTC" },
+                { icon: Users, label: "Fan Rooms", sub: "Your club" },
+              ].map(({ icon: Icon, label, sub }) => (
+                <div key={label} className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+                  <Icon className="mb-2 h-4 w-4 text-primary" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white">{label}</p>
+                  <p className="text-[9px] text-white/35 font-semibold">{sub}</p>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </aside>
 
@@ -143,12 +164,12 @@ export default function LoginPage() {
                 <p className="mt-2 text-sm text-gray-400">Use your phone, pick your side, and keep your receipts across matches.</p>
               </div>
 
-              {referralFrom && (
-                <div className="mb-5 flex items-center gap-2 bg-[#FFD700]/10 border border-[#FFD700]/30 px-4 py-3">
-                  <Gift className="w-4 h-4 text-[#FFD700]" />
-                  <span className="text-[#FFD700] font-black text-[11px] uppercase tracking-widest">Welcome boost: 500 MTC status points</span>
-                </div>
-              )}
+              <div className="mb-5 flex items-center gap-2 bg-[#FFD700]/8 border border-[#FFD700]/25 px-4 py-3 rounded-lg">
+                <Gift className="w-4 h-4 text-[#FFD700] shrink-0" />
+                <span className="text-[#FFD700] font-black text-[11px] uppercase tracking-widest">
+                  {referralFrom ? "Referral + Welcome boost: 1,000 MTC" : "Welcome boost: 500 MTC on signup"}
+                </span>
+              </div>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 mb-5 text-sm text-center font-bold">
