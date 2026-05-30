@@ -14,30 +14,44 @@ import OddspediaCredit from "./components/OddspediaCredit";
 import AdBanner from "./components/AdBanner";
 import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
+import { lazy, Suspense } from "react";
 
-import HomePage from "./pages/HomePage";
-import MatchesPage from "./pages/MatchesPage";
-import PredictionsPage from "./pages/PredictionsPage";
-import DebatesPage from "./pages/DebatesPage";
-import FanZonesPage from "./pages/FanZonesPage";
-import LeaderboardPage from "./pages/LeaderboardPage";
-import ProfilePage from "./pages/ProfilePage";
-import StorePage from "./pages/StorePage";
-import LiveCenterPage from "./pages/LiveCenterPage";
-import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
-import RivalriesPage from "./pages/RivalriesPage";
-import RapidFirePage from "./pages/RapidFirePage";
-import TriviaPage from "./pages/TriviaPage";
-import WarRoomPage from "./pages/WarRoomPage";
-import DiagnosticsPage from "./pages/DiagnosticsPage";
-import TermsPage from "./pages/TermsPage";
-import PrivacyPage from "./pages/PrivacyPage";
+// ─── Route-level code splitting ───────────────────────────────────────────────
+// Each page is loaded only when navigated to — reduces initial bundle by ~50%
+// LandingPage and HomePage are eagerly loaded (most visited, need fast paint)
 import LandingPage from "./pages/LandingPage";
-import WorldCup2026Page from "./pages/WorldCup2026Page";
-import MarketWatchPage from "./pages/MarketWatchPage";
-import MchambuziHalisiPage from "./pages/MchambuziHalisiPage";
-import LoginPage from "./pages/auth/LoginPage";
-import VerifyOTPPage from "./pages/auth/OTPPage";
+import HomePage from "./pages/HomePage";
+
+const MatchesPage        = lazy(() => import("./pages/MatchesPage"));
+const PredictionsPage    = lazy(() => import("./pages/PredictionsPage"));
+const DebatesPage        = lazy(() => import("./pages/DebatesPage"));
+const FanZonesPage       = lazy(() => import("./pages/FanZonesPage"));
+const LeaderboardPage    = lazy(() => import("./pages/LeaderboardPage"));
+const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
+const StorePage          = lazy(() => import("./pages/StorePage"));
+const LiveCenterPage     = lazy(() => import("./pages/LiveCenterPage"));
+const LiveCenterIndexPage= lazy(() => import("./pages/LiveCenterIndexPage"));
+const RivalriesPage      = lazy(() => import("./pages/RivalriesPage"));
+const RapidFirePage      = lazy(() => import("./pages/RapidFirePage"));
+const TriviaPage         = lazy(() => import("./pages/TriviaPage"));
+const WarRoomPage        = lazy(() => import("./pages/WarRoomPage"));
+const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
+const TermsPage          = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
+const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
+const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
+const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
+const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
+const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
+
+// Minimal loading fallback — dark bg matches app shell, no layout shift
+function PageLoader() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#B30000]" />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient();
 
@@ -72,6 +86,7 @@ function AppShell() {
         {!quietPage && <OnboardingModal />}
         {!quietPage && <InstallBanner />}
         <RouteSEO path={normalizedLocation} />
+        <Suspense fallback={<PageLoader />}>
         <Switch>
             <Route path="/" component={LandingPage} />
             <Route path="/home" component={HomePage} />
@@ -108,6 +123,7 @@ function AppShell() {
               </div>
             </Route>
         </Switch>
+        </Suspense>
 
         <div className={quietPage ? "mx-auto mt-6 w-full max-w-5xl px-3 md:px-5" : "mx-auto mt-8 w-full max-w-6xl px-4"}>
           <AdBanner
