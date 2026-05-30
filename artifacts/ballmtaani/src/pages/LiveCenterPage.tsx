@@ -389,7 +389,7 @@ export default function LiveCenterPage() {
         <div className="max-w-4xl mx-auto px-4 py-3 relative z-10">
           {/* Back + league */}
           <div className="flex items-center gap-3 mb-2">
-            <Link href="/matches">
+            <Link href="/live-center">
               <button className="p-2 hover:bg-white/5 rounded-full transition-colors text-gray-400 hover:text-white">
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -890,19 +890,52 @@ export default function LiveCenterPage() {
           </div>
         )}
 
-        {/* ── PROMO CARD ── */}
-        <div className="rounded-2xl bg-gradient-to-r from-[#B30000]/20 via-[#B30000]/10 to-transparent p-6 md:p-8 border border-[#B30000]/20 flex items-center justify-between shadow-[0_0_30px_rgba(179,0,0,0.1)] relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#B30000]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#B30000]/20 transition-colors pointer-events-none" />
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-2">
-              <Trophy className="w-5 h-5 md:w-6 md:h-6 text-[#B30000] drop-shadow-[0_0_5px_rgba(179,0,0,0.8)]" />
-              <h4 className="font-black uppercase tracking-[0.2em] text-sm md:text-lg">Make The Call</h4>
+        {/* ── ASK MCHAMBUZI ── */}
+        <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-[#FFD700]/20 bg-[#0c0b02]/90 px-4 py-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Zap className="h-3.5 w-3.5 text-[#FFD700]" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">Ask Mchambuzi</span>
             </div>
-            <p className="text-xs md:text-sm text-gray-400 font-medium">Make your call, climb the leaderboard, and collect matchday receipts.</p>
+            <p className="text-[11px] text-white/40">
+              "What's happening in this match?" — get an instant fan-first read.
+            </p>
+          </div>
+          <Link href={`/mchambuzi-halisi?q=${encodeURIComponent(`What's happening in the ${match?.home} vs ${match?.away} match right now?`)}`}>
+            <button className="shrink-0 rounded-lg bg-[#FFD700]/15 border border-[#FFD700]/25 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#FFD700] transition-all hover:bg-[#FFD700]/25">
+              Ask Now
+            </button>
+          </Link>
+        </div>
+
+        {/* ── SHARE LIVE MOMENT ── */}
+        <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-[#25D366]/15 bg-[#030a04]/90 px-4 py-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-black uppercase tracking-widest text-[#25D366] mb-0.5">Share to Group Chat</div>
+            <p className="text-[11px] text-white/35">{match?.home} {match?.homeScore ?? 0}–{match?.awayScore ?? 0} {match?.away} · Live on BallMtaani</p>
+          </div>
+          <button
+            onClick={() => {
+              const text = encodeURIComponent(`⚽ LIVE: ${match?.home} ${match?.homeScore ?? 0}–${match?.awayScore ?? 0} ${match?.away}\n${match?.league} · ${liveMinute}'\n\nWatch live: https://ballmtaani.com/live-center/${match?.id}`);
+              window.open(`https://wa.me/?text=${text}`, "_blank");
+            }}
+            className="shrink-0 rounded-lg bg-[#25D366]/12 border border-[#25D366]/20 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#25D366] transition-all hover:bg-[#25D366]/22">
+            WA Share
+          </button>
+        </div>
+
+        {/* ── PROMO CARD ── */}
+        <div className="rounded-2xl bg-gradient-to-r from-[#B30000]/20 via-[#B30000]/10 to-transparent p-5 border border-[#B30000]/20 flex items-center justify-between relative overflow-hidden">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Trophy className="w-4 h-4 text-[#B30000]" />
+              <h4 className="font-black uppercase tracking-[0.2em] text-sm">Make The Call</h4>
+            </div>
+            <p className="text-xs text-gray-400">Pick the final score. Earn MTC. Keep receipts.</p>
           </div>
           <Link href="/predictions">
-            <button className="relative z-10 bg-white text-black px-6 py-3 rounded-xl font-black uppercase text-[10px] md:text-xs tracking-widest hover:bg-gray-200 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-              Make Call
+            <button className="bg-white text-black px-5 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all active:scale-95">
+              Predict
             </button>
           </Link>
         </div>

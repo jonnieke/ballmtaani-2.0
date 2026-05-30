@@ -31,33 +31,23 @@ export default function LiveCenterIndexPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-6xl px-3 py-6 md:px-4 md:py-10">
-      <div className="mb-8 text-center md:mb-10">
-        <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 shadow-[0_0_20px_rgba(179,0,0,0.15)] md:mb-6 md:px-5">
-          <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
-          <span className="text-primary font-black text-[10px] uppercase tracking-widest md:text-xs">Matchday Live</span>
+      {/* Header — data-first, no meaningless tiles */}
+      <div className="mb-6 flex flex-col gap-1 md:mb-8">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary">Matchday Live</span>
         </div>
-        <h1 className="mb-3 text-3xl font-black uppercase tracking-tight md:mb-4 md:text-5xl">
-          Live <span className="text-primary drop-shadow-[0_0_15px_rgba(179,0,0,0.5)]">Match Center</span>
-        </h1>
-        <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 md:text-sm">Select a match to enter the tactical view</p>
-      </div>
-
-      <div className="mb-4 grid grid-cols-2 gap-2 md:mb-6 md:grid-cols-4">
-        <div className="border border-white/10 bg-[#111] p-2.5 md:p-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Live Matches</p>
-          <p className="text-sm font-black text-white">{filteredMatches.length}</p>
-        </div>
-        <div className="border border-white/10 bg-[#111] p-2.5 md:p-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Total Goals</p>
-          <p className="text-sm font-black text-primary">{totalGoals}</p>
-        </div>
-        <div className="border border-white/10 bg-[#111] p-2.5 md:p-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Filter</p>
-          <p className="text-sm font-black text-white truncate">{leagueFilter === "all" ? "All Leagues" : leagueFilter}</p>
-        </div>
-        <div className="border border-white/10 bg-[#111] p-2.5 md:p-3">
-          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Sort</p>
-          <p className="text-sm font-black text-white">{sortMode === "minute" ? "Latest Minute" : "Most Goals"}</p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-black uppercase tracking-tight text-white md:text-3xl">
+              Live <span className="text-primary">Center</span>
+            </h1>
+            <p className="text-[11px] text-white/35 font-semibold">
+              {isLoading ? "Loading…" : filteredMatches.length > 0
+                ? `${filteredMatches.length} match${filteredMatches.length > 1 ? "es" : ""} live · ${totalGoals} goal${totalGoals !== 1 ? "s" : ""} so far`
+                : "No live matches right now"}
+            </p>
+          </div>
         </div>
       </div>
 
