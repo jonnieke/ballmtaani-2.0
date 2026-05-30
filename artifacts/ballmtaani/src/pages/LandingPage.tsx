@@ -996,19 +996,17 @@ export default function LandingPage() {
           </button>
         </header>
 
-        {/* Only show stat tiles when we have real data */}
-        {(live.length > 0 || upcoming.length > 0 || recent.length > 0) && (
-          <section className="mb-3 grid grid-cols-3 gap-2">
-            <div className={live.length > 0 ? "animate-pulse" : ""}>
+        {/* Only show Live Now tile when there are live matches — actionable info only */}
+        {live.length > 0 && (
+          <section className="mb-3">
+            <div className="animate-pulse">
               <StatTile
                 label="Live Now"
-                value={live.length > 0 ? live.length : "—"}
+                value={live.length}
                 icon={Activity}
-                tone={live.length > 0 ? "border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]" : "border-primary/45 text-primary"}
+                tone="border-primary/70 text-primary shadow-[0_0_20px_rgba(179,0,0,0.3)]"
               />
             </div>
-            <StatTile label="Upcoming" value={upcoming.length > 0 ? upcoming.length : "—"} icon={CalendarDays} tone="border-blue-400/40 text-blue-300" />
-            <StatTile label="Results" value={recent.length > 0 ? recent.length : "—"} icon={Clock3} tone="border-emerald-400/40 text-emerald-300" />
           </section>
         )}
 
