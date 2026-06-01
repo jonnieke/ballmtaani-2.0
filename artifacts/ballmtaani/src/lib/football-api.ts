@@ -3,8 +3,12 @@
  * All endpoints filter by major leagues to ensure data accuracy.
  */
 
-const API_BASE_URL = 'https://v3.football.api-sports.io';
-const API_KEY = import.meta.env.VITE_API_FOOTBALL_KEY;
+// Route all football API calls through our server-side proxy.
+// Direct browser → api-sports.io is blocked by CORS in production.
+// The proxy at /api/football/[...path] forwards requests server-side
+// and keeps the API key out of the browser bundle.
+const API_BASE_URL = '/api/football';
+const API_KEY = 'proxied'; // actual key lives on the server only
 
 // ─── Major League IDs (API-Football) ────────────────────────
 export const MAJOR_LEAGUE_IDS = {
@@ -40,15 +44,9 @@ const liveSummaryInflight = new Map<string, Promise<LiveEventSummary>>();
 
 // ─── Shared fetch helper ────────────────────────────────────
 async function apiFetch(endpoint: string): Promise<any> {
-  if (!API_KEY) {
-    console.warn("Football API key missing.");
-    return null;
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: { 'x-apisports-key': API_KEY }
-    });
+    // Calls /api/football/... — no auth header needed, proxy adds it server-side
+    const response = await fetch(`${API_BASE_URL}${endpoint}`);
 
     if (!response.ok) {
       console.error(`[Football API] HTTP Error ${response.status} for ${endpoint}`);
