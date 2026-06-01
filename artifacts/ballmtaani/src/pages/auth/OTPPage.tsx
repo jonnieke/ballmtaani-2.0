@@ -8,6 +8,8 @@ const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 export default function VerifyOTPPage() {
   const [location, setLocation] = useLocation();
   const [phone, setPhone] = useState("");
+  const [emailAddr, setEmailAddr] = useState("");
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,16 +17,20 @@ export default function VerifyOTPPage() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    // Get phone from session storage
+    const storedEmail = sessionStorage.getItem("auth_email");
     const storedPhone = sessionStorage.getItem("auth_phone");
-    if (!storedPhone) {
-      // If no phone is found, redirect back to login
+
+    if (storedEmail) {
+      setEmailAddr(storedEmail);
+      setAuthMethod("email");
+    } else if (storedPhone) {
+      setPhone(storedPhone);
+      setAuthMethod("phone");
+    } else {
       setLocation("/login");
       return;
     }
-    setPhone(storedPhone);
 
-    // Initial countdown for resend
     const timer = setInterval(() => {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -69,6 +75,11 @@ export default function VerifyOTPPage() {
 
   const { mockLogin } = useAuth();
 
+  const clearSession = () => {
+    sessionStorage.removeItem("auth_phone");
+    sessionStorage.removeItem("auth_email");
+  };
+
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const code = otp.join("");
@@ -81,42 +92,42 @@ export default function VerifyOTPPage() {
     setError("");
 
     try {
+      // Mock auth shortcut for local dev
       if (code === "123456" && ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase)) {
-         mockLogin(phone);
-         sessionStorage.removeItem("auth_phone");
-         const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
-         sessionStorage.removeItem("auth_return_url");
-         setLocation(returnUrl);
-         return;
+        mockLogin(phone || emailAddr);
+        clearSession();
+        const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+        sessionStorage.removeItem("auth_return_url");
+        setLocation(returnUrl);
+        return;
       }
 
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: phone,
-        token: code,
-        type: 'sms'
-      });
+      // Real verification — email or phone
+      const verifyPayload = authMethod === "email"
+        ? { email: emailAddr, token: code, type: "email" as const }
+        : { phone: phone,     token: code, type: "sms"   as const };
 
+      const { error } = await supabase.auth.verifyOtp(verifyPayload);
       if (error) throw error;
-      
-      sessionStorage.removeItem("auth_phone");
-      const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
+
+      clearSession();
+      const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
       sessionStorage.removeItem("auth_return_url");
       setLocation(returnUrl);
-      
+
     } catch (err: any) {
       console.error("Verification error:", err);
-      const isMockableError = err.message.includes("Database error") || 
-                              err.message.includes("Token has expired") ||
-                              err.message.includes("invalid") ||
-                              !supabase;
-                              
-      if (isMockableError && code === "123456" && ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase)) {
-          mockLogin(phone);
-          sessionStorage.removeItem("auth_phone");
-          const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
-          sessionStorage.removeItem("auth_return_url");
-          setLocation(returnUrl);
-          return;
+      // Fall back to mock login in dev if OTP fails
+      const isMockable = err.message?.includes("Database error") ||
+                         err.message?.includes("Token has expired") ||
+                         err.message?.includes("invalid") || !supabase;
+      if (isMockable && code === "123456" && ENABLE_MOCK_AUTH) {
+        mockLogin(phone || emailAddr);
+        clearSession();
+        const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+        sessionStorage.removeItem("auth_return_url");
+        setLocation(returnUrl);
+        return;
       }
       setError(err.message || "Invalid code. Please try again.");
     } finally {
@@ -126,15 +137,16 @@ export default function VerifyOTPPage() {
 
   const handleResend = async () => {
     if (countdown > 0) return;
-    
     setCountdown(60);
     setError("");
-    
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
-      });
-      if (error) throw error;
+      if (authMethod === "email") {
+        const { error } = await supabase.auth.signInWithOtp({ email: emailAddr });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithOtp({ phone });
+        if (error) throw error;
+      }
     } catch (err: any) {
       console.error("Resend error:", err);
       setError("Failed to resend code. Please try again later.");
@@ -171,11 +183,16 @@ export default function VerifyOTPPage() {
         </div>
 
         <div className="text-center mb-10">
-          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest mb-3">Verify Phone</h1>
+          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest mb-3">
+            Check Your {authMethod === "email" ? "Email" : "Phone"}
+          </h1>
           <p className="text-sm text-gray-400 font-medium leading-relaxed">
-            We've sent a 6-digit verification code to <br/>
-            <span className="text-white font-bold">{phone}</span>
+            We sent a 6-digit code to<br/>
+            <span className="text-white font-bold">{authMethod === "email" ? emailAddr : phone}</span>
           </p>
+          {authMethod === "email" && (
+            <p className="text-xs text-gray-600 mt-2">Check your spam folder if you don't see it.</p>
+          )}
         </div>
 
         {error && (

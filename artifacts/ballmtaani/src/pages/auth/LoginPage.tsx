@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
-import { ArrowRight, ShieldCheck, Heart, Gift, MessageCircle, Radio, Trophy, Users } from "lucide-react";
+import { ArrowRight, Mail, Phone, ShieldCheck, Heart, Gift, Radio, Trophy, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { CLUB_LOGOS } from "../../data/mockData";
 import { useTheme } from "../../context/ThemeContext";
@@ -8,6 +8,8 @@ const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
+  const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+254");
   const [loading, setLoading] = useState(false);
@@ -34,38 +36,61 @@ export default function LoginPage() {
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (authMethod === "email") {
+      if (!email || !email.includes("@")) {
+        setError("Please enter a valid email address");
+        return;
+      }
+      setLoading(true);
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: true },
+        });
+        if (error) throw error;
+        if (favoriteClub) sessionStorage.setItem("mtaani_pending_club", favoriteClub);
+        sessionStorage.setItem("auth_email", email);
+        sessionStorage.removeItem("auth_phone");
+        setLocation("/verify");
+      } catch (err: any) {
+        console.error("Auth error:", err);
+        if (ENABLE_MOCK_AUTH) {
+          sessionStorage.setItem("auth_email", email);
+          sessionStorage.removeItem("auth_phone");
+          setLocation("/verify");
+          return;
+        }
+        setError(err.message || "Failed to send code. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Phone flow
     if (!phoneNumber) {
       setError("Please enter a valid phone number");
       return;
     }
-
     setLoading(true);
-    setError("");
-
     try {
       const fullNumber = `${countryCode}${phoneNumber.replace(/^0+/, '')}`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: fullNumber,
-      });
-
+      const { error } = await supabase.auth.signInWithOtp({ phone: fullNumber });
       if (error) throw error;
-
-      if (favoriteClub) {
-        sessionStorage.setItem("mtaani_pending_club", favoriteClub);
-      }
+      if (favoriteClub) sessionStorage.setItem("mtaani_pending_club", favoriteClub);
       sessionStorage.setItem("auth_phone", fullNumber);
+      sessionStorage.removeItem("auth_email");
       setLocation("/verify");
-      
     } catch (err: any) {
       console.error("Auth error:", err);
-      const isMissingConfig = err.message.includes("Error sending sms") || 
-                              err.message.includes("Unsupported phone provider") || 
-                              !supabase;
-                              
+      const isMissingConfig = err.message.includes("Error sending sms") ||
+                              err.message.includes("Unsupported phone provider") || !supabase;
       if (isMissingConfig && ENABLE_MOCK_AUTH) {
         const mockNumber = `${countryCode}${phoneNumber.replace(/^0+/, '')}`;
         sessionStorage.setItem("auth_phone", mockNumber);
+        sessionStorage.removeItem("auth_email");
         setLocation("/verify");
         return;
       }
@@ -178,13 +203,51 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSendOTP} className="space-y-5">
+          {/* Method tabs */}
+          <div className="flex rounded-xl border border-white/10 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => { setAuthMethod("email"); setError(""); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest transition-all ${
+                authMethod === "email" ? "bg-white/10 text-white" : "text-gray-500 hover:text-white"
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" /> Email
+            </button>
+            <button
+              type="button"
+              onClick={() => { setAuthMethod("phone"); setError(""); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-widest transition-all border-l border-white/10 ${
+                authMethod === "phone" ? "bg-white/10 text-white" : "text-gray-500 hover:text-white"
+              }`}
+            >
+              <Phone className="w-3.5 h-3.5" /> Phone
+            </button>
+          </div>
+
+          {authMethod === "email" ? (
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 ml-1 flex items-center gap-1.5">
+                <Mail className="w-3 h-3 text-primary" /> Email address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="yourname@gmail.com"
+                autoComplete="email"
+                className="w-full bg-black/40 border border-white/10 px-4 py-4 text-lg text-white font-bold placeholder:text-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all shadow-inner"
+              />
+              <p className="text-[11px] text-gray-500 ml-1">We send a 6-digit code to your email. No password needed.</p>
+            </div>
+          ) : (
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 ml-1 flex items-center gap-1.5">
-              <MessageCircle className="w-3 h-3 text-primary" /> Phone Login
+              <Phone className="w-3 h-3 text-primary" /> Phone number
             </label>
             <div className="flex gap-2">
               <div className="relative">
-                <select 
+                <select
                   value={countryCode}
                   onChange={(e) => setCountryCode(e.target.value)}
                   className="appearance-none bg-black/40 border border-white/10 text-white text-sm font-bold pl-4 pr-10 py-4 h-full focus:outline-none focus:border-primary/50 transition-colors cursor-pointer"
@@ -200,7 +263,6 @@ export default function LoginPage() {
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 text-xs">v</div>
               </div>
-              
               <input
                 type="tel"
                 value={phoneNumber}
@@ -210,6 +272,7 @@ export default function LoginPage() {
               />
             </div>
           </div>
+          )}
 
           <div className="space-y-3">
             <label className="text-xs font-black uppercase tracking-[0.15em] text-gray-400 ml-1 flex items-center gap-1">
@@ -252,7 +315,7 @@ export default function LoginPage() {
               <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
               <>
-                Send Matchday Code <ArrowRight className="w-5 h-5" />
+                {authMethod === "email" ? "Send Code to Email" : "Send SMS Code"} <ArrowRight className="w-5 h-5" />
               </>
             )}
           </button>
