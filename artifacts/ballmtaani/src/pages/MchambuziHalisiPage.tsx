@@ -198,7 +198,7 @@ export default function MchambuziHalisiPage() {
                       : "border-white/10 bg-white/[0.04] text-white/76"
                   }`}>
                     <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/38">
-                      {message.role === "fan" ? "Fan" : message.provider === "openai" ? "Mchambuzi Halisi" : message.provider === "gemini" ? "Mchambuzi Halisi" : message.usedAi === false ? "Mchambuzi Halisi - data mode" : "Mchambuzi Halisi"}
+                      {message.role === "fan" ? "Fan" : message.usedAi === false ? "Mchambuzi · Live Data" : "Mchambuzi Halisi"}
                     </div>
                     {message.text}
                     {message.role === "mchambuzi" && (
