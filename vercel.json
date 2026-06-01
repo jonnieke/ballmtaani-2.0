@@ -7,10 +7,6 @@
     {
       "path": "/api/settle-predictions",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/push-kickoff",
-      "schedule": "*/15 * * * *"
     }
   ],
   "rewrites": [
