@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMatches } from "../hooks/useData";
 import { Link } from "wouter";
 
@@ -7,8 +7,11 @@ export function ScoreTicker() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
 
-  // Only show when there are live matches or we have any match data
-  const liveMatches = matches.filter((m: any) => m.minute || m.status === 'LIVE' || m.homeScore !== undefined);
+  // useMemo gives a stable array reference so the rAF effect doesn't restart every render
+  const liveMatches = useMemo(
+    () => matches.filter((m: any) => m.minute || m.status === 'LIVE' || m.homeScore !== undefined),
+    [matches]
+  );
 
   useEffect(() => {
     const track = trackRef.current;
