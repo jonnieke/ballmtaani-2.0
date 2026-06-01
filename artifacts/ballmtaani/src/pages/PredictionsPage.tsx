@@ -3,25 +3,90 @@ import { useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
-import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2 } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 
-const WC26_NATIONS = [
-  "Brazil","France","Argentina","England","Germany","Spain",
-  "Portugal","Netherlands","Belgium","Morocco","Senegal","USA",
-];
-
 const WC26_SPECIAL_ID = "wc26-2026-winner";
+const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
+
+// ─── WC26 Tournament Prediction Questions ─────────────────────────────────────
+interface WC26Question {
+  id: string;
+  emoji: string;
+  title: string;
+  subtitle: string;
+  options: string[];
+  mtc: number;
+}
+
+const WC26_QUESTIONS: WC26Question[] = [
+  {
+    id: "wc26-champion",
+    emoji: "🏆",
+    title: "Who lifts the trophy?",
+    subtitle: "Pick the WC26 World Champion",
+    options: ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Morocco","Senegal","USA","Netherlands","Colombia"],
+    mtc: 500,
+  },
+  {
+    id: "wc26-africa",
+    emoji: "🌍",
+    title: "Africa's deepest run",
+    subtitle: "Which CAF team goes furthest?",
+    options: ["Morocco","Senegal","Nigeria","Egypt","Cameroon","South Africa","Ghana","Algeria","Tunisia"],
+    mtc: 200,
+  },
+  {
+    id: "wc26-boot",
+    emoji: "👟",
+    title: "Golden Boot winner",
+    subtitle: "Top scorer at WC26",
+    options: ["Mbappe","Vinicius Jr","Haaland","Osimhen","Mane","Lewandowski","Kane","Benzema","Lukaku","Salah"],
+    mtc: 300,
+  },
+  {
+    id: "wc26-shock",
+    emoji: "😱",
+    title: "Biggest group stage exit",
+    subtitle: "Who gets knocked out in the groups?",
+    options: ["Argentina","Brazil","France","Germany","England","Spain","Belgium","Portugal"],
+    mtc: 250,
+  },
+  {
+    id: "wc26-horse",
+    emoji: "⚡",
+    title: "Dark horse finalist",
+    subtitle: "Who reaches the final and shocks the world?",
+    options: ["Portugal","Colombia","Japan","Ecuador","Senegal","South Korea","Iran","Mexico","USA","Canada"],
+    mtc: 400,
+  },
+  {
+    id: "wc26-kenya",
+    emoji: "🇰🇪",
+    title: "Kenya's heart team",
+    subtitle: "Who are Kenyan fans riding with?",
+    options: ["Morocco","Senegal","Nigeria","South Africa","Brazil","France","England","Argentina","USA","Germany"],
+    mtc: 50,
+  },
+];
 
 
 export default function PredictionsPage() {
-  const [activeTab, setActiveTab] = useState<"make" | "my" | "premium">("make");
+  const [activeTab, setActiveTab] = useState<"make" | "my" | "wc26">("make");
+
+  // Legacy WC26 winner pick (kept for backward compat)
   const [wc26Pick, setWc26Pick]   = useState<string>("");
   const [wc26Saved, setWc26Saved] = useState(false);
   const [wc26Saving, setWc26Saving] = useState(false);
+
+  // WC26 Tournament predictions
+  const [wc26Picks, setWc26Picks]   = useState<Record<string, string>>({});   // questionId → pick
+  const [wc26Saved2, setWc26Saved2] = useState<Record<string, boolean>>({});   // questionId → saved
+  const [wc26Saving2, setWc26Saving2] = useState<string | null>(null);         // questionId being saved
+
   const { isLoggedIn, user, coins, updateCoins, awardCoins } = useAuth();
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
@@ -96,6 +161,50 @@ export default function PredictionsPage() {
     setWc26Saving(false);
     setWc26Saved(true);
     awardCoins('prediction_submitted');
+  };
+
+  // Load existing WC26 tournament picks
+  useEffect(() => {
+    if (!isLoggedIn || !user) return;
+    const ids = WC26_QUESTIONS.map(q => q.id);
+    supabase.from("predictions")
+      .select("match_id, predicted_score")
+      .eq("user_id", user.id)
+      .in("match_id", ids)
+      .then(({ data }) => {
+        if (!data) return;
+        const picks: Record<string, string> = {};
+        const saved: Record<string, boolean> = {};
+        data.forEach((row: any) => {
+          picks[row.match_id] = row.predicted_score;
+          saved[row.match_id] = true;
+        });
+        setWc26Picks(picks);
+        setWc26Saved2(saved);
+      });
+  }, [isLoggedIn, user]);
+
+  const handleWC26Pick = async (questionId: string, pick: string) => {
+    if (!isLoggedIn || !user) { sessionStorage.setItem("auth_return_url", window.location.pathname); setLocation('/login'); return; }
+    if (wc26Saved2[questionId]) return;
+    setWc26Picks(prev => ({ ...prev, [questionId]: pick }));
+    setWc26Saving2(questionId);
+    await supabase.from("predictions").upsert(
+      { user_id: user.id, match_id: questionId, predicted_score: pick },
+      { onConflict: "user_id,match_id" }
+    );
+    setWc26Saving2(null);
+    setWc26Saved2(prev => ({ ...prev, [questionId]: true }));
+    awardCoins('prediction_submitted');
+  };
+
+  const shareWC26Picks = () => {
+    const filled = WC26_QUESTIONS.filter(q => wc26Saved2[q.id]);
+    if (!filled.length) return;
+    const lines = filled.map(q => `${q.emoji} ${q.title}: ${wc26Picks[q.id]}`).join("\n");
+    const total = filled.reduce((s, q) => s + q.mtc, 0);
+    const text = encodeURIComponent(`🏆 My WC26 Bold Calls on BallMtaani\n\n${lines}\n\nMTC on the line: ${total.toLocaleString()}\n\nMake yours → https://ballmtaani.com/predictions`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   const shareReceipt = (item: any) => {
@@ -255,16 +364,16 @@ export default function PredictionsPage() {
               My Receipts
               {activeTab === "my" && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-[#FFD700] rounded-t-full shadow-[0_0_8px_#FFD700]" />}
             </button>
-            <button 
-              onClick={() => setActiveTab("premium")} 
+            <button
+              onClick={() => setActiveTab("wc26")}
               className={`px-6 md:px-10 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 relative ${
-                activeTab === "premium"
-                  ? "text-white bg-[#FFD700]/10 shadow-[inner_0_0_10px_rgba(255,215,0,0.1)] border border-[#FFD700]/20" 
+                activeTab === "wc26"
+                  ? "text-black bg-[#FFD700] shadow-[0_0_15px_rgba(255,215,0,0.4)]"
                   : "text-[#FFD700]/70 hover:text-[#FFD700] hover:bg-[#FFD700]/5"
               }`}
             >
-              Fan Intel
-              {activeTab === "premium" && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-[#FFD700] rounded-t-full shadow-[0_0_8px_#FFD700]" />}
+              🏆 WC26 Calls
+              {activeTab === "wc26" && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-[#FFD700] rounded-t-full shadow-[0_0_8px_#FFD700]" />}
             </button>
           </div>
         </div>
@@ -526,44 +635,114 @@ export default function PredictionsPage() {
             </div>
           )}
         </div>
-      ) : (
-        <div className="space-y-6 max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-black uppercase tracking-widest text-[#FFD700] mb-2 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">Fan Intel</h2>
-            <p className="text-gray-400">Community reads from BallMtaani fans with a track record — tactical watch-points before you lock in your call.</p>
+      ) : activeTab === "wc26" ? (
+        // ── WC26 TOURNAMENT PREDICTION TAB ──────────────────────────────
+        <div className="space-y-4 max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="rounded-2xl border border-[#FFD700]/25 bg-gradient-to-br from-[#110d00] to-[#09080d] px-5 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black uppercase tracking-widest text-[#FFD700]">WC26 Bold Calls</h2>
+                <p className="text-[11px] text-white/40 mt-0.5">
+                  {Object.keys(wc26Saved2).filter(k => wc26Saved2[k]).length}/{WC26_QUESTIONS.length} calls locked ·{" "}
+                  {WC26_QUESTIONS.filter(q => wc26Saved2[q.id]).reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line
+                </p>
+              </div>
+              {Object.keys(wc26Saved2).some(k => wc26Saved2[k]) && (
+                <button onClick={shareWC26Picks}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#25D366]/12 border border-[#25D366]/25 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-[#25D366] hover:bg-[#25D366]/22 transition-all">
+                  <Share2 className="h-3.5 w-3.5" /> Share
+                </button>
+              )}
+            </div>
+            {/* Progress bar */}
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/8">
+              <div
+                className="h-full rounded-full bg-[#FFD700] transition-all duration-500"
+                style={{ width: `${(Object.keys(wc26Saved2).filter(k => wc26Saved2[k]).length / WC26_QUESTIONS.length) * 100}%` }}
+              />
+            </div>
           </div>
 
-          <div className="bg-[#111] border border-[#FFD700]/20 rounded-2xl p-8 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/5 via-transparent to-transparent pointer-events-none" />
-            <Star className="w-10 h-10 text-[#FFD700] mx-auto mb-4 animate-pulse relative z-10" />
-            <h3 className="font-black text-white text-xl uppercase tracking-widest mb-3 relative z-10">Fan Analysts Coming for WC26</h3>
-            <p className="text-gray-400 text-sm max-w-lg mx-auto leading-relaxed mb-6 relative z-10">
-              We are onboarding the first wave of BallMtaani fan analysts ahead of the World Cup. Each one earns their badge through prediction receipts — no fake win rates, just real track records from real calls.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto mb-8 relative z-10">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="text-lg font-black text-[#FFD700]">Receipt-backed</div>
-                <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Every analyst earns their badge through verified prediction history.</p>
+          {/* Question cards */}
+          {WC26_QUESTIONS.map((q) => {
+            const picked = wc26Picks[q.id];
+            const saved  = wc26Saved2[q.id];
+            const saving = wc26Saving2 === q.id;
+            return (
+              <div key={q.id} className={`overflow-hidden rounded-2xl border transition-all ${
+                saved ? "border-[#FFD700]/35 bg-[#0c0a00]/95" : "border-white/8 bg-[#0d0f14]/95"
+              }`}>
+                <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{q.emoji}</span>
+                    <div>
+                      <div className="text-xs font-black uppercase tracking-widest text-white">{q.title}</div>
+                      <div className="text-[10px] text-white/35">{q.subtitle}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-black ${saved ? "text-[#FFD700]" : "text-white/30"}`}>
+                      +{q.mtc.toLocaleString()} MTC
+                    </span>
+                    {saved && <CheckCircle2 className="h-4 w-4 text-[#FFD700]" />}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  {saved ? (
+                    // Locked state
+                    <div className="flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
+                      <span className="text-[#FFD700] font-black text-sm">{picked}</span>
+                      <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-[#FFD700]/50">Locked</span>
+                    </div>
+                  ) : (
+                    // Pick buttons
+                    <div className="flex flex-wrap gap-2">
+                      {q.options.map(opt => (
+                        <button key={opt}
+                          onClick={() => handleWC26Pick(q.id, opt)}
+                          disabled={saving}
+                          className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all disabled:opacity-50 ${
+                            picked === opt && !saved
+                              ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]"
+                              : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"
+                          }`}>
+                          {saving && picked === opt
+                            ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />{opt}</span>
+                            : opt
+                          }
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="text-lg font-black text-[#FFD700]">MTC-gated</div>
-                <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Reads cost MTC. Correct calls that you backed earn it back and more.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="text-lg font-black text-[#FFD700]">Kenya-first</div>
-                <p className="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Matchday context written in EAT, for fans who watch at the right times.</p>
-              </div>
-            </div>
-            <div className="relative z-10 space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/8 px-5 py-2.5 text-xs font-black uppercase tracking-[0.2em] text-[#FFD700]">
-                Opening with the World Cup group stage — June 11
-              </div>
-              <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">
-                In the meantime — ask <a href="/mchambuzi-halisi" className="text-primary hover:underline">Mchambuzi Halisi</a> for any tactical read you need right now
+            );
+          })}
+
+          {/* All done state */}
+          {WC26_QUESTIONS.every(q => wc26Saved2[q.id]) && (
+            <div className="overflow-hidden rounded-2xl border border-[#FFD700]/35 bg-gradient-to-br from-[#110d00] to-[#09080d] p-6 text-center">
+              <div className="text-4xl mb-3">🏆</div>
+              <h3 className="font-black text-[#FFD700] uppercase tracking-widest mb-2">All 6 calls locked.</h3>
+              <p className="text-sm text-white/45 mb-5">
+                Come back after June 11 for your receipts.{" "}
+                {WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.
               </p>
+              <button onClick={shareWC26Picks}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-6 py-3 text-sm font-black uppercase tracking-widest text-white shadow-[0_0_20px_rgba(37,211,102,0.3)] transition-all hover:shadow-[0_0_30px_rgba(37,211,102,0.5)]">
+                <Share2 className="h-4 w-4" /> Share My Bracket
+              </button>
             </div>
-          </div>
+          )}
+
+          <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/20 pb-2">
+            Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT
+          </p>
         </div>
+      ) : (
+        <div className="py-10 text-center text-white/20 text-sm">Nothing here yet.</div>
       )}
       </div>
     </div>
