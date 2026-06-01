@@ -1,7 +1,8 @@
 {
   "framework": "vite",
-  "buildCommand": "cd artifacts/ballmtaani && npm run build",
-  "outputDirectory": "artifacts/ballmtaani/dist",
+  "rootDirectory": "artifacts/ballmtaani",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "installCommand": "npm install --legacy-peer-deps",
   "crons": [
     {
