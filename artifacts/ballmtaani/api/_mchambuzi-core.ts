@@ -350,7 +350,7 @@ function resolveProviderPreference(env: MchambuziEnv, options: MchambuziOptions)
     options.providerPreference ||
     env.MCHAMBUZI_PROVIDER_ORDER ||
     env.MCHAMBUZI_AI_PROVIDER ||
-    "vertexai-first"
+    "openai-first"   // OpenAI default: no token expiry, no GCP WIF needed
   ).toLowerCase();
 
   if (raw.includes("vertexai") && raw.includes("only")) return "vertexai-only" as const;
