@@ -194,8 +194,14 @@ Answer as short football chat with practical insight, not generic hype.`;
  * If the endpoint is unavailable (e.g. missing API keys on Vercel, network error),
  * falls back to a data-only text answer built from the live football context.
  * No AI keys ever touch the browser bundle.
+ *
+ * @param question  Fan's football question
+ * @param preloaded Optional pre-loaded context from React Query hooks (avoids duplicate API calls)
  */
-export async function askMchambuziHalisi(question: string): Promise<{
+export async function askMchambuziHalisi(
+  question: string,
+  preloaded?: { live?: any[]; upcoming?: any[]; recent?: any[] }
+): Promise<{
   answer: string;
   context: MchambuziContext;
   usedAi: boolean;
@@ -210,8 +216,32 @@ export async function askMchambuziHalisi(question: string): Promise<{
     };
   }
 
-  // ── 2. Graceful data-only fallback (no AI keys in browser) ───────────────
-  const context = await fetchMchambuziContext();
+  // ── 2. Build context — use pre-loaded React Query data to avoid rate limit hits ──
+  let context: MchambuziContext;
+  if (preloaded && (preloaded.live?.length || preloaded.upcoming?.length || preloaded.recent?.length)) {
+    // Use already-fetched data from the app's React Query cache
+    const news = await fetchFootballNews({ network: true, fallback: true });
+    const now = new Date();
+    context = {
+      generatedAt: now.toISOString(),
+      generatedAtLabel: now.toLocaleString("en-KE", {
+        weekday: "short", month: "short", day: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true,
+        timeZone: "Africa/Nairobi",
+      }) + " EAT",
+      seasonLabel: `${now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1}/${String((now.getUTCMonth() + 1 >= 7 ? now.getUTCFullYear() : now.getUTCFullYear() - 1) + 1).slice(-2)}`,
+      live: preloaded.live || [],
+      upcoming: preloaded.upcoming || [],
+      recent: preloaded.recent || [],
+      news,
+      wc26StartDate: "June 11, 2026",
+      sources: ["App live feed", "BBC Sport RSS", "Goal.com RSS"],
+    };
+  } else {
+    // Last resort: make fresh API calls
+    context = await fetchMchambuziContext();
+  }
+
   return {
     answer: buildFallbackAnswer(question, context),
     context,

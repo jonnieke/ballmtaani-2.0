@@ -1,7 +1,8 @@
-import { FormEvent, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useSearch } from "wouter";
 import { ArrowLeft, Bot, Brain, Newspaper, Radio, Send, Sparkles, Trophy } from "lucide-react";
 import SEO from "../components/SEO";
+import { useMatches, useUpcomingFixtures, useRecentMatches } from "../hooks/useData";
 import {
   askMchambuziHalisi,
   type MchambuziContext,
@@ -59,6 +60,21 @@ export default function MchambuziHalisiPage() {
     },
   ]);
 
+  // Load React Query data to use as pre-fetched context (avoids duplicate API calls + rate limits)
+  const { data: liveMatches = [] } = useMatches();
+  const { data: upcomingFixtures = [] } = useUpcomingFixtures();
+  const { data: recentMatches = [] } = useRecentMatches();
+
+  // Pre-fill question from URL ?q= param (e.g. from Live Center "Ask Mchambuzi" button)
+  const search = useSearch();
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const q = params.get("q");
+    if (q && q.trim().length > 2) {
+      setQuestion(q.trim());
+    }
+  }, [search]);
+
   const canAsk = question.trim().length > 2 && !isThinking;
 
   const ask = async (value = question) => {
@@ -69,7 +85,12 @@ export default function MchambuziHalisiPage() {
     setIsThinking(true);
     setMessages((prev) => [...prev, { role: "fan", text: clean }]);
 
-    const result = await askMchambuziHalisi(clean);
+    // Pass pre-loaded data to avoid hitting API rate limits on fallback
+    const result = await askMchambuziHalisi(clean, {
+      live: liveMatches,
+      upcoming: upcomingFixtures,
+      recent: recentMatches,
+    });
     setLatestContext(result.context);
     const sources = Array.isArray(result.context?.sources) && result.context.sources.length
       ? result.context.sources.join(" | ")
