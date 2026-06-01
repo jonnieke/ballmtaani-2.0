@@ -52,11 +52,11 @@ export async function getVertexAccessToken(env: Record<string, string | undefine
   });
 
   if (!stsRes.ok) {
-    const err = await stsRes.json().catch(() => ({}));
-    throw new Error(`WIF STS exchange failed (${stsRes.status}): ${err.error_description || err.error || "unknown"}`);
+    const err = await stsRes.json().catch(() => ({} as any)) as any;
+    throw new Error(`WIF STS exchange failed (${stsRes.status}): ${err?.error_description || err?.error || "unknown"}`);
   }
 
-  const { access_token: federatedToken } = await stsRes.json();
+  const { access_token: federatedToken } = await stsRes.json() as any;
 
   // Step 2: Impersonate the service account → short-lived access token
   const impersonateRes = await fetch(
@@ -75,10 +75,10 @@ export async function getVertexAccessToken(env: Record<string, string | undefine
   );
 
   if (!impersonateRes.ok) {
-    const err = await impersonateRes.json().catch(() => ({}));
-    throw new Error(`Service account impersonation failed (${impersonateRes.status}): ${JSON.stringify(err.error || err)}`);
+    const err = await impersonateRes.json().catch(() => ({} as any)) as any;
+    throw new Error(`Service account impersonation failed (${impersonateRes.status}): ${JSON.stringify(err?.error || err)}`);
   }
 
-  const { accessToken } = await impersonateRes.json();
+  const { accessToken } = await impersonateRes.json() as any;
   return { token: accessToken, source: "workload-identity-federation" };
 }

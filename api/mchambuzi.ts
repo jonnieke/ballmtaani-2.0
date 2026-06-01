@@ -23,10 +23,10 @@ export default async function handler(req: any, res: any) {
 
   const requestedProvider = String(req.body?.provider || "").trim().toLowerCase();
   const providerPreference =
-    requestedProvider === "gemini" ? "gemini-only" :
+    requestedProvider === "vertexai" ? "vertexai-only" :
     requestedProvider === "openai" ? "openai-only" :
     requestedProvider === "openai-first" ? "openai-first" :
-    requestedProvider === "gemini-first" ? "gemini-first" :
+    requestedProvider === "vertexai-first" ? "vertexai-first" :
     undefined;
   const debug = req.body?.debug === true || process.env.MCHAMBUZI_DEBUG === "true";
   const result = await answerMchambuzi(question, process.env, { debug, providerPreference });

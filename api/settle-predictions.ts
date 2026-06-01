@@ -33,8 +33,8 @@ async function fetchFixtureResults(
         headers: { "x-apisports-key": apiKey },
       });
       if (!resp.ok) continue;
-      const data = await resp.json();
-      for (const item of data.response || []) {
+      const data = await resp.json() as any;
+      for (const item of (data?.response || []) as any[]) {
         const status = item.fixture?.status?.short || "";
         if (!["FT", "AET", "PEN"].includes(status)) continue;
         results[String(item.fixture.id)] = {

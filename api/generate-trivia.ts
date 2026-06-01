@@ -54,12 +54,12 @@ export default async function handler(req: any, res: any) {
     });
 
     if (!apiRes.ok) {
-      const err = await apiRes.json().catch(() => ({}));
-      return json(res, 502, { error: err?.error?.message || `Vertex ${apiRes.status}`, questions: null });
+      const err = await apiRes.json().catch(() => ({} as any)) as any;
+      return json(res, 502, { error: (err as any)?.error?.message || `Vertex ${apiRes.status}`, questions: null });
     }
 
-    const data = await apiRes.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    const data = await apiRes.json() as any;
+    const raw = (data?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
     if (!raw) return json(res, 502, { error: "Empty response from Vertex AI", questions: null });
 
     let cleanJson = raw;

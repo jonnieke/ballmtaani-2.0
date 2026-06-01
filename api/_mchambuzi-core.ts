@@ -108,8 +108,8 @@ async function footballFetch(endpoint: string, env: MchambuziEnv) {
       headers: { "x-apisports-key": key },
     });
     if (!response.ok) return [];
-    const data = await response.json();
-    return Array.isArray(data.response) ? data.response : [];
+    const data = await response.json() as any;
+    return Array.isArray(data?.response) ? data.response : [];
   } catch {
     return [];
   }
@@ -281,13 +281,13 @@ async function askVertexAI(prompt: string, env: MchambuziEnv, diagnostics: strin
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      diagnostics.push(`VertexAI: ${err?.error?.message || res.status}`);
+      const err = await res.json().catch(() => ({} as any));
+      diagnostics.push(`VertexAI: ${(err as any)?.error?.message || res.status}`);
       return null;
     }
 
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+    const data = await res.json() as any;
+    return (data?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim() || null;
   } catch (err: any) {
     diagnostics.push(`VertexAI: ${String(err?.message || err).slice(0, 220)}`);
     return null;
@@ -324,8 +324,8 @@ async function askOpenAi(prompt: string, env: MchambuziEnv, diagnostics: string[
       diagnostics.push(`OpenAI: ${response.status} ${await readProviderError(response)}`);
       return null;
     }
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || null;
+    const data = await response.json() as any;
+    return (data?.choices?.[0]?.message?.content || "").trim() || null;
   } catch {
     diagnostics.push("OpenAI: network error");
     return null;
@@ -337,8 +337,8 @@ async function askOpenAi(prompt: string, env: MchambuziEnv, diagnostics: string[
 
 async function readProviderError(response: Response) {
   try {
-    const data = await response.clone().json();
-    const message = data?.error?.message || data?.error || data?.message;
+    const data = await response.clone().json() as any;
+    const message = (data?.error as any)?.message || data?.error || data?.message;
     return message ? `- ${String(message).slice(0, 220)}` : "";
   } catch {
     return "";
