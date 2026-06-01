@@ -31,13 +31,12 @@ export default async function handler(req: any, res: any) {
   const endpoint = "/" + segments.join("/");
 
   // Forward all query params EXCEPT the internal `path` param
-  const forwardParams = new URLSearchParams();
-  for (const [k, v] of Object.entries(req.query)) {
+  const parts: string[] = [];
+  for (const [k, v] of Object.entries(req.query as Record<string, string>)) {
     if (k === "path") continue;
-    forwardParams.append(k, String(v));
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
   }
-
-  const qs = forwardParams.toString();
+  const qs = parts.join("&");
   const upstream = `https://v3.football.api-sports.io${endpoint}${qs ? "?" + qs : ""}`;
 
   const key =
