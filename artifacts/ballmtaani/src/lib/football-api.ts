@@ -264,44 +264,57 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
 
 // ─── 2. UPCOMING FIXTURES (next matches from major leagues) ─
 export async function fetchUpcomingFixtures(): Promise<any[]> {
-  // UCL + UEL first (cup finals happen end of season when domestics are done)
-  const leagueIds = [2, 3, 12, 39, 140, 135, 78, 61];
-  const allFixtures: any[] = [];
+  // WC26 (league 1, season 2026) + European leagues (season 2025) fetched IN PARALLEL
+  // Was: sequential loop × 3 season fallbacks = 24 API calls
+  // Now: parallel Promise.all = 8 API calls simultaneously
+  const leagueSeasons: [number, number][] = [
+    [1, 2026],   // World Cup 2026
+    [2, 2025],   // UCL
+    [3, 2025],   // UEL
+    [12, 2025],  // CAF Champions League
+    [39, 2025],  // Premier League
+    [140, 2024], // La Liga
+    [135, 2025], // Serie A
+    [78, 2024],  // Bundesliga
+    [61, 2024],  // Ligue 1
+  ];
 
-  for (const leagueId of leagueIds) {
-    const raw = await fetchWithSeasonFallback(
-      (season) => `/fixtures?league=${leagueId}&season=${season}&next=5`
-    );
-    if (raw && raw.length > 0) {
-      const mapped = raw.map((item: any) => ({
-        id: String(item.fixture.id),
-        homeTeamId: item.teams.home.id,
-        awayTeamId: item.teams.away.id,
-        home: item.teams.home.name,
-        homeLogo: item.teams.home.logo,
-        homeColor: "#555",
-        homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
-        away: item.teams.away.name,
-        awayLogo: item.teams.away.logo,
-        awayColor: "#777",
-        awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
-        time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: 'Africa/Nairobi'
-        }) + ' EAT',
-        league: item.league.name,
-        leagueId: item.league.id,
-        leagueLogo: item.league.logo,
-        date: formatRelativeDate(item.fixture.date),
-        kickoffAt: new Date(item.fixture.date).getTime(),
-      }));
-      allFixtures.push(...mapped);
-    }
+  const results = await Promise.all(
+    leagueSeasons.map(([leagueId, season]) =>
+      apiFetch(`/fixtures?league=${leagueId}&season=${season}&next=5`).catch(() => null)
+    )
+  );
+
+  const allFixtures: any[] = [];
+  for (const raw of results) {
+    if (!raw || !raw.length) continue;
+    const mapped = raw.map((item: any) => ({
+      id: String(item.fixture.id),
+      homeTeamId: item.teams.home.id,
+      awayTeamId: item.teams.away.id,
+      home: item.teams.home.name,
+      homeLogo: item.teams.home.logo,
+      homeColor: "#555",
+      homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
+      away: item.teams.away.name,
+      awayLogo: item.teams.away.logo,
+      awayColor: "#777",
+      awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+      time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Africa/Nairobi'
+      }) + ' EAT',
+      league: item.league.name,
+      leagueId: item.league.id,
+      leagueLogo: item.league.logo,
+      date: formatRelativeDate(item.fixture.date),
+      kickoffAt: new Date(item.fixture.date).getTime(),
+    }));
+    allFixtures.push(...mapped);
   }
 
-  // Sort by kickoff timestamp (soonest first)
   return allFixtures.sort((a: any, b: any) => (a.kickoffAt || 0) - (b.kickoffAt || 0));
 }
 
@@ -409,61 +422,72 @@ function formatRelativeDate(dateStr: string): string {
 
 // ─── 2b. RECENT MATCHES (past 5 days from major leagues) ─────
 export async function fetchRecentMatches(): Promise<any[]> {
-  const leagueIds = [39, 140, 135, 78, 61]; // Top 5 domestic
-  const allFixtures: any[] = [];
-  
-  // Get date range: Today back to 5 days ago
+  // Was: sequential loop × 3 season fallbacks = 15 API calls
+  // Now: parallel Promise.all = 5 API calls simultaneously
   const toDate = new Date();
   const fromDate = new Date();
   fromDate.setDate(toDate.getDate() - 5);
-  
   const fromStr = fromDate.toISOString().split('T')[0];
   const toStr = toDate.toISOString().split('T')[0];
 
-  for (const leagueId of leagueIds) {
-    const raw = await fetchWithSeasonFallback(
-      (season) => `/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`
-    );
-    if (raw && raw.length > 0) {
-      const mapped = raw.map((item: any) => ({
-        id: String(item.fixture.id),
-        homeTeamId: item.teams.home.id,
-        awayTeamId: item.teams.away.id,
-        home: item.teams.home.name,
-        homeLogo: item.teams.home.logo,
-        homeColor: "#555",
-        homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
-        away: item.teams.away.name,
-        awayLogo: item.teams.away.logo,
-        awayColor: "#777",
-        awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
-        homeScore: item.goals.home ?? 0,
-        awayScore: item.goals.away ?? 0,
-        league: item.league.name,
-        leagueId: item.league.id,
-        leagueLogo: item.league.logo,
-        date: new Date(item.fixture.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-        kickoff: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: 'Africa/Nairobi'
-        }),
-        timestamp: new Date(item.fixture.date).getTime()
-      }));
-      allFixtures.push(...mapped);
-    }
+  const leagueSeasons: [number, number][] = [
+    [39, 2025],  // Premier League
+    [140, 2024], // La Liga
+    [135, 2025], // Serie A
+    [78, 2024],  // Bundesliga
+    [61, 2024],  // Ligue 1
+  ];
+
+  const results = await Promise.all(
+    leagueSeasons.map(([leagueId, season]) =>
+      apiFetch(`/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`).catch(() => null)
+    )
+  );
+
+  const allFixtures: any[] = [];
+  for (const raw of results) {
+    if (!raw || !raw.length) continue;
+    const mapped = raw.map((item: any) => ({
+      id: String(item.fixture.id),
+      homeTeamId: item.teams.home.id,
+      awayTeamId: item.teams.away.id,
+      home: item.teams.home.name,
+      homeLogo: item.teams.home.logo,
+      homeColor: "#555",
+      homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
+      away: item.teams.away.name,
+      awayLogo: item.teams.away.logo,
+      awayColor: "#777",
+      awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+      homeScore: item.goals.home ?? 0,
+      awayScore: item.goals.away ?? 0,
+      league: item.league.name,
+      leagueId: item.league.id,
+      leagueLogo: item.league.logo,
+      date: new Date(item.fixture.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      kickoff: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Africa/Nairobi'
+      }),
+      timestamp: new Date(item.fixture.date).getTime()
+    }));
+    allFixtures.push(...mapped);
   }
 
-  // Sort by date descending (latest first)
   return allFixtures.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 // ─── 3. STANDINGS (per league) ──────────────────────────────
+// Season map: explicit seasons per league (avoids 3-call season fallback loop)
+const LEAGUE_SEASON_MAP: Record<number, number> = {
+  39: 2025, 140: 2024, 135: 2025, 78: 2024, 61: 2024, 686: 2025, 288: 2025,
+};
+
 export async function fetchStandings(leagueId: number): Promise<StandingEntry[]> {
-  const raw = await fetchWithSeasonFallback(
-    (season) => `/standings?league=${leagueId}&season=${season}`
-  );
+  const season = LEAGUE_SEASON_MAP[leagueId] ?? CURRENT_SEASON;
+  const raw = await apiFetch(`/standings?league=${leagueId}&season=${season}`);
   if (!raw || raw.length === 0) return [];
 
   const league = raw[0]?.league;
