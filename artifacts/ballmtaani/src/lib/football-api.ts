@@ -272,11 +272,11 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
     [2, 2025],   // UCL
     [3, 2025],   // UEL
     [12, 2025],  // CAF Champions League
-    [39, 2025],  // Premier League
-    [140, 2024], // La Liga
-    [135, 2025], // Serie A
-    [78, 2024],  // Bundesliga
-    [61, 2024],  // Ligue 1
+    [39, 2025],  // Premier League 2025-26
+    [140, 2025], // La Liga 2025-26
+    [135, 2025], // Serie A 2025-26
+    [78, 2025],  // Bundesliga 2025-26
+    [61, 2025],  // Ligue 1 2025-26
   ];
 
   const results = await Promise.all(
@@ -431,11 +431,11 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const toStr = toDate.toISOString().split('T')[0];
 
   const leagueSeasons: [number, number][] = [
-    [39, 2025],  // Premier League
-    [140, 2024], // La Liga
-    [135, 2025], // Serie A
-    [78, 2024],  // Bundesliga
-    [61, 2024],  // Ligue 1
+    [39, 2025],  // Premier League 2025-26
+    [140, 2025], // La Liga 2025-26
+    [135, 2025], // Serie A 2025-26
+    [78, 2025],  // Bundesliga 2025-26
+    [61, 2025],  // Ligue 1 2025-26
   ];
 
   const results = await Promise.all(
@@ -482,7 +482,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
 // ─── 3. STANDINGS (per league) ──────────────────────────────
 // Season map: explicit seasons per league (avoids 3-call season fallback loop)
 const LEAGUE_SEASON_MAP: Record<number, number> = {
-  39: 2025, 140: 2024, 135: 2025, 78: 2024, 61: 2024, 686: 2025, 288: 2025,
+  39: 2025, 140: 2025, 135: 2025, 78: 2025, 61: 2025, 686: 2025, 288: 2025,
 };
 
 export async function fetchStandings(leagueId: number): Promise<StandingEntry[]> {

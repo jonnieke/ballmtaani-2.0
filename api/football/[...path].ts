@@ -55,17 +55,29 @@ export default async function handler(req: any, res: any) {
       headers: { "x-apisports-key": key },
     });
 
-    const data = await upstream_res.json();
+    const data = await upstream_res.json() as any;
 
-    // Cache at the CDN edge — football data changes slowly
-    // 5min cache prevents per-minute rate-limit (quota is daily, rate-limit is per-minute)
-    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+    // Check for API-level errors (rate-limit, token errors, etc.)
+    // Do NOT cache these — they are transient and should be retried fresh
+    const hasErrors = data?.errors &&
+      (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0);
+
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 200;
+
+    if (hasErrors) {
+      // Return error response without caching so the next request tries fresh
+      res.setHeader("Cache-Control", "no-store");
+    } else {
+      // Cache successful responses at CDN edge for 5 minutes
+      res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+    }
+
     res.end(JSON.stringify(data));
   } catch (err: any) {
     res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
     res.end(JSON.stringify({ error: "Upstream fetch failed", detail: String(err?.message || err) }));
   }
 }
