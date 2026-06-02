@@ -53,7 +53,14 @@ function PageLoader() {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 0, // Disable retries — we have fallbacks (mock data, cached data, empty state)
+      // When API fails, show empty state instead of retrying 3x and hammering the API
+    },
+  },
+});
 
 function AppShell() {
   const [location] = useLocation();
