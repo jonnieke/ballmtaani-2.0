@@ -13,7 +13,7 @@
  * Benefits:
  *   - CORS handled (server has no CORS restriction)
  *   - API key stays server-side only (not in browser bundle)
- *   - 60s CDN cache layer reduces API usage
+ *   - 5min CDN cache layer prevents per-minute rate-limit
  */
 
 import { loadEnv } from "../_env-loader";
@@ -58,7 +58,8 @@ export default async function handler(req: any, res: any) {
     const data = await upstream_res.json();
 
     // Cache at the CDN edge — football data changes slowly
-    res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+    // 5min cache prevents per-minute rate-limit (quota is daily, rate-limit is per-minute)
+    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 200;
     res.end(JSON.stringify(data));
