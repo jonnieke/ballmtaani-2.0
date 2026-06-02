@@ -9,6 +9,9 @@
       "schedule": "0 9 * * *"
     }
   ],
+  "redirects": [
+    { "source": "/:path*", "destination": "https://ballmtaani.com/:path*", "has": [{ "type": "host", "value": "www.ballmtaani.com" }], "permanent": true }
+  ],
   "rewrites": [
     { "source": "/((?!api/|assets/).*)", "destination": "/index.html" }
   ]
