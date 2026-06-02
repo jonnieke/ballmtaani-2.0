@@ -55,8 +55,8 @@ export default async function handler(req: any, res: any) {
   );
   if (!apiRes.ok) return json(res, 502, { error: "Football API error" });
 
-  const apiData = await apiRes.json();
-  const fixtures: any[] = Array.isArray(apiData.response) ? apiData.response : [];
+  const apiData = await apiRes.json() as any;
+  const fixtures: any[] = Array.isArray(apiData?.response) ? apiData.response : [];
 
   const now = Date.now();
   const upcoming = fixtures.filter((f: any) => {
@@ -108,8 +108,8 @@ export default async function handler(req: any, res: any) {
     );
 
     if (sendRes.ok) {
-      const result = await sendRes.json();
-      totalSent += result.sent || 0;
+      const result = await sendRes.json() as any;
+      totalSent += (result?.sent || 0);
       // Record that we sent this alert
       await supabase.from("push_alerts_sent").insert({ fixture_id: String(fixture.fixture.id), sent_at: new Date().toISOString() });
     }
