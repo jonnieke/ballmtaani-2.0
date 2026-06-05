@@ -3,6 +3,7 @@ import { useLocation, Link } from "wouter";
 import { ArrowRight, Mail, Phone, ShieldCheck, Heart, Gift, Radio, Trophy, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { CLUB_LOGOS } from "../../data/mockData";
+import TeamLogo from "../../components/TeamLogo";
 import { useTheme } from "../../context/ThemeContext";
 const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
@@ -107,6 +108,29 @@ export default function LoginPage() {
     "Gor Mahia", "AFC Leopards", "Simba SC", "Al Ahly",
     "Kaizer Chiefs", "Orlando Pirates", "Enyimba", "TP Mazembe",
   ];
+
+  const clubColors: Record<string, string> = {
+    Arsenal: "#EF0107",
+    Chelsea: "#034694",
+    "Man Utd": "#DA291C",
+    "Man City": "#6CABDD",
+    Liverpool: "#C8102E",
+    "Real Madrid": "#FEBE10",
+    Barcelona: "#A50044",
+    PSG: "#004170",
+    "Bayern Munich": "#DC052D",
+    Juventus: "#000000",
+    "AC Milan": "#FB090B",
+    Dortmund: "#FDE100",
+    "Gor Mahia": "#006400",
+    "AFC Leopards": "#0000FF",
+    "Simba SC": "#ED1C24",
+    "Al Ahly": "#E1000F",
+    "Kaizer Chiefs": "#F9A602",
+    "Orlando Pirates": "#000000",
+    Enyimba: "#00843D",
+    "TP Mazembe": "#111111",
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-white">
@@ -279,25 +303,25 @@ export default function LoginPage() {
               <Heart className="w-3 h-3 text-primary animate-pulse" /> Pick Your Side
             </label>
             <p className="text-[11px] text-gray-500 -mt-1">This shapes your rooms, rivals, and matchday atmosphere. You can change it later.</p>
-            <div className="grid max-h-[280px] grid-cols-4 gap-2 overflow-y-auto pr-1 sm:max-h-80">
+            <div className="grid grid-cols-3 gap-2 pr-1 sm:grid-cols-4">
               {clubs.map(club => (
                 <button
                   key={club}
                   type="button"
                   onClick={() => handleClubSelect(club)}
-                  className={`p-2 border flex flex-col items-center gap-1.5 transition-all duration-300 ${
+                  className={`p-2.5 border flex flex-col items-center gap-1.5 transition-all duration-300 ${
                     favoriteClub === club 
                       ? 'bg-primary/20 border-primary shadow-[0_0_15px_var(--theme-glow)] scale-105' 
                       : 'bg-black/40 border-white/5 hover:border-white/20 opacity-60 hover:opacity-100 grayscale hover:grayscale-0'
                   }`}
                 >
-                  {CLUB_LOGOS[club] ? (
-                    <img src={CLUB_LOGOS[club]} alt={club} className="w-8 h-8 object-contain drop-shadow-md" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-black text-white">
-                      {club.substring(0, 2)}
-                    </div>
-                  )}
+                  <TeamLogo
+                    logo={CLUB_LOGOS[club]}
+                    initial={club.substring(0, 2).toUpperCase()}
+                    color={clubColors[club] || "#1A2433"}
+                    size="xs"
+                    className="shadow-[0_0_12px_rgba(255,255,255,0.08)]"
+                  />
                   <span className="text-[8px] font-black uppercase text-center leading-tight truncate w-full text-gray-300">{club}</span>
                 </button>
               ))}

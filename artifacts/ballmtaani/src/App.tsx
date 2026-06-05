@@ -67,6 +67,8 @@ function AppShell() {
   const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
   const quietPage = ["/", "/world-cup-2026", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation);
+  const showInstallBanner = ["/", "/home", "/world-cup-2026"].includes(normalizedLocation);
+  const showAdBanner = !["/login", "/verify"].includes(normalizedLocation);
 
   return (
     <>
@@ -91,7 +93,7 @@ function AppShell() {
           <FloatingNav />
         )}
         {!quietPage && <OnboardingModal />}
-        {!quietPage && <InstallBanner />}
+        {showInstallBanner && <InstallBanner />}
         <RouteSEO path={normalizedLocation} />
         <Suspense fallback={<PageLoader />}>
         <Switch>
@@ -132,12 +134,14 @@ function AppShell() {
         </Switch>
         </Suspense>
 
-        <div className={quietPage ? "mx-auto mt-6 w-full max-w-5xl px-3 md:px-5" : "mx-auto mt-8 w-full max-w-6xl px-4"}>
-          <AdBanner
-            label={quietPage ? "BallMtaani Matchday Support" : "BallMtaani Matchday Intelligence"}
-            type="horizontal"
-          />
-        </div>
+        {showAdBanner && (
+          <div className={quietPage ? "mx-auto mt-6 w-full max-w-5xl px-3 md:px-5" : "mx-auto mt-8 w-full max-w-6xl px-4"}>
+            <AdBanner
+              label={quietPage ? "BallMtaani Matchday Support" : "BallMtaani Matchday Intelligence"}
+              type="horizontal"
+            />
+          </div>
+        )}
 
         {!quietPage && (
           <footer className="border-t border-[#1B1B1B] bg-[#0B0B0B] mt-20 py-12">

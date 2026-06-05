@@ -26,10 +26,16 @@ const RSS_FEEDS = [
     source: "Goal.com",
     sourceLogo: "GOAL",
   },
+  {
+    url: "https://www.api-football.com/news/",
+    source: "API-Football",
+    sourceLogo: "API",
+  },
 ];
 const SOURCE_FALLBACK_URLS: Record<string, string> = {
   "BBC Sport": "https://www.bbc.com/sport/football",
   "Goal.com": "https://www.goal.com/en/news",
+  "API-Football": "https://www.api-football.com/news/",
   KPL: "https://www.kpl.co.ke/",
   CAF: "https://www.cafonline.com/",
   SuperSport: "https://supersport.com/football",

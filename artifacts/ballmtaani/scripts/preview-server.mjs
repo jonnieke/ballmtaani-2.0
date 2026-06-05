@@ -1,33 +1,32 @@
-type FeedConfig = {
-  url: string;
-  source: string;
-  sourceLogo: string;
-  kind: "rss" | "html";
-};
+import http from "node:http";
+import { createReadStream, existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-type RawArticle = {
-  id: string;
-  title: string;
-  link: string;
-  pubDate: string;
-  source: string;
-  sourceLogo: string;
-  description?: string;
-  thumbnail?: string;
-};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, "..");
+const distDir = path.join(rootDir, "dist");
+const apiBase = "https://v3.football.api-sports.io";
+const port = Number(process.env.PORT || 5173);
 
-const FEEDS: FeedConfig[] = [
-  { url: "https://feeds.bbci.co.uk/sport/football/rss.xml", source: "BBC Sport", sourceLogo: "BBC", kind: "rss" },
-  { url: "https://www.goal.com/feeds/en/news", source: "Goal.com", sourceLogo: "GOAL", kind: "rss" },
-  { url: "https://www.api-football.com/news/", source: "API-Football", sourceLogo: "API", kind: "html" },
-  { url: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players", source: "API-Football", sourceLogo: "API", kind: "html" },
-];
+function loadEnvFile(filePath) {
+  if (!existsSync(filePath)) return;
+  const text = readFileSync(filePath, "utf8");
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+    const idx = trimmed.indexOf("=");
+    const key = trimmed.slice(0, idx).trim();
+    const value = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
 
-const SOURCE_FALLBACK_URLS: Record<string, string> = {
-  "BBC Sport": "https://www.bbc.com/sport/football",
-  "Goal.com": "https://www.goal.com/en/news",
-  "API-Football": "https://www.api-football.com/news/",
-};
+loadEnvFile(path.join(rootDir, ".env.local"));
+loadEnvFile(path.join(rootDir, ".env"));
+
+const apiFootballKey = process.env.VITE_API_FOOTBALL_KEY || process.env.API_FOOTBALL_KEY || "";
 
 const FOOTBALL_KEYWORDS = [
   "football",
@@ -51,7 +50,13 @@ const FOOTBALL_KEYWORDS = [
   "transfers",
 ];
 
-const API_FOOTBALL_FALLBACKS: RawArticle[] = [
+const SOURCE_FALLBACK_URLS = {
+  "BBC Sport": "https://www.bbc.com/sport/football",
+  "Goal.com": "https://www.goal.com/en/news",
+  "API-Football": "https://www.api-football.com/news/",
+};
+
+const API_FOOTBALL_FALLBACKS = [
   {
     id: "api-football-lineups-2026",
     title: "FIFA World Cup 2026 Lineups: All Teams, Coaches and Players",
@@ -135,15 +140,19 @@ const API_FOOTBALL_FALLBACKS: RawArticle[] = [
   },
 ];
 
-function json(res: any, status: number, body: unknown) {
+function sendJson(res, status, body) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
-  res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+  res.setHeader("Cache-Control", "no-store");
   res.end(JSON.stringify(body));
 }
 
-function decodeHtml(value: string): string {
-  return value
+function stripTags(value) {
+  return decodeHtml(String(value || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+}
+
+function decodeHtml(value) {
+  return String(value || "")
     .replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -153,47 +162,42 @@ function decodeHtml(value: string): string {
     .replace(/&#x27;/g, "'");
 }
 
-function stripTags(value: string): string {
-  return decodeHtml(value.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
-}
-
-function normalizeUrl(url?: string, fallbackSource?: string): string {
-  const raw = (url || "").trim();
+function normalizeUrl(url, fallbackSource) {
+  const raw = String(url || "").trim();
   if (!raw || raw === "#") return fallbackSource ? SOURCE_FALLBACK_URLS[fallbackSource] || "https://www.api-football.com/news/" : "https://www.api-football.com/news/";
   if (/^https?:\/\//i.test(raw)) return raw;
   if (raw.startsWith("//")) return `https:${raw}`;
   return `https://${raw.replace(/^\/+/, "")}`;
 }
 
-function isFootballRelated(text: string): boolean {
-  const lower = text.toLowerCase();
+function isFootballRelated(text) {
+  const lower = String(text || "").toLowerCase();
   return FOOTBALL_KEYWORDS.some((keyword) => lower.includes(keyword));
 }
 
-function extractFirstDate(text: string): string {
-  const match = text.match(/\b([A-Z][a-z]+ \d{2}, \d{4})\b/);
+function extractFirstDate(text) {
+  const match = String(text || "").match(/\b([A-Z][a-z]+ \d{2}, \d{4})\b/);
   if (!match) return new Date().toISOString();
   const parsed = new Date(match[1]);
   return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
-function parseRssItems(xml: string, feed: FeedConfig): RawArticle[] {
-  const items = xml.match(/<item[\s\S]*?<\/item>/gi) || [];
+function parseRssItems(xml, feed) {
+  const items = String(xml || "").match(/<item[\s\S]*?<\/item>/gi) || [];
   return items
     .slice(0, 8)
     .map((item, idx) => {
-      const title = stripTags((item.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").trim());
-      const link = stripTags((item.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1] || "").trim());
+      const title = stripTags(item.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "");
+      const link = stripTags(item.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1] || "");
       const pubDate = (item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1] || "").trim();
-      const description = stripTags((item.match(/<description[^>]*>([\s\S]*?)<\/description>/i)?.[1] || "").trim());
+      const description = stripTags(item.match(/<description[^>]*>([\s\S]*?)<\/description>/i)?.[1] || "");
       const thumbnail =
         item.match(/<media:thumbnail[^>]*url=["']([^"']+)["']/i)?.[1] ||
         item.match(/<media:content[^>]*url=["']([^"']+)["']/i)?.[1] ||
         item.match(/<enclosure[^>]*url=["']([^"']+)["']/i)?.[1] ||
         "";
 
-      const combined = `${title} ${description}`.trim();
-      if (!isFootballRelated(combined)) return null;
+      if (!isFootballRelated(`${title} ${description}`)) return null;
 
       return {
         id: `${feed.source}-${idx}-${title || link}`,
@@ -206,13 +210,13 @@ function parseRssItems(xml: string, feed: FeedConfig): RawArticle[] {
         thumbnail,
       };
     })
-    .filter(Boolean) as RawArticle[];
+    .filter(Boolean);
 }
 
-function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
-  const articles: RawArticle[] = [];
-  const seen = new Set<string>();
-  const linkMatches = [...html.matchAll(/<a[^>]+href=["']([^"']*\/news\/post\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
+function parseHtmlArticles(html, feed) {
+  const articles = [];
+  const seen = new Set();
+  const linkMatches = [...String(html || "").matchAll(/<a[^>]+href=["']([^"']*\/news\/post\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
 
   for (const match of linkMatches) {
     const href = normalizeUrl(match[1], feed.source);
@@ -221,17 +225,13 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
     if (/^read more$/i.test(title)) continue;
     if (seen.has(href)) continue;
 
-    const lower = `${title} ${html.slice(Math.max(0, match.index || 0), Math.min(html.length, (match.index || 0) + 1200))}`.toLowerCase();
+    const start = Math.max(0, match.index || 0);
+    const tail = String(html || "").slice(start + match[0].length, start + match[0].length + 1200);
+    const lower = `${title} ${tail}`.toLowerCase();
     if (!isFootballRelated(lower)) continue;
 
-    const tail = html.slice(Math.max(0, (match.index || 0) + match[0].length), Math.min(html.length, (match.index || 0) + match[0].length + 1200));
-    const snippet = stripTags(tail)
-      .replace(/Read more.*$/i, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 220);
+    const snippet = stripTags(tail).replace(/Read more.*$/i, "").replace(/\s+/g, " ").trim().slice(0, 220);
     const pubDate = extractFirstDate(tail);
-
     seen.add(href);
     articles.push({
       id: href,
@@ -247,19 +247,7 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
   return articles;
 }
 
-function removeDuplicates(articles: RawArticle[]): RawArticle[] {
-  const seen = new Set<string>();
-  const result: RawArticle[] = [];
-  for (const article of articles) {
-    const key = `${article.title.toLowerCase()}|${article.link}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(article);
-  }
-  return result;
-}
-
-function mergeFallbacks(articles: RawArticle[]): RawArticle[] {
+function mergeFallbacks(articles) {
   const seen = new Set(articles.map((article) => `${article.title.toLowerCase()}|${article.link}`));
   const merged = [...articles];
   for (const fallback of API_FOOTBALL_FALLBACKS) {
@@ -271,7 +259,7 @@ function mergeFallbacks(articles: RawArticle[]): RawArticle[] {
   return merged;
 }
 
-async function fetchFeed(feed: FeedConfig): Promise<RawArticle[]> {
+async function fetchFeed(feed) {
   try {
     const response = await fetch(feed.url, {
       headers: {
@@ -280,26 +268,97 @@ async function fetchFeed(feed: FeedConfig): Promise<RawArticle[]> {
       },
     });
     if (!response.ok) return [];
-
     const body = await response.text();
-    if (feed.kind === "rss") return parseRssItems(body, feed);
-    return parseHtmlArticles(body, feed);
+    return feed.kind === "rss" ? parseRssItems(body, feed) : parseHtmlArticles(body, feed);
   } catch {
     return [];
   }
 }
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== "GET") return json(res, 405, { error: "Method not allowed" });
-
+async function handleNews(req, res) {
+  if (req.method !== "GET") return sendJson(res, 405, { error: "Method not allowed" });
+  const feeds = [
+    { url: "https://feeds.bbci.co.uk/sport/football/rss.xml", source: "BBC Sport", sourceLogo: "BBC", kind: "rss" },
+    { url: "https://www.goal.com/feeds/en/news", source: "Goal.com", sourceLogo: "GOAL", kind: "rss" },
+    { url: "https://www.api-football.com/news/", source: "API-Football", sourceLogo: "API", kind: "html" },
+    { url: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players", source: "API-Football", sourceLogo: "API", kind: "html" },
+  ];
   try {
-    const results = await Promise.all(FEEDS.map((feed) => fetchFeed(feed)));
-    const articles = mergeFallbacks(removeDuplicates(results.flat())).sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-    return json(res, 200, { articles: articles.slice(0, 24) });
+    const results = await Promise.all(feeds.map((feed) => fetchFeed(feed)));
+    const articles = mergeFallbacks([].concat(...results))
+      .filter((a, idx, arr) => arr.findIndex((b) => `${b.title.toLowerCase()}|${b.link}` === `${a.title.toLowerCase()}|${a.link}`) === idx)
+      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
+      .slice(0, 24);
+    sendJson(res, 200, { articles });
   } catch (error) {
-    return json(res, 200, {
-      articles: API_FOOTBALL_FALLBACKS.slice(0, 4),
-      error: String(error),
-    });
+    sendJson(res, 200, { articles: API_FOOTBALL_FALLBACKS.slice(0, 4), error: String(error) });
   }
 }
+
+async function proxyFootball(req, res, requestUrl) {
+  if (!apiFootballKey) return sendJson(res, 500, { error: "Missing VITE_API_FOOTBALL_KEY" });
+  const upstreamUrl = `${apiBase}${requestUrl.pathname.replace(/^\/api\/football/, "")}${requestUrl.search}`;
+  const upstream = await fetch(upstreamUrl, {
+    headers: { "x-apisports-key": apiFootballKey },
+  });
+  const body = await upstream.text();
+  res.statusCode = upstream.status;
+  res.setHeader("Content-Type", upstream.headers.get("content-type") || "application/json");
+  res.setHeader("Cache-Control", "no-store");
+  res.end(body);
+}
+
+function sendFile(res, filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "application/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json; charset=utf-8",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".ico": "image/x-icon",
+  };
+  res.setHeader("Content-Type", contentType[ext] || "application/octet-stream");
+  createReadStream(filePath).pipe(res);
+}
+
+const server = http.createServer(async (req, res) => {
+  const requestUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  const pathname = requestUrl.pathname;
+
+  if (pathname.startsWith("/api/news")) {
+    await handleNews(req, res);
+    return;
+  }
+
+  if (pathname.startsWith("/api/football")) {
+    try {
+      await proxyFootball(req, res, requestUrl);
+    } catch (error) {
+      sendJson(res, 502, { error: "Football proxy failed", detail: String(error) });
+    }
+    return;
+  }
+
+  const filePath = path.join(distDir, pathname === "/" ? "index.html" : pathname.replace(/^\/+/, ""));
+  if (existsSync(filePath) && !pathname.endsWith("/")) {
+    sendFile(res, filePath);
+    return;
+  }
+
+  const indexHtml = path.join(distDir, "index.html");
+  if (existsSync(indexHtml)) {
+    sendFile(res, indexHtml);
+    return;
+  }
+
+  sendJson(res, 404, { error: "Build not found. Run npm run build first." });
+});
+
+server.listen(port, "0.0.0.0", () => {
+  console.log(`BallMtaani preview server running at http://localhost:${port}/`);
+});

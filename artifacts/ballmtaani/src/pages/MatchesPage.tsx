@@ -38,10 +38,10 @@ function normalizeText(value: unknown) {
 
 function StatPill({ icon: Icon, value, label, tone }: { icon: typeof Activity; value: string | number; label: string; tone: string }) {
   return (
-    <div className={`relative overflow-hidden rounded-2xl border bg-[#0d131c]/86 p-4 ${tone}`}>
+    <div className={`relative overflow-hidden rounded-2xl border bg-[#0d131c]/86 p-3 md:p-4 ${tone}`}>
       <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-current/10 blur-2xl" />
-      <Icon className="relative mb-3 h-5 w-5" />
-      <div className="relative text-3xl font-bold text-white">{value}</div>
+      <Icon className="relative mb-2 h-5 w-5" />
+      <div className="relative text-2xl font-bold text-white md:text-3xl">{value}</div>
       <div className="relative mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">{label}</div>
     </div>
   );
@@ -63,8 +63,8 @@ function MatchCard({ match, variant = "fixture" }: { match: any; variant?: "live
   const time = match.kickoff || match.time || "";
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#101721]/88 p-3 transition-colors hover:border-primary/45 hover:bg-[#121d2a]">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="rounded-2xl border border-white/10 bg-[#101721]/88 p-2.5 transition-colors hover:border-primary/45 hover:bg-[#121d2a] md:p-3">
+      <div className="mb-2.5 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="truncate text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">{match.league || "Football"}</div>
           <div className="mt-1 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
@@ -75,9 +75,9 @@ function MatchCard({ match, variant = "fixture" }: { match: any; variant?: "live
         {time ? <div className="shrink-0 text-right text-[11px] font-bold text-white/62">{time}</div> : null}
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5">
         <div className="min-w-0 text-center">
-          <TeamLogo logo={match.homeLogo} initial={match.homeInitial || String(match.home || "H").slice(0, 3)} color={match.homeColor || "#182333"} size="sm" className="mx-auto mb-2" />
+          <TeamLogo logo={match.homeLogo} initial={match.homeInitial || String(match.home || "H").slice(0, 3)} color={match.homeColor || "#182333"} size="sm" className="mx-auto mb-1.5" />
           <div className="truncate text-sm font-semibold text-white">{match.home}</div>
         </div>
         <div className="min-w-[58px] text-center">
@@ -92,12 +92,12 @@ function MatchCard({ match, variant = "fixture" }: { match: any; variant?: "live
           )}
         </div>
         <div className="min-w-0 text-center">
-          <TeamLogo logo={match.awayLogo} initial={match.awayInitial || String(match.away || "A").slice(0, 3)} color={match.awayColor || "#182333"} size="sm" className="mx-auto mb-2" />
+          <TeamLogo logo={match.awayLogo} initial={match.awayInitial || String(match.away || "A").slice(0, 3)} color={match.awayColor || "#182333"} size="sm" className="mx-auto mb-1.5" />
           <div className="truncate text-sm font-semibold text-white">{match.away}</div>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/8 pt-3">
+      <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-white/8 pt-2.5">
         <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/38">{match.date || "Matchday"}</div>
         <Link href={isLive ? `/live-center/${match.id}` : "/live-center"} className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
           Details <ChevronRight className="h-3.5 w-3.5" />
@@ -122,7 +122,13 @@ function StandingMiniTable({ league, rows }: { league: string; rows: any[] }) {
           <div key={`${league}-${team.rank}-${team.team}`} className="grid grid-cols-[26px_1fr_36px_42px] items-center border-b border-white/6 py-2 text-sm last:border-0">
             <span className="text-white/40">{team.rank}</span>
             <span className="flex min-w-0 items-center gap-2">
-              <img src={team.logo} alt={team.team} className="h-5 w-5 shrink-0 object-contain" />
+              <TeamLogo
+                logo={team.logo}
+                initial={String(team.team || "T").slice(0, 2)}
+                color="#182333"
+                size="sm"
+                className="shrink-0"
+              />
               <span className="truncate font-medium text-white">{team.team}</span>
             </span>
             <span className="text-center text-white/42">{team.played}</span>
@@ -190,6 +196,12 @@ export default function MatchesPage() {
 
   const featuredFixtures = fixtures.slice(0, 6);
   const featuredResults = results.slice(0, 4);
+  const overviewSpotlight =
+    live.length > 0
+      ? live.slice(0, 4).map((m: any) => ({ ...m, _variant: "live" }))
+      : featuredResults.length > 0
+        ? featuredResults.map((m: any) => ({ ...m, _variant: "result" }))
+        : featuredFixtures.slice(0, 4).map((m: any) => ({ ...m, _variant: "fixture" }));
   const tableEntries = Object.entries(standings).filter(([, rows]) => rows?.length > 0);
 
   const navItems: { id: HubView; label: string; icon: typeof Activity; count?: number }[] = [
@@ -201,7 +213,7 @@ export default function MatchesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#070a0f] pb-24 text-white">
+    <div className="min-h-screen bg-[#070a0f] pb-[24rem] text-white md:pb-24">
       <SEO
         title="Football Data Center Kenya | Live Scores, Fixtures and Tables"
         description="BallMtaani Matches is a one-stop football data center for Kenyan fans with live matches, fixtures, results, standings, World Cup 2026 routes and match intelligence."
@@ -234,9 +246,15 @@ export default function MatchesPage() {
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1800&q=80"
+            src="/wc26-hero.jpg"
             alt=""
             className="h-full w-full object-cover opacity-35"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.dataset.fallbackApplied === "true") return;
+              target.dataset.fallbackApplied = "true";
+              target.src = "/stadium.png";
+            }}
           />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(239,35,48,0.48),transparent_24%),linear-gradient(180deg,rgba(7,10,15,0.35),#070a0f_82%)]" />
         </div>
@@ -250,27 +268,9 @@ export default function MatchesPage() {
                 Live scores, fixtures, recent results, league tables, WC26 and match detail paths, built for fans who do not want to leave the site for basic football data.
               </p>
               <DataFreshnessChip label={freshnessLabelSafe} className="mt-2" />
-              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = view === item.id;
-                  return (
-                    <button
-                      key={`hero-${item.id}`}
-                      onClick={() => setView(item.id)}
-                      className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors md:px-4 ${
-                        active ? "border-primary bg-primary/18 text-white" : "border-white/14 bg-black/24 text-white/58 hover:text-white"
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <StatPill icon={Activity} value={live.length} label="Live Now" tone="border-primary/45 text-primary" />
               <StatPill icon={CalendarDays} value={fixtures.length} label="Upcoming" tone="border-blue-400/45 text-blue-300" />
               <StatPill icon={Clock3} value={results.length} label="Recent Results" tone="border-green-400/45 text-green-300" />
@@ -281,8 +281,8 @@ export default function MatchesPage() {
       </section>
 
       <main className="mx-auto max-w-7xl px-4 py-5 md:px-6">
-        <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="sticky top-24 z-30 mb-4 grid gap-3 rounded-2xl border border-white/8 bg-[#070a0f]/92 px-3 py-3 backdrop-blur-xl lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="flex flex-wrap gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = view === item.id;
@@ -327,7 +327,7 @@ export default function MatchesPage() {
           </div>
         </div>
 
-        <div className="mb-5 grid gap-3 md:grid-cols-4">
+        <div className="mb-5 hidden gap-3 md:grid md:grid-cols-4">
           {FEATURE_LINKS.map((item) => {
             const Icon = item.icon;
             return (
@@ -350,11 +350,10 @@ export default function MatchesPage() {
             Syncing football data
           </div>
         ) : null}
-        <DataFreshnessChip label={freshnessLabelSafe} className="mb-4" />
 
         {view === "overview" && (
           <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-            <section className="rounded-3xl border border-white/10 bg-[#0b1119]/88 p-3 md:p-4">
+            <section className="rounded-3xl border border-white/10 bg-[#0b1119]/88 p-2.5 md:p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold uppercase">Live and latest</h2>
@@ -364,15 +363,15 @@ export default function MatchesPage() {
                   View all
                 </button>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {(live.length ? live.slice(0, 4).map((m: any) => ({ ...m, _variant: "live" })) : featuredResults.map((m: any) => ({ ...m, _variant: "result" }))).map((match: any) => (
+              <div className="grid gap-2.5 md:grid-cols-2">
+                {overviewSpotlight.map((match: any) => (
                   <MatchCard key={`${match._variant}-${match.id}`} match={match} variant={match._variant} />
                 ))}
               </div>
-              {!live.length && !featuredResults.length ? <EmptyState title="No latest matches" body="The feed is empty right now. Try fixtures or tables while the API refreshes." /> : null}
+              {!overviewSpotlight.length ? <EmptyState title="No latest matches" body="The feed is empty right now. Try fixtures or tables while the API refreshes." /> : null}
             </section>
 
-            <section className="rounded-3xl border border-white/10 bg-[#0b1119]/88 p-3 md:p-4">
+            <section className="rounded-3xl border border-white/10 bg-[#0b1119]/88 p-2.5 md:p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold uppercase">Next fixtures</h2>
@@ -394,9 +393,16 @@ export default function MatchesPage() {
                   Full tables
                 </button>
               </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {tableEntries.slice(0, 3).map(([league, rows]) => <StandingMiniTable key={league} league={league} rows={rows} />)}
-              </div>
+              {tableEntries.length ? (
+                <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+                  {tableEntries.slice(0, 3).map(([league, rows]) => <StandingMiniTable key={league} league={league} rows={rows} />)}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No table data yet"
+                  body="Standings will appear here as soon as the API feed brings them in."
+                />
+              )}
             </section>
           </div>
         )}
@@ -408,7 +414,7 @@ export default function MatchesPage() {
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">Auto refreshes</span>
             </div>
             {live.length ? (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                 {live.map((match: any) => <MatchCard key={match.id} match={match} variant="live" />)}
               </div>
             ) : (
@@ -424,7 +430,7 @@ export default function MatchesPage() {
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">{fixtures.length} matches</span>
             </div>
             {fixtures.length ? (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                 {fixtures.map((match: any) => <MatchCard key={match.id} match={match} variant="fixture" />)}
               </div>
             ) : (
@@ -440,7 +446,7 @@ export default function MatchesPage() {
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">{results.length} results</span>
             </div>
             {results.length ? (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                 {results.map((match: any) => <MatchCard key={match.id} match={match} variant="result" />)}
               </div>
             ) : (

@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { answerMchambuzi } from "./api/_mchambuzi-core";
+import newsHandler from "./api/news";
 
 const port = Number(process.env.PORT || 5173);
 
@@ -17,6 +18,44 @@ const serverEnv = {
 export default defineConfig({
   base: basePath,
   plugins: [
+    {
+      name: "ballmtaani-football-api-proxy",
+      configureServer(server) {
+        server.middlewares.use("/api/football", async (req, res) => {
+          const key = serverEnv.VITE_API_FOOTBALL_KEY || serverEnv.API_FOOTBALL_KEY;
+          if (!key) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Missing API-Football key." }));
+            return;
+          }
+
+          try {
+            const incoming = new URL(req.url || "", "http://localhost");
+            const upstreamUrl = `https://v3.football.api-sports.io${incoming.pathname.replace(/^\/api\/football/, "")}${incoming.search}`;
+            const upstream = await fetch(upstreamUrl, {
+              headers: { "x-apisports-key": String(key) },
+            });
+
+            const text = await upstream.text();
+            res.statusCode = upstream.status;
+            res.setHeader("Content-Type", upstream.headers.get("content-type") || "application/json");
+            res.setHeader("Cache-Control", "no-store");
+            res.end(text);
+          } catch (error) {
+            res.statusCode = 502;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: "Football proxy failed.", detail: String(error) }));
+          }
+        });
+      },
+    },
+    {
+      name: "ballmtaani-news-api",
+      configureServer(server) {
+        server.middlewares.use("/api/news", async (req, res) => newsHandler(req, res));
+      },
+    },
     {
       name: "ballmtaani-mchambuzi-api",
       configureServer(server) {

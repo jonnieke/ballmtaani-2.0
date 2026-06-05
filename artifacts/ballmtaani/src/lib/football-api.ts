@@ -41,34 +41,107 @@ const LIVE_SUMMARY_CACHE_TTL_MS = 15 * 1000;
 const fixtureTeamCache = new Map<string, { homeTeamId: number | null; awayTeamId: number | null; expiresAt: number }>();
 const liveSummaryCache = new Map<string, { value: LiveEventSummary; expiresAt: number }>();
 const liveSummaryInflight = new Map<string, Promise<LiveEventSummary>>();
+const apiResponseCache = new Map<string, { value: any; expiresAt: number }>();
+const apiResponseInflight = new Map<string, Promise<any>>();
+const STORAGE_PREFIX = "ballmtaani:football-api:";
+const STORAGE_MAX_AGE_MS = 60 * 60 * 1000; // keep last known good football data for one hour
 
-// ─── Shared fetch helper ────────────────────────────────────
-async function apiFetch(endpoint: string): Promise<any> {
+type PersistedApiResponse = {
+  value: any;
+  savedAt: number;
+};
+
+function canUseStorage() {
+  return typeof window !== "undefined" && !!window.localStorage;
+}
+
+function storageKey(endpoint: string) {
+  return `${STORAGE_PREFIX}${endpoint}`;
+}
+
+function readPersistedResponse(endpoint: string): PersistedApiResponse | null {
+  if (!canUseStorage()) return null;
+
   try {
-    // Calls /api/football/... — no auth header needed, proxy adds it server-side
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const raw = window.localStorage.getItem(storageKey(endpoint));
+    if (!raw) return null;
 
-    if (!response.ok) {
-      console.error(`[Football API] HTTP Error ${response.status} for ${endpoint}`);
-      throw new Error(`Football API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    // Check for API-Football logic errors in 200 responses
-    if (data.errors && (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0)) {
-      console.error(`[Football API] Logic Error in ${endpoint}:`, data.errors);
-      return null;
-    }
-
-    return data.response || [];
-  } catch (err) {
-    console.error(`Failed to fetch ${endpoint}:`, err);
+    const parsed = JSON.parse(raw) as PersistedApiResponse;
+    if (!parsed || typeof parsed.savedAt !== "number") return null;
+    if (Date.now() - parsed.savedAt > STORAGE_MAX_AGE_MS) return null;
+    return parsed;
+  } catch {
     return null;
   }
 }
 
-// ─── Types ──────────────────────────────────────────────────
+function writePersistedResponse(endpoint: string, value: any) {
+  if (!canUseStorage()) return;
+
+  try {
+    const payload: PersistedApiResponse = { value, savedAt: Date.now() };
+    window.localStorage.setItem(storageKey(endpoint), JSON.stringify(payload));
+  } catch {
+    // Ignore storage quota / serialization issues.
+  }
+}
+
+function getEndpointCacheTtl(endpoint: string): number {
+  if (endpoint.includes("/fixtures?live=all")) return 15 * 1000;
+  if (endpoint.includes("/fixtures/statistics") || endpoint.includes("/fixtures/events") || endpoint.includes("/fixtures/lineups") || endpoint.includes("/fixtures?id=")) return 60 * 1000;
+  if (endpoint.includes("/fixtures?date=") || endpoint.includes("&next=") || endpoint.includes("&from=") || endpoint.includes("&to=")) return 60 * 1000;
+  if (endpoint.includes("/standings?")) return 5 * 60 * 1000;
+  if (endpoint.includes("/teams/statistics?")) return 10 * 60 * 1000;
+  return 30 * 1000;
+}
+
+
+// ─── Shared fetch helper ────────────────────────────────────
+async function apiFetch(endpoint: string): Promise<any> {
+  const now = Date.now();
+  const cached = apiResponseCache.get(endpoint);
+  if (cached && cached.expiresAt > now) return cached.value;
+
+  const inflight = apiResponseInflight.get(endpoint);
+  if (inflight) return inflight;
+
+  const request = (async () => {
+    try {
+      // Calls /api/football/... ??? no auth header needed, proxy adds it server-side
+      const response = await fetch(`${API_BASE_URL}${endpoint}`);
+
+      if (!response.ok) {
+        console.error(`[Football API] HTTP Error ${response.status} for ${endpoint}`);
+        return null;
+      }
+
+      const data = await response.json();
+
+      // Check for API-Football logic errors in 200 responses
+      if (data.errors && (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0)) {
+        console.error(`[Football API] Logic Error in ${endpoint}:`, data.errors);
+        return null;
+      }
+
+      const value = data.response || [];
+      apiResponseCache.set(endpoint, { value, expiresAt: Date.now() + getEndpointCacheTtl(endpoint) });
+      writePersistedResponse(endpoint, value);
+      return value;
+    } catch (err) {
+      console.error(`Failed to fetch ${endpoint}:`, err);
+      const persisted = readPersistedResponse(endpoint);
+      const stale = apiResponseCache.get(endpoint)?.value ?? persisted?.value;
+      if (stale !== undefined) return stale;
+      return null;
+    } finally {
+      apiResponseInflight.delete(endpoint);
+    }
+  })();
+
+  apiResponseInflight.set(endpoint, request);
+  return request;
+}
+
 export interface LiveMatch {
   id: string;
   homeTeamId?: number;

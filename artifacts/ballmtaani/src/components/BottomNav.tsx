@@ -20,8 +20,8 @@ export default function BottomNav() {
   ] as { href: string; label: string; icon: typeof Home; highlight?: boolean }[];
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-6 pb-6 pointer-events-none">
-      <div className="max-w-md mx-auto h-16 bg-[#111111]/90 border border-white/10 rounded-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl flex items-center justify-between px-2 pointer-events-auto">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-4 pb-4 pointer-events-none">
+      <div className="mx-auto flex h-14 max-w-sm items-center justify-between rounded-2xl border border-white/10 bg-[#111111]/90 px-1.5 shadow-[0_-10px_32px_rgba(0,0,0,0.55)] backdrop-blur-2xl pointer-events-auto">
         {navItems.map((item) => {
           const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
           const Icon = item.icon;
@@ -34,13 +34,13 @@ export default function BottomNav() {
             >
               <div className="relative flex flex-col items-center justify-center z-10">
                 <Icon
-                  className={`w-5 h-5 transition-all duration-300 ${
+                  className={`h-4.5 w-4.5 transition-all duration-300 ${
                     isActive
                       ? item.highlight ? "text-[#FFD700] scale-110" : "text-primary scale-110"
                       : item.highlight ? "text-[#FFD700]/70 group-hover:text-[#FFD700]" : "text-gray-500 group-hover:text-white"
                   }`}
                 />
-                <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 transition-all ${
+                <span className={`mt-0.5 text-[8px] font-black uppercase tracking-tighter transition-all ${
                   isActive
                     ? "text-white opacity-100"
                     : item.highlight ? "text-[#FFD700]/70 opacity-80" : "text-gray-500 opacity-60"

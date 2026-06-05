@@ -93,6 +93,20 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
 
   if (slot && noFill) return null;
   if (!slot && !showDevHint) return null;
+  if (showDevHint) {
+    return (
+      <aside
+        className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#0F0F0F] px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] text-gray-500"
+        aria-label={`${label} advertisement`}
+      >
+        <span>Advertisement</span>
+        <span className="min-w-0 truncate text-gray-600">{label} slot off</span>
+        <Link href="/privacy" className="shrink-0 text-gray-500 hover:text-white">
+          Ad Info
+        </Link>
+      </aside>
+    );
+  }
 
   if (type === "square") {
     return (
@@ -101,8 +115,8 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">Advertisement</span>
           <ShieldCheck className="h-3.5 w-3.5 text-gray-600" />
         </div>
-        <div className="flex min-h-[250px] flex-col items-center justify-center border border-dashed border-white/10 bg-black/30 px-4 text-center">
-          {slot ? (
+        {slot ? (
+          <div className="flex min-h-[250px] flex-col items-center justify-center border border-dashed border-white/10 bg-black/30 px-4 text-center">
             <AdSenseUnit
               slot={slot}
               format="rectangle"
@@ -110,16 +124,13 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               className="w-full min-h-[250px]"
               onNoFill={() => setNoFill(true)}
             />
-          ) : showDevHint ? (
-            <>
-              <Megaphone className="mb-3 h-6 w-6 text-gray-500" />
-              <p className="text-xs font-black uppercase tracking-widest text-gray-300">{label}</p>
-              <p className="mt-2 max-w-[190px] text-[11px] leading-relaxed text-gray-500">
-                Set `VITE_ADSENSE_SLOT_SQUARE` to activate this slot.
-              </p>
-            </>
-          ) : null}
-        </div>
+          </div>
+        ) : showDevHint ? (
+          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-3 py-2">
+            <Megaphone className="h-4 w-4 text-gray-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{label} slot off</p>
+          </div>
+        ) : null}
       </aside>
     );
   }
@@ -141,8 +152,8 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
           </div>
         </div>
 
-        <div className="flex min-h-[64px] items-center justify-center border border-dashed border-white/10 bg-black/30 px-4 text-center sm:w-[320px]">
-          {slot ? (
+        {slot ? (
+          <div className="flex min-h-[64px] items-center justify-center border border-dashed border-white/10 bg-black/30 px-4 text-center sm:w-[320px]">
             <AdSenseUnit
               slot={slot}
               format="auto"
@@ -150,12 +161,8 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               className="w-full min-h-[64px]"
               onNoFill={() => setNoFill(true)}
             />
-          ) : showDevHint ? (
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600">
-              Set `VITE_ADSENSE_SLOT_HORIZONTAL` to activate
-            </p>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         <Link
           href="/privacy"
