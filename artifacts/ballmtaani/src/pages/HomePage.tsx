@@ -127,7 +127,16 @@ export default function HomePage() {
 
   const freshnessLabel = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
-  const featuredMatch = liveMatches[0] || upcomingFixtures[0] || null;
+  // WC26 opener shown when no API match available (off-season before June 11)
+  const WC26_OPENER = {
+    id: "wc26-opener-preview",
+    home: "Mexico", homeLogo: "https://media.api-sports.io/flags/mx.svg", homeInitial: "MEX", homeColor: "#006847",
+    away: "South Africa", awayLogo: "https://media.api-sports.io/flags/za.svg", awayInitial: "RSA", awayColor: "#007A4D",
+    homeScore: 0, awayScore: 0, league: "FIFA World Cup 2026 - Opening Match",
+    time: "10:00 PM EAT", kickoffAt: new Date("2026-06-11T19:00:00Z").getTime(),
+  };
+
+  const featuredMatch = liveMatches[0] || upcomingFixtures[0] || WC26_OPENER;
   const isMatchLive   = !!liveMatches[0];
 
   const liveStatuses = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
@@ -204,12 +213,12 @@ export default function HomePage() {
               {/* Feature pills */}
               <div className="mb-5 flex flex-wrap gap-2">
                 {[
-                  { icon: "⚽", label: "Live Scores" },
-                  { icon: "🏆", label: "WC26 Predictions" },
-                  { icon: "🤖", label: "AI Analyst" },
-                  { icon: "🔥", label: "Fan Leaderboard" },
+                  { icon: "⚽", label: "Live Scores", color: "text-white/80 border-white/20 bg-white/8" },
+                  { icon: "🏆", label: "WC26 Calls", color: "text-[#FFD700] border-[#FFD700]/25 bg-[#FFD700]/8" },
+                  { icon: "🤖", label: "AI Analyst", color: "text-green-400 border-green-400/25 bg-green-400/8" },
+                  { icon: "🔥", label: "Leaderboard", color: "text-orange-400 border-orange-400/25 bg-orange-400/8" },
                 ].map(f => (
-                  <span key={f.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/60">
+                  <span key={f.label} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${f.color}`}>
                     {f.icon} {f.label}
                   </span>
                 ))}
@@ -313,12 +322,7 @@ export default function HomePage() {
                     </Link>
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-2xl border border-white/8 bg-black/30 p-12 text-center backdrop-blur-sm">
-                  <Calendar className="mx-auto mb-4 h-10 w-10 text-white/18" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/22">Matchday check-in coming soon</p>
-                </div>
-              )}
+              ) : null}
             </motion.div>
           </div>
         </div>
@@ -429,6 +433,38 @@ export default function HomePage() {
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
             {isLoadingMatches || isLoadingUpcoming || isLoadingRecent ? (
               [1, 2, 3].map(i => <SkeletonMatch key={i} />)
+            ) : liveMatches.length === 0 && upcomingFixtures.length === 0 && recentMatches.length === 0 ? (
+              // Off-season fallback — show WC26 schedule
+              <div className="w-full rounded-xl border border-[#FFD700]/20 bg-[#0c0a00]/80 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Trophy className="h-4 w-4 text-[#FFD700]" />
+                  <span className="text-xs font-black uppercase tracking-widest text-[#FFD700]">WC26 Opening Fixtures</span>
+                  <span className="ml-auto text-[10px] text-white/40">June 11 - 14</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { home: "Mexico", away: "South Africa", time: "Jun 11 · 10pm" },
+                    { home: "USA", away: "Colombia", time: "Jun 12 · 1am" },
+                    { home: "Canada", away: "Venezuela", time: "Jun 12 · 4pm" },
+                    { home: "Brazil", away: "Germany", time: "Jun 13 · 7pm" },
+                    { home: "Argentina", away: "Morocco", time: "Jun 14 · 10pm" },
+                    { home: "France", away: "England", time: "Jun 14 · 1am" },
+                  ].map(f => (
+                    <Link key={f.home + f.away} href="/predictions"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-white/8 bg-black/40 px-3 py-2.5 hover:border-[#FFD700]/30 transition-all">
+                      <span className="text-xs font-black text-white truncate">{f.home}</span>
+                      <div className="text-center shrink-0">
+                        <div className="text-[9px] text-[#FFD700] font-black">VS</div>
+                        <div className="text-[8px] text-white/30">{f.time}</div>
+                      </div>
+                      <span className="text-xs font-black text-white truncate text-right">{f.away}</span>
+                    </Link>
+                  ))}
+                </div>
+                <Link href="/predictions" className="mt-4 block text-center text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:underline">
+                  Make Your WC26 Calls
+                </Link>
+              </div>
             ) : (
               <>
                 {liveMatches.map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: "LIVE" }} />)}
@@ -604,7 +640,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-4">
                   <span className={`w-6 text-sm font-black ${p.rank === 1 ? "text-[#FFD700]" : "text-white/25"}`}>#{p.rank}</span>
                   <div className="text-left">
-                    <span className="text-sm font-black text-white">{p.name} {p.country}</span>
+                    <span className="text-sm font-black text-white">{p.name?.startsWith("Fan_") ? "Anonymous Fan" : p.name} {p.country}</span>
                     <div className="text-[9px] font-black uppercase tracking-widest text-[#B30000]">Level {p.streak || 1} Elite Host</div>
                   </div>
                 </div>
