@@ -1,431 +1,471 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useLocation } from "wouter";
-import { Loader2, Check, Zap, ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft, Flame, Zap } from "lucide-react";
 import { getRandomRapidFireSet, RapidFireDebate } from "../data/mockRapidFire";
 import { ShareCard } from "../components/ShareCard";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 
-// ─── Image helpers (unchanged) ────────────────────────────────────────────────
+// ─── Image resolution (unchanged) ─────────────────────────────────────────────
 function fallbackFace(label: string) {
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(label)}&background=111111&color=ffffff&size=256&bold=true&format=png`;
-}
-function resolveDebateImage(label: string, explicit?: string) {
-  if (explicit && explicit.trim().length > 0) return explicit;
-  const curated: Record<string, string> = {
-    "Ivan Toney": "https://ui-avatars.com/api/?name=Ivan+Toney&background=1f2937&color=ffffff&size=256&bold=true&format=png",
-    "Bruno Fernandes": "https://ui-avatars.com/api/?name=Bruno+Fernandes&background=7c2d12&color=ffffff&size=256&bold=true&format=png",
-  };
-  return curated[label] || "";
+  const colors = ["1a237e","b71c1c","1b5e20","4a148c","e65100","006064","37474f"];
+  const color = colors[label.charCodeAt(0) % colors.length];
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(label)}&background=${color}&color=ffffff&size=512&bold=true&format=png`;
 }
 
-function DebateImage({ label, src }: { label: string; src: string }) {
+function resolveDebateImage(label: string, explicit?: string) {
+  if (explicit && explicit.trim()) return explicit;
+  return "";
+}
+
+function useDebateImage(label: string, src: string) {
+  const [resolved, setResolved] = useState<string>("");
   const [failed, setFailed] = useState(false);
-  const [wikiSrc, setWikiSrc] = useState<string | null>(null);
+
   useEffect(() => {
-    let cancelled = false;
+    if (src) { setResolved(src); return; }
     const key = `mtaani_rf_img_${label}`;
     const cached = sessionStorage.getItem(key);
-    if (cached) { setWikiSrc(cached); return; }
+    if (cached) { setResolved(cached); return; }
+
     const aliases: Record<string, string> = {
-      "Brumo Fernandes": "Bruno Fernandes", "Trent AA": "Trent Alexander-Arnold",
-      "Neuer": "Manuel Neuer", "Courtois": "Thibaut Courtois",
-      "Kante": "N'Golo Kante", "Lewa": "Robert Lewandowski",
-      "Walker": "Kyle Walker", "Rice": "Declan Rice", "Ozil": "Mesut Ozil",
+      "Trent AA": "Trent Alexander-Arnold", "Neuer": "Manuel Neuer",
+      "Courtois": "Thibaut Courtois", "Kante": "N'Golo Kante",
+      "Lewa": "Robert Lewandowski", "Walker": "Kyle Walker",
+      "Rice": "Declan Rice", "Ozil": "Mesut Ozil",
     };
     const query = aliases[label] || label;
-    const run = async () => {
-      try {
-        const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query.replace(/\s+/g, "_"))}`);
-        if (!res.ok) return;
-        const data = await res.json();
+    let cancelled = false;
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query.replace(/\s+/g, "_"))}`)
+      .then(r => r.json())
+      .then(data => {
         const thumb = data?.thumbnail?.source;
-        if (!thumb || cancelled) return;
-        setWikiSrc(thumb);
-        sessionStorage.setItem(key, thumb);
-      } catch { /* ignore */ }
-    };
-    run();
+        if (thumb && !cancelled) { setResolved(thumb); sessionStorage.setItem(key, thumb); }
+      }).catch(() => {});
     return () => { cancelled = true; };
-  }, [label]);
-  const finalSrc = failed ? (wikiSrc || fallbackFace(label)) : (src || wikiSrc || fallbackFace(label));
-  return <img src={finalSrc} alt={label} className="w-full h-full object-cover" loading="lazy" onError={() => setFailed(true)} />;
+  }, [label, src]);
+
+  return failed ? fallbackFace(label) : (resolved || fallbackFace(label));
 }
 
-// ─── Floating coin popup ───────────────────────────────────────────────────────
-function CoinPop({ id, side }: { id: string; side: "left" | "right" }) {
+// ─── Side panel (left or right) ────────────────────────────────────────────────
+function FighterPanel({
+  label, imgSrc, side, voted, isMyPick, pct, onClick, disabled,
+}: {
+  label: string; imgSrc: string; side: "left" | "right";
+  voted: boolean; isMyPick: boolean; pct: number;
+  onClick: () => void; disabled: boolean;
+}) {
+  const img = useDebateImage(label, imgSrc);
+  const isLeft = side === "left";
+
+  const baseColor   = isLeft ? "#0047FF" : "#FF1744";
+  const glowColor   = isLeft ? "rgba(0,71,255,0.55)" : "rgba(255,23,68,0.55)";
+  const bgGradient  = isLeft
+    ? "linear-gradient(to right, #000d33 0%, #001a66 40%, rgba(0,30,100,0.6) 100%)"
+    : "linear-gradient(to left,  #330000 0%, #660000 40%, rgba(100,0,0,0.6) 100%)";
+
   return (
-    <div
-      key={id}
-      className={`pointer-events-none absolute bottom-28 z-50 text-[#FFD700] font-black text-xl tracking-widest animate-coin-pop ${side === "left" ? "left-8" : "right-8"}`}
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="relative flex-1 h-full overflow-hidden flex flex-col items-center justify-end select-none focus:outline-none transition-all duration-700"
+      style={{
+        flex: voted ? `${isMyPick ? pct : 100 - pct} 1 0%` : "1 1 0%",
+        background: bgGradient,
+        boxShadow: isMyPick ? `inset 0 0 80px ${glowColor}` : "none",
+      }}
     >
-      +10 MTC
-    </div>
-  );
-}
+      {/* Full-bleed fighter image */}
+      <img
+        src={img}
+        alt={label}
+        className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500"
+        style={{ opacity: voted ? (isMyPick ? 0.55 : 0.18) : 0.42 }}
+        loading="lazy"
+      />
 
-// ─── Combo announcement ────────────────────────────────────────────────────────
-function ComboFlash({ streak }: { streak: number }) {
-  if (streak === 0 || streak % 5 !== 0) return null;
-  return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center">
-      <div className="px-8 py-4 border-4 border-[#FFD700] bg-black/90 text-center animate-combo-flash">
-        <div className="text-[#FFD700] font-black text-4xl tracking-[0.3em] uppercase">Combo!</div>
-        <div className="text-white font-black text-2xl tracking-widest mt-1">x{streak} 🔥</div>
+      {/* Depth gradient — keeps text legible */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: isLeft
+            ? "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%), linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 35%, transparent 70%)"
+            : "linear-gradient(to left,  rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%), linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 35%, transparent 70%)",
+        }}
+      />
+
+      {/* Neon edge accent */}
+      <div
+        className="absolute top-0 bottom-0 w-[3px] transition-opacity duration-500"
+        style={{
+          [isLeft ? "right" : "left"]: 0,
+          background: `linear-gradient(to bottom, transparent 10%, ${baseColor} 50%, transparent 90%)`,
+          boxShadow: `0 0 18px 4px ${glowColor}`,
+          opacity: isMyPick ? 1 : 0.3,
+        }}
+      />
+
+      {/* Fighter name + pick prompt */}
+      <div className={`relative z-10 pb-10 px-4 md:pb-14 ${isLeft ? "text-left pl-6 md:pl-10" : "text-right pr-6 md:pr-10"} w-full`}>
+        {/* Tag line */}
+        {!voted && (
+          <p className="text-[10px] font-black uppercase tracking-[0.35em] mb-2" style={{ color: baseColor }}>
+            {isLeft ? "← Tap to pick" : "Tap to pick →"}
+          </p>
+        )}
+
+        {/* Name */}
+        <h3
+          className="font-black leading-none uppercase text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]"
+          style={{ fontSize: "clamp(1.4rem, 5vw, 3rem)", textShadow: isMyPick ? `0 0 40px ${glowColor}` : "none" }}
+        >
+          {label}
+        </h3>
+
+        {/* After vote: percentage */}
+        {voted && (
+          <div className="mt-3 flex items-center gap-2" style={{ justifyContent: isLeft ? "flex-start" : "flex-end" }}>
+            <span
+              className="text-5xl md:text-7xl font-black tabular-nums leading-none"
+              style={{ color: isMyPick ? baseColor : "rgba(255,255,255,0.25)", textShadow: isMyPick ? `0 0 50px ${glowColor}` : "none" }}
+            >
+              {pct}%
+            </span>
+          </div>
+        )}
+
+        {/* My pick badge */}
+        {isMyPick && (
+          <div
+            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 font-black text-[10px] uppercase tracking-[0.25em]"
+            style={{ background: `${baseColor}22`, border: `1px solid ${baseColor}55`, color: baseColor }}
+          >
+            <Check className="w-3.5 h-3.5" /> Your pick
+          </div>
+        )}
       </div>
-    </div>
+
+      {/* Ripple on hover (desktop) */}
+      {!voted && !disabled && (
+        <div
+          className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-300"
+          style={{ background: `radial-gradient(ellipse at ${isLeft ? "30%" : "70%"} 60%, ${glowColor} 0%, transparent 60%)` }}
+        />
+      )}
+    </button>
   );
 }
 
+// ─── Main component ─────────────────────────────────────────────────────────────
 export default function RapidFirePage() {
   const { isLoggedIn, awardCoins, username } = useAuth();
   const [, setLocation] = useLocation();
 
   const [debates] = useState<RapidFireDebate[]>(() => getRandomRapidFireSet(100));
-  const [localVotes, setLocalVotes] = useState<Record<string, "left" | "right">>({});
-  const [isVoting, setIsVoting] = useState<string | null>(null);
-  const [voteStreak, setVoteStreak] = useState(0);
-  const [showShare, setShowShare] = useState(false);
-  const [showCombo, setShowCombo] = useState(0);
-  const [coinPops, setCoinPops] = useState<{ id: string; side: "left" | "right" }[]>([]);
+  const [localVotes, setLocalVotes]   = useState<Record<string, "left" | "right">>({});
+  const [isVoting, setIsVoting]       = useState<string | null>(null);
+  const [voteStreak, setVoteStreak]   = useState(0);
+  const [showShare, setShowShare]     = useState(false);
+  const [showCombo, setShowCombo]     = useState(0);
+  const [coinPop, setCoinPop]         = useState<{ key: string; side: "left" | "right" } | null>(null);
   const [liveVoteMap, setLiveVoteMap] = useState<Record<string, { leftVotes: number; rightVotes: number; totalVotes: number }>>({});
   const [updatedAtMap, setUpdatedAtMap] = useState<Record<string, number>>({});
-  const [pulseMap, setPulseMap] = useState<Record<string, boolean>>({});
+  const [pulseMap, setPulseMap]       = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
   const votedCount = Object.keys(localVotes).length;
-  const progress = Math.round((votedCount / debates.length) * 100);
-  const score = votedCount * 10 + Math.floor(voteStreak / 5) * 25;
+  const progress   = Math.round((votedCount / debates.length) * 100);
+  const score      = votedCount * 10 + Math.floor(voteStreak / 5) * 25;
 
-  // ── Supabase sync (logic unchanged) ──────────────────────────────────────────
+  // ── Live Supabase sync ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (!supabase || debates.length === 0) return;
+    if (!supabase || !debates.length) return;
     let cancelled = false;
-    const syncVotes = async () => {
-      const ids = debates.map((d) => d.id);
-      const { data, error } = await supabase.from("rapid_fire_votes").select("debate_id,left_votes,right_votes,total_votes,updated_at").in("debate_id", ids);
+    const sync = async () => {
+      const { data, error } = await supabase.from("rapid_fire_votes")
+        .select("debate_id,left_votes,right_votes,total_votes,updated_at")
+        .in("debate_id", debates.map(d => d.id));
       if (error || !data || cancelled) return;
-      const nextVotes: Record<string, { leftVotes: number; rightVotes: number; totalVotes: number }> = {};
-      const nextUpdatedAt: Record<string, number> = {};
-      for (const row of data as any[]) {
-        nextVotes[row.debate_id] = { leftVotes: row.left_votes || 0, rightVotes: row.right_votes || 0, totalVotes: row.total_votes || 0 };
-        nextUpdatedAt[row.debate_id] = row.updated_at ? new Date(row.updated_at).getTime() : Date.now();
+      const vMap: Record<string, { leftVotes: number; rightVotes: number; totalVotes: number }> = {};
+      const aMap: Record<string, number> = {};
+      for (const r of data as any[]) {
+        vMap[r.debate_id] = { leftVotes: r.left_votes || 0, rightVotes: r.right_votes || 0, totalVotes: r.total_votes || 0 };
+        aMap[r.debate_id] = r.updated_at ? new Date(r.updated_at).getTime() : Date.now();
       }
-      setLiveVoteMap((prev) => ({ ...prev, ...nextVotes }));
-      setUpdatedAtMap((prev) => ({ ...prev, ...nextUpdatedAt }));
+      setLiveVoteMap(p => ({ ...p, ...vMap }));
+      setUpdatedAtMap(p => ({ ...p, ...aMap }));
     };
-    syncVotes();
-    const timer = window.setInterval(syncVotes, 30000);
-    return () => { cancelled = true; window.clearInterval(timer); };
+    sync();
+    const t = window.setInterval(sync, 30_000);
+    return () => { cancelled = true; window.clearInterval(t); };
   }, [debates]);
 
   useEffect(() => {
-    if (!supabase || debates.length === 0) return;
-    const debateIds = new Set(debates.map((d) => d.id));
-    const channel = supabase.channel("rapid-fire-votes-live")
+    if (!supabase || !debates.length) return;
+    const ids = new Set(debates.map(d => d.id));
+    const ch = supabase.channel("rf-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "rapid_fire_votes" }, (payload: any) => {
-        const row = (payload.new || payload.old) as any;
-        if (!row?.debate_id || !debateIds.has(row.debate_id)) return;
-        setLiveVoteMap((prev) => ({ ...prev, [row.debate_id]: { leftVotes: row.left_votes || 0, rightVotes: row.right_votes || 0, totalVotes: row.total_votes || 0 } }));
-        setUpdatedAtMap((prev) => ({ ...prev, [row.debate_id]: row.updated_at ? new Date(row.updated_at).getTime() : Date.now() }));
-        triggerPulse(row.debate_id);
+        const r = (payload.new || payload.old) as any;
+        if (!r?.debate_id || !ids.has(r.debate_id)) return;
+        setLiveVoteMap(p => ({ ...p, [r.debate_id]: { leftVotes: r.left_votes || 0, rightVotes: r.right_votes || 0, totalVotes: r.total_votes || 0 } }));
+        setUpdatedAtMap(p => ({ ...p, [r.debate_id]: Date.now() }));
+        setPulseMap(p => ({ ...p, [r.debate_id]: true }));
+        setTimeout(() => setPulseMap(p => ({ ...p, [r.debate_id]: false })), 600);
       }).subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(ch); };
   }, [debates]);
 
-  const triggerPulse = (debateId: string) => {
-    setPulseMap((prev) => ({ ...prev, [debateId]: true }));
-    window.setTimeout(() => setPulseMap((prev) => ({ ...prev, [debateId]: false })), 650);
-  };
-
+  // ── Vote handler ─────────────────────────────────────────────────────────────
   const handleVote = async (debateId: string, side: "left" | "right", index: number) => {
     if (!isLoggedIn) {
       sessionStorage.setItem("auth_return_url", window.location.pathname);
       setLocation("/login");
       return;
     }
-    if (localVotes[debateId]) return;
+    if (localVotes[debateId] || isVoting) return;
+
     setIsVoting(debateId);
-    await new Promise((resolve) => setTimeout(resolve, 180));
-    setLocalVotes((prev) => ({ ...prev, [debateId]: side }));
+    await new Promise(r => setTimeout(r, 120));
+    setLocalVotes(p => ({ ...p, [debateId]: side }));
     setIsVoting(null);
-    setLiveVoteMap((prev) => {
-      const current = prev[debateId] || { leftVotes: 0, rightVotes: 0, totalVotes: 0 };
-      return { ...prev, [debateId]: { leftVotes: current.leftVotes + (side === "left" ? 1 : 0), rightVotes: current.rightVotes + (side === "right" ? 1 : 0), totalVotes: current.totalVotes + 1 } };
+
+    setLiveVoteMap(p => {
+      const c = p[debateId] || { leftVotes: 0, rightVotes: 0, totalVotes: 0 };
+      return { ...p, [debateId]: { leftVotes: c.leftVotes + (side === "left" ? 1 : 0), rightVotes: c.rightVotes + (side === "right" ? 1 : 0), totalVotes: c.totalVotes + 1 } };
     });
-    setUpdatedAtMap((prev) => ({ ...prev, [debateId]: Date.now() }));
-    triggerPulse(debateId);
 
-    // Coin pop animation
-    const popId = `${debateId}-${Date.now()}`;
-    setCoinPops((prev) => [...prev.slice(-3), { id: popId, side }]);
-    setTimeout(() => setCoinPops((prev) => prev.filter((p) => p.id !== popId)), 1000);
+    // Coin pop
+    const popKey = `${debateId}-${Date.now()}`;
+    setCoinPop({ key: popKey, side });
+    setTimeout(() => setCoinPop(null), 900);
 
+    // Supabase write
     if (supabase) {
       const { error } = await supabase.rpc("increment_rapid_fire_vote", { p_debate_id: debateId, p_side: side });
       if (error) {
-        const current = liveVoteMap[debateId] || { leftVotes: 0, rightVotes: 0, totalVotes: 0 };
+        const c = liveVoteMap[debateId] || { leftVotes: 0, rightVotes: 0, totalVotes: 0 };
         await supabase.from("rapid_fire_votes").upsert(
-          { debate_id: debateId, left_votes: current.leftVotes + (side === "left" ? 1 : 0), right_votes: current.rightVotes + (side === "right" ? 1 : 0), total_votes: current.totalVotes + 1, updated_at: new Date().toISOString() },
+          { debate_id: debateId, left_votes: c.leftVotes + (side === "left" ? 1 : 0), right_votes: c.rightVotes + (side === "right" ? 1 : 0), total_votes: c.totalVotes + 1, updated_at: new Date().toISOString() },
           { onConflict: "debate_id" }
         );
       }
     }
 
     awardCoins("rapid_fire_vote");
-    const newStreak = voteStreak + 1;
-    setVoteStreak(newStreak);
-    if (newStreak % 5 === 0) {
+    const ns = voteStreak + 1;
+    setVoteStreak(ns);
+    if (ns % 5 === 0) {
       awardCoins("rapid_fire_streak_5");
-      setShowCombo(newStreak);
-      setTimeout(() => setShowCombo(0), 1400);
+      setShowCombo(ns);
+      setTimeout(() => setShowCombo(0), 1500);
     }
-    if (newStreak > 0 && newStreak % 10 === 0) {
-      setTimeout(() => setShowShare(true), 1000);
-    }
+    if (ns > 0 && ns % 10 === 0) setTimeout(() => setShowShare(true), 800);
+
+    // Auto-advance after 1.6s
     setTimeout(() => {
-      const nextEl = document.getElementById(`debate-${index + 1}`);
-      if (nextEl) nextEl.scrollIntoView({ behavior: "smooth" });
-    }, 1200);
+      const next = document.getElementById(`rf-${index + 1}`);
+      if (next) next.scrollIntoView({ behavior: "smooth" });
+    }, 1600);
   };
 
   return (
-    <div className="bg-[#050508] fixed inset-0 z-50 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden">
 
-      {/* ── Scanline overlay ───────────────────────────────────────────────── */}
-      <div className="pointer-events-none fixed inset-0 z-10 opacity-[0.03]"
-        style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,1) 2px, rgba(255,255,255,1) 4px)", backgroundSize: "100% 4px" }}
-      />
-
-      {/* ── Combo flash ───────────────────────────────────────────────────── */}
-      {showCombo > 0 && <ComboFlash streak={showCombo} />}
-
-      {/* ── Arcade cabinet header ─────────────────────────────────────────── */}
-      <div className="relative z-20 flex-shrink-0 bg-black border-b-2 border-[#00CFFF]/40 px-3 py-2.5">
-        {/* top row */}
-        <div className="flex items-center justify-between mb-2">
-          <Link href="/" className="inline-flex items-center gap-1.5 border border-white/15 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Quit
-          </Link>
-
-          <div className="flex items-center gap-1.5 px-3 py-1.5 border border-[#00CFFF]/50 bg-[#00CFFF]/10">
-            <Zap className="w-4 h-4 text-[#00CFFF]" />
-            <span className="font-black text-[#00CFFF] uppercase tracking-[0.3em] text-xs">Rapid Fire</span>
+      {/* ── COMBO FLASH ────────────────────────────────────────────────────── */}
+      {showCombo > 0 && (
+        <div className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="animate-combo-flash text-center">
+            <div className="text-[#FFD700] font-black tracking-[0.3em] uppercase" style={{ fontSize: "clamp(2.5rem,8vw,5rem)" }}>
+              COMBO!
+            </div>
+            <div className="text-white font-black tracking-widest" style={{ fontSize: "clamp(1.5rem,5vw,3rem)" }}>
+              🔥 x{showCombo}
+            </div>
           </div>
+        </div>
+      )}
 
+      {/* ── COIN POP ───────────────────────────────────────────────────────── */}
+      {coinPop && (
+        <div
+          key={coinPop.key}
+          className={`pointer-events-none fixed z-[55] text-[#FFD700] font-black text-2xl tracking-widest animate-coin-pop ${coinPop.side === "left" ? "left-[20%]" : "right-[20%]"} bottom-40`}
+        >
+          +10 MTC
+        </div>
+      )}
+
+      {/* ── HEADER BAR ─────────────────────────────────────────────────────── */}
+      <div className="relative z-30 flex-shrink-0 flex items-center justify-between gap-2 px-3 py-2 bg-black/95 border-b border-white/8">
+        <Link href="/" className="flex items-center gap-1.5 px-3 py-2 border border-white/10 bg-white/[0.04] text-white/50 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">
+          <ChevronLeft className="w-3.5 h-3.5" />
+          Quit
+        </Link>
+
+        <div className="flex items-center gap-2 px-3 py-2 border border-[#0047FF]/50 bg-[#0047FF]/10">
+          <Zap className="w-4 h-4 text-[#0047FF]" />
+          <span className="text-[#0047FF] font-black uppercase tracking-[0.3em] text-[11px]">Rapid Fire</span>
+          <span className="text-white/30 text-[10px] font-black">
+            {String(votedCount + 1).padStart(2, "0")}/{String(debates.length).padStart(2, "0")}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {voteStreak > 0 && (
+            <div className="flex items-center gap-1 text-orange-400 font-black text-sm">
+              <Flame className="w-4 h-4" />{voteStreak}
+            </div>
+          )}
           <div className="text-right">
-            <div className="text-[8px] font-black uppercase tracking-widest text-white/30">Score</div>
+            <div className="text-[8px] font-black uppercase tracking-widest text-white/25">Score</div>
             <div className="text-sm font-black text-[#FFD700] tabular-nums">{String(score).padStart(4, "0")}</div>
-          </div>
-        </div>
-
-        {/* stats row */}
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          <div className="border border-white/10 bg-white/[0.03] px-2 py-1.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-widest text-white/30">Stage</div>
-            <div className="text-xs font-black text-white tabular-nums">{String(votedCount + 1).padStart(2, "0")}<span className="text-white/25">/{String(debates.length).padStart(2, "0")}</span></div>
-          </div>
-          <div className="border border-orange-500/30 bg-orange-500/5 px-2 py-1.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-widest text-orange-400/60">Combo</div>
-            <div className="text-xs font-black text-orange-400 tabular-nums">x{voteStreak} 🔥</div>
-          </div>
-          <div className="border border-[#FFD700]/20 bg-[#FFD700]/5 px-2 py-1.5 text-center">
-            <div className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">MTC</div>
-            <div className="text-xs font-black text-[#FFD700] tabular-nums">+{score}</div>
-          </div>
-        </div>
-
-        {/* EXP progress bar */}
-        <div className="relative h-2 bg-white/5 border border-white/10 overflow-hidden">
-          <div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#00CFFF] to-[#7B2FFF] transition-all duration-500 shadow-[0_0_8px_rgba(0,207,255,0.8)]"
-            style={{ width: `${progress}%` }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center text-[7px] font-black uppercase tracking-widest text-white/50">
-            {progress}% complete
           </div>
         </div>
       </div>
 
-      {/* ── Snap scroll arena ─────────────────────────────────────────────── */}
+      {/* ── THIN PROGRESS BAR ──────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 h-[3px] bg-white/5">
+        <div
+          className="h-full transition-all duration-500"
+          style={{ width: `${progress}%`, background: "linear-gradient(to right, #0047FF, #7B2FFF, #FF1744)" }}
+        />
+      </div>
+
+      {/* ── SNAP SCROLL ARENA ──────────────────────────────────────────────── */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-scroll snap-y snap-mandatory hide-scrollbar relative"
+        className="flex-1 overflow-y-scroll snap-y snap-mandatory hide-scrollbar"
         style={{ scrollBehavior: "smooth" }}
       >
         {debates.map((debate: any, index: number) => {
-          const userVote = localVotes[debate.id];
-          const fallbackTotal = parseInt(debate.totalVotes?.replace(",", "") || "0");
-          const live = liveVoteMap[debate.id];
-          const leftVotes = live ? live.leftVotes : (debate.leftVotes || 0);
-          const rightVotes = live ? live.rightVotes : (debate.rightVotes || 0);
-          const totalVotesRaw = live ? live.totalVotes : fallbackTotal;
-          const leftImage = resolveDebateImage(debate.left, debate.leftImage);
-          const rightImage = resolveDebateImage(debate.right, debate.rightImage);
-          const total = leftVotes + rightVotes || 1;
-          const finalLeft = Math.round((leftVotes / total) * 100);
-          const finalRight = 100 - finalLeft;
-          const voted = userVote !== undefined;
+          const voted     = localVotes[debate.id];
+          const live      = liveVoteMap[debate.id];
+          const leftV     = live ? live.leftVotes  : (debate.leftVotes  || 0);
+          const rightV    = live ? live.rightVotes : (debate.rightVotes || 0);
+          const totalV    = live ? live.totalVotes : (parseInt(debate.totalVotes?.replace(",", "") || "0"));
+          const total     = leftV + rightV || 1;
+          const leftPct   = Math.round((leftV  / total) * 100);
+          const rightPct  = 100 - leftPct;
+          const leftImg   = resolveDebateImage(debate.left,  debate.leftImage);
+          const rightImg  = resolveDebateImage(debate.right, debate.rightImage);
 
           return (
             <div
               key={debate.id}
-              id={`debate-${index}`}
-              className="w-full min-h-[calc(100dvh-110px)] snap-start snap-always flex flex-col items-center justify-center relative px-4 py-6"
+              id={`rf-${index}`}
+              className="w-full snap-start snap-always flex flex-col"
+              style={{ height: "calc(100dvh - 56px)" }}
             >
-              {/* arena glow */}
-              <div className={`absolute inset-0 transition-all duration-700 pointer-events-none ${
-                userVote === "left"  ? "bg-[radial-gradient(ellipse_at_30%_50%,rgba(0,150,255,0.12),transparent_60%)]" :
-                userVote === "right" ? "bg-[radial-gradient(ellipse_at_70%_50%,rgba(255,40,40,0.12),transparent_60%)]" :
-                "bg-[radial-gradient(ellipse_at_50%_50%,rgba(255,255,255,0.03),transparent_60%)]"
-              }`} />
-
-              {/* coin pops */}
-              {coinPops.map((p) => <CoinPop key={p.id} id={p.id} side={p.side} />)}
-
-              <div className="max-w-md w-full relative z-10 flex flex-col items-center gap-4">
-
-                {/* stage badge */}
-                <div className="flex items-center gap-2">
-                  <div className="h-px w-8 bg-[#00CFFF]/40" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.35em] text-[#00CFFF]/70">
-                    Stage {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className="h-px w-8 bg-[#00CFFF]/40" />
-                </div>
-
-                {/* question */}
-                <h2 className="text-xl md:text-3xl font-black text-center leading-tight text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+              {/* ── Question bar ─────────────────────────────────────────── */}
+              <div className="flex-shrink-0 bg-black/90 backdrop-blur border-b border-white/8 px-4 py-3 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/30 mb-1">
+                  {debate.emoji || "⚡"} Stage {String(index + 1).padStart(2, "0")}
+                </p>
+                <h2 className="text-base md:text-xl font-black text-white leading-tight">
                   {debate.title}
                 </h2>
+              </div>
 
-                {/* fighter portraits */}
-                <div className="flex items-end justify-between w-full gap-3">
-                  {/* Left fighter */}
-                  <div className={`flex flex-col items-center gap-2 w-[44%] transition-all duration-300 ${voted && userVote !== "left" ? "opacity-30 scale-95" : ""}`}>
-                    <div className={`w-full aspect-square overflow-hidden border-2 transition-all duration-300 ${
-                      userVote === "left" ? "border-[#00CFFF] shadow-[0_0_24px_rgba(0,207,255,0.6)]" : "border-white/15"
-                    }`}>
-                      <DebateImage label={debate.left} src={leftImage} />
-                    </div>
-                    <span className="text-xs md:text-sm font-black text-center text-white leading-tight uppercase tracking-wide">
-                      {debate.left}
-                    </span>
-                    {userVote === "left" && (
-                      <div className="flex items-center gap-1 text-[#00CFFF] text-[10px] font-black uppercase tracking-widest">
-                        <Check className="w-3 h-3" /> Your Pick
-                      </div>
-                    )}
-                  </div>
+              {/* ── Full-height split arena ───────────────────────────────── */}
+              <div className="flex-1 flex relative overflow-hidden">
+                <FighterPanel
+                  label={debate.left}
+                  imgSrc={leftImg}
+                  side="left"
+                  voted={!!voted}
+                  isMyPick={voted === "left"}
+                  pct={leftPct}
+                  onClick={() => handleVote(debate.id, "left", index)}
+                  disabled={!!voted || isVoting === debate.id}
+                />
 
-                  {/* VS */}
-                  <div className="flex flex-col items-center gap-1 pb-8 shrink-0">
-                    <div className="text-[10px] font-black text-white/20 tracking-widest">⚡</div>
-                    <span className="text-xl font-black text-white/60 tracking-widest">VS</span>
-                    <div className="text-[10px] font-black text-white/20 tracking-widest">⚡</div>
+                {/* ── VS divider ─────────────────────────────────────────── */}
+                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="w-px flex-1 bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+                  <div className="bg-black border border-white/20 px-2.5 py-3 my-2">
+                    <span className="text-white/60 font-black text-[11px] uppercase tracking-[0.2em] [writing-mode:vertical-rl]">VS</span>
                   </div>
-
-                  {/* Right fighter */}
-                  <div className={`flex flex-col items-center gap-2 w-[44%] transition-all duration-300 ${voted && userVote !== "right" ? "opacity-30 scale-95" : ""}`}>
-                    <div className={`w-full aspect-square overflow-hidden border-2 transition-all duration-300 ${
-                      userVote === "right" ? "border-[#FF2828] shadow-[0_0_24px_rgba(255,40,40,0.6)]" : "border-white/15"
-                    }`}>
-                      <DebateImage label={debate.right} src={rightImage} />
-                    </div>
-                    <span className="text-xs md:text-sm font-black text-center text-white leading-tight uppercase tracking-wide">
-                      {debate.right}
-                    </span>
-                    {userVote === "right" && (
-                      <div className="flex items-center gap-1 text-[#FF2828] text-[10px] font-black uppercase tracking-widest">
-                        <Check className="w-3 h-3" /> Your Pick
-                      </div>
-                    )}
-                  </div>
+                  <div className="w-px flex-1 bg-gradient-to-b from-transparent via-white/15 to-transparent" />
                 </div>
 
-                {/* Fighting-game HP bars */}
-                <div className={`w-full transition-all duration-300 ${pulseMap[debate.id] ? "brightness-125" : ""}`}>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-[#00CFFF]/70 w-8 text-left">{voted ? `${finalLeft}%` : ""}</span>
-                    <div className="flex-1 h-3 bg-white/5 border border-white/10 overflow-hidden flex">
-                      {/* Left HP — fills from left */}
-                      <div
-                        className={`h-full transition-all duration-1000 ${userVote === "left" ? "bg-[#00CFFF] shadow-[0_0_10px_rgba(0,207,255,0.8)]" : "bg-[#00CFFF]/40"}`}
-                        style={{ width: voted ? `${finalLeft}%` : "50%" }}
-                      />
-                      {/* Right HP — fills from right */}
-                      <div
-                        className={`h-full transition-all duration-1000 ${userVote === "right" ? "bg-[#FF2828] shadow-[0_0_10px_rgba(255,40,40,0.8)]" : "bg-[#FF2828]/40"}`}
-                        style={{ width: voted ? `${finalRight}%` : "50%" }}
-                      />
-                    </div>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-[#FF2828]/70 w-8 text-right">{voted ? `${finalRight}%` : ""}</span>
-                  </div>
-                  {voted && (
-                    <div className="text-center text-[9px] font-black uppercase tracking-widest text-white/25 mt-1">
-                      {totalVotesRaw.toLocaleString()} fans voted
-                    </div>
-                  )}
-                </div>
+                <FighterPanel
+                  label={debate.right}
+                  imgSrc={rightImg}
+                  side="right"
+                  voted={!!voted}
+                  isMyPick={voted === "right"}
+                  pct={rightPct}
+                  onClick={() => handleVote(debate.id, "right", index)}
+                  disabled={!!voted || isVoting === debate.id}
+                />
 
-                {/* Vote buttons */}
-                {!voted ? (
-                  <div className="flex gap-3 w-full">
-                    <button
-                      onClick={() => handleVote(debate.id, "left", index)}
-                      disabled={isVoting === debate.id}
-                      className="flex-1 py-4 md:py-5 font-black uppercase tracking-widest text-sm border-2 border-[#00CFFF]/50 bg-[#00CFFF]/10 text-[#00CFFF] hover:bg-[#00CFFF]/25 hover:border-[#00CFFF] hover:shadow-[0_0_20px_rgba(0,207,255,0.4)] active:scale-95 transition-all duration-150 flex flex-col items-center gap-1"
-                    >
-                      {isVoting === debate.id
-                        ? <Loader2 className="w-5 h-5 animate-spin" />
-                        : <>
-                            <span className="text-xs text-[#00CFFF]/60 font-black tracking-widest">Pick This</span>
-                            <span className="leading-tight text-center">{debate.left}</span>
-                          </>
-                      }
-                    </button>
-                    <button
-                      onClick={() => handleVote(debate.id, "right", index)}
-                      disabled={isVoting === debate.id}
-                      className="flex-1 py-4 md:py-5 font-black uppercase tracking-widest text-sm border-2 border-[#FF2828]/50 bg-[#FF2828]/10 text-[#FF2828] hover:bg-[#FF2828]/25 hover:border-[#FF2828] hover:shadow-[0_0_20px_rgba(255,40,40,0.4)] active:scale-95 transition-all duration-150 flex flex-col items-center gap-1"
-                    >
-                      {isVoting === debate.id
-                        ? <Loader2 className="w-5 h-5 animate-spin" />
-                        : <>
-                            <span className="text-xs text-[#FF2828]/60 font-black tracking-widest">Pick This</span>
-                            <span className="leading-tight text-center">{debate.right}</span>
-                          </>
-                      }
-                    </button>
+                {/* ── Vote count overlay (post-vote) ────────────────────── */}
+                {voted && (
+                  <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center pb-4 z-10 pointer-events-none">
+                    <div className="bg-black/80 backdrop-blur border border-white/10 px-4 py-2 text-center">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-white/35">
+                        {totalV.toLocaleString()} fans voted
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      const nextEl = document.getElementById(`debate-${index + 1}`);
-                      if (nextEl) nextEl.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="w-full py-3.5 font-black uppercase tracking-[0.3em] text-xs border border-white/15 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-all"
-                  >
-                    Next Stage →
-                  </button>
                 )}
 
-                {/* logged-out prompt */}
-                {!isLoggedIn && (
-                  <div className="w-full border border-[#FFD700]/30 bg-[#FFD700]/5 px-4 py-3 text-center">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
-                      Insert Coin — Sign in to vote and earn MTC
+                {/* ── Swipe hint (pre-vote) ─────────────────────────────── */}
+                {!voted && index < debates.length - 1 && (
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
+                    <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/15 animate-bounce">
+                      vote · then swipe down
                     </span>
+                  </div>
+                )}
+
+                {/* ── Login wall ────────────────────────────────────────── */}
+                {!isLoggedIn && (
+                  <div className="absolute inset-0 z-30 flex items-end justify-center pb-8 bg-black/50 backdrop-blur-sm">
+                    <div className="text-center px-6">
+                      <div className="text-[#FFD700] font-black text-xl tracking-widest uppercase mb-3">
+                        INSERT COIN
+                      </div>
+                      <p className="text-white/50 text-xs font-bold mb-4">Sign in to vote and earn MTC</p>
+                      <Link
+                        href="/login"
+                        className="inline-block bg-[#FFD700] text-black font-black uppercase tracking-widest text-xs px-8 py-3 hover:bg-yellow-400 transition-colors"
+                      >
+                        Sign In Free
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* scroll hint */}
-              {!voted && index < debates.length - 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-[8px] font-black uppercase tracking-widest text-white/15 animate-bounce">
-                  swipe down
+              {/* ── Next stage button (post-vote) ─────────────────────────── */}
+              {voted && index < debates.length - 1 && (
+                <div className="flex-shrink-0 bg-black border-t border-white/8">
+                  <button
+                    onClick={() => {
+                      const next = document.getElementById(`rf-${index + 1}`);
+                      if (next) next.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="w-full py-3.5 font-black uppercase tracking-[0.3em] text-[11px] text-white/40 hover:text-white hover:bg-white/5 transition-all"
+                  >
+                    Next Stage →
+                  </button>
+                </div>
+              )}
+
+              {voted && index === debates.length - 1 && (
+                <div className="flex-shrink-0 bg-black border-t border-[#FFD700]/30 text-center py-4">
+                  <div className="text-[#FFD700] font-black text-lg tracking-widest">
+                    GAME OVER
+                  </div>
+                  <div className="text-white/40 text-xs font-bold mt-1 tracking-widest">
+                    {votedCount} votes · {score} MTC earned
+                  </div>
+                  <Link href="/" className="mt-3 inline-block text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-colors">
+                    Return to BallMtaani
+                  </Link>
                 </div>
               )}
             </div>
@@ -435,11 +475,11 @@ export default function RapidFirePage() {
 
       {showShare && (
         <ShareCard
-          achievement={`Rapid Fire Streak: ${voteStreak} Votes!`}
-          subtitle="I just ran through a stack of football debates."
+          achievement={`Rapid Fire: ${voteStreak} in a row!`}
+          subtitle="I just torched a stack of football debates on BallMtaani."
           coinsEarned={score}
           emoji="RF"
-          shareUrl={`https://ballmtaani.com/?ref=${username || "fan"}`}
+          shareUrl={`https://ballmtaani.com/rapid-fire?ref=${username || "fan"}`}
           onClose={() => setShowShare(false)}
         />
       )}
