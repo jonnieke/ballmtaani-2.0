@@ -940,6 +940,7 @@ function WC26HeroBanner() {
 }
 
 export default function LandingPage() {
+  const { isLoggedIn } = useAuth();
   const [live, setLive] = useState<LiveMatch[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const [upcoming, setUpcoming] = useState<any[]>([]);
@@ -1247,7 +1248,11 @@ export default function LandingPage() {
                     />
                   ))
                 ) : (
-                  <div className="px-4 py-8 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">No matches loaded yet.</div>
+                  <div className="px-4 py-8 text-center">
+                    <div className="text-2xl mb-2">⚽</div>
+                    <div className="text-xs font-black uppercase tracking-widest text-white/50 mb-1">No live matches right now</div>
+                    <div className="text-[10px] text-white/25">WC26 kicks off June 11 · Check back then for live action</div>
+                  </div>
                 )}
               </div>
             </section>
@@ -1364,7 +1369,11 @@ export default function LandingPage() {
                 {activeTab === "match" ? (
                   <div className="space-y-3">
                     {!selectedMatch ? (
-                      <div className="rounded-xl border border-white/8 bg-white/[0.03] p-5 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">Pick a match from the queue to open the numbers.</div>
+                      <div className="rounded-xl border border-white/8 bg-white/[0.03] p-5 text-center">
+                        <div className="text-xl mb-2">📊</div>
+                        <div className="text-[11px] font-black uppercase tracking-widest text-white/40 mb-1">Match board ready</div>
+                        <div className="text-[10px] text-white/20">Pick a match from the queue to see live stats, events and lineups</div>
+                      </div>
                     ) : detailsLoading ? (
                       <div className="rounded-xl border border-white/8 bg-white/[0.03] p-5 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/38">Opening the match book...</div>
                     ) : fixtureStats.length ? (
@@ -1441,6 +1450,19 @@ export default function LandingPage() {
       <footer className="relative z-10 mx-auto max-w-[1480px] px-3 pb-6 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-white/38 md:px-5">
         <div>BallMtaani match center for fans who want the full picture.</div>
       </footer>
+
+      {/* ── STICKY GOOGLE SIGN-IN BANNER ── logged-out fans only */}
+      {!isLoggedIn && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#FFD700]/20 bg-[#0a0800]/96 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_30px_rgba(0,0,0,0.6)]">
+          <div className="mx-auto flex max-w-lg items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black text-[#FFD700] leading-tight">⚽ WC26 kicks off in 4 days</p>
+              <p className="text-[10px] text-white/40">Join free — make your bold calls before June 11</p>
+            </div>
+            <GoogleSignInButton size="sm" label="Join · Google" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
