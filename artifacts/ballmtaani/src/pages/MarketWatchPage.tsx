@@ -4,7 +4,6 @@ import {
   Activity,
   ArrowLeft,
   BarChart3,
-  ExternalLink,
   Flame,
   ShieldCheck,
   Sparkles,
@@ -15,8 +14,6 @@ import {
 } from "lucide-react";
 import SEO from "../components/SEO";
 import { supabase } from "../lib/supabase";
-import TeamLogo from "../components/TeamLogo";
-import { analytics } from "../lib/analytics";
 
 // ─── WC26 Pre-Match Intelligence ─────────────────────────────────────────────
 const OPENING_MATCHES = [
@@ -115,11 +112,6 @@ const CONTENDERS = [
   { flag: "🇲🇦", name: "Morocco", rating: 82, strength: "CAF's best team. Tactical discipline.", risk: "Attacking fire power plateau", color: "text-orange-300", border: "border-orange-300/30" },
 ];
 
-const PLATFORMS = [
-  { name: "SportPesa", url: "https://www.sportpesa.co.ke/?utm_source=ballmtaani&utm_medium=market_watch&utm_campaign=wc26", color: "text-[#00A651]", bg: "bg-[#00A651]/10", border: "border-[#00A651]/30" },
-  { name: "Odibets",  url: "https://www.odibets.com/?utm_source=ballmtaani&utm_medium=market_watch&utm_campaign=wc26",  color: "text-[#FF6B00]", bg: "bg-[#FF6B00]/10", border: "border-[#FF6B00]/30" },
-  { name: "Betway",   url: "https://www.betway.co.ke/?utm_source=ballmtaani&utm_medium=market_watch&utm_campaign=wc26",  color: "text-[#00A4E4]", bg: "bg-[#00A4E4]/10", border: "border-[#00A4E4]/30" },
-];
 
 function HeatBar({ value }: { value: number }) {
   const color = value >= 90 ? "bg-red-500" : value >= 75 ? "bg-orange-500" : "bg-yellow-500";
@@ -167,11 +159,6 @@ export default function MarketWatchPage() {
       .catch(() => setSentimentLoading(false));
   }, []);
 
-  const handleAffiliateClick = (name: string) => {
-    analytics.pageView(`market_watch_affiliate_${name.toLowerCase()}`);
-    window.gtag?.("event", "betting_affiliate_click", { platform: name, source: "market_watch" });
-  };
-
   // Champion picks — top 3
   const championPicks = Object.entries(sentiment["wc26-champion"] || {})
     .sort(([, a], [, b]) => b - a)
@@ -217,7 +204,7 @@ export default function MarketWatchPage() {
           </Link>
           <div className="inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-500/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-green-300">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Football intelligence only — BallMtaani does not process bets
+            Football intelligence for Kenyan fans
           </div>
         </div>
 
@@ -437,32 +424,6 @@ export default function MarketWatchPage() {
           </div>
         </section>
 
-        {/* Back Your Call — Affiliate */}
-        <section className="mb-6 rounded-3xl border border-white/10 bg-[#0c121b]/90 p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold uppercase text-white">Back Your Call With Real Money</h2>
-              <p className="mt-1 text-xs text-white/40">Made your WC26 predictions? Place your real stake on Kenya's top platforms.</p>
-            </div>
-            <span className="text-[10px] font-bold text-white/20">18+ · Gamble responsibly</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {PLATFORMS.map((p) => (
-              <a
-                key={p.name}
-                href={p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => handleAffiliateClick(p.name)}
-                className={`flex items-center justify-center gap-2 rounded-xl border ${p.border} ${p.bg} py-3.5 transition-all hover:opacity-80 active:scale-[0.97]`}
-              >
-                <span className={`text-sm font-black ${p.color}`}>{p.name}</span>
-                <ExternalLink className={`h-3 w-3 ${p.color} opacity-50`} />
-              </a>
-            ))}
-          </div>
-        </section>
-
         {/* Make Your Calls CTA */}
         <section className="rounded-3xl border border-[#FFD700]/25 bg-[#FFD700]/5 p-5 text-center">
           <div className="text-2xl mb-2">⚽</div>
@@ -477,7 +438,7 @@ export default function MarketWatchPage() {
         </section>
 
         <footer className="mt-6 text-center text-[10px] font-medium uppercase tracking-[0.16em] text-white/30">
-          BallMtaani does not process bets or take wagers. Content is football intelligence only.
+          BallMtaani · Football intelligence for Kenyan fans
         </footer>
       </main>
     </div>

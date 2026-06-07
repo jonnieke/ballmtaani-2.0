@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2 } from "lucide-react";
-import BettingAffiliate from "../components/BettingAffiliate";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
@@ -528,10 +527,6 @@ export default function PredictionsPage() {
                       >
                         Edit Call
                       </button>
-                      <BettingAffiliate
-                        matchLabel={`${fixture.home} vs ${fixture.away}`}
-                        compact
-                      />
                     </>
                   ) : (
                     <button
@@ -752,8 +747,6 @@ export default function PredictionsPage() {
             Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT
           </p>
 
-          {/* Betting affiliate — shown always on WC26 tab */}
-          <BettingAffiliate matchLabel="WC26 Group Stage" />
         </div>
       ) : (
         <div className="py-10 text-center text-white/20 text-sm">Nothing here yet.</div>
