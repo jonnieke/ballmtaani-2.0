@@ -1,10 +1,15 @@
-const CACHE_NAME = 'ballmtaani-v4';
+const CACHE_NAME = 'ballmtaani-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/logo.png',
 ];
+
+// Skip waiting immediately when asked — allows instant SW activation on update
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
 // Install: cache static assets
 self.addEventListener('install', (event) => {
