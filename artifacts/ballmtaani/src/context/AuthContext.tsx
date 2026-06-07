@@ -158,11 +158,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setUser(session.user);
         setIsLoggedIn(true);
         loadProfile(session.user.id);
+        // Award login coins on new sign-in (Google OAuth redirect flow)
+        // getSession() handles page-reload case; this handles fresh sign-in
+        if (event === "SIGNED_IN") {
+          const streakInfo = processLoginStreak();
+          if (streakInfo.isNewDay) {
+            const total = streakInfo.coinsEarned + streakInfo.bonusEarned;
+            if (total > 0) {
+              setCoins(prev => prev + total);
+              playCoinSound();
+              window.dispatchEvent(new CustomEvent('coinsAdded', { detail: { amount: total } }));
+              addCoinTransaction({ action: 'daily_login', label: 'Daily Login', emoji: 'Login', amount: streakInfo.coinsEarned });
+              if (streakInfo.bonusEarned > 0) {
+                addCoinTransaction({ action: 'login_streak', label: `${streakInfo.streak}-Day Streak Bonus`, emoji: 'Streak', amount: streakInfo.bonusEarned });
+              }
+            }
+            setPendingLoginStreak(streakInfo);
+            supabase.from('profiles').update({ streak: streakInfo.streak, last_login_date: new Date().toISOString().split('T')[0] }).eq('id', session.user.id);
+          }
+        }
       } else {
         const hasMock = ENABLE_MOCK_AUTH ? localStorage.getItem("mock_auth_session") : null;
         if (!hasMock) { setUser(null); setIsLoggedIn(false); setDbProfile(null); }
