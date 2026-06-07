@@ -3,12 +3,12 @@ import { Link } from "wouter";
 import { CalendarDays, ChevronRight, MapPin, Shield, Sparkles, Trophy, Users, Zap } from "lucide-react";
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
-import OddspediaCredit from "../components/OddspediaCredit";
 import {
   fetchTournamentFixtures,
   fetchTournamentStandings,
   type TournamentStandingEntry,
 } from "../lib/football-api";
+import { WC26_GUIDES } from "../data/wc26-guides";
 
 // ─── Static data ─────────────────────────────────────────────
 const WC26_START = new Date("2026-06-11T17:00:00Z");
@@ -41,6 +41,66 @@ const CAF_NATIONS = [
   { flag: "🇩🇿", name: "Algeria" },
   { flag: "🇹🇳", name: "Tunisia" },
 ];
+
+const WC26_OPENING_FIXTURES = [
+  { home: "Mexico", away: "South Africa", date: "Jun 11", time: "10:00 PM" },
+  { home: "USA", away: "Colombia", date: "Jun 12", time: "1:00 AM" },
+  { home: "Canada", away: "Venezuela", date: "Jun 12", time: "4:00 PM" },
+  { home: "Brazil", away: "Germany", date: "Jun 13", time: "7:00 PM" },
+  { home: "Argentina", away: "Morocco", date: "Jun 14", time: "10:00 PM" },
+  { home: "France", away: "England", date: "Jun 14", time: "1:00 AM" },
+];
+
+const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = {
+  "Group A": [
+    { rank: 1, team: "Mexico", logo: "https://media.api-sports.io/flags/mx.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+    { rank: 2, team: "South Africa", logo: "https://media.api-sports.io/flags/za.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+    { rank: 3, team: "USA", logo: "https://media.api-sports.io/flags/us.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+    { rank: 4, team: "Colombia", logo: "https://media.api-sports.io/flags/co.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+  ],
+  "Group B": [
+    { rank: 1, team: "Canada", logo: "https://media.api-sports.io/flags/ca.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+    { rank: 2, team: "Venezuela", logo: "https://media.api-sports.io/flags/ve.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+    { rank: 3, team: "Spain", logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+    { rank: 4, team: "Costa Rica", logo: "https://media.api-sports.io/flags/cr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+  ],
+  "Group C": [
+    { rank: 1, team: "Brazil", logo: "https://media.api-sports.io/flags/br.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+    { rank: 2, team: "Germany", logo: "https://media.api-sports.io/flags/de.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+    { rank: 3, team: "Japan", logo: "https://media.api-sports.io/flags/jp.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+    { rank: 4, team: "Morocco", logo: "https://media.api-sports.io/flags/ma.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+  ],
+  "Group D": [
+    { rank: 1, team: "Argentina", logo: "https://media.api-sports.io/flags/ar.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+    { rank: 2, team: "Uruguay", logo: "https://media.api-sports.io/flags/uy.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+    { rank: 3, team: "Paraguay", logo: "https://media.api-sports.io/flags/py.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+    { rank: 4, team: "Egypt", logo: "https://media.api-sports.io/flags/eg.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+  ],
+  "Group E": [
+    { rank: 1, team: "France", logo: "https://media.api-sports.io/flags/fr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+    { rank: 2, team: "England", logo: "https://media.api-sports.io/flags/gb-eng.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+    { rank: 3, team: "Belgium", logo: "https://media.api-sports.io/flags/be.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+    { rank: 4, team: "Slovakia", logo: "https://media.api-sports.io/flags/sk.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+  ],
+  "Group F": [
+    { rank: 1, team: "Netherlands", logo: "https://media.api-sports.io/flags/nl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+    { rank: 2, team: "Sweden", logo: "https://media.api-sports.io/flags/se.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+    { rank: 3, team: "Austria", logo: "https://media.api-sports.io/flags/at.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+    { rank: 4, team: "Cameroon", logo: "https://media.api-sports.io/flags/cm.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+  ],
+  "Group G": [
+    { rank: 1, team: "Spain", logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+    { rank: 2, team: "Italy", logo: "https://media.api-sports.io/flags/it.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+    { rank: 3, team: "Denmark", logo: "https://media.api-sports.io/flags/dk.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+    { rank: 4, team: "Serbia", logo: "https://media.api-sports.io/flags/rs.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+  ],
+  "Group H": [
+    { rank: 1, team: "Portugal", logo: "https://media.api-sports.io/flags/pt.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+    { rank: 2, team: "Poland", logo: "https://media.api-sports.io/flags/pl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+    { rank: 3, team: "Czech Republic", logo: "https://media.api-sports.io/flags/cz.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+    { rank: 4, team: "South Korea", logo: "https://media.api-sports.io/flags/kr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+  ],
+};
 
 // ─── Countdown hook ───────────────────────────────────────────
 function useCountdown() {
@@ -270,6 +330,36 @@ export default function WorldCup2026Page() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
+        <section className="mb-8">
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">WC26 Knowledge Base</h2>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-white/34">
+                Format, stadiums, Africa watch and squad logic
+              </p>
+            </div>
+            <Link href="/world-cup-2026/format" className="hidden rounded-full border border-[#FFD700]/20 bg-[#FFD700]/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#FFD700] sm:inline-flex">
+              Start with format
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {WC26_GUIDES.map((guide) => (
+              <Link
+                key={guide.slug}
+                href={`/world-cup-2026/${guide.slug}`}
+                className="group rounded-2xl border border-white/8 bg-[#090d14] p-4 transition-all hover:-translate-y-0.5 hover:border-[#FFD700]/28 hover:bg-[#101622]"
+              >
+                <div className="mb-3 text-[9px] font-black uppercase tracking-[0.18em] text-[#FFD700]/52">{guide.eyebrow}</div>
+                <h3 className="text-sm font-black uppercase leading-snug tracking-[0.08em] text-white">{guide.title}</h3>
+                <p className="mt-3 line-clamp-3 text-xs leading-6 text-white/48">{guide.deck}</p>
+                <div className="mt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-white/34">
+                  Read guide
+                  <ChevronRight className="h-3.5 w-3.5 text-[#FFD700] transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {/* ── FIXTURES + TIMELINE ── */}
         <div className="mb-8 grid gap-6 lg:grid-cols-2">
@@ -287,9 +377,15 @@ export default function WorldCup2026Page() {
             ) : nextFixtures.length > 0 ? (
               nextFixtures.map(f => <FixtureRow key={f.id} fixture={f} />)
             ) : (
-              <div className="p-8 text-center">
-                <p className="text-[11px] font-bold text-white/35">Fixtures publish as the tournament approaches.</p>
-                <p className="mt-1 text-[10px] text-white/20">API-Football data · Auto-updates</p>
+              <div className="space-y-2">
+                {WC26_OPENING_FIXTURES.map((f, i) => (
+                  <div key={i} className="flex items-center justify-between border-b border-white/5 px-4 py-3 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-black uppercase tracking-widest text-white">{f.home} vs {f.away}</div>
+                      <div className="text-[10px] text-white/30 mt-0.5">{f.date} · {f.time} EAT</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -367,18 +463,13 @@ export default function WorldCup2026Page() {
               {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-[#FFD700]/20 bg-[#0c0b02]/90">
-              <div className="grid grid-cols-2 gap-0 divide-x divide-white/6 sm:grid-cols-4">
-                {["Group A","Group B","Group C","Group D","Group E","Group F","Group G","Group H","Group I","Group J","Group K","Group L"].map(g => (
-                  <div key={g} className="border-b border-white/5 px-4 py-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">{g}</div>
-                    <div className="mt-1 text-[9px] text-white/22">4 teams · 6 matches</div>
-                  </div>
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(WC26_GROUPS).map(([name, rows]) => (
+                  <GroupTable key={name} name={name} rows={rows} />
                 ))}
               </div>
-              <div className="border-t border-[#FFD700]/10 px-4 py-4 text-center">
-                <p className="text-xs font-bold text-white/40">Full group draws and standings populate automatically when the tournament starts.</p>
-              </div>
+              <p className="text-center text-[10px] text-white/30">Live standings update as the tournament progresses · Tap to make group stage predictions</p>
             </div>
           )}
         </section>
@@ -451,7 +542,6 @@ export default function WorldCup2026Page() {
 
         <footer className="text-center text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
           <div>Data: API-Football · Tournament structure: FIFA WC2026</div>
-          <div className="mt-3"><OddspediaCredit /></div>
         </footer>
       </div>
     </div>
