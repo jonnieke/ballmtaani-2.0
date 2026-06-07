@@ -3,7 +3,8 @@ import { useLocation, Link } from "wouter";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../context/AuthContext";
-const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
+import { analytics } from "../../lib/analytics";
+const ENABLE_MOCK_AUTH = import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
 export default function VerifyOTPPage() {
   const [location, setLocation] = useLocation();
@@ -23,13 +24,17 @@ export default function VerifyOTPPage() {
     if (storedEmail) {
       setEmailAddr(storedEmail);
       setAuthMethod("email");
+      analytics.authOtpViewed("email");
     } else if (storedPhone) {
       setPhone(storedPhone);
       setAuthMethod("phone");
+      analytics.authOtpViewed("phone");
     } else {
       setLocation("/login");
       return;
     }
+
+    analytics.pageView("OTP");
 
     const timer = setInterval(() => {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
@@ -93,10 +98,11 @@ export default function VerifyOTPPage() {
 
     try {
       // Mock auth shortcut for local dev
-      if (code === "123456" && ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase)) {
+      if (code === "123456" && ENABLE_MOCK_AUTH) {
         mockLogin(phone || emailAddr);
+        analytics.authOtpVerified(authMethod, "success");
         clearSession();
-        const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+        const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
         sessionStorage.removeItem("auth_return_url");
         setLocation(returnUrl);
         return;
@@ -109,26 +115,32 @@ export default function VerifyOTPPage() {
 
       const { error } = await supabase.auth.verifyOtp(verifyPayload);
       if (error) throw error;
+      analytics.authOtpVerified(authMethod, "success");
 
       clearSession();
-      const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+      const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
       sessionStorage.removeItem("auth_return_url");
       setLocation(returnUrl);
 
     } catch (err: any) {
       console.error("Verification error:", err);
       // Fall back to mock login in dev if OTP fails
-      const isMockable = err.message?.includes("Database error") ||
-                         err.message?.includes("Token has expired") ||
-                         err.message?.includes("invalid") || !supabase;
+      const isMockable = import.meta.env.DEV && (
+        err.message?.includes("Database error") ||
+        err.message?.includes("Token has expired") ||
+        err.message?.includes("invalid") ||
+        !supabase
+      );
       if (isMockable && code === "123456" && ENABLE_MOCK_AUTH) {
         mockLogin(phone || emailAddr);
+        analytics.authOtpVerified(authMethod, "success");
         clearSession();
-        const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+        const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
         sessionStorage.removeItem("auth_return_url");
         setLocation(returnUrl);
         return;
       }
+      analytics.authOtpVerified(authMethod, "failed");
       setError(err.message || "Invalid code. Please try again.");
     } finally {
       setLoading(false);
@@ -247,7 +259,7 @@ export default function VerifyOTPPage() {
             )}
           </p>
           {ENABLE_MOCK_AUTH && (import.meta.env.DEV || !supabase) && (
-             <p className="text-[10px] text-gray-600 mt-4">Local testing code: 123456</p>
+          <p className="text-[10px] text-gray-600 mt-4">Local testing code: 123456</p>
           )}
         </div>
       </div>

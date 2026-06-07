@@ -70,8 +70,8 @@ function AppShell() {
   const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
   const isWorldCupPage = normalizedLocation === "/world-cup-2026" || normalizedLocation.startsWith("/world-cup-2026/");
-  const quietPage = ["/", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
-  const showInstallBanner = ["/", "/home", "/world-cup-2026"].includes(normalizedLocation);
+  const quietPage = ["/", "/hub", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
+  const showInstallBanner = ["/", "/home", "/hub", "/world-cup-2026"].includes(normalizedLocation);
   const showAdBanner = !["/login", "/verify"].includes(normalizedLocation);
 
   return (
@@ -101,8 +101,9 @@ function AppShell() {
         <RouteSEO path={normalizedLocation} />
         <Suspense fallback={<PageLoader />}>
         <Switch>
-            <Route path="/" component={LandingPage} />
+            <Route path="/" component={HomePage} />
             <Route path="/home" component={HomePage} />
+            <Route path="/hub" component={LandingPage} />
             <Route path="/world-cup-2026" component={WorldCup2026Page} />
             <Route path="/world-cup-2026/:guide" component={WorldCupGuidePage} />
             <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />

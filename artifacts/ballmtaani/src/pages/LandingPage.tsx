@@ -1142,7 +1142,7 @@ export default function LandingPage() {
 
         <header className={`mb-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 backdrop-blur-xl transition-all duration-700 ${live.length > 0 ? "border-primary/30 bg-black/50 shadow-[0_0_30px_rgba(179,0,0,0.15)]" : "border-white/10 bg-black/38"}`}>
           <div className="flex items-center gap-2">
-            <Link href="/home" aria-label="Open home" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/70 hover:text-white">
+            <Link href="/" aria-label="Open home" className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-white/70 hover:text-white">
               <Home className="h-5 w-5" />
             </Link>
             <div>

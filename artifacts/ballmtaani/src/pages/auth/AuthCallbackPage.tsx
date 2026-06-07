@@ -24,7 +24,7 @@ export default function AuthCallbackPage() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
-        const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+        const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
         sessionStorage.removeItem("auth_return_url");
         setLocation(returnUrl);
       }
@@ -32,7 +32,7 @@ export default function AuthCallbackPage() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        const returnUrl = sessionStorage.getItem("auth_return_url") || "/home";
+        const returnUrl = sessionStorage.getItem("auth_return_url") || "/";
         sessionStorage.removeItem("auth_return_url");
         setLocation(returnUrl);
       }

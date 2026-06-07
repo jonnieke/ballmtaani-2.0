@@ -17,7 +17,7 @@ export default function FloatingNav() {
       <nav className="pointer-events-auto flex items-center gap-1 rounded-2xl border border-white/12 bg-black/75 px-2 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.7)] backdrop-blur-2xl">
         {/* Brand mark */}
         <Link
-          href="/home"
+          href="/"
           className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B30000] shadow-[0_0_16px_rgba(179,0,0,0.5)] transition-transform hover:scale-105 active:scale-95"
           aria-label="BallMtaani Home"
         >
