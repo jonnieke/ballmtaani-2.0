@@ -145,7 +145,11 @@ export const RAPID_FIRE_POOL: RapidFireDebate[] = [
   { id: "wc10", title: "⚡ WC26 Breakthrough Star", left: "Lamine Yamal", right: "Kobbie Mainoo", leftVotes: 4200, rightVotes: 3500, totalVotes: "7,700" }
 ];
 
+// These always appear first in order — max engagement openers
+const PINNED_IDS = ["rf1", "wc1", "wc2", "rf37", "wc3", "rf19", "wc8", "rf2", "rf52", "wc7"];
+
 export function getRandomRapidFireSet(count: number): RapidFireDebate[] {
-  const shuffled = [...RAPID_FIRE_POOL].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
+  const pinned = PINNED_IDS.map(id => RAPID_FIRE_POOL.find(d => d.id === id)).filter(Boolean) as RapidFireDebate[];
+  const rest = RAPID_FIRE_POOL.filter(d => !PINNED_IDS.includes(d.id)).sort(() => 0.5 - Math.random());
+  return [...pinned, ...rest].slice(0, count);
 }

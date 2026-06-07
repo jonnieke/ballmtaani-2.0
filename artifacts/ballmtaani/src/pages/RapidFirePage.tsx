@@ -7,28 +7,21 @@ import { ShareCard } from "../components/ShareCard";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 
-// ─── Image resolution (unchanged) ─────────────────────────────────────────────
-function fallbackFace(label: string) {
-  const colors = ["1a237e","b71c1c","1b5e20","4a148c","e65100","006064","37474f"];
-  const color = colors[label.charCodeAt(0) % colors.length];
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(label)}&background=${color}&color=ffffff&size=512&bold=true&format=png`;
-}
-
+// ─── Image resolution ──────────────────────────────────────────────────────────
 function resolveDebateImage(label: string, explicit?: string) {
   if (explicit && explicit.trim()) return explicit;
   return "";
 }
 
 function useDebateImage(label: string, src: string) {
-  const [resolved, setResolved] = useState<string>("");
-  const [failed, setFailed] = useState(false);
+  const [resolved, setResolved] = useState<string>(src || "");
+  const [failed, setFailed]     = useState(false);
 
   useEffect(() => {
     if (src) { setResolved(src); return; }
     const key = `mtaani_rf_img_${label}`;
     const cached = sessionStorage.getItem(key);
     if (cached) { setResolved(cached); return; }
-
     const aliases: Record<string, string> = {
       "Trent AA": "Trent Alexander-Arnold", "Neuer": "Manuel Neuer",
       "Courtois": "Thibaut Courtois", "Kante": "N'Golo Kante",
@@ -46,7 +39,7 @@ function useDebateImage(label: string, src: string) {
     return () => { cancelled = true; };
   }, [label, src]);
 
-  return failed ? fallbackFace(label) : (resolved || fallbackFace(label));
+  return { url: failed ? "" : resolved, onError: () => setFailed(true) };
 }
 
 // ─── Side panel (left or right) ────────────────────────────────────────────────
@@ -57,104 +50,216 @@ function FighterPanel({
   voted: boolean; isMyPick: boolean; pct: number;
   onClick: () => void; disabled: boolean;
 }) {
-  const img = useDebateImage(label, imgSrc);
-  const isLeft = side === "left";
-
-  const baseColor   = isLeft ? "#0047FF" : "#FF1744";
-  const glowColor   = isLeft ? "rgba(0,71,255,0.55)" : "rgba(255,23,68,0.55)";
-  const bgGradient  = isLeft
-    ? "linear-gradient(to right, #000d33 0%, #001a66 40%, rgba(0,30,100,0.6) 100%)"
-    : "linear-gradient(to left,  #330000 0%, #660000 40%, rgba(100,0,0,0.6) 100%)";
+  const { url: imgUrl, onError } = useDebateImage(label, imgSrc);
+  const isLeft    = side === "left";
+  const hasImage  = !!imgUrl;
+  const baseColor = isLeft ? "#0047FF" : "#FF1744";
+  const glowColor = isLeft ? "rgba(0,71,255,0.6)" : "rgba(255,23,68,0.6)";
+  const initial   = label.trim().slice(0, 2).toUpperCase();
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className="relative flex-1 h-full overflow-hidden flex flex-col items-center justify-end select-none focus:outline-none transition-all duration-700"
+      className="relative overflow-hidden flex flex-col items-center justify-end select-none focus:outline-none transition-all duration-700"
       style={{
         flex: voted ? `${isMyPick ? pct : 100 - pct} 1 0%` : "1 1 0%",
-        background: bgGradient,
-        boxShadow: isMyPick ? `inset 0 0 80px ${glowColor}` : "none",
+        background: isLeft
+          ? "linear-gradient(135deg, #000820 0%, #001147 50%, #000820 100%)"
+          : "linear-gradient(225deg, #1a0000 0%, #3d0000 50%, #1a0000 100%)",
+        boxShadow: isMyPick ? `inset 0 0 120px ${glowColor}` : "none",
       }}
     >
-      {/* Full-bleed fighter image */}
-      <img
-        src={img}
-        alt={label}
-        className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500"
-        style={{ opacity: voted ? (isMyPick ? 0.55 : 0.18) : 0.42 }}
-        loading="lazy"
-      />
+      {/* ── Background: image OR jersey-number fallback ───────────────────── */}
+      {hasImage ? (
+        <img
+          src={imgUrl}
+          alt={label}
+          onError={onError}
+          className="absolute inset-0 w-full h-full object-cover object-top"
+          style={{ opacity: voted ? (isMyPick ? 0.5 : 0.12) : 0.38 }}
+          loading="lazy"
+        />
+      ) : (
+        /* Jersey-number style fallback — looks intentional not broken */
+        <div
+          className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
+          style={{ opacity: voted ? (isMyPick ? 0.18 : 0.06) : 0.12 }}
+        >
+          <span
+            className="font-black uppercase leading-none tracking-tighter"
+            style={{
+              fontSize: "clamp(5rem, 22vw, 16rem)",
+              color: baseColor,
+              textShadow: `0 0 60px ${glowColor}`,
+              fontStyle: "italic",
+            }}
+          >
+            {initial}
+          </span>
+        </div>
+      )}
 
-      {/* Depth gradient — keeps text legible */}
+      {/* ── Depth gradient ─────────────────────────────────────────────────── */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background: isLeft
-            ? "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%), linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 35%, transparent 70%)"
-            : "linear-gradient(to left,  rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%), linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 35%, transparent 70%)",
+            ? "linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 30%, transparent 65%)"
+            : "linear-gradient(to left,  rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 30%, transparent 65%)",
         }}
       />
 
-      {/* Neon edge accent */}
+      {/* ── Neon edge ─────────────────────────────────────────────────────── */}
       <div
-        className="absolute top-0 bottom-0 w-[3px] transition-opacity duration-500"
+        className="absolute top-0 bottom-0 w-[3px] pointer-events-none transition-all duration-500"
         style={{
           [isLeft ? "right" : "left"]: 0,
-          background: `linear-gradient(to bottom, transparent 10%, ${baseColor} 50%, transparent 90%)`,
-          boxShadow: `0 0 18px 4px ${glowColor}`,
-          opacity: isMyPick ? 1 : 0.3,
+          background: `linear-gradient(to bottom, transparent 5%, ${baseColor} 45%, ${baseColor} 55%, transparent 95%)`,
+          boxShadow: isMyPick ? `0 0 24px 6px ${glowColor}` : "none",
+          opacity: voted ? (isMyPick ? 1 : 0.15) : 0.4,
         }}
       />
 
-      {/* Fighter name + pick prompt */}
-      <div className={`relative z-10 pb-10 px-4 md:pb-14 ${isLeft ? "text-left pl-6 md:pl-10" : "text-right pr-6 md:pr-10"} w-full`}>
-        {/* Tag line */}
+      {/* ── Hover shimmer ─────────────────────────────────────────────────── */}
+      {!voted && !disabled && (
+        <div
+          className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at ${isLeft ? "25% 65%" : "75% 65%"}, ${glowColor} 0%, transparent 55%)` }}
+        />
+      )}
+
+      {/* ── Content ───────────────────────────────────────────────────────── */}
+      <div
+        className={`relative z-10 pb-8 md:pb-12 px-5 w-full ${isLeft ? "text-left" : "text-right"}`}
+      >
         {!voted && (
-          <p className="text-[10px] font-black uppercase tracking-[0.35em] mb-2" style={{ color: baseColor }}>
-            {isLeft ? "← Tap to pick" : "Tap to pick →"}
+          <p className="text-[9px] font-black uppercase tracking-[0.4em] mb-2.5" style={{ color: baseColor }}>
+            {isLeft ? "← tap to pick" : "tap to pick →"}
           </p>
         )}
 
-        {/* Name */}
         <h3
-          className="font-black leading-none uppercase text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]"
-          style={{ fontSize: "clamp(1.4rem, 5vw, 3rem)", textShadow: isMyPick ? `0 0 40px ${glowColor}` : "none" }}
+          className="font-black leading-[0.9] uppercase text-white"
+          style={{
+            fontSize: "clamp(1.6rem, 5.5vw, 3.5rem)",
+            textShadow: isMyPick ? `0 0 40px ${glowColor}, 0 2px 20px rgba(0,0,0,0.8)` : "0 2px 20px rgba(0,0,0,0.8)",
+          }}
         >
           {label}
         </h3>
 
-        {/* After vote: percentage */}
         {voted && (
-          <div className="mt-3 flex items-center gap-2" style={{ justifyContent: isLeft ? "flex-start" : "flex-end" }}>
+          <div className="mt-3">
             <span
-              className="text-5xl md:text-7xl font-black tabular-nums leading-none"
-              style={{ color: isMyPick ? baseColor : "rgba(255,255,255,0.25)", textShadow: isMyPick ? `0 0 50px ${glowColor}` : "none" }}
+              className="font-black tabular-nums leading-none block"
+              style={{
+                fontSize: "clamp(3rem, 12vw, 6rem)",
+                color: isMyPick ? baseColor : "rgba(255,255,255,0.18)",
+                textShadow: isMyPick ? `0 0 60px ${glowColor}` : "none",
+              }}
             >
               {pct}%
             </span>
           </div>
         )}
 
-        {/* My pick badge */}
         {isMyPick && (
           <div
-            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 font-black text-[10px] uppercase tracking-[0.25em]"
-            style={{ background: `${baseColor}22`, border: `1px solid ${baseColor}55`, color: baseColor }}
+            className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 font-black text-[9px] uppercase tracking-[0.28em]"
+            style={{ background: `${baseColor}20`, border: `1px solid ${baseColor}50`, color: baseColor }}
           >
-            <Check className="w-3.5 h-3.5" /> Your pick
+            <Check className="w-3 h-3" /> Your pick
           </div>
         )}
       </div>
-
-      {/* Ripple on hover (desktop) */}
-      {!voted && !disabled && (
-        <div
-          className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-300"
-          style={{ background: `radial-gradient(ellipse at ${isLeft ? "30%" : "70%"} 60%, ${glowColor} 0%, transparent 60%)` }}
-        />
-      )}
     </button>
+  );
+}
+
+// ─── Intro splash screen ────────────────────────────────────────────────────────
+function IntroScreen({ firstDebate, onStart, totalDebates }: {
+  firstDebate: RapidFireDebate | undefined;
+  onStart: () => void;
+  totalDebates: number;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-[#050508] flex flex-col items-center justify-center px-6 text-center overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-[120px] opacity-20" style={{ background: "#0047FF" }} />
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 rounded-full blur-[120px] opacity-20" style={{ background: "#FF1744" }} />
+      </div>
+
+      {/* Logo */}
+      <div className="relative z-10 mb-8">
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#0047FF]" />
+          <Zap className="w-6 h-6 text-[#0047FF]" />
+          <span className="font-black text-2xl uppercase tracking-[0.4em] text-white">Rapid Fire</span>
+          <Zap className="w-6 h-6 text-[#FF1744]" />
+          <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#FF1744]" />
+        </div>
+        <p className="text-white/40 font-bold text-sm tracking-[0.2em] uppercase">
+          Hot takes. No thinking. Just pick.
+        </p>
+      </div>
+
+      {/* First debate preview */}
+      {firstDebate && (
+        <div className="relative z-10 w-full max-w-sm mb-8">
+          <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/30 mb-3">Up first</p>
+          <div className="border border-white/10 bg-white/[0.03] overflow-hidden">
+            <div className="bg-black/50 px-4 py-2 border-b border-white/8">
+              <p className="text-xs font-black text-white truncate">{firstDebate.title}</p>
+            </div>
+            <div className="flex h-20">
+              <div className="flex-1 flex items-center justify-center bg-[#0047FF]/15 border-r border-white/8">
+                <span className="font-black text-[#0047FF] text-sm uppercase tracking-wide text-center px-2">{firstDebate.left}</span>
+              </div>
+              <div className="flex items-center justify-center px-3 bg-black/20">
+                <span className="text-white/30 font-black text-xs">VS</span>
+              </div>
+              <div className="flex-1 flex items-center justify-center bg-[#FF1744]/15">
+                <span className="font-black text-[#FF1744] text-sm uppercase tracking-wide text-center px-2">{firstDebate.right}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="relative z-10 flex items-center gap-6 mb-8">
+        {[
+          { value: totalDebates, label: "debates" },
+          { value: "+10", label: "MTC each vote" },
+          { value: "+25", label: "MTC per 5 streak" },
+        ].map(({ value, label }) => (
+          <div key={label} className="text-center">
+            <div className="text-xl font-black text-[#FFD700]">{value}</div>
+            <div className="text-[8px] font-black uppercase tracking-widest text-white/30">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <div className="relative z-10 w-full max-w-xs">
+        <button
+          onClick={onStart}
+          className="w-full py-4 font-black uppercase tracking-[0.35em] text-sm text-black bg-[#FFD700] hover:bg-yellow-400 active:scale-[0.97] transition-all shadow-[0_0_40px_rgba(255,215,0,0.3)]"
+        >
+          Enter the Arena ⚡
+        </button>
+        <p className="mt-3 text-[9px] font-bold uppercase tracking-widest text-white/20">
+          No fence-sitting. Take a stand.
+        </p>
+      </div>
+
+      {/* Quit */}
+      <Link href="/" className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-2 border border-white/10 bg-white/[0.03] text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors">
+        <ChevronLeft className="w-3.5 h-3.5" /> Quit
+      </Link>
+    </div>
   );
 }
 
@@ -163,6 +268,7 @@ export default function RapidFirePage() {
   const { isLoggedIn, awardCoins, username } = useAuth();
   const [, setLocation] = useLocation();
 
+  const [gameStarted, setGameStarted] = useState(false);
   const [debates] = useState<RapidFireDebate[]>(() => getRandomRapidFireSet(100));
   const [localVotes, setLocalVotes]   = useState<Record<string, "left" | "right">>({});
   const [isVoting, setIsVoting]       = useState<string | null>(null);
@@ -269,6 +375,16 @@ export default function RapidFirePage() {
       if (next) next.scrollIntoView({ behavior: "smooth" });
     }, 1600);
   };
+
+  if (!gameStarted) {
+    return (
+      <IntroScreen
+        firstDebate={debates[0]}
+        onStart={() => setGameStarted(true)}
+        totalDebates={debates.length}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden">
