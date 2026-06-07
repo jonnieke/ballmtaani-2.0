@@ -19,6 +19,19 @@ Sentry.init({
 // Register the PWA service worker
 // registerSW({ immediate: true });
 
+// Auto-reload once if a JS chunk fails to load (stale service worker serving old hashes)
+window.addEventListener("error", (event) => {
+  const target = event.target as HTMLElement;
+  if (target?.tagName === "SCRIPT") {
+    const url = (target as HTMLScriptElement).src || "";
+    if (url.includes("/assets/") && !sessionStorage.getItem("chunk_reload_attempted")) {
+      console.warn("[BallMtaani] Stale chunk detected, reloading:", url);
+      sessionStorage.setItem("chunk_reload_attempted", "1");
+      window.location.reload();
+    }
+  }
+}, true);
+
 // Optional monitor for resource load failures during local debugging.
 if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_RESOURCES === "true") {
   window.addEventListener(
