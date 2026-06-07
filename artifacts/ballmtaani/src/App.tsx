@@ -44,6 +44,7 @@ const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
+import WelcomeModal from "./components/WelcomeModal";
 
 // Minimal loading fallback — dark bg matches app shell, no layout shift
 function PageLoader() {
@@ -181,6 +182,7 @@ export default function App() {
       <AuthProvider>
         <ThemeProvider>
           <AppInner />
+          <WelcomeModal />
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
