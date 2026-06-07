@@ -10,7 +10,6 @@ import { DailyLoginModal } from "./components/DailyLoginModal";
 import { OnboardingModal } from "./components/OnboardingModal";
 import { InstallBanner } from "./components/InstallBanner";
 import { ScoreTicker } from "./components/ScoreTicker";
-import OddspediaCredit from "./components/OddspediaCredit";
 import AdBanner from "./components/AdBanner";
 import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
@@ -39,10 +38,12 @@ const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
 const TermsPage          = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
 const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
+const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
 const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
 const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
+const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
 
 // Minimal loading fallback — dark bg matches app shell, no layout shift
 function PageLoader() {
@@ -66,7 +67,8 @@ function AppShell() {
   const [location] = useLocation();
   const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
-  const quietPage = ["/", "/world-cup-2026", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation);
+  const isWorldCupPage = normalizedLocation === "/world-cup-2026" || normalizedLocation.startsWith("/world-cup-2026/");
+  const quietPage = ["/", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
   const showInstallBanner = ["/", "/home", "/world-cup-2026"].includes(normalizedLocation);
   const showAdBanner = !["/login", "/verify"].includes(normalizedLocation);
 
@@ -100,9 +102,11 @@ function AppShell() {
             <Route path="/" component={LandingPage} />
             <Route path="/home" component={HomePage} />
             <Route path="/world-cup-2026" component={WorldCup2026Page} />
+            <Route path="/world-cup-2026/:guide" component={WorldCupGuidePage} />
             <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
             <Route path="/login" component={LoginPage} />
             <Route path="/verify" component={VerifyOTPPage} />
+            <Route path="/auth/callback" component={AuthCallbackPage} />
             <Route path="/matches" component={MatchesPage} />
             <Route path="/market-watch" component={MarketWatchPage} />
             <Route path="/predictions" component={PredictionsPage} />
@@ -155,9 +159,6 @@ function AppShell() {
               <p className="text-gray-600 text-xs">
                 (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
               </p>
-              <div className="mt-5">
-                <OddspediaCredit />
-              </div>
             </div>
           </footer>
         )}
