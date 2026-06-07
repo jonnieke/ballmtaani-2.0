@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ballmtaani-v3';
+const CACHE_NAME = 'ballmtaani-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -24,29 +24,29 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for static assets
+// Fetch: network-first always.
+// We do NOT cache JS/CSS assets — Vite hashes filenames on every build,
+// so old cached hashes 404 after a new deploy. Let the browser handle caching.
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and cross-origin API requests
+  // Skip non-GET requests
   if (request.method !== 'GET') return;
-  if (url.hostname.includes('supabase') || url.hostname.includes('api-sports') || url.hostname.includes('googleapis')) return;
 
+  // Skip cross-origin requests entirely
+  if (url.origin !== self.location.origin) return;
+
+  // Skip API calls — never cache these
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Skip hashed JS/CSS assets — browser cache handles these via Vite content hashing
+  if (url.pathname.startsWith('/assets/')) return;
+
+  // For top-level document requests (SPA routes), serve index.html from cache or network
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const networkFetch = fetch(request)
-        .then((response) => {
-          // Cache successful responses for static assets
-          if (response.ok && (request.destination === 'document' || request.destination === 'script' || request.destination === 'style' || request.destination === 'image')) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached || Response.error()); // If network fails, return cached or error
-
-      return cached ? cached : networkFetch;
+    caches.match('/index.html').then((cached) => {
+      return fetch(request).catch(() => cached || Response.error());
     })
   );
 });
