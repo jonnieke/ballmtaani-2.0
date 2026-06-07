@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2 } from "lucide-react";
+import BettingAffiliate from "../components/BettingAffiliate";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
@@ -516,12 +517,18 @@ export default function PredictionsPage() {
                   )}
 
                   {isSaved ? (
-                    <button
-                      onClick={() => setPredictions({...predictions, [fixture.id]: { ...predictions[fixture.id], saved: false }})}
-                      className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] py-3 rounded-xl transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] relative z-10"
-                    >
-                      Edit Call
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setPredictions({...predictions, [fixture.id]: { ...predictions[fixture.id], saved: false }})}
+                        className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] py-3 rounded-xl transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] relative z-10"
+                      >
+                        Edit Call
+                      </button>
+                      <BettingAffiliate
+                        matchLabel={`${fixture.home} vs ${fixture.away}`}
+                        compact
+                      />
+                    </>
                   ) : (
                     <button
                       onClick={() => handlePredict(fixture.id)}
@@ -740,6 +747,9 @@ export default function PredictionsPage() {
           <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/20 pb-2">
             Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT
           </p>
+
+          {/* Betting affiliate — shown always on WC26 tab */}
+          <BettingAffiliate matchLabel="WC26 Group Stage" />
         </div>
       ) : (
         <div className="py-10 text-center text-white/20 text-sm">Nothing here yet.</div>
