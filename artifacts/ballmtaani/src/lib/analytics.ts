@@ -19,6 +19,22 @@ export const analytics = {
     window.gtag?.("event", "login", { method });
   },
 
+  authMethodSelected: (method: "email" | "phone") => {
+    window.gtag?.("event", "auth_method_selected", { method });
+  },
+
+  authOtpRequested: (method: "email" | "phone") => {
+    window.gtag?.("event", "auth_otp_requested", { method });
+  },
+
+  authOtpViewed: (method: "email" | "phone") => {
+    window.gtag?.("event", "auth_otp_viewed", { method });
+  },
+
+  authOtpVerified: (method: "email" | "phone", status: "success" | "failed") => {
+    window.gtag?.("event", "auth_otp_verified", { method, status });
+  },
+
   // Prediction events
   predictionMade: (league: string, type: "score" | "result") => {
     window.gtag?.("event", "prediction_made", { league, type });

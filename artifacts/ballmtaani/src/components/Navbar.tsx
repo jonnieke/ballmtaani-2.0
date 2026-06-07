@@ -87,7 +87,6 @@ export function Navbar() {
           >
             Home
           </Link>
-          
           {menuCategories.map((category) => {
             const isActive = category.links.some(link => location.startsWith(link.href) && link.href !== "/");
             const primaryHref = category.links[0]?.href || "/";

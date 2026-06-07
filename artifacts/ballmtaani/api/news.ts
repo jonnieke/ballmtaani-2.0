@@ -46,10 +46,32 @@ const FOOTBALL_KEYWORDS = [
   "lineups",
   "players",
   "coaches",
-  "widgets",
   "fixtures",
   "transfers",
+  "stadiums",
+  "venues",
+  "qualifiers",
+  "squads",
 ];
+
+const TECHNICAL_PATTERNS = [
+  "widget",
+  "widgets",
+  "api-sports",
+  "api football",
+  "api-football",
+  "how to get started",
+  "how custom",
+  "builder",
+  "using data with",
+  "using api-sports",
+  "complete beginner",
+  "technical",
+  "integration",
+  "setup",
+];
+
+const LOW_QUALITY_TITLES = ["line ups", "coachs & players"];
 
 const API_FOOTBALL_FALLBACKS: RawArticle[] = [
   {
@@ -62,76 +84,49 @@ const API_FOOTBALL_FALLBACKS: RawArticle[] = [
     description: "Team-by-team World Cup 2026 lineups, coaches and players before kickoff in USA, Canada and Mexico.",
   },
   {
-    id: "api-football-widgets-2026",
-    title: "FIFA WORLD CUP 2026: Using API-SPORTS Widgets",
-    link: "https://www.api-football.com/news/post/fifa-world-cup-2026-using-api-sports-widgets",
-    pubDate: "2026-05-13T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "A guide to using widgets and match data around the biggest World Cup ever.",
+    id: "ballmtaani-wc26-format-guide",
+    title: "World Cup 2026 Format: What Changes for Fans",
+    link: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026",
+    pubDate: "2026-06-03T00:00:00.000Z",
+    source: "FIFA",
+    sourceLogo: "FIFA",
+    description: "The 48-team World Cup changes the group stage, knockout path and upset math for every fan tracking 2026.",
   },
   {
-    id: "api-football-guide-2026",
-    title: "FIFA WORLD CUP 2026: Guide to Using Data with API-SPORTS",
-    link: "https://www.api-football.com/news/post/fifa-world-cup-2026-guide-to-using-data-with-api-sports",
-    pubDate: "2026-04-13T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "48 teams, 16 stadiums and 39 days of competition, with data ideas for the tournament.",
+    id: "ballmtaani-wc26-stadium-guide",
+    title: "World Cup 2026 Stadium Guide: The Venues That Matter",
+    link: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/destination",
+    pubDate: "2026-06-02T00:00:00.000Z",
+    source: "FIFA",
+    sourceLogo: "FIFA",
+    description: "Sixteen host venues across the United States, Mexico and Canada will shape travel, climate and match rhythm.",
   },
   {
-    id: "api-football-widget-builder",
-    title: "Introducing the API-SPORTS Widget Builder",
-    link: "https://www.api-football.com/news/post/introducing-the-api-sports-widget-builder",
-    pubDate: "2025-10-27T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Build and preview football widgets instantly with the modular Widget Builder.",
+    id: "ballmtaani-africa-wc26-watch",
+    title: "Africa at World Cup 2026: Teams, Pressure and Dark Horses",
+    link: "https://www.cafonline.com/",
+    pubDate: "2026-06-01T00:00:00.000Z",
+    source: "CAF",
+    sourceLogo: "CAF",
+    description: "More World Cup places create a bigger African story: qualification pressure, squad depth and teams Kenyan fans should watch.",
   },
   {
-    id: "api-football-new-widgets",
-    title: "Discover our new Widgets",
-    link: "https://www.api-football.com/news/post/discover-our-new-widgets",
-    pubDate: "2025-09-26T00:00:00.000Z",
+    id: "ballmtaani-squad-depth-watch",
+    title: "Squad Depth Watch: How to Read a 2026 World Cup Team",
+    link: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players",
+    pubDate: "2026-05-31T00:00:00.000Z",
     source: "API-Football",
     sourceLogo: "API",
-    description: "The new widget set brings fixtures, standings and live score building blocks to football sites.",
+    description: "Lineups, coaches and player pools tell fans where a team is strong, thin or one injury away from trouble.",
   },
   {
-    id: "api-football-custom-widgets",
-    title: "How Custom API-Football Widgets work",
-    link: "https://www.api-football.com/news/post/how-custom-api-football-widgets",
-    pubDate: "2021-01-01T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Customize football widgets with team, match and competition data for your own layout.",
-  },
-  {
-    id: "api-football-line-ups",
-    title: "LINE UPS",
-    link: "https://www.api-football.com/news/post/line-ups",
-    pubDate: "2018-01-01T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Lineups endpoint coverage for fixtures, starters and matchday squad context.",
-  },
-  {
-    id: "api-football-coachs-players",
-    title: "COACHS & PLAYERS",
-    link: "https://www.api-football.com/news/post/coachs-players",
-    pubDate: "2018-01-01T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Player and coach endpoints for team season context, squad depth and identities.",
-  },
-  {
-    id: "api-football-get-started",
-    title: "How to Get Started with API-Football: The Complete Beginner's Guide",
-    link: "https://www.api-football.com/news/post/how-to-get-started-with-api-football-the-complete-beginners-guide",
-    pubDate: "2026-03-13T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Quick start guidance for working with API-Football data.",
+    id: "ballmtaani-matchday-form-guide",
+    title: "Matchday Form Guide: What the Table Does Not Tell You",
+    link: "https://www.bbc.com/sport/football",
+    pubDate: "2026-05-30T00:00:00.000Z",
+    source: "BBC Sport",
+    sourceLogo: "BBC",
+    description: "Recent fixtures, home-away records, injuries and lineups give fans a better argument than table position alone.",
   },
 ];
 
@@ -170,6 +165,15 @@ function isFootballRelated(text: string): boolean {
   return FOOTBALL_KEYWORDS.some((keyword) => lower.includes(keyword));
 }
 
+function isFootballLibraryQuality(article: RawArticle): boolean {
+  const title = article.title.trim().toLowerCase();
+  const combined = `${article.title} ${article.description || ""}`.toLowerCase();
+  if (!article.title.trim() || article.title.trim().length < 18) return false;
+  if (LOW_QUALITY_TITLES.includes(title)) return false;
+  if (TECHNICAL_PATTERNS.some((pattern) => combined.includes(pattern))) return false;
+  return isFootballRelated(combined);
+}
+
 function extractFirstDate(text: string): string {
   const match = text.match(/\b([A-Z][a-z]+ \d{2}, \d{4})\b/);
   if (!match) return new Date().toISOString();
@@ -204,9 +208,10 @@ function parseRssItems(xml: string, feed: FeedConfig): RawArticle[] {
         sourceLogo: feed.sourceLogo,
         description,
         thumbnail,
-      };
+      } satisfies RawArticle;
     })
-    .filter(Boolean) as RawArticle[];
+    .filter((article): article is RawArticle => Boolean(article))
+    .filter(isFootballLibraryQuality)
 }
 
 function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
@@ -218,6 +223,7 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
     const href = normalizeUrl(match[1], feed.source);
     const title = stripTags(match[2]).replace(/\s+/g, " ").trim();
     if (!title || title.length < 18) continue;
+    if (LOW_QUALITY_TITLES.includes(title.toLowerCase())) continue;
     if (/^read more$/i.test(title)) continue;
     if (seen.has(href)) continue;
 
@@ -233,7 +239,7 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
     const pubDate = extractFirstDate(tail);
 
     seen.add(href);
-    articles.push({
+    const article = {
       id: href,
       title,
       link: href,
@@ -241,7 +247,8 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
       source: feed.source,
       sourceLogo: feed.sourceLogo,
       description: snippet,
-    });
+    };
+    if (isFootballLibraryQuality(article)) articles.push(article);
   }
 
   return articles;
@@ -260,8 +267,9 @@ function removeDuplicates(articles: RawArticle[]): RawArticle[] {
 }
 
 function mergeFallbacks(articles: RawArticle[]): RawArticle[] {
-  const seen = new Set(articles.map((article) => `${article.title.toLowerCase()}|${article.link}`));
-  const merged = [...articles];
+  const cleanArticles = articles.filter(isFootballLibraryQuality);
+  const seen = new Set(cleanArticles.map((article) => `${article.title.toLowerCase()}|${article.link}`));
+  const merged = [...cleanArticles];
   for (const fallback of API_FOOTBALL_FALLBACKS) {
     const key = `${fallback.title.toLowerCase()}|${fallback.link}`;
     if (seen.has(key)) continue;

@@ -41,44 +41,56 @@ export default function RivalriesPage() {
     });
 
     const loadInitial = async () => {
-      const { data, error } = await supabase
-        .from("fan_duels")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(30);
-      if (error || !data || !mounted) return;
-      setCreatedDuels(data.map(mapRowToRivalry));
+      try {
+        const { data, error } = await supabase
+          .from("fan_duels")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(30);
+        if (error || !data || !mounted) return;
+        setCreatedDuels(data.map(mapRowToRivalry));
+      } catch (err) {
+        // fan_duels table may not exist yet — show empty state
+        return;
+      }
     };
 
     loadInitial();
 
     // Fetch real duel counts for the stats panel
-    supabase.from("fan_duels").select("status").then(({ data }) => {
-      if (data && mounted) {
-        setDuelStats({
-          total: data.length,
-          completed: data.filter((d: any) => d.status === "completed").length,
-        });
-      }
+    supabase.from("fan_duels").select("status").then(({ data, error }) => {
+      if (error || !data || !mounted) return;
+      setDuelStats({
+        total: data.length,
+        completed: data.filter((d: any) => d.status === "completed").length,
+      });
+    }).catch(() => {
+      // fan_duels table may not exist yet
+      return;
     });
 
-    const channel = supabase
-      .channel("fan-duels-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "fan_duels" }, (payload: any) => {
-        const row = (payload.new || payload.old) as any;
-        if (!row?.id) return;
-        const mapped = mapRowToRivalry(row);
-        setCreatedDuels((prev) => {
-          const without = prev.filter((d) => String(d.id) !== String(mapped.id));
-          if (payload.eventType === "DELETE") return without;
-          return [mapped, ...without];
-        });
-      })
-      .subscribe();
+    let channel: any = null;
+    try {
+      channel = supabase
+        .channel("fan-duels-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "fan_duels" }, (payload: any) => {
+          const row = (payload.new || payload.old) as any;
+          if (!row?.id) return;
+          const mapped = mapRowToRivalry(row);
+          setCreatedDuels((prev) => {
+            const without = prev.filter((d) => String(d.id) !== String(mapped.id));
+            if (payload.eventType === "DELETE") return without;
+            return [mapped, ...without];
+          });
+        })
+        .subscribe();
+    } catch (err) {
+      // fan_duels table may not exist yet
+    }
 
     return () => {
       mounted = false;
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, []);
 
@@ -107,22 +119,26 @@ export default function RivalriesPage() {
     setCreatedDuels((prev) => [newDuel, ...prev]);
 
     if (supabase && isLoggedIn) {
-      const { data } = await supabase.from("fan_duels").insert({
-        challenger_name: newDuel.challenger.name,
-        defender_name: newDuel.defender.name,
-        home_team: newDuel.match.home,
-        away_team: newDuel.match.away,
-        home_logo: newDuel.match.homeLogo.startsWith("https://ui-avatars") ? null : newDuel.match.homeLogo,
-        away_logo: newDuel.match.awayLogo.startsWith("https://ui-avatars") ? null : newDuel.match.awayLogo,
-        prediction: newDuel.prediction,
-        status: "pending",
-        brag_line: newDuel.bragLine,
-      }).select("*").single();
+      try {
+        const { data } = await supabase.from("fan_duels").insert({
+          challenger_name: newDuel.challenger.name,
+          defender_name: newDuel.defender.name,
+          home_team: newDuel.match.home,
+          away_team: newDuel.match.away,
+          home_logo: newDuel.match.homeLogo.startsWith("https://ui-avatars") ? null : newDuel.match.homeLogo,
+          away_logo: newDuel.match.awayLogo.startsWith("https://ui-avatars") ? null : newDuel.match.awayLogo,
+          prediction: newDuel.prediction,
+          status: "pending",
+          brag_line: newDuel.bragLine,
+        }).select("*").single();
 
-      if (data?.id) {
-        setCreatedDuels((prev) =>
-          prev.map((d) => (String(d.id) === localId ? { ...d, id: data.id } : d))
-        );
+        if (data?.id) {
+          setCreatedDuels((prev) =>
+            prev.map((d) => (String(d.id) === localId ? { ...d, id: data.id } : d))
+          );
+        }
+      } catch (err) {
+        // fan_duels table may not exist yet — duel stays in local state
       }
     }
 
@@ -139,7 +155,11 @@ export default function RivalriesPage() {
       prev.map((d) => (String(d.id) === String(id) ? { ...d, status: "active", match: { ...d.match, time: "Duel Live" } } : d))
     );
     if (supabase && !String(id).startsWith("local-")) {
-      await supabase.from("fan_duels").update({ status: "active" }).eq("id", id);
+      try {
+        await supabase.from("fan_duels").update({ status: "active" }).eq("id", id);
+      } catch (err) {
+        // fan_duels table may not exist yet
+      }
     }
   };
 
@@ -156,7 +176,11 @@ export default function RivalriesPage() {
       )
     );
     if (supabase && !String(id).startsWith("local-")) {
-      await supabase.from("fan_duels").update({ status: "completed", winner_name: winnerName, prediction: finalScore }).eq("id", id);
+      try {
+        await supabase.from("fan_duels").update({ status: "completed", winner_name: winnerName, prediction: finalScore }).eq("id", id);
+      } catch (err) {
+        // fan_duels table may not exist yet
+      }
     }
   };
 

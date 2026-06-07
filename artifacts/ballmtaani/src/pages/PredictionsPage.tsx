@@ -172,8 +172,8 @@ export default function PredictionsPage() {
       .select("match_id, predicted_score")
       .eq("user_id", user.id)
       .in("match_id", ids)
-      .then(({ data }) => {
-        if (!data) return;
+      .then(({ data, error }) => {
+        if (error || !data) return;
         const picks: Record<string, string> = {};
         const saved: Record<string, boolean> = {};
         data.forEach((row: any) => {
@@ -182,6 +182,10 @@ export default function PredictionsPage() {
         });
         setWc26Picks(picks);
         setWc26Saved2(saved);
+      })
+      .catch(() => {
+        // Gracefully handle if predictions table doesn't exist yet
+        return;
       });
   }, [isLoggedIn, user]);
 

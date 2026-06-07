@@ -6,6 +6,7 @@
 
 export interface NewsArticle {
   id: string;
+  slug?: string;
   title: string;
   link: string;
   pubDate: string;
@@ -13,6 +14,7 @@ export interface NewsArticle {
   sourceLogo: string;
   thumbnail: string;
   imageQuality: "feed" | "team-fallback" | "competition-fallback" | "generic-fallback";
+  description?: string;
 }
 
 const RSS_FEEDS = [
@@ -45,8 +47,8 @@ const SOURCE_FALLBACK_URLS: Record<string, string> = {
 
 const CACHE_KEY = "mtaani_news_cache";
 const CACHE_TTL = 15 * 60 * 1000;
-const CACHE_VERSION = "v4";
-const DEFAULT_NEWS_IMAGE = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=60";
+const CACHE_VERSION = "v8";
+const DEFAULT_NEWS_IMAGE = "/wc26-hero.jpg";
 const TEAM_IMAGE_FALLBACKS: Array<{ key: string; image: string }> = [
   { key: "arsenal", image: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png" },
   { key: "chelsea", image: "https://a.espncdn.com/i/teamlogos/soccer/500/363.png" },
@@ -83,6 +85,23 @@ const COMPETITION_IMAGE_FALLBACKS: Array<{ key: string; image: string }> = [
   { key: "fifa world cup", image: "https://media.api-sports.io/football/leagues/1.png" },
 ];
 
+const TECHNICAL_NEWS_PATTERNS = [
+  "widget",
+  "widgets",
+  "api-sports",
+  "api football",
+  "api-football",
+  "how to get started",
+  "how custom",
+  "builder",
+  "using data with",
+  "using api-sports",
+  "complete beginner",
+  "technical",
+  "integration",
+  "setup",
+];
+
 interface ImageTelemetry {
   total: number;
   fallbackUsed: number;
@@ -106,7 +125,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 7200000).toISOString(),
     source: "Goal.com",
     sourceLogo: "GOAL",
-    thumbnail: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
   {
@@ -116,7 +135,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 10800000).toISOString(),
     source: "CAF",
     sourceLogo: "CAF",
-    thumbnail: "https://images.unsplash.com/photo-1606925797300-0b35e9d1794e?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
   {
@@ -126,7 +145,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 14400000).toISOString(),
     source: "BBC Sport",
     sourceLogo: "BBC",
-    thumbnail: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
   {
@@ -136,7 +155,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 18000000).toISOString(),
     source: "SuperSport",
     sourceLogo: "ZA",
-    thumbnail: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
   {
@@ -146,7 +165,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 21600000).toISOString(),
     source: "Goal.com",
     sourceLogo: "GOAL",
-    thumbnail: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
   {
@@ -156,7 +175,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 25200000).toISOString(),
     source: "Azam TV",
     sourceLogo: "TZ",
-    thumbnail: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
   {
@@ -166,7 +185,7 @@ const MOCK_HEADLINES: NewsArticle[] = [
     pubDate: new Date(Date.now() - 32400000).toISOString(),
     source: "FIFA",
     sourceLogo: "FIFA",
-    thumbnail: "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=400&q=60",
+    thumbnail: "/wc26-hero.jpg",
     imageQuality: "generic-fallback",
   },
 ];
@@ -177,7 +196,10 @@ function timeAgo(dateStr: string): string {
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  const days = Math.floor(hrs / 24);
+  if (days <= 30) return `${days}d ago`;
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export { timeAgo };
@@ -196,6 +218,28 @@ function normalizeArticleLink(link: string | undefined, source: string): string 
   if (/^https?:\/\//i.test(raw)) return raw;
   if (raw.startsWith("//")) return `https:${raw}`;
   return `https://${raw.replace(/^\/+/, "")}`;
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/['".,!?()[\]{}]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function shortHash(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36).slice(0, 6);
+}
+
+export function createArticleSlug(article: Pick<NewsArticle, "title" | "source" | "link">): string {
+  const base = slugify(`${article.source}-${article.title}`) || "football-story";
+  return base;
 }
 
 function looksLikeImageUrl(url?: string): boolean {
@@ -232,6 +276,11 @@ function pickCompetitionImageFromTitle(title?: string): string {
   }
 
   return "";
+}
+
+export function isTechnicalFootballStory(article: Pick<NewsArticle, "title" | "description" | "source">): boolean {
+  const text = `${article.title} ${article.description || ""}`.toLowerCase();
+  return TECHNICAL_NEWS_PATTERNS.some((pattern) => text.includes(pattern));
 }
 
 function pickBestThumbnail(item: any, source: string): { thumbnail: string; quality: NewsArticle["imageQuality"] } {
@@ -340,6 +389,7 @@ function mapFeedItems(items: any[], feed: (typeof RSS_FEEDS)[number], sourceImag
 
     articles.push({
       id: item.guid || item.link,
+      slug: createArticleSlug({ title: item.title, source: feed.source, link: item.link }),
       title: item.title,
       link: normalizeArticleLink(item.link, feed.source),
       pubDate: item.pubDate,
@@ -347,6 +397,7 @@ function mapFeedItems(items: any[], feed: (typeof RSS_FEEDS)[number], sourceImag
       sourceLogo: feed.sourceLogo,
       thumbnail,
       imageQuality: resolvedImage.quality,
+      description: item.description || item.content || "",
     });
   }
 }
@@ -376,11 +427,15 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
     if (cached) {
       const { data, timestamp, version } = JSON.parse(cached);
       if (version === CACHE_VERSION && Date.now() - timestamp < CACHE_TTL) {
-        return (data as NewsArticle[]).map((article) => ({
+        return (data as NewsArticle[])
+          .map((article) => ({
           ...article,
+          slug: createArticleSlug(article),
           link: normalizeArticleLink(article.link, article.source),
           imageQuality: article.imageQuality || "generic-fallback",
-        }));
+          description: article.description || "",
+        }))
+          .filter((article) => !isTechnicalFootballStory(article));
       }
     }
   } catch {
@@ -414,8 +469,10 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
 
   const normalized = (articles.length > 0 ? articles : MOCK_HEADLINES).map((article) => ({
     ...article,
+    slug: createArticleSlug(article),
     link: normalizeArticleLink(article.link, article.source),
-  }));
+    description: article.description || "",
+  })).filter((article) => !isTechnicalFootballStory(article));
 
   const result = normalized.sort((a, b) => {
     const qualityDiff = getQualityRank(a.imageQuality) - getQualityRank(b.imageQuality);
