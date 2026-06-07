@@ -297,3 +297,24 @@
 .animate-coin-fly {
   animation: coin-fly 1.5s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
 }
+
+/* Rapid Fire arcade animations */
+@keyframes coin-pop {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  20%  { transform: translateY(-20px) scale(1.3); opacity: 1; }
+  80%  { transform: translateY(-70px) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(0.8); opacity: 0; }
+}
+.animate-coin-pop {
+  animation: coin-pop 0.9s ease-out forwards;
+}
+
+@keyframes combo-flash {
+  0%   { transform: scale(0.5); opacity: 0; }
+  15%  { transform: scale(1.15); opacity: 1; }
+  80%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0; }
+}
+.animate-combo-flash {
+  animation: combo-flash 1.4s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}
