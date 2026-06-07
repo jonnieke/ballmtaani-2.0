@@ -394,15 +394,15 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── STICKY SIGN-UP BANNER ── logged-out fans only */}
+      {/* STICKY SIGN-UP BANNER - logged-out fans only */}
       {!isLoggedIn && (
-        <div className=”fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#0B0B0B]/96 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.5)]”>
-          <div className=”mx-auto flex max-w-lg items-center gap-3”>
-            <div className=”flex-1 min-w-0”>
-              <p className=”text-xs font-black text-white leading-tight”>🏆 WC26 kicks off June 11</p>
-              <p className=”text-[10px] text-white/40”>Make your bold calls before kickoff — free</p>
+        <div style={{position:”fixed”,bottom:0,left:0,right:0,zIndex:50,borderTop:”1px solid rgba(255,255,255,0.1)”,background:”rgba(11,11,11,0.96)”,backdropFilter:”blur(16px)”,padding:”12px 16px”,boxShadow:”0 -4px 24px rgba(0,0,0,0.5)”}}>
+          <div style={{maxWidth:512,margin:”0 auto”,display:”flex”,alignItems:”center”,gap:12}}>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:900,color:”white”,textTransform:”uppercase”,letterSpacing:”0.05em”,margin:0}}>{“WC26 kicks off June 11”}</p>
+              <p style={{fontSize:10,color:”rgba(255,255,255,0.4)”,margin:”2px 0 0 0”}}>{“Make your bold calls before kickoff - free”}</p>
             </div>
-            <GoogleSignInButton size=”sm” label=”Join · Google” />
+            <GoogleSignInButton size=”sm” label=”Join Google” />
           </div>
         </div>
       )}
