@@ -34,7 +34,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
+const ENABLE_MOCK_AUTH = import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
 function getLoginStreak(): { streak: number; lastLoginDate: string | null } {
   const lastLogin = localStorage.getItem("mtaani_last_login_date");
@@ -267,6 +267,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const displayUsername =
     dbProfile?.username ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
     user?.user_metadata?.username ||
     user?.phone ||
     user?.email?.split("@")[0] ||
