@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
+import { useAuth } from "../context/AuthContext";
 import {
   Activity,
   BarChart3,
@@ -21,8 +22,8 @@ import {
 } from "lucide-react";
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
-import OddspediaCredit from "../components/OddspediaCredit";
 import DataFreshnessChip from "../components/DataFreshnessChip";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 import {
   fetchFixtureEvents,
   fetchFixtureLineups,
@@ -811,6 +812,7 @@ function WC26HeroBanner() {
   const isOver = now > WC26_END.getTime();
   const isActive = now >= WC26_START.getTime();
   const [cd, setCd] = useState(getWC26Countdown());
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     if (isActive || isOver) return;
@@ -926,6 +928,12 @@ function WC26HeroBanner() {
             {isActive ? "Live Groups & Scores" : "Groups & Fixtures"}
           </Link>
         </div>
+        {/* Google sign-in CTA — only for logged-out fans */}
+        {!isLoggedIn && (
+          <div className="mt-4 flex justify-center">
+            <GoogleSignInButton size="md" label="Join Free · Google" className="shadow-[0_0_24px_rgba(255,255,255,0.1)]" />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1169,6 +1177,38 @@ export default function LandingPage() {
           </button>
         </header>
 
+        <section className="mt-4">
+          <div className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
+            Your matchday tools
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8 auto-rows-[minmax(96px,auto)]">
+            {FEATURE_LINKS.map((item, idx) => {
+              const Icon = item.icon;
+              const isWC = item.href === "/world-cup-2026";
+              const isPrimary = idx === 0;
+              const isFeatured = isPrimary || isWC;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg min-h-[104px] md:min-h-[116px] ${isFeatured ? "md:col-span-2 xl:col-span-2" : ""} ${
+                    isWC
+                      ? "border-[#FFD700]/30 bg-[#111006]/92 hover:border-[#FFD700]/70 hover:shadow-[#FFD700]/15"
+                      : isPrimary
+                      ? "border-primary/25 bg-[#0f0a0a]/92 hover:border-primary/55 hover:shadow-primary/15"
+                      : "border-white/10 bg-[#0b1119]/92 hover:border-primary/45 hover:shadow-primary/10"
+                  }`}
+                >
+                  <div className={`absolute -right-4 -top-4 h-12 w-12 rounded-full blur-xl transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${isWC ? "bg-[#FFD700]/20" : "bg-primary/20"}`} />
+                  <Icon className={`relative mb-2.5 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${isWC ? "text-[#FFD700]" : "text-primary"}`} />
+                  <div className={`relative font-bold uppercase tracking-[0.06em] text-white ${isFeatured ? "text-sm md:text-base" : "text-xs"}`}>{item.label}</div>
+                  <div className={`relative mt-0.5 leading-4 text-white/40 group-hover:text-white/60 transition-colors ${isFeatured ? "text-[12px]" : "text-[11px]"}`}>{item.sub}</div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
         {/* Data-first match cards — only render when real data exists */}
         <div className="mb-3 grid gap-3 lg:grid-cols-2">
           <LiveNowCard matches={matches} />
@@ -1396,45 +1436,10 @@ export default function LandingPage() {
           )}
         </div>
 
-        <section className="mt-4">
-          <div className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
-            Your matchday tools
-          </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
-            {FEATURE_LINKS.map((item, idx) => {
-              const Icon = item.icon;
-              // WC26 gets gold treatment; first item (Data Center) gets a subtle blue; rest are standard
-              const isWC = item.href === "/world-cup-2026";
-              const isPrimary = idx === 0;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-                    isWC
-                      ? "border-[#FFD700]/30 bg-[#111006]/92 hover:border-[#FFD700]/70 hover:shadow-[#FFD700]/15"
-                      : isPrimary
-                      ? "border-primary/25 bg-[#0f0a0a]/92 hover:border-primary/55 hover:shadow-primary/15"
-                      : "border-white/10 bg-[#0b1119]/92 hover:border-primary/45 hover:shadow-primary/10"
-                  }`}
-                >
-                  {/* glow spot */}
-                  <div className={`absolute -right-4 -top-4 h-12 w-12 rounded-full blur-xl transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${isWC ? "bg-[#FFD700]/20" : "bg-primary/20"}`} />
-                  <Icon className={`relative mb-2.5 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${isWC ? "text-[#FFD700]" : "text-primary"}`} />
-                  <div className="relative text-xs font-bold uppercase tracking-[0.06em] text-white">{item.label}</div>
-                  <div className="relative mt-0.5 text-[11px] leading-4 text-white/40 group-hover:text-white/60 transition-colors">{item.sub}</div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
       </main>
 
       <footer className="relative z-10 mx-auto max-w-[1480px] px-3 pb-6 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-white/38 md:px-5">
         <div>BallMtaani match center for fans who want the full picture.</div>
-        <div className="mt-3">
-          <OddspediaCredit />
-        </div>
       </footer>
     </div>
   );

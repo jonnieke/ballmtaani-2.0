@@ -1,11 +1,11 @@
-import { Link } from "wouter";
+﻿import { Link } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState, useMemo } from "react";
-import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar, ExternalLink } from "lucide-react";
+import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar } from "lucide-react";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useLeaderboard } from "../hooks/useData";
 import { fetchTodaysFixtures, type LiveMatch } from "../lib/football-api";
-import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
 import { supabase } from "../lib/supabase";
+import { WC26_GUIDES } from "../data/wc26-guides";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import { SkeletonMatch } from "../components/Skeletons";
@@ -15,12 +15,10 @@ import FloatingMchambuzi from "../components/FloatingMchambuzi";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import { motion } from "framer-motion";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 const WC26_START = new Date("2026-06-11T17:00:00Z");
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
-
-const WC26_KW = ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026", "world cup final", "usa host", "canada host", "mexico host", "group stage 2026", "world cup squad", "wc26 qualifier"];
-const isWC26 = (title: string) => { const t = title.toLowerCase(); return WC26_KW.some(k => t.includes(k)); };
 
 function useWC26() {
   const [cd, setCd] = useState({ days: 0, hours: 0, mins: 0, secs: 0, isLive: false, isOver: false });
@@ -63,42 +61,11 @@ function CountBox({ v, l }: { v: number; l: string }) {
   );
 }
 
-function NewsCard({ article, featured }: { article: NewsArticle; featured?: boolean }) {
-  const share = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${article.title}\n\n${article.link}\n\nShared from BallMtaani`)}`, "_blank");
-  return (
-    <div className={`group flex flex-col overflow-hidden rounded-xl border transition-all duration-200 hover:-translate-y-0.5 ${featured ? "border-[#FFD700]/20 bg-[#0a0900]" : "border-white/6 bg-[#0d1018]"}`}>
-      <div className="relative h-36 overflow-hidden">
-        <img src={article.thumbnail} alt={article.title} loading="lazy" decoding="async"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=50&fm=webp"; }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-        {featured && <div className="absolute inset-0 bg-[#FFD700]/5" />}
-        <div className="absolute bottom-2 left-2">
-          <span className="rounded bg-black/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-white/60 backdrop-blur-sm">{article.source}</span>
-        </div>
-      </div>
-      <div className="flex flex-1 flex-col p-3">
-        <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/28">{timeAgo(article.pubDate)}</p>
-        <h3 className="mb-3 flex-1 text-[13px] font-black leading-snug text-white line-clamp-2">{article.title}</h3>
-        <div className="flex gap-1.5">
-          <a href={article.link} target="_blank" rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/38 transition-all hover:bg-white/10 hover:text-white">
-            <ExternalLink className="h-3 w-3" /> Read
-          </a>
-          <button onClick={share} className="rounded-lg bg-[#25D366]/10 px-2.5 py-1.5 text-xs text-[#25D366] transition-all hover:bg-[#25D366]/20" title="Share to WhatsApp">WA</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function HomePage() {
   const { isLoggedIn } = useAuth();
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
   const [todaysFixtures, setTodaysFixtures] = useState<any[]>([]);
-  const [news, setNews] = useState<NewsArticle[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
 
   const { data: liveMatches = [], isLoading: isLoadingMatches } = useMatches();
   const { data: upcomingFixtures = [], isLoading: isLoadingUpcoming } = useUpcomingFixtures();
@@ -112,11 +79,6 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchTodaysFixtures().then(setTodaysFixtures);
-    fetchFootballNews().then(articles => {
-      const wc = articles.filter(a => isWC26(a.title));
-      const rest = articles.filter(a => !isWC26(a.title));
-      setNews([...wc, ...rest]);
-    }).finally(() => setNewsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -132,9 +94,6 @@ export default function HomePage() {
   const liveStatuses = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
   const todayUpcoming = todaysFixtures.filter(m => !liveStatuses.has(m.status)).slice(0, 6);
 
-  const wc26News   = news.filter(a => isWC26(a.title)).slice(0, 3);
-  const otherNews  = news.filter(a => !isWC26(a.title)).slice(0, 6);
-
   // Group today's matches by league
   const byLeague = todayUpcoming.reduce((acc: Record<string, any[]>, m) => {
     const k = m.league || "Other";
@@ -146,16 +105,16 @@ export default function HomePage() {
   return (
     <div className="pb-24">
       <SEO
-        title="BallMtaani | Kenyan Football Hub — WC26 Ready"
+        title="BallMtaani | Kenyan Football Hub â€” WC26 Ready"
         description="Kenya's #1 football hub: live UCL scores, World Cup 2026 countdown, today's fixtures, fan predictions and Mchambuzi AI analysis."
         keywords={["BallMtaani","Kenyan football","World Cup 2026","live football scores","UCL final","WC26 Kenya","football predictions"]}
         path="/home"
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "Home", url: "/home" }]}
       />
 
-      {/* ─────────────────────────────── HERO ─────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative overflow-hidden border-b border-white/8 bg-[#040508]">
-        {/* AI-generated hero — Vertex AI Imagen 3, World Cup energy */}
+        {/* AI-generated hero â€” Vertex AI Imagen 3, World Cup energy */}
         <img src="/wc26-hero.jpg" alt="" decoding="async"
           className="absolute inset-0 h-full w-full object-cover object-center opacity-55" />
         {/* Cinematic grade overlays */}
@@ -168,7 +127,7 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-10 md:py-16">
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
 
-            {/* Left — headline + social proof + CTAs */}
+            {/* Left â€” headline + social proof + CTAs */}
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
               {/* WC26 badge */}
               {!wc26.isOver && (
@@ -176,15 +135,15 @@ export default function HomePage() {
                   {wc26.isLive && <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />}
                   <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
                   <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#FFD700]">
-                    {wc26.isLive ? "World Cup 2026 — Live!" : `WC26 in ${wc26.days}d ${wc26.hours}h`}
+                    {wc26.isLive ? "World Cup 2026 â€” Live!" : `WC26 in ${wc26.days}d ${wc26.hours}h`}
                   </span>
                 </div>
               )}
 
-              {/* Dynamic headline — speaks to the fan, not a brand statement */}
+              {/* Dynamic headline â€” speaks to the fan, not a brand statement */}
               <h1 className="mb-3 text-4xl font-black leading-[0.9] tracking-tight text-white md:text-5xl lg:text-6xl">
                 {isMatchLive && featuredMatch ? (
-                  <>{featuredMatch.home} {featuredMatch.homeScore}–{featuredMatch.awayScore} {featuredMatch.away}.<br />
+                  <>{featuredMatch.home} {featuredMatch.homeScore}â€“{featuredMatch.awayScore} {featuredMatch.away}.<br />
                   <span className="text-[#B30000]">{featuredMatch.minute}. Your move.</span></>
                 ) : wc26.isLive ? (
                   <>The World Cup<br /><span className="text-[#FFD700]">Is Live.</span></>
@@ -225,7 +184,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* CTAs — primary action first, sign-up if logged out */}
+              {/* CTAs â€” primary action first, sign-up if logged out */}
               <div className="flex flex-wrap gap-3">
                 {isMatchLive && featuredMatch ? (
                   <Link href={`/live-center/${featuredMatch.id}`}
@@ -239,10 +198,7 @@ export default function HomePage() {
                   </Link>
                 )}
                 {!isLoggedIn ? (
-                  <Link href="/login"
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/8 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/14 active:scale-95">
-                    Join Free
-                  </Link>
+                  <GoogleSignInButton size="md" label="Join Free · Google" />
                 ) : (
                   <Link href="/predictions"
                     className="inline-flex items-center gap-2 rounded-xl border border-white/18 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
@@ -252,7 +208,7 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* Right — Featured match */}
+            {/* Right â€” Featured match */}
             <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65, delay: 0.15 }}>
               {featuredMatch ? (
                 <div className={`overflow-hidden rounded-2xl border backdrop-blur-xl ${isMatchLive ? "border-[#B30000]/40 bg-[#0d0608]/92 shadow-[0_0_40px_rgba(179,0,0,0.22)]" : "border-white/12 bg-[#0c111a]/92"}`}>
@@ -274,7 +230,7 @@ export default function HomePage() {
                       <div className="text-center">
                         {isMatchLive ? (
                           <>
-                            <div className="text-3xl font-black tabular-nums text-white">{featuredMatch.homeScore}<span className="text-white/25 mx-1">–</span>{featuredMatch.awayScore}</div>
+                            <div className="text-3xl font-black tabular-nums text-white">{featuredMatch.homeScore}<span className="text-white/25 mx-1">â€“</span>{featuredMatch.awayScore}</div>
                             <div className="mt-1 text-[10px] font-black uppercase text-[#B30000]">{featuredMatch.minute}</div>
                           </>
                         ) : (
@@ -315,8 +271,41 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <section className="border-b border-white/6 bg-[#05070b] py-8">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="border-l-4 border-[#FFD700] pl-3 text-lg font-black uppercase tracking-widest text-white">WC26 Guides</h2>
+              <p className="ml-4 mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">
+                Format · Stadiums · Africa · Squads
+              </p>
+            </div>
+            <Link href="/world-cup-2026" className="hidden items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFD700] sm:flex">
+              Open WC26 Hub <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
 
-      {/* ─────────────────────── LIVE + TODAY'S MATCHES ───────────────────────── */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {WC26_GUIDES.map((guide) => (
+              <Link
+                key={guide.slug}
+                href={`/world-cup-2026/${guide.slug}`}
+                className="group rounded-2xl border border-white/8 bg-[#090d14] p-4 transition-all hover:-translate-y-0.5 hover:border-[#FFD700]/30"
+              >
+                <div className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#FFD700]/58">{guide.eyebrow}</div>
+                <h3 className="text-sm font-black uppercase leading-snug tracking-[0.08em] text-white">{guide.title}</h3>
+                <p className="mt-3 line-clamp-3 text-xs leading-6 text-white/46">{guide.deck}</p>
+                <div className="mt-4 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#FFD700]">
+                  Read guide <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LIVE + TODAY'S MATCHES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {(liveMatches.length > 0 || todayUpcoming.length > 0) && (
         <section className="border-b border-white/6 bg-[#060810] py-8">
           <div className="mx-auto max-w-6xl px-4">
@@ -341,7 +330,7 @@ export default function HomePage() {
                             <TeamLogo logo={m.homeLogo} initial={m.homeInitial} color="#1a0608" size="sm" />
                             <span className="truncate text-sm font-bold text-white">{m.home}</span>
                           </div>
-                          <span className="text-lg font-black tabular-nums text-[#B30000]">{m.homeScore} – {m.awayScore}</span>
+                          <span className="text-lg font-black tabular-nums text-[#B30000]">{m.homeScore} â€“ {m.awayScore}</span>
                           <div className="flex min-w-0 items-center justify-end gap-2">
                             <span className="truncate text-right text-sm font-bold text-white">{m.away}</span>
                             <TeamLogo logo={m.awayLogo} initial={m.awayInitial} color="#1a0608" size="sm" />
@@ -351,7 +340,7 @@ export default function HomePage() {
                           <div className="mb-1.5 flex justify-between">
                             <span className="text-[9px] text-white/28 font-semibold uppercase tracking-widest">{m.league}</span>
                             <span className={`text-[9px] font-black uppercase tracking-widest ${isHT ? "text-yellow-400" : "text-[#B30000]"}`}>
-                              {isHT ? "Half Time" : m.minute ? `${m.minute} · ${hl}` : hl}
+                              {isHT ? "Half Time" : m.minute ? `${m.minute} Â· ${hl}` : hl}
                             </span>
                           </div>
                           <div className="h-1 overflow-hidden rounded-full bg-white/8">
@@ -405,13 +394,26 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ─────────────────────────── MATCH HUB ───────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#0B0B0B] py-8">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-5 flex items-center justify-between">
+      {/* ── STICKY SIGN-UP BANNER ── logged-out fans only */}
+      {!isLoggedIn && (
+        <div className=”fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#0B0B0B]/96 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.5)]”>
+          <div className=”mx-auto flex max-w-lg items-center gap-3”>
+            <div className=”flex-1 min-w-0”>
+              <p className=”text-xs font-black text-white leading-tight”>🏆 WC26 kicks off June 11</p>
+              <p className=”text-[10px] text-white/40”>Make your bold calls before kickoff — free</p>
+            </div>
+            <GoogleSignInButton size=”sm” label=”Join · Google” />
+          </div>
+        </div>
+      )}
+
+      {/* MATCH HUB */}
+      <section className=”border-b border-white/6 bg-[#0B0B0B] py-8”>
+        <div className=”mx-auto max-w-6xl px-4”>
+          <div className=”mb-5 flex items-center justify-between”>
             <div>
               <h2 className="border-l-4 border-[#B30000] pl-4 text-xl font-black uppercase tracking-wide text-white">Match Hub</h2>
-              <p className="ml-4 mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">Live · Results · Upcoming</p>
+              <p className="ml-4 mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">Live Â· Results Â· Upcoming</p>
               {lastUpdated && <DataFreshnessChip label={freshnessLabel} className="ml-4 mt-1" />}
             </div>
             <Link href="/matches" className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#B30000]">
@@ -421,6 +423,16 @@ export default function HomePage() {
           <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar">
             {isLoadingMatches || isLoadingUpcoming || isLoadingRecent ? (
               [1, 2, 3].map(i => <SkeletonMatch key={i} />)
+            ) : liveMatches.length === 0 && upcomingFixtures.length === 0 && recentMatches.length === 0 ? (
+              <div className="min-w-[280px] max-w-[320px] snap-start rounded-xl border border-white/8 bg-[#0d1018] p-4">
+                <div className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/30">No live desk right now</div>
+                <p className="text-sm leading-6 text-white/58">
+                  The live desk is quiet at the moment. The WC26 guides above are ready, and this desk will refill as soon as fixtures land.
+                </p>
+                <Link href="/world-cup-2026" className="mt-4 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#FFD700]">
+                  Open WC26 Hub <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
             ) : (
               <>
                 {liveMatches.map((m: any) => <PremiumMatchCard key={m.id} match={{ ...m, status: "LIVE" }} />)}
@@ -432,15 +444,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────────────── ARCADE (above news) ───────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ARCADE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="border-b border-white/6 bg-[#0B0B0B] py-10">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black uppercase tracking-widest text-white">The <span className="text-[#FFD700]">Arcade</span></h2>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">Calls · Trivia · Debates · Earn MTC</p>
+              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">Calls Â· Trivia Â· Debates Â· Earn MTC</p>
             </div>
-            {/* MTC explanation — one line */}
+            {/* MTC explanation â€” one line */}
             <span className="hidden text-[10px] font-bold text-white/30 sm:block">
               Every correct call earns <span className="text-[#FFD700] font-black">MTC status</span>
             </span>
@@ -458,26 +470,26 @@ export default function HomePage() {
                 <Icon className={`mb-3 h-5 w-5 ${ic}`} />
                 <h3 className={`mb-1 text-xs font-black uppercase tracking-wide ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
                 <p className="mb-3 flex-1 text-[11px] leading-relaxed text-white/30">{sub}</p>
-                <span className={`text-[9px] font-black uppercase tracking-[0.18em] ${ic}`}>{cta} →</span>
+                <span className={`text-[9px] font-black uppercase tracking-[0.18em] ${ic}`}>{cta} â†’</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─────────────────────── KENYAN FOOTBALL STRIP ───────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ KENYAN FOOTBALL STRIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="border-b border-[#006600]/25 bg-[#040a04] py-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#006600]/40 bg-[#006600]/15 text-sm">🇰🇪</div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#006600]/40 bg-[#006600]/15 text-sm">ðŸ‡°ðŸ‡ª</div>
             <div>
               <h2 className="text-sm font-black uppercase tracking-widest text-white">African Football</h2>
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-[#22c55e]/60">CAF · Harambee Stars · Local</p>
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-[#22c55e]/60">CAF Â· Harambee Stars Â· Local</p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Link href="/matches?league=CAF" className="group flex items-center gap-3 rounded-xl border border-[#006600]/18 bg-[#060d06] p-4 transition-all hover:border-[#006600]/40">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">🏆</div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">ðŸ†</div>
               <div className="min-w-0">
                 <div className="text-xs font-black uppercase text-white">CAF Champions League</div>
                 <div className="text-[10px] text-white/35">Continental club football</div>
@@ -485,7 +497,7 @@ export default function HomePage() {
               <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 group-hover:text-[#22c55e]" />
             </Link>
             <Link href="/matches" className="group flex items-center gap-3 rounded-xl border border-[#006600]/18 bg-[#060d06] p-4 transition-all hover:border-[#006600]/40">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">⚽</div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">âš½</div>
               <div className="min-w-0">
                 <div className="text-xs font-black uppercase text-white">Harambee Stars</div>
                 <div className="text-[10px] text-white/35">Kenya national team</div>
@@ -493,61 +505,14 @@ export default function HomePage() {
               <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 group-hover:text-[#22c55e]" />
             </Link>
             <Link href="/fan-zones" className="group flex items-center gap-3 rounded-xl border border-[#006600]/18 bg-[#060d06] p-4 transition-all hover:border-[#006600]/40">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">🔥</div>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">ðŸ”¥</div>
               <div className="min-w-0">
                 <div className="text-xs font-black uppercase text-white">Kenyan Fan Zones</div>
-                <div className="text-[10px] text-white/35">Gor · Leopards · Tusker · More</div>
+                <div className="text-[10px] text-white/35">Gor Â· Leopards Â· Tusker Â· More</div>
               </div>
               <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 group-hover:text-[#22c55e]" />
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* ─────────────────────── NEWS: WC26 FIRST ────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#05070b] py-10">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="border-l-4 border-[#FFD700] pl-3 text-lg font-black uppercase tracking-widest text-white">Latest News</h2>
-              <p className="ml-4 mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">WC26 First · Breaking Headlines</p>
-            </div>
-          </div>
-
-          {newsLoading ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="animate-pulse overflow-hidden rounded-xl border border-white/5 bg-[#111]">
-                  <div className="h-36 bg-white/5" />
-                  <div className="space-y-2 p-3"><div className="h-2 w-16 rounded bg-white/10" /><div className="h-3 rounded bg-white/10" /><div className="h-3 w-3/4 rounded bg-white/10" /></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {wc26News.length > 0 && (
-                <div className="mb-6">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Trophy className="h-3 w-3 text-[#FFD700]" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]">World Cup 2026</span>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {wc26News.map(a => <NewsCard key={a.id} article={a} featured />)}
-                  </div>
-                </div>
-              )}
-              {wc26News.length > 0 && otherNews.length > 0 && (
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-white/8" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">Football Headlines</span>
-                  <div className="h-px flex-1 bg-white/8" />
-                </div>
-              )}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {otherNews.map(a => <NewsCard key={a.id} article={a} />)}
-              </div>
-            </>
-          )}
         </div>
       </section>
 
@@ -558,7 +523,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────────────── COMMUNITY ───────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ COMMUNITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="border-b border-white/6 bg-[#04060a] py-10">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-6">
@@ -578,14 +543,14 @@ export default function HomePage() {
                 </div>
                 <h3 className={`mb-1 text-xs font-black uppercase tracking-wide ${gold ? "text-[#FFD700]" : "text-white"}`}>{label}</h3>
                 <p className="mb-3 flex-1 text-[11px] text-white/28">{sub}</p>
-                <span className={`text-[9px] font-black uppercase tracking-widest ${ic}`}>{cta} →</span>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${ic}`}>{cta} â†’</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─────────────────────── LEADERBOARD PREVIEW ─────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LEADERBOARD PREVIEW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="bg-[#04060a] py-10">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h2 className="mb-1 text-lg font-black uppercase tracking-widest text-white">Hall of <span className="text-[#FFD700]">Fame</span></h2>
