@@ -20,6 +20,7 @@ import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
+import type { TournamentStandingEntry } from "../lib/football-api";
 
 type HubView = "overview" | "live" | "fixtures" | "results" | "tables";
 
@@ -30,7 +31,67 @@ const FEATURE_LINKS = [
   { href: "/predictions", label: "Predictions", sub: "Make your call", icon: Goal, tone: "text-cyan-300 border-cyan-400/35 bg-cyan-500/10" },
 ];
 
-const TOP_LEAGUES = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "KPL"];
+const TOP_LEAGUES = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "KPL", "World Cup 2026"];
+
+const WC26_OPENING_FIXTURES = [
+  { home: "Mexico", away: "South Africa", date: "Jun 11", time: "10:00 PM", league: "World Cup 2026", id: "wc26-1" },
+  { home: "USA", away: "Colombia", date: "Jun 12", time: "1:00 AM", league: "World Cup 2026", id: "wc26-2" },
+  { home: "Canada", away: "Venezuela", date: "Jun 12", time: "4:00 PM", league: "World Cup 2026", id: "wc26-3" },
+  { home: "Brazil", away: "Germany", date: "Jun 13", time: "7:00 PM", league: "World Cup 2026", id: "wc26-4" },
+  { home: "Argentina", away: "Morocco", date: "Jun 14", time: "10:00 PM", league: "World Cup 2026", id: "wc26-5" },
+  { home: "France", away: "England", date: "Jun 14", time: "1:00 AM", league: "World Cup 2026", id: "wc26-6" },
+];
+
+const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = {
+  "Group A": [
+    { rank: 1, team: "Mexico", logo: "https://media.api-sports.io/flags/mx.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+    { rank: 2, team: "South Africa", logo: "https://media.api-sports.io/flags/za.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+    { rank: 3, team: "USA", logo: "https://media.api-sports.io/flags/us.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+    { rank: 4, team: "Colombia", logo: "https://media.api-sports.io/flags/co.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
+  ],
+  "Group B": [
+    { rank: 1, team: "Canada", logo: "https://media.api-sports.io/flags/ca.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+    { rank: 2, team: "Venezuela", logo: "https://media.api-sports.io/flags/ve.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+    { rank: 3, team: "Spain", logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+    { rank: 4, team: "Costa Rica", logo: "https://media.api-sports.io/flags/cr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
+  ],
+  "Group C": [
+    { rank: 1, team: "Brazil", logo: "https://media.api-sports.io/flags/br.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+    { rank: 2, team: "Germany", logo: "https://media.api-sports.io/flags/de.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+    { rank: 3, team: "Japan", logo: "https://media.api-sports.io/flags/jp.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+    { rank: 4, team: "Morocco", logo: "https://media.api-sports.io/flags/ma.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
+  ],
+  "Group D": [
+    { rank: 1, team: "Argentina", logo: "https://media.api-sports.io/flags/ar.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+    { rank: 2, team: "Uruguay", logo: "https://media.api-sports.io/flags/uy.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+    { rank: 3, team: "Paraguay", logo: "https://media.api-sports.io/flags/py.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+    { rank: 4, team: "Egypt", logo: "https://media.api-sports.io/flags/eg.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
+  ],
+  "Group E": [
+    { rank: 1, team: "France", logo: "https://media.api-sports.io/flags/fr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+    { rank: 2, team: "England", logo: "https://media.api-sports.io/flags/gb-eng.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+    { rank: 3, team: "Belgium", logo: "https://media.api-sports.io/flags/be.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+    { rank: 4, team: "Slovakia", logo: "https://media.api-sports.io/flags/sk.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
+  ],
+  "Group F": [
+    { rank: 1, team: "Netherlands", logo: "https://media.api-sports.io/flags/nl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+    { rank: 2, team: "Sweden", logo: "https://media.api-sports.io/flags/se.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+    { rank: 3, team: "Austria", logo: "https://media.api-sports.io/flags/at.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+    { rank: 4, team: "Cameroon", logo: "https://media.api-sports.io/flags/cm.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
+  ],
+  "Group G": [
+    { rank: 1, team: "Spain", logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+    { rank: 2, team: "Italy", logo: "https://media.api-sports.io/flags/it.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+    { rank: 3, team: "Denmark", logo: "https://media.api-sports.io/flags/dk.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+    { rank: 4, team: "Serbia", logo: "https://media.api-sports.io/flags/rs.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
+  ],
+  "Group H": [
+    { rank: 1, team: "Portugal", logo: "https://media.api-sports.io/flags/pt.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+    { rank: 2, team: "Poland", logo: "https://media.api-sports.io/flags/pl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+    { rank: 3, team: "Czech Republic", logo: "https://media.api-sports.io/flags/cz.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+    { rank: 4, team: "Senegal", logo: "https://media.api-sports.io/flags/sn.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
+  ],
+};
 
 function normalizeText(value: unknown) {
   return String(value || "").toLowerCase();
@@ -153,32 +214,46 @@ export default function MatchesPage() {
   const { data: upcomingFixtures = [], isFetching: upcomingFetching } = useUpcomingFixtures();
   const { data: standings = {} as Record<string, any[]>, isFetching: standingsFetching } = useStandings();
 
+  const hasApiData = liveMatches.length || recentMatches.length || upcomingFixtures.length || Object.keys(standings).length;
+  const fixturesWithFallback = useMemo(() => {
+    if (upcomingFixtures.length) return upcomingFixtures;
+    return WC26_OPENING_FIXTURES;
+  }, [upcomingFixtures]);
+
+  const standingsWithFallback = useMemo(() => {
+    if (Object.keys(standings).length) return standings;
+    return WC26_GROUPS;
+  }, [standings]);
+
   useEffect(() => {
-    if (
-      liveMatches.length ||
-      recentMatches.length ||
-      upcomingFixtures.length ||
-      Object.keys(standings).length
-    ) {
+    if (hasApiData || !upcomingFetching && !standingsFetching) {
       setLastUpdated(new Date());
     }
-  }, [liveMatches, recentMatches, upcomingFixtures, standings]);
+  }, [hasApiData, upcomingFetching, standingsFetching]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClockTick((t) => t + 1), 60000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!standingsWithFallback[tableLeague]?.length && availableLeagues.length) {
+      const firstAvailable = availableLeagues[0];
+      setTableLeague(firstAvailable);
+    }
+  }, [tableLeague, standingsWithFallback, availableLeagues]);
+
   const freshnessLabelSafe = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
   const availableLeagues = useMemo(() => {
     const names = [
       ...liveMatches.map((m: any) => m.league),
-      ...upcomingFixtures.map((m: any) => m.league),
+      ...fixturesWithFallback.map((m: any) => m.league),
       ...recentMatches.map((m: any) => m.league),
-      ...Object.keys(standings),
+      ...Object.keys(standingsWithFallback),
     ].filter(Boolean);
     return Array.from(new Set(names));
-  }, [liveMatches, upcomingFixtures, recentMatches, standings]);
+  }, [liveMatches, fixturesWithFallback, recentMatches, standingsWithFallback]);
 
   const filtered = (items: any[]) =>
     items.filter((item) => {
@@ -189,9 +264,9 @@ export default function MatchesPage() {
     });
 
   const live = useMemo(() => filtered(liveMatches), [liveMatches, leagueFilter, query]);
-  const fixtures = useMemo(() => filtered(upcomingFixtures), [upcomingFixtures, leagueFilter, query]);
+  const fixtures = useMemo(() => filtered(fixturesWithFallback), [fixturesWithFallback, leagueFilter, query]);
   const results = useMemo(() => filtered(recentMatches), [recentMatches, leagueFilter, query]);
-  const selectedStandings = standings[tableLeague] || [];
+  const selectedStandings = standingsWithFallback[tableLeague] || [];
   const fetching = liveFetching || recentFetching || upcomingFetching || standingsFetching;
 
   const featuredFixtures = fixtures.slice(0, 6);
@@ -202,7 +277,7 @@ export default function MatchesPage() {
       : featuredResults.length > 0
         ? featuredResults.map((m: any) => ({ ...m, _variant: "result" }))
         : featuredFixtures.slice(0, 4).map((m: any) => ({ ...m, _variant: "fixture" }));
-  const tableEntries = Object.entries(standings).filter(([, rows]) => rows?.length > 0);
+  const tableEntries = Object.entries(standingsWithFallback).filter(([, rows]) => rows?.length > 0);
 
   const navItems: { id: HubView; label: string; icon: typeof Activity; count?: number }[] = [
     { id: "overview", label: "Overview", icon: LayoutGrid },
@@ -458,7 +533,7 @@ export default function MatchesPage() {
         {view === "tables" && (
           <section>
             <div className="mb-4 flex flex-wrap gap-2">
-              {[...TOP_LEAGUES, ...Object.keys(standings).filter((name) => !TOP_LEAGUES.includes(name))].slice(0, 10).map((league) => (
+              {[...TOP_LEAGUES, ...Object.keys(standingsWithFallback).filter((name) => !TOP_LEAGUES.includes(name))].slice(0, 10).map((league) => (
                 <button
                   key={league}
                   onClick={() => setTableLeague(league)}
