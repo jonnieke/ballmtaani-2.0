@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ballmtaani-v5';
+const CACHE_NAME = 'ballmtaani-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
