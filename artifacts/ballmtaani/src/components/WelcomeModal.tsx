@@ -15,7 +15,7 @@ import { useLocation } from "wouter";
 import { X, Trophy, MessageCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-const WHATSAPP_GROUP = "https://chat.whatsapp.com/BallMtaaniWC26Community";
+const WHATSAPP_GROUP = "https://chat.whatsapp.com/FYadWQJ4KgjC0HS4AUihmm";
 const STORAGE_KEY = "mtaani_welcomed_v1";
 
 export default function WelcomeModal() {
