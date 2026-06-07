@@ -16,6 +16,7 @@ import FloatingMchambuzi from "../components/FloatingMchambuzi";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import { motion } from "framer-motion";
+import AfricanFootballWidget from "../components/AfricanFootballWidget";
 
 const WC26_START = new Date("2026-06-11T17:00:00Z");
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
@@ -592,6 +593,19 @@ export default function HomePage() {
               </div>
             </>
           )}
+        </div>
+      </section>
+
+      {/* ─────────────────────── AFRICAN FOOTBALL ────────────────────────── */}
+      <section className="border-b border-white/6 bg-[#04060a] py-8">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">African <span className="text-orange-400">Lions</span> at WC26</h2>
+              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">9 CAF nations · All with something to prove</p>
+            </div>
+          </div>
+          <AfricanFootballWidget compact={true} />
         </div>
       </section>
 

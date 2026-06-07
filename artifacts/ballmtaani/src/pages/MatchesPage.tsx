@@ -21,8 +21,9 @@ import SEO from "../components/SEO";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import type { TournamentStandingEntry } from "../lib/football-api";
+import AfricanFootballWidget from "../components/AfricanFootballWidget";
 
-type HubView = "overview" | "live" | "fixtures" | "results" | "tables";
+type HubView = "overview" | "live" | "fixtures" | "results" | "tables" | "africa";
 
 const FEATURE_LINKS = [
   { href: "/live-center", label: "Live Center", sub: "Open match pulse", icon: Radio, tone: "text-primary border-primary/35 bg-primary/10" },
@@ -202,7 +203,11 @@ function StandingMiniTable({ league, rows }: { league: string; rows: any[] }) {
 }
 
 export default function MatchesPage() {
-  const [view, setView] = useState<HubView>("overview");
+  const [view, setView] = useState<HubView>(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "africa") return "africa";
+    return "overview";
+  });
   const [leagueFilter, setLeagueFilter] = useState("all");
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [tableLeague, setTableLeague] = useState("Premier League");
@@ -281,6 +286,7 @@ export default function MatchesPage() {
 
   const navItems: { id: HubView; label: string; icon: typeof Activity; count?: number }[] = [
     { id: "overview", label: "Overview", icon: LayoutGrid },
+    { id: "africa", label: "Africa", icon: Trophy },
     { id: "live", label: "Live", icon: Activity, count: live.length },
     { id: "fixtures", label: "Fixtures", icon: CalendarDays, count: fixtures.length },
     { id: "results", label: "Results", icon: Clock3, count: results.length },
@@ -480,6 +486,12 @@ export default function MatchesPage() {
               )}
             </section>
           </div>
+        )}
+
+        {view === "africa" && (
+          <section>
+            <AfricanFootballWidget compact={false} />
+          </section>
         )}
 
         {view === "live" && (
