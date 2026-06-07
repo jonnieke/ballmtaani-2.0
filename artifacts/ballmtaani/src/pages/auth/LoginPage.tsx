@@ -3,7 +3,6 @@ import { useLocation, Link } from "wouter";
 import { ArrowRight, Mail, Phone, ShieldCheck, Heart, Gift, Radio, Trophy, Users } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { CLUB_LOGOS } from "../../data/mockData";
-import TeamLogo from "../../components/TeamLogo";
 import { useTheme } from "../../context/ThemeContext";
 const ENABLE_MOCK_AUTH = import.meta.env.VITE_ENABLE_MOCK_AUTH === "true";
 
@@ -33,6 +32,25 @@ export default function LoginPage() {
     if (club === "Arsenal" || club === "Man City") setAtmosphere("gunners-city");
     else if (club === "Real Madrid" || club === "Barcelona") setAtmosphere("el-clasico");
     else setAtmosphere("default");
+  };
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      if (favoriteClub) sessionStorage.setItem("mtaani_pending_club", favoriteClub);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Google sign-in error:", err);
+      setError(err.message || "Google sign-in failed. Try email below.");
+      setLoading(false);
+    }
   };
 
   const handleSendOTP = async (e: React.FormEvent) => {
@@ -108,29 +126,6 @@ export default function LoginPage() {
     "Gor Mahia", "AFC Leopards", "Simba SC", "Al Ahly",
     "Kaizer Chiefs", "Orlando Pirates", "Enyimba", "TP Mazembe",
   ];
-
-  const clubColors: Record<string, string> = {
-    Arsenal: "#EF0107",
-    Chelsea: "#034694",
-    "Man Utd": "#DA291C",
-    "Man City": "#6CABDD",
-    Liverpool: "#C8102E",
-    "Real Madrid": "#FEBE10",
-    Barcelona: "#A50044",
-    PSG: "#004170",
-    "Bayern Munich": "#DC052D",
-    Juventus: "#000000",
-    "AC Milan": "#FB090B",
-    Dortmund: "#FDE100",
-    "Gor Mahia": "#006400",
-    "AFC Leopards": "#0000FF",
-    "Simba SC": "#ED1C24",
-    "Al Ahly": "#E1000F",
-    "Kaizer Chiefs": "#F9A602",
-    "Orlando Pirates": "#000000",
-    Enyimba: "#00843D",
-    "TP Mazembe": "#111111",
-  };
 
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-white">
@@ -226,6 +221,32 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* ── Google Sign-In (primary) ── */}
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 font-black uppercase tracking-widest py-4 rounded-xl transition-all hover:bg-gray-100 active:scale-[0.98] disabled:opacity-50 shadow-lg mb-5"
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+          ) : (
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+          )}
+          Continue with Google
+        </button>
+
+        <div className="flex items-center gap-3 mb-5">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">or use email / phone</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+
         <form onSubmit={handleSendOTP} className="space-y-5">
           {/* Method tabs */}
           <div className="flex rounded-xl border border-white/10 overflow-hidden">
@@ -303,25 +324,25 @@ export default function LoginPage() {
               <Heart className="w-3 h-3 text-primary animate-pulse" /> Pick Your Side
             </label>
             <p className="text-[11px] text-gray-500 -mt-1">This shapes your rooms, rivals, and matchday atmosphere. You can change it later.</p>
-            <div className="grid grid-cols-3 gap-2 pr-1 sm:grid-cols-4">
+            <div className="grid max-h-[280px] grid-cols-4 gap-2 overflow-y-auto pr-1 sm:max-h-80">
               {clubs.map(club => (
                 <button
                   key={club}
                   type="button"
                   onClick={() => handleClubSelect(club)}
-                  className={`p-2.5 border flex flex-col items-center gap-1.5 transition-all duration-300 ${
+                  className={`p-2 border flex flex-col items-center gap-1.5 transition-all duration-300 ${
                     favoriteClub === club 
                       ? 'bg-primary/20 border-primary shadow-[0_0_15px_var(--theme-glow)] scale-105' 
                       : 'bg-black/40 border-white/5 hover:border-white/20 opacity-60 hover:opacity-100 grayscale hover:grayscale-0'
                   }`}
                 >
-                  <TeamLogo
-                    logo={CLUB_LOGOS[club]}
-                    initial={club.substring(0, 2).toUpperCase()}
-                    color={clubColors[club] || "#1A2433"}
-                    size="xs"
-                    className="shadow-[0_0_12px_rgba(255,255,255,0.08)]"
-                  />
+                  {CLUB_LOGOS[club] ? (
+                    <img src={CLUB_LOGOS[club]} alt={club} className="w-8 h-8 object-contain drop-shadow-md" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-black text-white">
+                      {club.substring(0, 2)}
+                    </div>
+                  )}
                   <span className="text-[8px] font-black uppercase text-center leading-tight truncate w-full text-gray-300">{club}</span>
                 </button>
               ))}
