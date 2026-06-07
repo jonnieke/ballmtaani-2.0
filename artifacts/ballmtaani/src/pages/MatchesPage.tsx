@@ -225,6 +225,19 @@ export default function MatchesPage() {
     return WC26_GROUPS;
   }, [standings]);
 
+  // Declare derived values BEFORE any effects that reference them
+  const availableLeagues = useMemo(() => {
+    const names = [
+      ...liveMatches.map((m: any) => m.league),
+      ...fixturesWithFallback.map((m: any) => m.league),
+      ...recentMatches.map((m: any) => m.league),
+      ...Object.keys(standingsWithFallback),
+    ].filter(Boolean);
+    return Array.from(new Set(names));
+  }, [liveMatches, fixturesWithFallback, recentMatches, standingsWithFallback]);
+
+  const freshnessLabelSafe = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
+
   useEffect(() => {
     if (hasApiData || !upcomingFetching && !standingsFetching) {
       setLastUpdated(new Date());
@@ -238,22 +251,9 @@ export default function MatchesPage() {
 
   useEffect(() => {
     if (!standingsWithFallback[tableLeague]?.length && availableLeagues.length) {
-      const firstAvailable = availableLeagues[0];
-      setTableLeague(firstAvailable);
+      setTableLeague(availableLeagues[0]);
     }
   }, [tableLeague, standingsWithFallback, availableLeagues]);
-
-  const freshnessLabelSafe = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
-
-  const availableLeagues = useMemo(() => {
-    const names = [
-      ...liveMatches.map((m: any) => m.league),
-      ...fixturesWithFallback.map((m: any) => m.league),
-      ...recentMatches.map((m: any) => m.league),
-      ...Object.keys(standingsWithFallback),
-    ].filter(Boolean);
-    return Array.from(new Set(names));
-  }, [liveMatches, fixturesWithFallback, recentMatches, standingsWithFallback]);
 
   const filtered = (items: any[]) =>
     items.filter((item) => {
