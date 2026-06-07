@@ -201,16 +201,18 @@ export default function HomePage() {
                   : "Kenya's loudest fan room for live scores, WC26 predictions and real match receipts."}
               </p>
 
-              {/* Social proof */}
-              <div className="mb-5 flex items-center gap-3">
-                <div className="flex -space-x-1.5">
-                  {["#B30000","#1E6FFF","#FFD700","#22c55e"].map(c => (
-                    <div key={c} className="h-6 w-6 rounded-full border-2 border-[#040508]" style={{ background: c }} />
-                  ))}
-                </div>
-                <span className="text-[11px] font-bold text-white/40">
-                  Join <span className="text-white/70 font-black">18,000+</span> Kenyan fans calling it
-                </span>
+              {/* Feature pills */}
+              <div className="mb-5 flex flex-wrap gap-2">
+                {[
+                  { icon: "⚽", label: "Live Scores" },
+                  { icon: "🏆", label: "WC26 Predictions" },
+                  { icon: "🤖", label: "AI Analyst" },
+                  { icon: "🔥", label: "Fan Leaderboard" },
+                ].map(f => (
+                  <span key={f.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/60">
+                    {f.icon} {f.label}
+                  </span>
+                ))}
               </div>
 
               {/* Countdown (compact, inline) */}
@@ -226,26 +228,34 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* CTAs — primary action first, sign-up if logged out */}
+              {/* CTAs */}
               <div className="flex flex-wrap gap-3">
-                {isMatchLive && featuredMatch ? (
-                  <Link href={`/live-center/${featuredMatch.id}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#B30000] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_rgba(179,0,0,0.4)] transition-all hover:shadow-[0_0_36px_rgba(179,0,0,0.6)] active:scale-95">
-                    Join Live Center <ChevronRight className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <Link href="/world-cup-2026"
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_24px_rgba(255,214,0,0.3)] transition-all hover:shadow-[0_0_36px_rgba(255,214,0,0.5)] active:scale-95">
-                    WC26 Hub <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )}
                 {!isLoggedIn ? (
-                  <GoogleSignInButton size="md" label="Join Free - Google" />
+                  <>
+                    <GoogleSignInButton size="lg" label="Join Free - Google" />
+                    <Link href="/world-cup-2026"
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10 active:scale-95">
+                      WC26 Hub <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </>
                 ) : (
-                  <Link href="/predictions"
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/18 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
-                    Make Your Call
-                  </Link>
+                  <>
+                    {isMatchLive && featuredMatch ? (
+                      <Link href={`/live-center/${featuredMatch.id}`}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#B30000] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_rgba(179,0,0,0.4)] transition-all hover:shadow-[0_0_36px_rgba(179,0,0,0.6)] active:scale-95">
+                        Join Live Center <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link href="/world-cup-2026"
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_24px_rgba(255,214,0,0.3)] transition-all hover:shadow-[0_0_36px_rgba(255,214,0,0.5)] active:scale-95">
+                        WC26 Hub <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                    <Link href="/predictions"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/18 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
+                      Make Your Call
+                    </Link>
+                  </>
                 )}
               </div>
             </motion.div>

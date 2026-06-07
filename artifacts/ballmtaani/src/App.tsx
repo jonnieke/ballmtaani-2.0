@@ -46,6 +46,7 @@ const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
 import WelcomeModal from "./components/WelcomeModal";
 import ProfileSetupModal from "./components/ProfileSetupModal";
+import StickySignUpBanner from "./components/StickySignUpBanner";
 
 // Minimal loading fallback — dark bg matches app shell, no layout shift
 function PageLoader() {
@@ -186,6 +187,7 @@ export default function App() {
           <AppInner />
           <WelcomeModal />
           <ProfileSetupModal />
+          <StickySignUpBanner />
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
