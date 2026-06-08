@@ -14,14 +14,24 @@ const NAV = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const isAdmin = useIsAdmin();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, authLoading } = useAuth();
   const [location, navigate] = useLocation();
+
+  // Wait for Supabase session to resolve before deciding to redirect
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#070a0f]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#B30000]" />
+      </div>
+    );
+  }
 
   if (!isLoggedIn) { navigate("/login"); return null; }
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0B0B0B]">
         <p className="text-2xl font-black text-[#B30000]">Access Denied</p>
+        <p className="mt-1 text-xs text-white/30">Add your user ID to VITE_ADMIN_USER_IDS in Vercel env vars.</p>
         <Link href="/" className="text-sm text-white/40 hover:text-white">← Back to home</Link>
       </div>
     );

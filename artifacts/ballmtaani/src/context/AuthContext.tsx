@@ -21,6 +21,7 @@ export interface LoginStreakInfo {
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  authLoading: boolean;
   user: User | null;
   username: string;
   dbProfile: any | null;
@@ -82,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => ENABLE_MOCK_AUTH && localStorage.getItem("mock_auth_session") !== null);
+  const [authLoading, setAuthLoading] = useState(!ENABLE_MOCK_AUTH);
 
   const [dbProfile, setDbProfile] = useState<any | null>(null);
 
@@ -130,9 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("mock_auth_session");
     }
 
-    if (!supabase) return;
+    if (!supabase) { setAuthLoading(false); return; }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthLoading(false);
       if (session) {
         setUser(session.user);
         setIsLoggedIn(true);
@@ -297,6 +300,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         isLoggedIn,
+        authLoading,
         user,
         username: displayUsername,
         dbProfile,
