@@ -226,17 +226,17 @@ export default function HomePage() {
                   : "Kenya's loudest fan room for live scores, WC26 predictions and real match receipts."}
               </p>
 
-              {/* Feature pills */}
+              {/* Feature pills — clickable */}
               <div className="mb-5 flex flex-wrap gap-2">
                 {[
-                  { icon: "⚽", label: "Live Scores", color: "text-white/80 border-white/20 bg-white/8" },
-                  { icon: "🏆", label: "WC26 Calls", color: "text-[#FFD700] border-[#FFD700]/25 bg-[#FFD700]/8" },
-                  { icon: "🤖", label: "AI Analyst", color: "text-green-400 border-green-400/25 bg-green-400/8" },
-                  { icon: "🔥", label: "Leaderboard", color: "text-orange-400 border-orange-400/25 bg-orange-400/8" },
+                  { icon: "⚽", label: "Live Scores",  href: "/matches",         color: "text-white/80 border-white/20 bg-white/8 hover:bg-white/14" },
+                  { icon: "🏆", label: "WC26 Calls",   href: "/world-cup-2026",  color: "text-[#FFD700] border-[#FFD700]/25 bg-[#FFD700]/8 hover:bg-[#FFD700]/16" },
+                  { icon: "🤖", label: "AI Analyst",   href: "/mchambuzi-halisi",color: "text-green-400 border-green-400/25 bg-green-400/8 hover:bg-green-400/16" },
+                  { icon: "🔥", label: "Leaderboard",  href: "/leaderboard",     color: "text-orange-400 border-orange-400/25 bg-orange-400/8 hover:bg-orange-400/16" },
                 ].map(f => (
-                  <span key={f.label} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${f.color}`}>
+                  <Link key={f.label} href={f.href} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide transition-colors active:scale-95 ${f.color}`}>
                     {f.icon} {f.label}
-                  </span>
+                  </Link>
                 ))}
               </div>
 
@@ -343,6 +343,67 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ─────────────────── LATEST ARTICLES SCROLLER ──────────────────────── */}
+      {news.filter(a => a.isInternal).length > 0 && (
+        <section className="relative border-b border-white/6 bg-[#050709] py-4 overflow-hidden">
+          {/* Right fade */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#050709] to-transparent" />
+          {/* Left fade */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#050709] to-transparent" />
+
+          <div className="mx-auto max-w-6xl px-4">
+            {/* Label */}
+            <div className="mb-3 flex items-center gap-3">
+              <span className="h-3 w-1 rounded-full bg-[#B30000]" />
+              <span className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">Latest from BallMtaani</span>
+            </div>
+
+            {/* Scrollable strip */}
+            <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {news.filter(a => a.isInternal).slice(0, 5).map((article, i) => (
+                <Link
+                  key={article.id}
+                  href={`/article/${article.slug}`}
+                  className="group relative flex w-[260px] shrink-0 snap-start overflow-hidden rounded-xl border border-white/8 bg-[#0c111a] transition-all duration-200 hover:-translate-y-0.5 hover:border-white/18 sm:w-[300px]"
+                >
+                  {/* Thumbnail */}
+                  <div className="relative h-full w-24 shrink-0 overflow-hidden sm:w-28">
+                    <img
+                      src={article.thumbnail}
+                      alt={article.title}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onError={e => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"; }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c111a]/60" />
+                    {/* Article index badge */}
+                    <div className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#B30000] text-[9px] font-black text-white">
+                      {i + 1}
+                    </div>
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex min-w-0 flex-1 flex-col justify-between p-3">
+                    <div>
+                      {article.isWC26 && (
+                        <span className="mb-1 inline-block rounded bg-[#FFD700]/15 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-[#FFD700]">WC26</span>
+                      )}
+                      <p className="line-clamp-3 text-[12px] font-black leading-snug text-white group-hover:text-white/90">
+                        {article.title}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-white/30">{article.source}</span>
+                      <span className="text-[9px] text-white/20">{timeAgo(article.pubDate)}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─────────────────────── LIVE + TODAY'S MATCHES ───────────────────────── */}
       {(liveMatches.length > 0 || todayUpcoming.length > 0) && (
