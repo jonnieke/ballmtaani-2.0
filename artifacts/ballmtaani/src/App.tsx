@@ -41,6 +41,12 @@ const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
 const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
 const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
 const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
+const ArticlePage        = lazy(() => import("./pages/ArticlePage"));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
+const AdminArticlesPage  = lazy(() => import("./pages/AdminArticlesPage"));
+const AdminAdsPage       = lazy(() => import("./pages/AdminAdsPage"));
+const AdminPartnersPage  = lazy(() => import("./pages/AdminPartnersPage"));
+const AdminRolesPage     = lazy(() => import("./pages/AdminRolesPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
@@ -133,6 +139,12 @@ function AppShell() {
             <Route path="/privacy" component={PrivacyPage} />
             <Route path="/privacy/" component={PrivacyPage} />
             <Route path="/privacy-policy" component={PrivacyPage} />
+            <Route path="/article/:slug" component={ArticlePage} />
+            <Route path="/admin" component={AdminDashboardPage} />
+            <Route path="/admin/articles" component={AdminArticlesPage} />
+            <Route path="/admin/ads" component={AdminAdsPage} />
+            <Route path="/admin/partners" component={AdminPartnersPage} />
+            <Route path="/admin/roles" component={AdminRolesPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>

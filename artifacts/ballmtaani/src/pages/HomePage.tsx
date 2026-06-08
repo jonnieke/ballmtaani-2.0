@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar, ExternalLink } from "lucide-react";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useLeaderboard } from "../hooks/useData";
 import { fetchTodaysFixtures, type LiveMatch } from "../lib/football-api";
-import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
+import { fetchFootballNews, fetchPartnerArticles, timeAgo, type NewsArticle } from "../lib/news-api";
 import { supabase } from "../lib/supabase";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
@@ -66,7 +66,10 @@ function CountBox({ v, l }: { v: number; l: string }) {
 }
 
 function NewsCard({ article, featured }: { article: NewsArticle; featured?: boolean }) {
-  const share = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${article.title}\n\n${article.link}\n\nShared from BallMtaani`)}`, "_blank");
+  const shareUrl = article.isInternal ? `${window.location.origin}/article/${article.slug}` : article.link;
+  const share = () => window.open(`https://wa.me/?text=${encodeURIComponent(`${article.title}\n\n${shareUrl}\n\nShared from BallMtaani`)}`, "_blank");
+  const isPartner = article.isInternal;
+
   return (
     <div className={`group flex flex-col overflow-hidden rounded-xl border transition-all duration-200 hover:-translate-y-0.5 ${featured ? "border-[#FFD700]/20 bg-[#0a0900]" : "border-white/6 bg-[#0d1018]"}`}>
       <div className="relative h-36 overflow-hidden">
@@ -75,18 +78,26 @@ function NewsCard({ article, featured }: { article: NewsArticle; featured?: bool
           onError={(e) => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"; }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         {featured && <div className="absolute inset-0 bg-[#FFD700]/5" />}
-        <div className="absolute bottom-2 left-2">
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
           <span className="rounded bg-black/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-white/60 backdrop-blur-sm">{article.source}</span>
+          {isPartner && <span className="rounded bg-[#B30000]/80 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-white backdrop-blur-sm">Partner</span>}
         </div>
       </div>
       <div className="flex flex-1 flex-col p-3">
         <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/28">{timeAgo(article.pubDate)}</p>
         <h3 className="mb-3 flex-1 text-[13px] font-black leading-snug text-white line-clamp-2">{article.title}</h3>
         <div className="flex gap-1.5">
-          <a href={article.link} target="_blank" rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/38 transition-all hover:bg-white/10 hover:text-white">
-            <ExternalLink className="h-3 w-3" /> Read
-          </a>
+          {isPartner ? (
+            <Link href={`/article/${article.slug}`}
+              className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#B30000]/15 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#ff6b6b] transition-all hover:bg-[#B30000]/25 hover:text-white">
+              Read
+            </Link>
+          ) : (
+            <a href={article.link} target="_blank" rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/38 transition-all hover:bg-white/10 hover:text-white">
+              <ExternalLink className="h-3 w-3" /> Read
+            </a>
+          )}
           <button onClick={share} className="rounded-lg bg-[#25D366]/10 px-2.5 py-1.5 text-xs text-[#25D366] transition-all hover:bg-[#25D366]/20" title="Share to WhatsApp">WA</button>
         </div>
       </div>
@@ -114,9 +125,13 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchTodaysFixtures().then(setTodaysFixtures);
-    fetchFootballNews().then(articles => {
-      const wc = articles.filter(a => isWC26(a.title));
-      const rest = articles.filter(a => !isWC26(a.title));
+    Promise.all([fetchPartnerArticles(), fetchFootballNews()]).then(([partner, rss]) => {
+      // Partner articles first; RSS fills remaining slots up to 9 total
+      const partnerIds = new Set(partner.map(a => a.id));
+      const rssGap = rss.filter(a => !partnerIds.has(a.id));
+      const combined = [...partner, ...rssGap];
+      const wc = combined.filter(a => a.isWC26 || isWC26(a.title));
+      const rest = combined.filter(a => !a.isWC26 && !isWC26(a.title));
       setNews([...wc, ...rest]);
     }).finally(() => setNewsLoading(false));
   }, []);

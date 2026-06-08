@@ -2,7 +2,9 @@
  * Football News Feed
  * Uses RSS XML through a lightweight CORS proxy.
  * Falls back to curated mock headlines when API unavailable.
+ * Partner articles from Supabase are fetched separately and surfaced first.
  */
+import { supabase } from "./supabase";
 
 export interface NewsArticle {
   id: string;
@@ -15,6 +17,8 @@ export interface NewsArticle {
   thumbnail: string;
   imageQuality: "feed" | "team-fallback" | "competition-fallback" | "generic-fallback";
   description?: string;
+  isInternal?: boolean;
+  isWC26?: boolean;
 }
 
 const RSS_FEEDS = [
@@ -488,4 +492,33 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
   }
 
   return result;
+}
+
+export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from("articles")
+      .select("id, slug, title, excerpt, thumbnail_url, author_name, partner_team_name, is_wc26, published_at")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(9);
+    if (error || !data) return [];
+    return data.map((a: any) => ({
+      id: a.id,
+      slug: a.slug,
+      title: a.title,
+      link: `/article/${a.slug}`,
+      pubDate: a.published_at,
+      source: a.partner_team_name || "BallMtaani",
+      sourceLogo: "PARTNER",
+      thumbnail: a.thumbnail_url || DEFAULT_NEWS_IMAGE,
+      imageQuality: "feed" as const,
+      description: a.excerpt || "",
+      isInternal: true,
+      isWC26: !!a.is_wc26,
+    }));
+  } catch {
+    return [];
+  }
 }

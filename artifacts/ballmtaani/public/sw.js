@@ -70,7 +70,7 @@ self.addEventListener('fetch', (event) => {
 
   // For everything else (manifest, logo, etc.) — cache-first
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request))
+    caches.match(request).then((cached) => cached || fetch(request)).catch(() => new Response('', { status: 503 }))
   );
 });
 

@@ -200,3 +200,71 @@ values (
   840,
   'active'
 ) on conflict do nothing;
+
+-- ─────────────────────────── PARTNER ARTICLES SYSTEM ─────────────────────────
+
+-- Partner teams approved to publish articles on BallMtaani
+create table if not exists partner_teams (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  slug text not null unique,
+  logo_url text,
+  description text,
+  contact_email text,
+  approved boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+-- Articles written by partner teams (internal — keeps users on-platform)
+create table if not exists articles (
+  id uuid primary key default uuid_generate_v4(),
+  slug text not null unique,
+  title text not null,
+  content text not null,
+  excerpt text,
+  thumbnail_url text,
+  author_id uuid references auth.users(id) on delete set null,
+  author_name text not null,
+  partner_team_id uuid references partner_teams(id) on delete set null,
+  partner_team_name text,
+  tags text[] default '{}',
+  is_wc26 boolean default false,
+  status text default 'draft',
+  published_at timestamp with time zone,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+alter table articles enable row level security;
+create policy "Published articles are public" on articles
+  for select using (status = 'published');
+create policy "Authors manage own articles" on articles
+  for all using (auth.uid() = author_id);
+
+alter table partner_teams enable row level security;
+create policy "Partner teams are public" on partner_teams
+  for select using (true);
+
+-- Direct sponsor ad campaigns (override AdSense when active)
+create table if not exists ad_campaigns (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  advertiser text,
+  image_url text,
+  destination_url text not null,
+  cta_text text default 'Learn More',
+  label text default 'Sponsor',
+  placement text not null default 'horizontal',
+  status text default 'active',
+  priority integer default 0,
+  starts_at timestamp with time zone default now(),
+  ends_at timestamp with time zone,
+  impressions integer default 0,
+  clicks integer default 0,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+alter table ad_campaigns enable row level security;
+create policy "Active ad campaigns are public" on ad_campaigns
+  for select using (status = 'active');

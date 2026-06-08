@@ -1,6 +1,55 @@
 import { Link } from "wouter";
 import { Megaphone, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { supabase } from "../lib/supabase";
+
+interface DirectAd {
+  id: string;
+  name: string;
+  advertiser: string | null;
+  image_url: string | null;
+  destination_url: string;
+  cta_text: string;
+  label: string;
+}
+
+async function fetchDirectAd(placement: "horizontal" | "square"): Promise<DirectAd | null> {
+  if (!supabase) return null;
+  const now = new Date().toISOString();
+  const { data } = await supabase
+    .from("ad_campaigns")
+    .select("id, name, advertiser, image_url, destination_url, cta_text, label")
+    .eq("status", "active")
+    .or(`placement.eq.${placement},placement.eq.both`)
+    .or(`ends_at.is.null,ends_at.gt.${now}`)
+    .lte("starts_at", now)
+    .order("priority", { ascending: false })
+    .limit(1)
+    .single();
+  return (data as DirectAd) || null;
+}
+
+async function trackImpression(id: string) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.rpc("increment_ad_impressions", { ad_id: id });
+    if (error) throw error;
+  } catch {
+    const { data } = await supabase.from("ad_campaigns").select("impressions").eq("id", id).single();
+    if (data) supabase.from("ad_campaigns").update({ impressions: (data.impressions || 0) + 1 }).eq("id", id);
+  }
+}
+
+async function trackClick(id: string) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase.rpc("increment_ad_clicks", { ad_id: id });
+    if (error) throw error;
+  } catch {
+    const { data } = await supabase.from("ad_campaigns").select("clicks").eq("id", id).single();
+    if (data) supabase.from("ad_campaigns").update({ clicks: (data.clicks || 0) + 1 }).eq("id", id);
+  }
+}
 
 interface AdBannerProps {
   label?: string;
@@ -89,7 +138,48 @@ function AdSenseUnit({
 export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBannerProps) {
   const slot = type === "square" ? SQUARE_SLOT : HORIZONTAL_SLOT;
   const [noFill, setNoFill] = useState(false);
+  const [directAd, setDirectAd] = useState<DirectAd | null>(null);
+  const [directAdLoaded, setDirectAdLoaded] = useState(false);
   const showDevHint = import.meta.env.DEV;
+
+  useEffect(() => {
+    fetchDirectAd(type as "horizontal" | "square").then(ad => {
+      setDirectAd(ad);
+      setDirectAdLoaded(true);
+      if (ad) trackImpression(ad.id);
+    });
+  }, [type]);
+
+  // Show direct sponsor ad if one is active
+  if (directAdLoaded && directAd) {
+    return (
+      <aside className={`w-full overflow-hidden rounded-lg border border-white/10 bg-[#0F0F0F] ${type === "square" ? "" : ""}`} aria-label="Sponsored">
+        <a href={directAd.destination_url} target="_blank" rel="noopener noreferrer sponsored"
+          onClick={() => trackClick(directAd.id)}
+          className="flex items-center gap-3 p-3 transition-opacity hover:opacity-90 sm:p-4">
+          {directAd.image_url && (
+            <img src={directAd.image_url} alt={directAd.name}
+              className={`shrink-0 rounded object-cover ${type === "square" ? "h-24 w-full" : "h-12 w-20"}`} />
+          )}
+          {!directAd.image_url && (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-white/10 bg-black/40">
+              <Megaphone className="h-5 w-5 text-gray-500" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="mb-0.5 flex items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">Sponsored · {directAd.label}</span>
+            </div>
+            <p className="truncate text-sm font-bold text-white">{directAd.name}</p>
+            {directAd.advertiser && <p className="text-[10px] text-white/30">{directAd.advertiser}</p>}
+          </div>
+          <span className="shrink-0 rounded border border-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/50 transition-colors hover:text-white">
+            {directAd.cta_text}
+          </span>
+        </a>
+      </aside>
+    );
+  }
 
   if (slot && noFill) return null;
   if (!slot && !showDevHint) return null;
