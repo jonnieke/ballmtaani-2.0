@@ -30,12 +30,13 @@ interface ArticleForm {
   content: string;
   excerpt: string;
   thumbnail_url: string;
+  author_name: string;
   partner_team_name: string;
   tags: string;
   is_wc26: boolean;
 }
 
-const EMPTY_FORM: ArticleForm = { title: "", content: "", excerpt: "", thumbnail_url: "", partner_team_name: "", tags: "", is_wc26: false };
+const EMPTY_FORM: ArticleForm = { title: "", content: "", excerpt: "", thumbnail_url: "", author_name: "BallMtaani", partner_team_name: "", tags: "", is_wc26: false };
 
 const STATUS_META: Record<ArticleStatus, { label: string; color: string }> = {
   draft:     { label: "Draft",     color: "text-white/35" },
@@ -87,7 +88,7 @@ export default function AdminArticlesPage() {
   function openEditor(article?: Article) {
     if (article) {
       setEditingId(article.id);
-      setForm({ title: article.title, content: "", excerpt: article.excerpt || "", thumbnail_url: article.thumbnail_url || "", partner_team_name: article.partner_team_name || "", tags: "", is_wc26: article.is_wc26 });
+      setForm({ title: article.title, content: "", excerpt: article.excerpt || "", thumbnail_url: article.thumbnail_url || "", author_name: article.author_name || "BallMtaani", partner_team_name: article.partner_team_name || "", tags: "", is_wc26: article.is_wc26 });
       if (supabase) supabase.from("articles").select("content, tags").eq("id", article.id).single().then(({ data }) => {
         if (data) setForm(f => ({ ...f, content: data.content, tags: (data.tags || []).join(", ") }));
       });
@@ -111,7 +112,7 @@ export default function AdminArticlesPage() {
       partner_team_name: form.partner_team_name.trim() || null,
       tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
       is_wc26: form.is_wc26,
-      author_name: username || user.email || "Anonymous",
+      author_name: form.author_name.trim() || "BallMtaani",
       author_id: user.id,
       status: targetStatus,
       published_at: targetStatus === "published" ? new Date().toISOString() : null,
@@ -192,7 +193,8 @@ export default function AdminArticlesPage() {
 
           <div className="space-y-4">
             <FormField label="Title *" value={form.title} onChange={v => setForm(f => ({ ...f, title: v }))} placeholder="Article headline..." bold />
-            <FormField label="Excerpt (shown on homepage card)" value={form.excerpt} onChange={v => setForm(f => ({ ...f, excerpt: v }))} placeholder="One-line summary..." />
+            <FormField label="Author / Byline" value={form.author_name} onChange={v => setForm(f => ({ ...f, author_name: v }))} placeholder="BallMtaani" />
+            <FormField label="Excerpt — shown on homepage card and as article standfirst" value={form.excerpt} onChange={v => setForm(f => ({ ...f, excerpt: v }))} placeholder="One compelling sentence about the article..." />
             <FormField label="Thumbnail URL" value={form.thumbnail_url} onChange={v => setForm(f => ({ ...f, thumbnail_url: v }))} placeholder="https://..." />
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Team / Publication" value={form.partner_team_name} onChange={v => setForm(f => ({ ...f, partner_team_name: v }))} placeholder="e.g. KPL Digest" />
@@ -205,7 +207,7 @@ export default function AdminArticlesPage() {
             <div>
               <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-white/40">Article Content * (HTML supported)</label>
               <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-                placeholder="Write your article here. HTML tags like <p>, <h2>, <strong>, <blockquote> are supported..."
+                placeholder="Write your article here. Separate paragraphs with a blank line. For formatting: use **bold**, or HTML tags like <h2>, <blockquote>, <strong>. Images: <img src='url' />."
                 rows={18} className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 font-mono text-sm text-white/80 placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
             </div>
 
