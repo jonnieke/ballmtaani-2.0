@@ -232,8 +232,8 @@ export default function WorldCup2026Page() {
 
       {/* ── CINEMATIC HERO ── */}
       <section className="relative overflow-hidden border-b border-[#FFD700]/15">
-        <img src="/wc26-hero.jpg" alt="" decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-50" />
+        <img src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg" alt="" decoding="async" loading="eager"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_10%,rgba(5,7,11,0.7)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#05070b] via-[#05070b]/20 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700] to-transparent" />

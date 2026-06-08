@@ -824,12 +824,12 @@ function WC26HeroBanner() {
 
   return (
     <section className="relative mb-4 overflow-hidden rounded-2xl border border-[#FFD700]/18">
-      {/* ── Gemini Imagen 3 generated hero ── */}
+      {/* ── Hero image ── */}
       <div className="absolute inset-0">
         <img
-          src="/wc26-hero.jpg"
+          src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg"
           alt=""
-          loading="lazy"
+          loading="eager"
           decoding="async"
           className="h-full w-full object-cover object-center"
         />
@@ -1121,14 +1121,11 @@ export default function LandingPage() {
 
       <div className="fixed inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=60&fm=webp"
-          srcSet="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=640&q=50&fm=webp 640w, https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=60&fm=webp 1200w, https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=70&fm=webp 1920w"
-          sizes="100vw"
+          src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg"
           alt=""
-          loading="lazy"
+          loading="eager"
           decoding="async"
-          fetchPriority="low"
-          className={`h-full w-full object-cover transition-opacity duration-1000 ${live.length > 0 ? "opacity-40" : "opacity-28"}`}
+          className={`h-full w-full object-cover object-center transition-opacity duration-1000 ${live.length > 0 ? "opacity-45" : "opacity-30"}`}
         />
         <div className={`absolute inset-0 transition-all duration-1000 ${live.length > 0 ? "bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.65),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.48),#05070b_46%,#05070b)]" : "bg-[radial-gradient(circle_at_78%_10%,rgba(239,35,48,0.5),transparent_22%),radial-gradient(circle_at_18%_15%,rgba(30,111,255,0.3),transparent_24%),linear-gradient(180deg,rgba(5,7,11,0.56),#05070b_46%,#05070b)]"}`} />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:56px_56px] opacity-35" />

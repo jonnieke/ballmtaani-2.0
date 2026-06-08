@@ -166,17 +166,36 @@ export default function AfricanFootballWidget({ compact = false }: Props) {
   // ── Full /matches version ────────────────────────────────────────
   return (
     <div className="rounded-3xl border border-white/10 bg-[#0b1119]/88 overflow-hidden">
-      {/* Header + tabs */}
-      <div className="border-b border-white/8 px-4 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div>
-            <h2 className="text-xl font-bold uppercase text-white">Local Heroes</h2>
-            <p className="text-xs text-white/44">African football for Kenyan fans</p>
+      {/* Hero image banner */}
+      <div className="relative h-36 overflow-hidden">
+        <img
+          src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/African_fans_celebration_stadium.jpeg"
+          alt="African football fans"
+          className="w-full h-full object-cover object-center"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1119] via-[#0b1119]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0b1119]/60 to-transparent" />
+        <div className="absolute bottom-4 left-4">
+          <p className="text-[9px] font-black uppercase tracking-[0.35em] text-orange-400/80 mb-0.5">WC26 · Africa</p>
+          <h2 className="text-xl font-black uppercase text-white leading-none drop-shadow-lg">Local Heroes</h2>
+        </div>
+        {totalVotes > 0 && (
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full border border-orange-400/25 bg-black/60 backdrop-blur-sm px-3 py-1.5">
+            <Star className="h-3 w-3 text-orange-400" />
+            <span className="text-[10px] font-bold text-orange-300">{topAfricaPick} favoured</span>
           </div>
+        )}
+      </div>
+
+      {/* Header + tabs */}
+      <div className="border-b border-white/8 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <p className="text-xs text-white/44">African football for Kenyan fans</p>
           {totalVotes > 0 && (
-            <div className="flex items-center gap-2 rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-2">
-              <Star className="h-3.5 w-3.5 text-orange-400" />
-              <span className="text-xs font-bold text-orange-300">
+            <div className="flex items-center gap-2 rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1.5">
+              <Star className="h-3 w-3 text-orange-400" />
+              <span className="text-[10px] font-bold text-orange-300">
                 {totalVotes} fans backing Africa's deepest run
               </span>
             </div>

@@ -72,7 +72,7 @@ function NewsCard({ article, featured }: { article: NewsArticle; featured?: bool
       <div className="relative h-36 overflow-hidden">
         <img src={article.thumbnail} alt={article.title} loading="lazy" decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=50&fm=webp"; }} />
+          onError={(e) => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"; }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         {featured && <div className="absolute inset-0 bg-[#FFD700]/5" />}
         <div className="absolute bottom-2 left-2">
@@ -167,8 +167,8 @@ export default function HomePage() {
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-white/8 bg-[#040508]">
         {/* AI-generated hero — Vertex AI Imagen 3, World Cup energy */}
-        <img src="/wc26-hero.jpg" alt="" decoding="async"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-55" />
+        <img src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg" alt="" decoding="async" loading="eager"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-60" />
         {/* Cinematic grade overlays */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(4,5,8,0.65)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-[#040508]/30 to-transparent" />

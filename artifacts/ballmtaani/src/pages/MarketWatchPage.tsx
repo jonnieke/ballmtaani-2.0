@@ -191,7 +191,13 @@ export default function MarketWatchPage() {
 
       {/* Background */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(239,35,48,0.35),transparent_28%),radial-gradient(circle_at_14%_70%,rgba(42,130,255,0.18),transparent_30%),linear-gradient(180deg,rgba(7,10,15,0.55),#070a0f_72%)]" />
+        <img
+          src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/African_fans_celebration_stadium.jpeg"
+          alt=""
+          className="h-full w-full object-cover object-center opacity-18"
+          loading="eager"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(239,35,48,0.25),transparent_28%),radial-gradient(circle_at_14%_70%,rgba(42,130,255,0.15),transparent_30%),linear-gradient(180deg,rgba(7,10,15,0.7),#070a0f_80%)]" />
       </div>
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">

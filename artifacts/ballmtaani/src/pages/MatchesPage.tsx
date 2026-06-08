@@ -327,15 +327,10 @@ export default function MatchesPage() {
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0">
           <img
-            src="/wc26-hero.jpg"
+            src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"
             alt=""
-            className="h-full w-full object-cover opacity-35"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (target.dataset.fallbackApplied === "true") return;
-              target.dataset.fallbackApplied = "true";
-              target.src = "/stadium.png";
-            }}
+            className="h-full w-full object-cover object-center opacity-45"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,rgba(239,35,48,0.48),transparent_24%),linear-gradient(180deg,rgba(7,10,15,0.35),#070a0f_82%)]" />
         </div>
