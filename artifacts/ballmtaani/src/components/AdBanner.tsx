@@ -25,7 +25,7 @@ async function fetchDirectAd(placement: "horizontal" | "square"): Promise<Direct
     .lte("starts_at", now)
     .order("priority", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
   return (data as DirectAd) || null;
 }
 

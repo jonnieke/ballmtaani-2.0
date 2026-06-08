@@ -34,7 +34,7 @@ export default function ArticlePage() {
       .select("*")
       .eq("slug", slug)
       .eq("status", "published")
-      .single()
+      .maybeSingle()
       .then(({ data, error }) => {
         if (error || !data) setNotFound(true);
         else setArticle(data as Article);
