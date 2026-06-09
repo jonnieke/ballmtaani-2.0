@@ -167,7 +167,9 @@ export default function AdminArticlesPage() {
   // ── EDITOR ────────────────────────────────────────────────────────────────
   if (view === "editor") {
     const editingArticle = articles.find(a => a.id === editingId);
-    const isDraft = !editingId || editingArticle?.status === "draft" || editingArticle?.status === "rejected";
+    const currentStatus = editingArticle?.status;
+    const isDraft = !editingId || currentStatus === "draft" || currentStatus === "rejected";
+    const isLive = currentStatus === "published" || currentStatus === "approved";
     const canSubmit = role.canWrite && isDraft;
     const canPublishDirect = role.canPublish;
 
@@ -212,21 +214,31 @@ export default function AdminArticlesPage() {
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">
-              <button onClick={() => saveArticle("draft")} disabled={saving}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white/60 hover:bg-white/10 disabled:opacity-40">
-                <Save className="h-3.5 w-3.5" /> Save Draft
-              </button>
-              {canSubmit && (
-                <button onClick={() => saveArticle("submitted")} disabled={saving}
-                  className="flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-blue-400 hover:bg-blue-500/20 disabled:opacity-40">
-                  <Send className="h-3.5 w-3.5" /> Submit for Review
-                </button>
-              )}
-              {canPublishDirect && (
-                <button onClick={() => saveArticle("published")} disabled={saving}
+              {/* Editing a live article — Save Changes keeps it published/approved */}
+              {isLive && editingId ? (
+                <button onClick={() => saveArticle(currentStatus!)} disabled={saving}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B30000] px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-[#cc0000] disabled:opacity-40">
-                  <Globe className="h-3.5 w-3.5" /> {saving ? "Publishing..." : "Publish Now"}
+                  <Save className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save Changes"}
                 </button>
+              ) : (
+                <>
+                  <button onClick={() => saveArticle("draft")} disabled={saving}
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white/60 hover:bg-white/10 disabled:opacity-40">
+                    <Save className="h-3.5 w-3.5" /> Save Draft
+                  </button>
+                  {canSubmit && (
+                    <button onClick={() => saveArticle("submitted")} disabled={saving}
+                      className="flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-blue-400 hover:bg-blue-500/20 disabled:opacity-40">
+                      <Send className="h-3.5 w-3.5" /> Submit for Review
+                    </button>
+                  )}
+                  {canPublishDirect && (
+                    <button onClick={() => saveArticle("published")} disabled={saving}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B30000] px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-[#cc0000] disabled:opacity-40">
+                      <Globe className="h-3.5 w-3.5" /> {saving ? "Publishing…" : "Publish Now"}
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -296,7 +308,8 @@ export default function AdminArticlesPage() {
             {shownArticles.map(article => {
               const sm = STATUS_META[article.status];
               const isOwn = article.author_id === user?.id;
-              const isEditableByMe = isOwn && (article.status === "draft" || article.status === "rejected");
+              // Editors/publishers/admins can edit any article; writers only own drafts/rejected
+              const isEditableByMe = role.canEdit || (isOwn && (article.status === "draft" || article.status === "rejected"));
               const isRejectOpen = rejectingId === article.id;
 
               return (
