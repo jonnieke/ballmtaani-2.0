@@ -3,12 +3,14 @@ import { useAuth } from "../context/AuthContext";
 import { useDebates } from "../hooks/useData";
 import { useLocation } from "wouter";
 import { supabase } from "../lib/supabase";
-import { MessageSquarePlus, Check, Loader2, ShieldAlert, Share2, Facebook, Twitter, MessageCircle } from "lucide-react";
+import { MessageSquarePlus, Check, Loader2, ShieldAlert, Share2, Facebook, Twitter, MessageCircle, Shield } from "lucide-react";
 import AdBanner from "../components/AdBanner";
 import { SkeletonDebate } from "../components/Skeletons";
 import { UserBadge } from "../components/UserBadge";
 import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
+import DebateModerationUI from "../components/DebateModerationUI";
+import DebateModerationDashboard from "../components/DebateModerationDashboard";
 
 export default function DebatesPage() {
   const { isLoggedIn, awardCoins } = useAuth();
@@ -30,6 +32,11 @@ export default function DebatesPage() {
   const [raidPrompt, setRaidPrompt] = useState<string | null>(null);
   const [showShareLinks, setShowShareLinks] = useState<string | null>(null);
   const [copiedDebateId, setCopiedDebateId] = useState<string | null>(null);
+
+  // Moderation state
+  const [showModerationDash, setShowModerationDash] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user && (user as any)?.user_metadata?.role === "admin";
 
   const visibleDebates = useMemo(() => {
     const searched = debates.filter((d: any) => {
@@ -172,11 +179,33 @@ export default function DebatesPage() {
         description="Vote on football debates, bring backup from your group chat, and keep receipts with Kenyan fans."
       />
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white mb-2">
-          FAN <span className="text-accent">DEBATE</span> ZONE
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white">
+            FAN <span className="text-accent">DEBATE</span> ZONE
+          </h1>
+          {isAdmin && (
+            <button
+              onClick={() => setShowModerationDash(!showModerationDash)}
+              className="flex items-center gap-1.5 rounded-lg bg-[#FFD700]/15 border border-[#FFD700]/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:bg-[#FFD700]/25 transition-colors"
+            >
+              <Shield className="h-4 w-4" />
+              Mod
+            </button>
+          )}
+        </div>
         <p className="text-gray-400 font-bold uppercase tracking-wider">Vote. Argue. Settle It.</p>
       </div>
+
+      {/* Moderation Dashboard */}
+      {showModerationDash && isAdmin && (
+        <div className="max-w-6xl mx-auto mb-12 rounded-2xl border border-[#FFD700]/20 bg-[#0B0B0B]/50 p-6">
+          <h2 className="text-2xl font-black uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+            <Shield className="h-6 w-6 text-[#FFD700]" />
+            Debate Moderation
+          </h2>
+          <DebateModerationDashboard />
+        </div>
+      )}
 
       <div className="mb-8 border border-white/10 bg-[#111] p-4">
         <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
@@ -377,9 +406,16 @@ export default function DebatesPage() {
                     )}
                   </button>
                 </div>
-                
-                <div className="mt-6 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                  {totalVotesRaw} Total Votes
+
+                {/* Moderation UI */}
+                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                  <DebateModerationUI
+                    debateId={debate.id}
+                    onFlagSuccess={() => refetch()}
+                  />
+                  <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                    {totalVotesRaw} Total Votes
+                  </div>
                 </div>
 
                 {/* Group-chat backup UI */}
