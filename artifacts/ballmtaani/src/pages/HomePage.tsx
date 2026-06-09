@@ -17,6 +17,7 @@ import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import { motion } from "framer-motion";
 import AfricanFootballWidget from "../components/AfricanFootballWidget";
+import HeroTicker from "../components/HeroTicker";
 
 const WC26_START = new Date("2026-06-11T17:00:00Z");
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
@@ -177,6 +178,12 @@ export default function HomePage() {
         keywords={["BallMtaani","Kenyan football","World Cup 2026","live football scores","UCL final","WC26 Kenya","football predictions"]}
         path="/home"
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "Home", url: "/home" }]}
+      />
+
+      {/* ──────────────────────── HERO TICKER BELT ───────────────────────── */}
+      <HeroTicker
+        articles={news.slice(0, 8)}
+        matches={[...liveMatches, ...upcomingFixtures].slice(0, 8)}
       />
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
