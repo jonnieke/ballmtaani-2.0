@@ -11,8 +11,39 @@ export default function LiveLeaderboard() {
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
     const load = async () => {
-      const { data } = await supabase.from("prediction_stats").select("user_id, display_name, correct_count").order("correct_count", { ascending: false }).limit(5);
-      setLeaders((data || []).map((d: any) => ({ id: d.user_id, display_name: d.display_name || "Fan", correct_this_week: d.correct_count || 0 })));
+      // Query predictions grouped by user to count correct predictions this week
+      const { data } = await supabase
+        .from("predictions")
+        .select("user_id, result")
+        .eq("result", "correct")
+        .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      if (data) {
+        // Count correct predictions per user
+        const counts: Record<string, number> = {};
+        (data as any[]).forEach(p => {
+          counts[p.user_id] = (counts[p.user_id] || 0) + 1;
+        });
+
+        // Get top 5 users with display names
+        const userIds = Object.entries(counts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .map(([uid]) => uid);
+
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, username, display_name")
+            .in("id", userIds);
+
+          setLeaders((profiles || []).map((p: any) => ({
+            id: p.id,
+            display_name: p.display_name || p.username || "Fan",
+            correct_this_week: counts[p.id] || 0
+          })));
+        }
+      }
       setLoading(false);
     };
     load();
