@@ -3,9 +3,11 @@ import { useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useFanZones, useBanter, useProfile } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
-import { Users, ArrowLeft, MessageSquare, Heart, Send, Flame } from "lucide-react";
+import { Users, ArrowLeft, MessageSquare, Heart, Send, Flame, Plus, BarChart3 } from "lucide-react";
 import AdBanner from "../components/AdBanner";
 import { SkeletonBanter } from "../components/Skeletons";
+import FanZonePolls from "../components/FanZonePolls";
+import PollCreationModal from "../components/PollCreationModal";
 
 export default function FanZonesPage() {
   const { isLoggedIn, user, username, awardCoins } = useAuth();
@@ -18,6 +20,9 @@ export default function FanZonesPage() {
   const [localHeatOnly, setLocalHeatOnly] = useState(false);
   const [zoneSearch, setZoneSearch] = useState("");
   const [trendingVelocity, setTrendingVelocity] = useState<Record<string, number>>({});
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [pollsRefresh, setPollsRefresh] = useState(0);
+  const [showPolls, setShowPolls] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const { data: zones = [] } = useFanZones();
@@ -155,6 +160,38 @@ export default function FanZonesPage() {
             </div>
           </div>
 
+          {/* Polls Section Toggle */}
+          <div className="border-b border-white/10 bg-[#0B0B0B] px-4 md:px-6 py-2">
+            <button
+              onClick={() => setShowPolls(!showPolls)}
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#FFD700] hover:text-[#FFA500] transition-colors py-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {showPolls ? "Hide" : "Show"} Zone Polls
+            </button>
+          </div>
+
+          {/* Polls Display */}
+          {showPolls && (
+            <div className="border-b border-white/10 bg-[#0A0A0A] px-4 md:px-6 py-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-black uppercase tracking-widest text-white/50">
+                  Active Polls
+                </span>
+                {user && interactions >= 50 && (
+                  <button
+                    onClick={() => setShowPollModal(true)}
+                    className="flex items-center gap-1.5 rounded-lg bg-[#FFD700]/15 border border-[#FFD700]/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:bg-[#FFD700]/25 transition-colors"
+                  >
+                    <Plus className="h-3 w-3" />
+                    New Poll
+                  </button>
+                )}
+              </div>
+              <FanZonePolls key={pollsRefresh} fanZoneId={activeZone} />
+            </div>
+          )}
+
           {/* Chat Feed */}
           <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col-reverse gap-4 bg-[#0B0B0B]">
             <div ref={chatEndRef} />
@@ -228,6 +265,16 @@ export default function FanZonesPage() {
             </div>
           </div>
         </div>
+
+        <PollCreationModal
+          fanZoneId={activeZone}
+          isOpen={showPollModal}
+          onClose={() => setShowPollModal(false)}
+          onPollCreated={() => {
+            setPollsRefresh((prev) => prev + 1);
+            setShowPolls(true);
+          }}
+        />
       </div>
     );
   }
