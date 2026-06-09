@@ -29,8 +29,9 @@ export function useMatches() {
         return [];
       }
     },
-    refetchInterval: 30000, // Refresh every 30s for live scores
-    staleTime: 15000,       // Consider data stale after 15s
+    refetchInterval: 60000,        // Reduced: refresh every 60s (was 30s)
+    staleTime: 45000,              // Consider stale after 45s
+    refetchOnWindowFocus: false,   // Don't burst on tab focus
   });
 }
 
@@ -48,7 +49,8 @@ export function useUpcomingFixtures() {
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000,    // 15 min — upcoming fixtures rarely change
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -66,7 +68,8 @@ export function useRecentMatches() {
         return [];
       }
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes (past results don't change often)
+    staleTime: 15 * 60 * 1000,    // 15 min — past results don't change
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -88,7 +91,8 @@ export function useStandings() {
 
       return {};
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes — standings don't change mid-match
+    staleTime: 30 * 60 * 1000,    // 30 min — standings change once a day max
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -111,8 +115,9 @@ export function useFixtureDetail(fixtureId: string | undefined) {
       return { stats, events, lineups };
     },
     enabled: !!fixtureId,
-    staleTime: 30000, // Refresh every 30s
-    refetchInterval: 30000,
+    staleTime: 60000,              // 60s — only refetch if stale
+    refetchInterval: 60000,        // 60s interval (was 30s)
+    refetchOnWindowFocus: false,
   });
 }
 
