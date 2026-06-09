@@ -12,7 +12,7 @@
     { "source": "/:path*", "destination": "https://ballmtaani.com/:path*", "has": [{ "type": "host", "value": "www.ballmtaani.com" }], "permanent": true }
   ],
   "routes": [
-    { "src": "/sitemap.xml", "dest": "/api/sitemap" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
