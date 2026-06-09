@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useProfile } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 
-import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2, Activity, UserPlus, Check } from "lucide-react";
+import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2, Activity, UserPlus, Check, Coins, Package, Swords } from "lucide-react";
 import { UserBadge } from "../components/UserBadge";
 import { getUserTier } from "../lib/tiers";
 import { useRoute, useLocation, Link } from "wouter";
@@ -15,12 +15,14 @@ export default function ProfilePage() {
   const [match, params] = useRoute("/profile/:id");
   const [, setLocation] = useLocation();
   const profileId = params?.id;
-  const { isLoggedIn, user, username, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<"calls" | "debates" | "badges">("calls");
+  const { isLoggedIn, user, username, logout, coins } = useAuth();
+  const [activeTab, setActiveTab] = useState<"calls" | "debates" | "badges" | "duels" | "rewards">("calls");
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [challengeSent, setChallengeSent] = useState(false);
   const [predStats, setPredStats] = useState<{ total: number; correct: number } | null>(null);
+  const [duels, setDuels] = useState<any[]>([]);
+  const [redemptions, setRedemptions] = useState<any[]>([]);
 
   const targetId = profileId || user?.id;
   const isOwnProfile = !profileId || profileId === user?.id;
@@ -38,17 +40,22 @@ export default function ProfilePage() {
   // Fetch real prediction stats for this profile
   useEffect(() => {
     if (!targetId || !supabase) return;
-    supabase
-      .from("predictions")
-      .select("result")
-      .eq("user_id", targetId)
+    supabase.from("predictions").select("result").eq("user_id", targetId)
       .then(({ data }) => {
         if (!data) return;
         const correct = data.filter((p) => p.result === "correct" || p.result === "partial").length;
         setPredStats({ total: data.length, correct });
-      })
-      .catch(() => {});
+      });
   }, [targetId]);
+
+  // Fetch duels and redemptions for own profile
+  useEffect(() => {
+    if (!isOwnProfile || !user || !supabase) return;
+    supabase.from("fan_duels").select("*").or(`challenger_name.eq.${username},defender_name.eq.${username}`).order("created_at", { ascending: false }).limit(20)
+      .then(({ data }) => { setDuels(data || []); });
+    supabase.from("reward_redemptions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20)
+      .then(({ data }) => { setRedemptions(data || []); });
+  }, [isOwnProfile, user, username]);
 
   if (!isLoggedIn && !profileId) {
     return null; // or a loader
@@ -156,28 +163,32 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-white/5">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-8 pt-8 border-t border-white/5">
+          {isOwnProfile && (
+            <Link href="/store" className="group text-center rounded-xl border border-[#FFD700]/20 bg-[#FFD700]/6 p-3 transition-all hover:bg-[#FFD700]/12">
+              <span className="block text-2xl font-black text-[#FFD700]">{coins.toLocaleString()}</span>
+              <span className="text-[9px] text-[#FFD700]/60 uppercase font-bold tracking-widest">MTC Balance</span>
+            </Link>
+          )}
           <div className="text-center">
-            <span className="block text-3xl font-black text-[#FFD700]">{points}</span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Points</span>
-          </div>
-          <div className="text-center">
-            <span className="block text-3xl font-black text-white">
+            <span className="block text-2xl font-black text-white">
               {predStats ? predStats.total : <span className="text-gray-600">--</span>}
             </span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Calls</span>
+            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Calls</span>
           </div>
           <div className="text-center">
-            <span className="block text-3xl font-black text-green-500">
+            <span className="block text-2xl font-black text-green-500">
               {predStats ? predStats.correct : <span className="text-gray-600">--</span>}
             </span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Correct</span>
+            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Correct</span>
           </div>
           <div className="text-center">
-            <span className="block text-3xl font-black text-primary flex items-center justify-center gap-1">
-              {streak} <Flame className="w-5 h-5" />
-            </span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Current Streak</span>
+            <span className="block text-2xl font-black text-primary">{streak}</span>
+            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Streak 🔥</span>
+          </div>
+          <div className="text-center">
+            <span className="block text-2xl font-black text-[#FFD700]">{points}</span>
+            <span className="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Points</span>
           </div>
         </div>
       </div>
@@ -198,10 +209,12 @@ export default function ProfilePage() {
       {/* Tabs */}
       <div className="flex border-b border-white/10 mb-6 overflow-x-auto hide-scrollbar">
         {[
-          { id: "calls", label: "Receipts" },
-          { id: "debates", label: "My Debates" },
-          { id: "badges", label: "Badges" }
-        ].map(tab => (
+          { id: "calls",   label: "Receipts" },
+          { id: "debates", label: "Debates" },
+          { id: "duels",   label: "Duels",   own: true },
+          { id: "rewards", label: "Rewards",  own: true },
+          { id: "badges",  label: "Badges" },
+        ].filter(t => !t.own || isOwnProfile).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
@@ -278,6 +291,68 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+        {activeTab === "duels" && (
+          <div className="space-y-3">
+            {duels.length === 0 ? (
+              <div className="rounded-xl border border-white/5 bg-[#111] p-8 text-center">
+                <Swords className="mx-auto mb-3 h-8 w-8 text-white/15" />
+                <p className="text-xs font-bold uppercase tracking-widest text-white/30">No duels yet</p>
+                <Link href="/rivalries" className="mt-3 inline-block rounded-xl bg-[#B30000] px-5 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-[#cc0000]">
+                  Issue a Challenge
+                </Link>
+              </div>
+            ) : duels.map((d: any) => (
+              <div key={d.id} className="flex items-center justify-between rounded-xl border border-white/8 bg-[#111] px-4 py-3">
+                <div>
+                  <p className="text-sm font-black text-white">{d.challenger_name} <span className="text-white/25">vs</span> {d.defender_name}</p>
+                  <p className="text-[10px] text-white/35">{d.home_team} vs {d.away_team} · {d.prediction}</p>
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-[8px] font-black uppercase ${
+                  d.status === "completed" ? "bg-[#FFD700]/15 text-[#FFD700]" :
+                  d.status === "active"    ? "bg-[#B30000]/15 text-[#B30000]" :
+                  "bg-white/8 text-white/30"}`}>
+                  {d.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "rewards" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-black uppercase tracking-widest text-white/50">Your Redemptions</p>
+              <Link href="/store" className="rounded-full border border-[#FFD700]/20 bg-[#FFD700]/8 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 hover:bg-[#FFD700]/15">
+                Redeem More →
+              </Link>
+            </div>
+            {redemptions.length === 0 ? (
+              <div className="rounded-xl border border-white/5 bg-[#111] p-8 text-center">
+                <Package className="mx-auto mb-3 h-8 w-8 text-white/15" />
+                <p className="text-xs font-bold uppercase tracking-widest text-white/30">No redemptions yet</p>
+                <Link href="/store" className="mt-3 inline-block rounded-xl bg-[#FFD700] px-5 py-2 text-xs font-black uppercase tracking-widest text-black">
+                  Browse Rewards
+                </Link>
+              </div>
+            ) : redemptions.map((r: any) => (
+              <div key={r.id} className="flex items-center justify-between rounded-xl border border-white/8 bg-[#111] px-4 py-3">
+                <div>
+                  <p className="text-sm font-black text-white">{r.item_name}</p>
+                  <p className="text-[10px] text-white/35">{r.cost_mtc.toLocaleString()} MTC · {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
+                  {r.admin_note && <p className="mt-0.5 text-[10px] text-blue-400/60">{r.admin_note}</p>}
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-[8px] font-black uppercase ${
+                  r.status === "fulfilled"  ? "bg-green-500/15 text-green-400" :
+                  r.status === "processing" ? "bg-blue-500/15 text-blue-400" :
+                  r.status === "cancelled"  ? "bg-white/8 text-white/25" :
+                  "bg-yellow-500/15 text-yellow-400"}`}>
+                  {r.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
       {/* Invite Friends */}
       {isOwnProfile && (

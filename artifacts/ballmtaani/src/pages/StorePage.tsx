@@ -127,6 +127,7 @@ export default function StorePage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[#0B0B0B] text-white pb-20">
       <div className="relative bg-[#111] border-b border-white/5 overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700]/10 blur-[100px] pointer-events-none rounded-full" />
@@ -454,5 +455,6 @@ export default function StorePage() {
         </div>
       </div>
     )}
+    </>
   );
 }

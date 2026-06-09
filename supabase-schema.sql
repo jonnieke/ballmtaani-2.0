@@ -288,6 +288,38 @@ create table if not exists reward_redemptions (
 );
 
 alter table reward_redemptions enable row level security;
+
+-- ─────────────────────── ARTICLE ENGAGEMENT ──────────────────────────────
+
+create table if not exists article_comments (
+  id uuid primary key default uuid_generate_v4(),
+  article_id uuid references articles(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete set null,
+  author_name text not null,
+  content text not null,
+  parent_id uuid references article_comments(id) on delete cascade,
+  likes integer default 0,
+  created_at timestamp with time zone default now()
+);
+alter table article_comments enable row level security;
+create policy "Comments are public" on article_comments for select using (true);
+create policy "Authenticated users can comment" on article_comments
+  for insert with check (auth.uid() = user_id);
+create policy "Authors delete own comments" on article_comments
+  for delete using (auth.uid() = user_id);
+
+create table if not exists article_reactions (
+  id uuid primary key default uuid_generate_v4(),
+  article_id uuid references articles(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  type text default 'like',
+  created_at timestamp with time zone default now(),
+  unique(article_id, user_id, type)
+);
+alter table article_reactions enable row level security;
+create policy "Reactions are public" on article_reactions for select using (true);
+create policy "Authenticated users react" on article_reactions
+  for all using (auth.uid() = user_id);
 create policy "Users see own redemptions" on reward_redemptions
   for select using (auth.uid() = user_id);
 create policy "Users create own redemptions" on reward_redemptions

@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { timeAgo } from "../lib/news-api";
-import { ArrowLeft, Share2, MessageSquare } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import SEO from "../components/SEO";
+import ArticleEngagement from "../components/ArticleEngagement";
 
 interface Article {
   id: string;
@@ -253,8 +254,11 @@ export default function ArticlePage() {
             </div>
           )}
 
+          {/* ── Likes + Comments + Share ── */}
+          <ArticleEngagement articleId={article.id} articleTitle={article.title} />
+
           {/* CTA */}
-          <div className="rounded-2xl border border-white/8 bg-[#0d1018] p-6 text-center">
+          <div className="mt-8 rounded-2xl border border-white/8 bg-[#0d1018] p-6 text-center">
             <div className="mb-1 text-xl">⚽</div>
             <p className="mb-1 text-sm font-black uppercase tracking-widest text-white">Keep the receipt.</p>
             <p className="mb-5 text-xs text-white/40">Predict, debate, and score points on BallMtaani</p>
@@ -263,7 +267,7 @@ export default function ArticlePage() {
                 Make a Call
               </Link>
               <Link href="/debates" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white/60 transition-all hover:bg-white/10">
-                <MessageSquare className="h-3.5 w-3.5" /> Join Debate
+                Join Debate
               </Link>
             </div>
           </div>
