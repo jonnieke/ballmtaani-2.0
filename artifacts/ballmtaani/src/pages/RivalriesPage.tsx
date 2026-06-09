@@ -1,393 +1,478 @@
-import { useEffect, useState } from "react";
-import { GrudgeMatchFeed, type RivalryItem } from "../components/GrudgeMatchFeed";
-import { Swords, Trophy, Activity, History, MessageCircle, TrendingUp, PlayCircle, ShieldCheck, ScrollText } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Swords, Trophy, Zap, Activity, ScrollText, Plus, X, CheckCircle2, Clock, Share2, Users, Flame } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import AdBanner from "../components/AdBanner";
+import SEO from "../components/SEO";
 
-export default function RivalriesPage() {
-  const { username, isLoggedIn } = useAuth();
-  const [activeTab, setActiveTab] = useState<"active" | "global" | "history">("active");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "active" | "completed">("all");
-  const [duelTarget, setDuelTarget] = useState("");
-  const [duelMatch, setDuelMatch] = useState("");
-  const [duelCall, setDuelCall] = useState("");
-  const [duelSent, setDuelSent] = useState(false);
-  const [createdDuels, setCreatedDuels] = useState<RivalryItem[]>([]);
-  const [settleTargetId, setSettleTargetId] = useState<string | number | null>(null);
-  const [settleWinner, setSettleWinner] = useState<"challenger" | "defender">("challenger");
-  const [settleScore, setSettleScore] = useState("2-1");
-  const [duelStats, setDuelStats] = useState<{ total: number; completed: number } | null>(null);
+/* ─── Types ───────────────────────────────────────────────────────────────── */
+type DuelStatus = "pending" | "active" | "completed";
 
-  useEffect(() => {
-    if (!supabase) return;
-    let mounted = true;
+interface Duel {
+  id: string;
+  challenger_name: string;
+  defender_name: string;
+  home_team: string;
+  away_team: string;
+  prediction: string;
+  status: DuelStatus;
+  winner_name?: string | null;
+  brag_line?: string;
+  created_at: string;
+}
 
-    const mapRowToRivalry = (row: any): RivalryItem => ({
-      id: row.id,
-      challenger: { name: row.challenger_name || "Fan A", interactions: 0 },
-      defender: { name: row.defender_name || "Fan B", interactions: 0 },
-      match: {
-        home: row.home_team || "Home",
-        away: row.away_team || "Away",
-        homeLogo: row.home_logo || "https://media.api-sports.io/football/teams/42.png",
-        awayLogo: row.away_logo || "https://media.api-sports.io/football/teams/49.png",
-        time: row.status === "completed" ? "Final Result" : row.status === "active" ? "Duel Live" : "Pending Response",
-      },
-      bragLine: row.brag_line || "Direct challenge",
-      status: (row.status || "pending") as RivalryItem["status"],
-      prediction: row.prediction || "",
-      winner: row.winner_name || undefined,
-    });
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
+function initials(name: string) { return name.slice(0, 2).toUpperCase(); }
+function ago(iso: string) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
 
-    const loadInitial = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("fan_duels")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(30);
-        if (error || !data || !mounted) return;
-        setCreatedDuels(data.map(mapRowToRivalry));
-      } catch (err) {
-        // fan_duels table may not exist yet — show empty state
-        return;
-      }
-    };
+/* ─── DuelCard ────────────────────────────────────────────────────────────── */
+function DuelCard({ duel, currentUser, onAccept, onSettle }: {
+  duel: Duel;
+  currentUser: string;
+  onAccept: (id: string) => void;
+  onSettle: (duel: Duel) => void;
+}) {
+  const isChallenger = duel.challenger_name === currentUser;
+  const isDefender   = duel.defender_name   === currentUser;
+  const isMyDuel     = isChallenger || isDefender;
+  const share = () => window.open(`https://wa.me/?text=${encodeURIComponent(`⚔️ Fan Duel on BallMtaani!\n${duel.challenger_name} vs ${duel.defender_name}\n${duel.home_team} vs ${duel.away_team}\nMy call: ${duel.prediction}\nhttps://ballmtaani.com/rivalries`)}`, "_blank");
 
-    loadInitial();
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border bg-[#0a0d14] transition-all duration-200
+      ${duel.status === "active" ? "border-[#B30000]/40 shadow-[0_0_24px_rgba(179,0,0,0.12)]" :
+        duel.status === "completed" ? "border-[#FFD700]/20" :
+        "border-white/8"}`}>
 
-    // Fetch real duel counts for the stats panel
-    supabase.from("fan_duels").select("status").then(({ data, error }) => {
-      if (error || !data || !mounted) return;
-      setDuelStats({
-        total: data.length,
-        completed: data.filter((d: any) => d.status === "completed").length,
-      });
-    }).catch(() => {
-      // fan_duels table may not exist yet
-      return;
-    });
+      {/* Active pulse bar */}
+      {duel.status === "active" && (
+        <div className="absolute inset-x-0 top-0 h-[2px] animate-pulse bg-gradient-to-r from-[#B30000] via-orange-500 to-[#B30000]" />
+      )}
 
-    let channel: any = null;
-    try {
-      channel = supabase
-        .channel("fan-duels-live")
-        .on("postgres_changes", { event: "*", schema: "public", table: "fan_duels" }, (payload: any) => {
-          const row = (payload.new || payload.old) as any;
-          if (!row?.id) return;
-          const mapped = mapRowToRivalry(row);
-          setCreatedDuels((prev) => {
-            const without = prev.filter((d) => String(d.id) !== String(mapped.id));
-            if (payload.eventType === "DELETE") return without;
-            return [mapped, ...without];
-          });
-        })
-        .subscribe();
-    } catch (err) {
-      // fan_duels table may not exist yet
-    }
+      {/* Status chip */}
+      <div className="flex items-center justify-between border-b border-white/6 px-4 py-2.5">
+        <span className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em]
+          ${duel.status === "active" ? "text-[#B30000]" :
+            duel.status === "completed" ? "text-[#FFD700]" : "text-white/30"}`}>
+          {duel.status === "active"    ? <><span className="h-1.5 w-1.5 animate-ping rounded-full bg-[#B30000]" /> Duel Live</> :
+           duel.status === "completed" ? <><Trophy className="h-3 w-3" /> Settled</> :
+           <><Clock className="h-3 w-3" /> Awaiting Response</>}
+        </span>
+        <span className="text-[9px] text-white/20">{ago(duel.created_at)}</span>
+      </div>
 
-    return () => {
-      mounted = false;
-      if (channel) supabase.removeChannel(channel);
-    };
-  }, []);
+      {/* Fighters */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-5">
+        {/* Challenger */}
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-blue-500/50 bg-blue-500/10 text-lg font-black text-white shadow-[0_0_16px_rgba(59,130,246,0.2)]">
+            {initials(duel.challenger_name)}
+          </div>
+          <p className="max-w-[80px] truncate text-[11px] font-black text-white">{duel.challenger_name}</p>
+          <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-blue-400">Challenger</span>
+        </div>
 
-  const sendDuel = async () => {
-    if (!duelTarget || !duelMatch || !duelCall) return;
-    const [homeRaw, awayRaw] = duelMatch.split(/vs|VS|v/);
-    const home = (homeRaw || "Home").trim();
-    const away = (awayRaw || "Away").trim();
+        {/* VS */}
+        <div className="flex flex-col items-center gap-1">
+          <div className={`rounded-full p-2.5 ${duel.status === "active" ? "bg-[#B30000] shadow-[0_0_12px_rgba(179,0,0,0.4)]" : "bg-white/6"}`}>
+            <Swords className={`h-5 w-5 ${duel.status === "active" ? "text-white" : "text-white/30"}`} />
+          </div>
+          <span className="text-[9px] font-black text-[#B30000]">VS</span>
+        </div>
 
-    const localId = `local-${Date.now()}`;
-    const newDuel: RivalryItem = {
-      id: localId,
-      challenger: { name: username || "You", interactions: 0 },
-      defender: { name: duelTarget.trim(), interactions: 0 },
-      match: {
-        home,
-        away,
-        homeLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(home.slice(0, 2))}&background=1B1B1B&color=fff&size=64&bold=true`,
-        awayLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(away.slice(0, 2))}&background=1B1B1B&color=fff&size=64&bold=true`,
-        time: "Pending Response",
-      },
-      bragLine: "Direct challenge",
-      status: "pending",
-      prediction: duelCall.trim(),
-    };
-    setCreatedDuels((prev) => [newDuel, ...prev]);
+        {/* Defender */}
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <div className={`flex h-14 w-14 items-center justify-center rounded-full border-2 bg-[#B30000]/10 text-lg font-black text-white
+            ${duel.status === "pending" ? "border-white/10 opacity-50 grayscale" : "border-[#B30000]/50 shadow-[0_0_16px_rgba(179,0,0,0.2)]"}`}>
+            {initials(duel.defender_name)}
+          </div>
+          <p className="max-w-[80px] truncate text-[11px] font-black text-white">{duel.defender_name}</p>
+          <span className="rounded-full bg-[#B30000]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-[#B30000]/70">Defender</span>
+        </div>
+      </div>
 
-    if (supabase && isLoggedIn) {
-      try {
-        const { data } = await supabase.from("fan_duels").insert({
-          challenger_name: newDuel.challenger.name,
-          defender_name: newDuel.defender.name,
-          home_team: newDuel.match.home,
-          away_team: newDuel.match.away,
-          home_logo: newDuel.match.homeLogo.startsWith("https://ui-avatars") ? null : newDuel.match.homeLogo,
-          away_logo: newDuel.match.awayLogo.startsWith("https://ui-avatars") ? null : newDuel.match.awayLogo,
-          prediction: newDuel.prediction,
-          status: "pending",
-          brag_line: newDuel.bragLine,
-        }).select("*").single();
+      {/* Match + prediction */}
+      <div className="mx-4 mb-4 rounded-xl border border-white/6 bg-black/40 px-4 py-3">
+        <p className="mb-1 text-center text-[9px] font-black uppercase tracking-widest text-white/25">The Match</p>
+        <p className="text-center text-sm font-black text-white">{duel.home_team} <span className="text-white/25">vs</span> {duel.away_team}</p>
+        {duel.prediction && (
+          <p className="mt-1 text-center text-[10px] font-bold text-[#FFD700]/60">
+            Call: <span className="text-[#FFD700]">{duel.prediction}</span>
+          </p>
+        )}
+        {duel.status === "completed" && duel.winner_name && (
+          <div className="mt-2 flex items-center justify-center gap-1.5 rounded-lg bg-[#FFD700]/8 py-1.5">
+            <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
+            <span className="text-[10px] font-black text-[#FFD700]">Winner: {duel.winner_name}</span>
+          </div>
+        )}
+      </div>
 
-        if (data?.id) {
-          setCreatedDuels((prev) =>
-            prev.map((d) => (String(d.id) === localId ? { ...d, id: data.id } : d))
-          );
-        }
-      } catch (err) {
-        // fan_duels table may not exist yet — duel stays in local state
-      }
-    }
+      {/* Actions */}
+      <div className="flex gap-2 px-4 pb-4">
+        {duel.status === "pending" && isDefender && (
+          <button onClick={() => onAccept(duel.id)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-blue-500 active:scale-95">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Accept Duel
+          </button>
+        )}
+        {duel.status === "active" && isMyDuel && (
+          <button onClick={() => onSettle(duel)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B30000] py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-[#cc0000] active:scale-95">
+            <Trophy className="h-3.5 w-3.5" /> Settle Receipt
+          </button>
+        )}
+        {duel.status === "completed" && (
+          <div className="flex-1 rounded-xl border border-[#FFD700]/20 bg-[#FFD700]/5 py-2.5 text-center text-[10px] font-black uppercase tracking-widest text-[#FFD700]/60">
+            Receipt Kept ✓
+          </div>
+        )}
+        <button onClick={share}
+          className="rounded-xl border border-white/8 bg-white/4 px-3 py-2.5 text-white/30 transition-all hover:bg-white/10 hover:text-white">
+          <Share2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
-    setDuelSent(true);
-    setTimeout(() => setDuelSent(false), 2500);
-    setDuelTarget("");
-    setDuelMatch("");
-    setDuelCall("");
-  };
+/* ─── CreateDuelModal ─────────────────────────────────────────────────────── */
+function CreateDuelModal({ username, onClose, onCreate }: {
+  username: string;
+  onClose: () => void;
+  onCreate: (d: Omit<Duel, "id" | "created_at">) => void;
+}) {
+  const [defender, setDefender] = useState("");
+  const [home, setHome] = useState("");
+  const [away, setAway] = useState("");
+  const [prediction, setPrediction] = useState("");
+  const [brag, setBrag] = useState("");
+  const valid = defender.trim() && home.trim() && away.trim() && prediction.trim();
 
-  const acceptDuel = async (id?: string | number) => {
-    if (!id) return;
-    setCreatedDuels((prev) =>
-      prev.map((d) => (String(d.id) === String(id) ? { ...d, status: "active", match: { ...d.match, time: "Duel Live" } } : d))
-    );
-    if (supabase && !String(id).startsWith("local-")) {
-      try {
-        await supabase.from("fan_duels").update({ status: "active" }).eq("id", id);
-      } catch (err) {
-        // fan_duels table may not exist yet
-      }
-    }
-  };
-
-  const settleDuel = async (id?: string | number, winnerOverride?: string, scoreOverride?: string) => {
-    if (!id) return;
-    const duel = createdDuels.find((d) => String(d.id) === String(id));
-    const winnerName = winnerOverride || username || "You";
-    const finalScore = scoreOverride || duel?.prediction || "2-1";
-    setCreatedDuels((prev) =>
-      prev.map((d) =>
-        String(d.id) === String(id)
-          ? { ...d, status: "completed", winner: winnerName, prediction: finalScore, match: { ...d.match, time: "Final Result" } }
-          : d
-      )
-    );
-    if (supabase && !String(id).startsWith("local-")) {
-      try {
-        await supabase.from("fan_duels").update({ status: "completed", winner_name: winnerName, prediction: finalScore }).eq("id", id);
-      } catch (err) {
-        // fan_duels table may not exist yet
-      }
-    }
-  };
-
-  const openSettle = (id?: string | number) => {
-    if (!id) return;
-    setSettleTargetId(id);
-    setSettleWinner("challenger");
-    setSettleScore("2-1");
-  };
-
-  const confirmSettle = async () => {
-    if (!settleTargetId) return;
-    const duel = createdDuels.find((d) => String(d.id) === String(settleTargetId));
-    const winnerName =
-      settleWinner === "challenger"
-        ? duel?.challenger.name || username || "You"
-        : duel?.defender.name || "Opponent";
-    await settleDuel(settleTargetId, winnerName, settleScore);
-    setSettleTargetId(null);
+  const submit = () => {
+    if (!valid) return;
+    onCreate({ challenger_name: username || "You", defender_name: defender.trim(), home_team: home.trim(), away_team: away.trim(), prediction: prediction.trim(), brag_line: brag.trim() || "Direct Challenge", status: "pending", winner_name: null });
+    onClose();
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 md:px-4 py-6 md:py-10">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-5 md:gap-8 mb-8 md:mb-10 bg-[#1B1B1B] rounded-xl md:rounded-2xl border border-white/10 p-4 md:p-7 shadow-2xl relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-accent/10 pointer-events-none" />
-
-        <div className="relative z-10 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-            <Swords className="w-8 h-8 text-primary drop-shadow-[0_0_10px_rgba(179,0,0,0.5)]" />
-            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white">
-              FAN <span className="text-[#FFD700]">DUELS</span>
-            </h1>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center"
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-md overflow-hidden rounded-t-2xl border border-white/10 bg-[#0d1018] sm:rounded-2xl">
+        <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <Swords className="h-4 w-4 text-[#B30000]" />
+            <h2 className="text-sm font-black uppercase tracking-widest text-white">Issue a Duel</h2>
           </div>
-          <p className="text-gray-400 font-bold uppercase tracking-wider text-[11px] md:text-xs">Call the score. Keep the receipt.</p>
+          <button onClick={onClose} className="text-white/30 hover:text-white"><X className="h-4 w-4" /></button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 md:gap-4 relative z-10 w-full md:w-auto">
-          <div className="bg-black/60 border border-white/10 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
-            <span className="block text-lg md:text-2xl font-black text-white">
-              {duelStats ? duelStats.total : "--"}
-            </span>
-            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Total Duels</span>
+        <div className="space-y-3 p-5">
+          <div>
+            <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Challenge Who?</label>
+            <input value={defender} onChange={e => setDefender(e.target.value)}
+              placeholder="Fan username e.g. Wanjiku_KE"
+              className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#B30000]/50 focus:outline-none" />
           </div>
-          <div className="bg-black/60 border border-[#FFD700]/30 rounded-lg md:rounded-xl p-3 md:p-4 text-center shadow-[0_0_20px_rgba(255,215,0,0.1)]">
-            <span className="block text-lg md:text-2xl font-black text-[#FFD700]">
-              {duelStats ? duelStats.completed : "--"}
-            </span>
-            <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Settled</span>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Home Team</label>
+              <input value={home} onChange={e => setHome(e.target.value)} placeholder="Arsenal"
+                className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#B30000]/50 focus:outline-none" />
+            </div>
+            <div>
+              <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Away Team</label>
+              <input value={away} onChange={e => setAway(e.target.value)} placeholder="Chelsea"
+                className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#B30000]/50 focus:outline-none" />
+            </div>
           </div>
-          <div className="bg-black/60 border border-accent/30 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
-            <span className="block text-lg md:text-2xl font-black text-accent">
-              {duelStats ? duelStats.total - duelStats.completed : "--"}
-            </span>
-            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Live / Pending</span>
+
+          <div>
+            <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Your Score Call *</label>
+            <input value={prediction} onChange={e => setPrediction(e.target.value)} placeholder="e.g. Arsenal 2-1"
+              className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm font-bold text-white placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Brag Line (optional)</label>
+            <input value={brag} onChange={e => setBrag(e.target.value)} placeholder="e.g. I'll never let you forget this"
+              className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-white/20 focus:outline-none" />
           </div>
         </div>
-      </div>
 
-      <div className="mb-6 md:mb-8">
-        <AdBanner label="Rivalry Sponsor" type="horizontal" />
-      </div>
-
-      <div className="mb-8 border border-white/10 bg-[#111] p-4 md:p-5">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <h2 className="text-sm md:text-base font-black uppercase tracking-widest text-white">Create Duel</h2>
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Fast Challenge</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input
-            value={duelTarget}
-            onChange={(e) => setDuelTarget(e.target.value)}
-            placeholder="Fan username"
-            className="bg-black border border-white/10 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary"
-          />
-          <input
-            value={duelMatch}
-            onChange={(e) => setDuelMatch(e.target.value)}
-            placeholder="Match (e.g. Arsenal vs Chelsea)"
-            className="bg-black border border-white/10 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary"
-          />
-          <input
-            value={duelCall}
-            onChange={(e) => setDuelCall(e.target.value)}
-            placeholder="Your score call (e.g. 2-1)"
-            className="bg-black border border-white/10 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary"
-          />
-          <button
-            onClick={sendDuel}
-            className="border border-primary bg-primary/20 text-white px-3 py-2 text-xs font-black uppercase tracking-widest hover:bg-primary/30 transition-colors"
-          >
-            Send Duel
+        <div className="flex gap-2 border-t border-white/6 p-4">
+          <button onClick={onClose} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white/40 hover:text-white">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={!valid}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B30000] py-2.5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-[#cc0000] disabled:opacity-35 active:scale-95">
+            <Swords className="h-3.5 w-3.5" /> Send Challenge
           </button>
         </div>
-        {duelSent && (
-          <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-accent">
-            Duel sent. Waiting for acceptance.
-          </p>
-        )}
       </div>
+    </div>
+  );
+}
 
-      <div className="mb-6 md:mb-8 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <button className="border border-primary/30 bg-primary/10 p-4 text-left hover:bg-primary/20 transition-colors">
-          <div className="flex items-center gap-2 mb-1"><PlayCircle className="w-4 h-4 text-primary" /><p className="text-xs font-black uppercase tracking-widest text-white">Start Here</p></div>
-          <p className="text-[11px] font-bold text-gray-300">Accept pending duel or open one live rivalry room.</p>
-        </button>
-        <button className="border border-white/10 bg-[#111] p-4 text-left hover:bg-white/5 transition-colors">
-          <div className="flex items-center gap-2 mb-1"><ShieldCheck className="w-4 h-4 text-accent" /><p className="text-xs font-black uppercase tracking-widest text-white">How To Win</p></div>
-          <p className="text-[11px] font-bold text-gray-300">Make your call before kickoff, then keep the receipt.</p>
-        </button>
-        <button className="border border-white/10 bg-[#111] p-4 text-left hover:bg-white/5 transition-colors">
-          <div className="flex items-center gap-2 mb-1"><ScrollText className="w-4 h-4 text-[#FFD700]" /><p className="text-xs font-black uppercase tracking-widest text-white">Receipt Mode</p></div>
-          <p className="text-[11px] font-bold text-gray-300">Track past wins/losses and settle fan banter fast.</p>
-        </button>
+/* ─── SettleModal ─────────────────────────────────────────────────────────── */
+function SettleModal({ duel, onClose, onConfirm }: { duel: Duel; onClose: () => void; onConfirm: (winner: string, score: string) => void }) {
+  const [winner, setWinner] = useState<"challenger" | "defender">("challenger");
+  const [score, setScore] = useState(duel.prediction || "2-1");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1018] p-5">
+        <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-white">Keep the Receipt</h3>
+
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          {(["challenger", "defender"] as const).map(side => (
+            <button key={side} onClick={() => setWinner(side)}
+              className={`rounded-xl border py-3 text-xs font-black uppercase tracking-widest transition-all
+                ${winner === side ? "border-[#B30000] bg-[#B30000]/15 text-white" : "border-white/10 text-white/35 hover:text-white"}`}>
+              {side === "challenger" ? duel.challenger_name : duel.defender_name}
+              <span className="mt-0.5 block text-[8px] normal-case font-bold opacity-60">{side}</span>
+            </button>
+          ))}
+        </div>
+
+        <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Final Score</label>
+        <input value={score} onChange={e => setScore(e.target.value)}
+          className="mb-4 w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm font-bold text-white focus:border-[#FFD700]/40 focus:outline-none" />
+
+        <div className="flex gap-2">
+          <button onClick={onClose} className="rounded-xl border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-white/40 hover:text-white">Cancel</button>
+          <button onClick={() => onConfirm(winner === "challenger" ? duel.challenger_name : duel.defender_name, score)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#FFD700] py-2 text-xs font-black uppercase tracking-widest text-black hover:bg-yellow-300">
+            <Trophy className="h-3.5 w-3.5" /> Confirm Receipt
+          </button>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="flex items-center gap-2 mb-8 bg-black/40 p-2 rounded-2xl border border-white/5 w-fit max-w-full overflow-x-auto hide-scrollbar">
-        <button
-          onClick={() => setActiveTab("active")}
-          className={`px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "active" ? "bg-primary text-white shadow-lg" : "text-gray-500 hover:text-white"}`}
-        >
-          <Activity className="w-4 h-4" /> Play Now
-        </button>
-        <button
-          onClick={() => setActiveTab("global")}
-          className={`px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "global" ? "bg-accent text-white shadow-lg" : "text-gray-500 hover:text-white"}`}
-        >
-          <TrendingUp className="w-4 h-4" /> Discover
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "history" ? "bg-white/10 text-white shadow-lg" : "text-gray-500 hover:text-white"}`}
-        >
-          <History className="w-4 h-4" /> Receipts
-        </button>
-      </div>
+/* ─── Main Page ───────────────────────────────────────────────────────────── */
+export default function RivalriesPage() {
+  const { username, isLoggedIn } = useAuth();
+  const [duels, setDuels] = useState<Duel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"live" | "all" | "receipts">("live");
+  const [showCreate, setShowCreate] = useState(false);
+  const [settlingDuel, setSettlingDuel] = useState<Duel | null>(null);
+  const [stats, setStats] = useState({ total: 0, active: 0, settled: 0 });
 
-      <div className="min-h-[500px]">
-        {activeTab === "active" || activeTab === "global" ? (
-          <div className="space-y-8">
-            <div className="flex flex-wrap gap-2">
-              {(["all", "pending", "active", "completed"] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${
-                    statusFilter === status ? "bg-white/10 border-white/30 text-white" : "bg-[#111] border-white/10 text-gray-500 hover:text-white"
-                  }`}
-                >
-                  {status}
+  const loadDuels = useCallback(async () => {
+    if (!supabase) { setLoading(false); return; }
+    try {
+      const { data } = await supabase.from("fan_duels").select("*").order("created_at", { ascending: false }).limit(60);
+      if (data) {
+        setDuels(data as Duel[]);
+        setStats({ total: data.length, active: data.filter((d: any) => d.status === "active").length, settled: data.filter((d: any) => d.status === "completed").length });
+      }
+    } catch { /* table may not exist */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadDuels();
+    if (!supabase) return;
+    let ch: any;
+    try {
+      ch = supabase.channel("rivalries-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "fan_duels" }, () => loadDuels())
+        .subscribe();
+    } catch { /* ignore */ }
+    return () => { if (ch) supabase.removeChannel(ch); };
+  }, [loadDuels]);
+
+  const createDuel = async (payload: Omit<Duel, "id" | "created_at">) => {
+    const tempId = `temp-${Date.now()}`;
+    const temp: Duel = { ...payload, id: tempId, created_at: new Date().toISOString() };
+    setDuels(prev => [temp, ...prev]);
+    if (supabase && isLoggedIn) {
+      try {
+        const { data } = await supabase.from("fan_duels").insert({ challenger_name: payload.challenger_name, defender_name: payload.defender_name, home_team: payload.home_team, away_team: payload.away_team, prediction: payload.prediction, brag_line: payload.brag_line, status: "pending" }).select("*").single();
+        if (data) setDuels(prev => prev.map(d => d.id === tempId ? data as Duel : d));
+      } catch { /* local only */ }
+    }
+  };
+
+  const acceptDuel = async (id: string) => {
+    setDuels(prev => prev.map(d => d.id === id ? { ...d, status: "active" } : d));
+    if (supabase && !id.startsWith("temp-")) await supabase.from("fan_duels").update({ status: "active" }).eq("id", id).catch(() => {});
+  };
+
+  const settleDuel = async (winner: string, score: string) => {
+    if (!settlingDuel) return;
+    const id = settlingDuel.id;
+    setDuels(prev => prev.map(d => d.id === id ? { ...d, status: "completed", winner_name: winner, prediction: score } : d));
+    if (supabase && !id.startsWith("temp-")) await supabase.from("fan_duels").update({ status: "completed", winner_name: winner, prediction: score }).eq("id", id).catch(() => {});
+    setSettlingDuel(null);
+    loadDuels();
+  };
+
+  const filtered = duels.filter(d => {
+    if (tab === "live") return d.status === "pending" || d.status === "active";
+    if (tab === "receipts") return d.status === "completed";
+    return true;
+  });
+
+  return (
+    <>
+      <SEO title="Fan Duels | BallMtaani" description="Challenge rival fans to score predictions, settle receipts and keep the banter going." path="/rivalries" />
+
+      <div className="min-h-screen bg-[#070a0f] pb-24">
+
+        {/* ── ARENA HERO ──────────────────────────────────────────────── */}
+        <div className="relative overflow-hidden border-b border-white/6 bg-[#07080f]">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_0%,rgba(179,0,0,0.15),transparent)]" />
+          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#B30000]/60 to-transparent" />
+
+          <div className="relative mx-auto max-w-6xl px-4 py-10">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#B30000] shadow-[0_0_20px_rgba(179,0,0,0.4)]">
+                    <Swords className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black uppercase leading-none tracking-tight text-white">
+                      Fan <span className="text-[#B30000]">Duels</span>
+                    </h1>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">Call the score. Keep the receipt.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex gap-3">
+                {[
+                  { label: "Total Duels",   value: stats.total,   icon: Users,    color: "text-white" },
+                  { label: "Live Now",       value: stats.active,  icon: Flame,    color: "text-[#B30000]" },
+                  { label: "Receipts Kept", value: stats.settled, icon: Trophy,   color: "text-[#FFD700]" },
+                ].map(({ label, value, icon: Icon, color }) => (
+                  <div key={label} className="rounded-xl border border-white/8 bg-black/40 px-4 py-3 text-center">
+                    <Icon className={`mx-auto mb-1 h-3.5 w-3.5 ${color}`} />
+                    <p className={`text-lg font-black tabular-nums ${color}`}>{value}</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-white/25">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* How it works */}
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              {[
+                { n: "1", label: "Issue Challenge", sub: "Pick a rival fan, name the match, call the score", icon: Swords },
+                { n: "2", label: "They Accept", sub: "Rival confirms the duel — both predictions locked in", icon: CheckCircle2 },
+                { n: "3", label: "Keep Receipt", sub: "After the final whistle, settle it and keep the receipt", icon: ScrollText },
+              ].map(({ n, label, sub, icon: Icon }) => (
+                <div key={n} className="rounded-xl border border-white/6 bg-white/3 p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#B30000]/20 text-[9px] font-black text-[#B30000]">{n}</span>
+                    <Icon className="h-3.5 w-3.5 text-white/40" />
+                  </div>
+                  <p className="text-[11px] font-black text-white">{label}</p>
+                  <p className="mt-0.5 text-[9px] text-white/30">{sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-6xl px-4 pt-6">
+          <AdBanner label="Fan Duel Sponsor" type="horizontal" />
+        </div>
+
+        {/* ── TABS + CREATE ────────────────────────────────────────────── */}
+        <div className="mx-auto max-w-6xl px-4 pt-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex gap-1 rounded-xl border border-white/6 bg-[#0d1018] p-1">
+              {([
+                { key: "live",     label: "Live & Pending", icon: Activity },
+                { key: "all",      label: "All Duels",      icon: Swords },
+                { key: "receipts", label: "Receipt Book",   icon: ScrollText },
+              ] as const).map(({ key, label, icon: Icon }) => (
+                <button key={key} onClick={() => setTab(key)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all
+                    ${tab === key ? "bg-white/10 text-white" : "text-white/30 hover:text-white/60"}`}>
+                  <Icon className="h-3 w-3" /> <span className="hidden sm:inline">{label}</span>
+                  <span className="sm:hidden">{label.split(" ")[0]}</span>
                 </button>
               ))}
             </div>
-            {activeTab === "active" && (
-              <div className="bg-orange-950/20 border border-orange-500/20 rounded-2xl p-4 flex items-center gap-4 mb-6">
-                <MessageCircle className="w-6 h-6 text-orange-500" />
-                <p className="text-orange-200 text-sm font-bold">You have 1 pending duel from <span className="text-white">Wanjiku KE</span>. Reply before kickoff.</p>
+
+            {isLoggedIn && (
+              <button onClick={() => setShowCreate(true)}
+                className="flex items-center gap-2 rounded-xl bg-[#B30000] px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-[0_0_16px_rgba(179,0,0,0.3)] transition-all hover:bg-[#cc0000] hover:shadow-[0_0_24px_rgba(179,0,0,0.4)] active:scale-95">
+                <Plus className="h-3.5 w-3.5" /> New Duel
+              </button>
+            )}
+          </div>
+
+          {/* ── DUEL FEED ─────────────────────────────────────────────── */}
+          <div className="mt-5">
+            {loading ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[1,2,3].map(i => <div key={i} className="h-64 animate-pulse rounded-2xl bg-white/5" />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center gap-5 rounded-2xl border border-white/6 bg-[#0d1018] py-20 text-center">
+                {tab === "receipts" ? (
+                  <>
+                    <ScrollText className="h-10 w-10 text-white/10" />
+                    <div>
+                      <p className="font-black uppercase tracking-widest text-white/25">Receipt Book Empty</p>
+                      <p className="mt-1 text-xs text-white/15">Settled duels appear here. Win a duel to fill it.</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Swords className="h-10 w-10 text-white/10" />
+                    <div>
+                      <p className="font-black uppercase tracking-widest text-white/25">No Active Duels</p>
+                      <p className="mt-1 text-xs text-white/15">Be the first to issue a challenge.</p>
+                    </div>
+                    {isLoggedIn && (
+                      <button onClick={() => setShowCreate(true)}
+                        className="flex items-center gap-2 rounded-xl bg-[#B30000] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-[#cc0000]">
+                        <Plus className="h-3.5 w-3.5" /> Issue First Duel
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filtered.map(duel => (
+                  <DuelCard key={duel.id} duel={duel} currentUser={username}
+                    onAccept={acceptDuel} onSettle={setSettlingDuel} />
+                ))}
               </div>
             )}
-            <GrudgeMatchFeed
-              scope={activeTab === "active" ? "active" : "all"}
-              statusFilter={statusFilter}
-              extraRivalries={createdDuels}
-              onAcceptDuel={acceptDuel}
-              onSettleDuel={openSettle}
-            />
-            <AdBanner label="Duel Feed Partner" type="horizontal" />
           </div>
-        ) : (
-          <div className="bg-[#1B1B1B] rounded-2xl border border-white/5 p-12 text-center opacity-50 grayscale">
-            <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-black uppercase tracking-widest text-gray-500">Receipt Book Empty</h3>
-            <p className="text-sm text-gray-600 font-bold mt-2 uppercase">Completed fan duels will appear here.</p>
-          </div>
-        )}
+
+          {/* Bottom ad */}
+          {!loading && filtered.length > 0 && (
+            <div className="mt-8">
+              <AdBanner label="BallMtaani Fan Partner" type="horizontal" />
+            </div>
+          )}
+        </div>
       </div>
 
-      {settleTargetId && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="w-full max-w-md border border-white/10 bg-[#111] p-5">
-            <h3 className="text-sm font-black uppercase tracking-widest text-white mb-4">Settle Duel</h3>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={() => setSettleWinner("challenger")}
-                className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${settleWinner === "challenger" ? "bg-primary/20 border-primary text-white" : "bg-black border-white/10 text-gray-400"}`}
-              >
-                Challenger Wins
-              </button>
-              <button
-                onClick={() => setSettleWinner("defender")}
-                className={`px-3 py-2 text-[10px] font-black uppercase tracking-widest border ${settleWinner === "defender" ? "bg-primary/20 border-primary text-white" : "bg-black border-white/10 text-gray-400"}`}
-              >
-                Defender Wins
-              </button>
-            </div>
-            <input
-              value={settleScore}
-              onChange={(e) => setSettleScore(e.target.value)}
-              placeholder="Final score e.g. 2-1"
-              className="w-full bg-black border border-white/10 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary mb-4"
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setSettleTargetId(null)} className="flex-1 border border-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300">Cancel</button>
-              <button onClick={confirmSettle} className="flex-1 border border-primary bg-primary/20 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white">Confirm Receipt</button>
-            </div>
-          </div>
-        </div>
+      {showCreate && (
+        <CreateDuelModal username={username} onClose={() => setShowCreate(false)} onCreate={createDuel} />
       )}
-    </div>
+      {settlingDuel && (
+        <SettleModal duel={settlingDuel} onClose={() => setSettlingDuel(null)} onConfirm={settleDuel} />
+      )}
+    </>
   );
 }
