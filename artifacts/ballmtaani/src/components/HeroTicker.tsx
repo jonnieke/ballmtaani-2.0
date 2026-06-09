@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import type { NewsArticle } from "../lib/news-api";
 
@@ -54,117 +54,119 @@ function buildItems(articles: NewsArticle[], matches: TickerMatch[]): TickerItem
 }
 
 export default function HeroTicker({ articles, matches }: HeroTickerProps) {
-  const trackRef = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
 
-  // Use refs so the animation loop never needs to restart for pause/resume
-  const posRef   = useRef(0);
-  const pauseRef = useRef(false);
-  const rafRef   = useRef<number>(0);
-
-  // Stable items list — only recompute when data actually changes
-  const items = useMemo(() => buildItems(articles, matches), [articles, matches]);
-
-  // Single animation loop — only restarts when items change (data update)
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track || items.length === 0) return;
-
-    // Reset position when items list changes
-    posRef.current = 0;
-    track.style.transform = "translateX(0px)";
-
-    const step = () => {
-      if (!pauseRef.current) {
-        posRef.current -= 0.6;
-        // Read scrollWidth inside the loop so it's always current
-        const half = track.scrollWidth / 2;
-        if (half > 0 && posRef.current <= -half) {
-          posRef.current = 0;
-        }
-        track.style.transform = `translateX(${posRef.current}px)`;
-      }
-      rafRef.current = requestAnimationFrame(step);
-    };
-
-    rafRef.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [items]); // ← NO `paused` here — that's what caused the glitch
-
-  const pause   = () => { pauseRef.current = true; };
-  const unpause = () => { pauseRef.current = false; };
+  // Stable items — only rebuild when data actually changes
+  const items = useMemo(
+    () => buildItems(articles, matches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [articles.length, matches.length]
+  );
 
   if (items.length === 0) return null;
 
-  // Double the list for a seamless infinite loop
+  // Duplicate the list — CSS animates from 0 → -50% for a seamless loop
   const doubled = [...items, ...items];
 
+  // ~5 seconds per item so there's time to read each headline
+  const duration = Math.max(25, items.length * 5);
+
   return (
-    <div
-      className="relative z-20 overflow-hidden border-b border-white/6 bg-black/80 backdrop-blur-sm"
-      style={{ height: 36 }}
-      onMouseEnter={pause}
-      onMouseLeave={unpause}
-      onTouchStart={pause}
-      onTouchEnd={unpause}
-    >
-      {/* Left brand pin */}
-      <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center gap-2 border-r border-white/8 bg-[#B30000] px-3">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-        <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white whitespace-nowrap">BallMtaani</span>
-      </div>
+    <>
+      {/* Inject the keyframe once — no external CSS file needed */}
+      <style>{`
+        @keyframes hero-ticker {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+      `}</style>
 
-      {/* Right fade */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-black/90 to-transparent" />
-
-      {/* Track — paddingLeft keeps content clear of the brand pin */}
       <div
-        ref={trackRef}
-        className="flex h-full items-center will-change-transform whitespace-nowrap"
-        style={{ paddingLeft: 120 }}
+        className="relative z-20 overflow-hidden border-b border-white/6 bg-black/80 backdrop-blur-sm"
+        style={{ height: 36 }}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
       >
-        {doubled.map((item, i) => {
-          const isExternal = !item.href.startsWith("/");
-          const inner = (
-            <span className="inline-flex h-full shrink-0 cursor-pointer items-center gap-2 border-r border-white/6 px-5 transition-colors hover:bg-white/5">
-              {item.isLive ? (
-                <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-[#B30000]" />
-              ) : item.type === "article" ? (
-                <span className="text-[9px] text-white/25">📰</span>
-              ) : (
-                <span className="text-[9px] text-white/25">⚽</span>
-              )}
+        {/* Brand pin — anchored left, above the scrolling track */}
+        <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center gap-2 border-r border-white/8 bg-[#B30000] px-3">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+          <span className="text-[9px] font-black uppercase tracking-[0.22em] text-white whitespace-nowrap">
+            BallMtaani
+          </span>
+        </div>
 
-              <span className={`text-[11px] font-bold ${item.isLive ? "text-white" : "text-white/65"}`}>
-                {item.label}
-              </span>
+        {/* Right fade */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 bg-gradient-to-l from-black/90 to-transparent" />
 
-              {item.sub && (
-                <span className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${
-                  item.isLive
-                    ? "bg-[#B30000]/12 text-[#B30000]"
-                    : item.type === "article"
-                    ? "bg-[#FFD700]/8 text-[#FFD700]/60"
-                    : "text-white/30"
-                }`}>
-                  {item.isLive ? `${item.sub}'` : item.sub}
+        {/* Scrolling track — pure CSS animation, no rAF, no position state */}
+        <div
+          className="flex h-full items-center whitespace-nowrap will-change-transform"
+          style={{
+            paddingLeft: 120,
+            animation: `hero-ticker ${duration}s linear infinite`,
+            animationPlayState: paused ? "paused" : "running",
+          }}
+        >
+          {doubled.map((item, i) => {
+            const isExternal = !item.href.startsWith("/");
+
+            const chip = (
+              <span
+                className="inline-flex h-full shrink-0 cursor-pointer items-center gap-2 border-r border-white/6 px-5 transition-colors hover:bg-white/5"
+              >
+                {/* Indicator */}
+                {item.isLive ? (
+                  <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-[#B30000]" />
+                ) : item.type === "article" ? (
+                  <span className="text-[9px] text-white/25">📰</span>
+                ) : (
+                  <span className="text-[9px] text-white/25">⚽</span>
+                )}
+
+                {/* Label */}
+                <span className={`text-[11px] font-bold ${item.isLive ? "text-white" : "text-white/65"}`}>
+                  {item.label}
                 </span>
-              )}
-            </span>
-          );
 
-          return isExternal ? (
-            <a key={`${item.id}-${i}`} href={item.href} target="_blank" rel="noopener noreferrer"
-              className="inline-flex h-full shrink-0 items-center">
-              {inner}
-            </a>
-          ) : (
-            <Link key={`${item.id}-${i}`} href={item.href}
-              className="inline-flex h-full shrink-0 items-center">
-              {inner}
-            </Link>
-          );
-        })}
+                {/* Badge */}
+                {item.sub && (
+                  <span className={`rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${
+                    item.isLive
+                      ? "bg-[#B30000]/15 text-[#B30000]"
+                      : item.type === "article"
+                      ? "bg-[#FFD700]/8 text-[#FFD700]/60"
+                      : "text-white/30"
+                  }`}>
+                    {item.isLive ? `${item.sub}'` : item.sub}
+                  </span>
+                )}
+              </span>
+            );
+
+            return isExternal ? (
+              <a
+                key={`${item.id}-${i}`}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-full shrink-0 items-center"
+              >
+                {chip}
+              </a>
+            ) : (
+              <Link
+                key={`${item.id}-${i}`}
+                href={item.href}
+                className="inline-flex h-full shrink-0 items-center"
+              >
+                {chip}
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

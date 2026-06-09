@@ -186,8 +186,8 @@ export default function HomePage() {
 
       {/* ──────────────────────── HERO TICKER BELT ───────────────────────── */}
       <HeroTicker
-        articles={news.slice(0, 8)}
-        matches={[...liveMatches, ...upcomingFixtures].slice(0, 8)}
+        articles={useMemo(() => news.slice(0, 8), [news])}
+        matches={useMemo(() => [...liveMatches, ...upcomingFixtures].slice(0, 8), [liveMatches, upcomingFixtures])}
       />
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
