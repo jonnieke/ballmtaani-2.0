@@ -195,85 +195,144 @@ export default function HomePage() {
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-white/8 bg-[#040508]">
-        {/* AI-generated hero — Vertex AI Imagen 3, World Cup energy */}
+        {/* Stadium backdrop */}
         <img src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg" alt="" decoding="async" loading="eager"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-60" />
-        {/* Cinematic grade overlays */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(4,5,8,0.65)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-[#040508]/30 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#040508]/80 via-transparent to-[#040508]/40" />
-        {/* Gold shimmer at top */}
-        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700]/60 to-transparent" />
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-55" />
+        {/* Cinematic overlays */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(4,5,8,0.72)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-[#040508]/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040508]/90 via-transparent to-[#040508]/50" />
+        {/* WC26 gold shimmer */}
+        <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700]/70 to-transparent" />
+        {/* Subtle red glow bottom-left for energy */}
+        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-[#B30000]/10 blur-3xl" />
 
         <div className="relative z-10 mx-auto max-w-6xl px-4 py-10 md:py-16">
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
 
-            {/* Left — headline + social proof + CTAs */}
+            {/* ── LEFT — headline, countdown, CTAs ── */}
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
-              {/* WC26 badge */}
-              {!wc26.isOver && (
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/28 bg-[#FFD700]/8 px-4 py-1.5">
-                  {wc26.isLive && <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />}
-                  <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#FFD700]">
-                    {wc26.isLive ? "World Cup 2026 — Live!" : `WC26 in ${wc26.days}d ${wc26.hours}h`}
-                  </span>
-                </div>
-              )}
 
-              {/* Dynamic headline — speaks to the fan, not a brand statement */}
-              <h1 className="mb-3 text-4xl font-black leading-[0.9] tracking-tight text-white md:text-5xl lg:text-6xl">
+              {/* Top badge row */}
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {!wc26.isOver && (
+                  <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5
+                    ${wc26.isLive
+                      ? "border-[#FFD700]/50 bg-[#FFD700]/15 shadow-[0_0_16px_rgba(255,214,0,0.2)]"
+                      : "border-[#FFD700]/25 bg-[#FFD700]/8"}`}>
+                    {wc26.isLive
+                      ? <span className="h-2 w-2 animate-pulse rounded-full bg-[#FFD700]" />
+                      : <Trophy className="h-3 w-3 text-[#FFD700]" />}
+                    <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">
+                      {wc26.isLive ? "🏆 World Cup 2026 — Live Now!" : `🏆 FIFA World Cup 2026`}
+                    </span>
+                  </div>
+                )}
+                {/* Africa is here chip */}
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/8 px-3 py-1.5">
+                  <span className="text-[10px]">🌍</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-400">9 African Nations</span>
+                </div>
+              </div>
+
+              {/* ── HEADLINE — fan-first, WC26 spirit ── */}
+              <h1 className="mb-3 text-4xl font-black leading-[0.88] tracking-tight text-white md:text-5xl lg:text-6xl">
                 {isMatchLive && featuredMatch ? (
-                  <>{featuredMatch.home} {featuredMatch.homeScore}–{featuredMatch.awayScore} {featuredMatch.away}.<br />
-                  <span className="text-[#B30000]">{featuredMatch.minute}. Your move.</span></>
+                  <>
+                    {featuredMatch.home} {featuredMatch.homeScore}
+                    <span className="text-white/30">–</span>
+                    {featuredMatch.awayScore} {featuredMatch.away}<br />
+                    <span className="text-[#B30000]">{featuredMatch.minute}′. Your move.</span>
+                  </>
                 ) : wc26.isLive ? (
-                  <>The World Cup<br /><span className="text-[#FFD700]">Is Live.</span></>
+                  <>
+                    The World Cup<br />
+                    <span className="text-[#FFD700]">Is Live.</span><br />
+                    <span className="text-2xl text-white/50 md:text-3xl">Who's your call?</span>
+                  </>
                 ) : (
-                  <>Your group chat,<br /><span className="text-[#B30000]">but with receipts.</span></>
+                  <>
+                    Your group chat,<br />
+                    <span className="text-[#B30000]">but with receipts.</span>
+                  </>
                 )}
               </h1>
 
-              {/* One-liner that explains the product */}
-              <p className="mb-5 text-sm text-white/50 md:text-base">
+              {/* Sub-headline */}
+              <p className="mb-4 max-w-md text-sm leading-relaxed text-white/50 md:text-base">
                 {isMatchLive
                   ? "Pick the final score. Come back at full time. The receipt doesn't lie."
-                  : "Kenya's loudest fan room for live scores, WC26 predictions and real match receipts."}
+                  : wc26.isLive
+                  ? "Live scores, fan predictions and AI analysis for every World Cup match. Africa has 9 teams — make your calls."
+                  : "Predict every World Cup match. Debate every goal. Keep the receipt on every Kenyan fan who got it wrong."}
               </p>
 
-              {/* Feature pills — clickable */}
+              {/* ── COUNTDOWN — centrepiece when active ── */}
+              {!wc26.isLive && !wc26.isOver && (
+                <div className="mb-5">
+                  <p className="mb-2 text-[9px] font-black uppercase tracking-[0.3em] text-white/25">
+                    ⚡ Until Kickoff — Mexico vs South Africa, June 11
+                  </p>
+                  <div className="flex items-end gap-2">
+                    <CountBox v={wc26.days}  l="Days" />
+                    <span className="mb-5 text-xl font-black text-[#FFD700]/30">:</span>
+                    <CountBox v={wc26.hours} l="Hrs" />
+                    <span className="mb-5 text-xl font-black text-[#FFD700]/30">:</span>
+                    <CountBox v={wc26.mins}  l="Min" />
+                    <span className="mb-5 text-xl font-black text-[#FFD700]/30">:</span>
+                    <CountBox v={wc26.secs}  l="Sec" />
+                  </div>
+                </div>
+              )}
+
+              {/* ── African nations at WC26 ── */}
+              {!wc26.isOver && (
+                <div className="mb-5">
+                  <p className="mb-2 text-[9px] font-black uppercase tracking-[0.28em] text-white/20">Africa at WC26 🌍</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { flag: "🇲🇦", name: "Morocco" },
+                      { flag: "🇸🇳", name: "Senegal" },
+                      { flag: "🇪🇬", name: "Egypt" },
+                      { flag: "🇳🇬", name: "Nigeria" },
+                      { flag: "🇨🇲", name: "Cameroon" },
+                      { flag: "🇿🇦", name: "S. Africa" },
+                      { flag: "🇨🇮", name: "Côte d'Ivoire" },
+                      { flag: "🇲🇱", name: "Mali" },
+                      { flag: "🇹🇳", name: "Tunisia" },
+                    ].map(n => (
+                      <Link key={n.name} href="/world-cup-2026"
+                        className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-white/4 px-2 py-1 text-[9px] font-bold text-white/50 transition-all hover:border-white/16 hover:bg-white/8 hover:text-white">
+                        <span>{n.flag}</span> {n.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Feature pills ── */}
               <div className="mb-5 flex flex-wrap gap-2">
                 {[
-                  { icon: "⚽", label: "Live Scores",  href: "/matches",         color: "text-white/80 border-white/20 bg-white/8 hover:bg-white/14" },
-                  { icon: "🏆", label: "WC26 Calls",   href: "/world-cup-2026",  color: "text-[#FFD700] border-[#FFD700]/25 bg-[#FFD700]/8 hover:bg-[#FFD700]/16" },
-                  { icon: "🤖", label: "AI Analyst",   href: "/mchambuzi-halisi",color: "text-green-400 border-green-400/25 bg-green-400/8 hover:bg-green-400/16" },
-                  { icon: "🔥", label: "Leaderboard",  href: "/leaderboard",     color: "text-orange-400 border-orange-400/25 bg-orange-400/8 hover:bg-orange-400/16" },
+                  { icon: "⚽", label: "Live Scores",  href: "/matches",          color: "text-white/70 border-white/15 bg-white/5 hover:bg-white/12" },
+                  { icon: "🏆", label: "WC26 Hub",     href: "/world-cup-2026",   color: "text-[#FFD700] border-[#FFD700]/25 bg-[#FFD700]/6 hover:bg-[#FFD700]/14" },
+                  { icon: "🤖", label: "AI Analyst",   href: "/mchambuzi-halisi", color: "text-green-400 border-green-400/20 bg-green-400/6 hover:bg-green-400/14" },
+                  { icon: "🔥", label: "Leaderboard",  href: "/leaderboard",      color: "text-orange-400 border-orange-400/20 bg-orange-400/6 hover:bg-orange-400/14" },
+                  { icon: "⚔️", label: "Fan Duels",    href: "/rivalries",        color: "text-[#B30000] border-[#B30000]/20 bg-[#B30000]/6 hover:bg-[#B30000]/14" },
                 ].map(f => (
-                  <Link key={f.label} href={f.href} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide transition-colors active:scale-95 ${f.color}`}>
+                  <Link key={f.label} href={f.href}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition-all active:scale-95 ${f.color}`}>
                     {f.icon} {f.label}
                   </Link>
                 ))}
               </div>
 
-              {/* Countdown (compact, inline) */}
-              {!wc26.isLive && !wc26.isOver && (
-                <div className="mb-5 flex items-end gap-2">
-                  <CountBox v={wc26.days}  l="Days" />
-                  <span className="mb-5 text-lg font-black text-[#FFD700]/28">:</span>
-                  <CountBox v={wc26.hours} l="Hrs" />
-                  <span className="mb-5 text-lg font-black text-[#FFD700]/28">:</span>
-                  <CountBox v={wc26.mins}  l="Min" />
-                  <span className="mb-5 text-lg font-black text-[#FFD700]/28">:</span>
-                  <CountBox v={wc26.secs}  l="Sec" />
-                </div>
-              )}
-
-              {/* CTAs */}
+              {/* ── CTAs ── */}
               <div className="flex flex-wrap gap-3">
                 {!isLoggedIn ? (
                   <>
-                    <GoogleSignInButton size="lg" label="Join Free - Google" />
+                    <GoogleSignInButton size="lg" label="Join Free · Make Your Call" />
                     <Link href="/world-cup-2026"
-                      className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10 active:scale-95">
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-5 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/65 hover:bg-[#FFD700]/10 active:scale-95">
                       WC26 Hub <ChevronRight className="h-4 w-4" />
                     </Link>
                   </>
@@ -282,21 +341,26 @@ export default function HomePage() {
                     {isMatchLive && featuredMatch ? (
                       <Link href={`/live-center/${featuredMatch.id}`}
                         className="inline-flex items-center gap-2 rounded-xl bg-[#B30000] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white shadow-[0_0_24px_rgba(179,0,0,0.4)] transition-all hover:shadow-[0_0_36px_rgba(179,0,0,0.6)] active:scale-95">
-                        Join Live Center <ChevronRight className="h-4 w-4" />
+                        <Radio className="h-4 w-4" /> Join Live Center
                       </Link>
                     ) : (
                       <Link href="/world-cup-2026"
                         className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_24px_rgba(255,214,0,0.3)] transition-all hover:shadow-[0_0_36px_rgba(255,214,0,0.5)] active:scale-95">
-                        WC26 Hub <ChevronRight className="h-4 w-4" />
+                        🏆 WC26 Hub <ChevronRight className="h-4 w-4" />
                       </Link>
                     )}
                     <Link href="/predictions"
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/18 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
                       Make Your Call
                     </Link>
                   </>
                 )}
               </div>
+
+              {/* Social proof */}
+              <p className="mt-4 text-[10px] font-bold text-white/20">
+                🇰🇪 Kenya's loudest football fan room · Free to join · No password needed
+              </p>
             </motion.div>
 
             {/* Right — Featured match */}
