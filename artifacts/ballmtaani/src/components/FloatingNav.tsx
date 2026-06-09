@@ -1,11 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { Home, Radio, Trophy, Sparkles, Star } from "lucide-react";
+import { Home, Radio, Trophy, Sparkles, Star, Search } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 const NAV_ITEMS = [
   { href: "/home",             label: "Home",      icon: Home },
+  { href: "/search",           label: "Search",    icon: Search },
   { href: "/live-center",      label: "Live",       icon: Radio },
   { href: "/matches",          label: "Matches",    icon: Trophy },
-  { href: "/mchambuzi-halisi", label: "Mchambuzi", icon: Sparkles },
   { href: "/world-cup-2026",   label: "WC26",       icon: Star, gold: true },
 ];
 
@@ -23,6 +24,9 @@ export default function FloatingNav() {
         >
           <span className="text-[13px] font-black text-white">B</span>
         </Link>
+
+        {/* Notification bell */}
+        <NotificationBell compact />
 
         {/* Divider */}
         <div className="mx-1 h-6 w-px bg-white/10" />

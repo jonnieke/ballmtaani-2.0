@@ -48,6 +48,8 @@ const AdminAdsPage       = lazy(() => import("./pages/AdminAdsPage"));
 const AdminPartnersPage  = lazy(() => import("./pages/AdminPartnersPage"));
 const AdminRolesPage     = lazy(() => import("./pages/AdminRolesPage"));
 const AdminRewardsPage   = lazy(() => import("./pages/AdminRewardsPage"));
+const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
+const SearchPage         = lazy(() => import("./pages/SearchPage"));
 const NewsPage           = lazy(() => import("./pages/NewsPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
@@ -148,6 +150,8 @@ function AppShell() {
             <Route path="/admin/partners" component={AdminPartnersPage} />
             <Route path="/admin/roles" component={AdminRolesPage} />
             <Route path="/admin/rewards" component={AdminRewardsPage} />
+            <Route path="/admin/analytics" component={AdminAnalyticsPage} />
+            <Route path="/search" component={SearchPage} />
             <Route path="/news" component={NewsPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
