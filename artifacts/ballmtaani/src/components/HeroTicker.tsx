@@ -68,8 +68,8 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
   // Duplicate the list — CSS animates from 0 → -50% for a seamless loop
   const doubled = [...items, ...items];
 
-  // ~5 seconds per item so there's time to read each headline
-  const duration = Math.max(25, items.length * 5);
+  // ~2.5s per item (2× faster than original)
+  const duration = Math.max(12, items.length * 2.5);
 
   return (
     <>

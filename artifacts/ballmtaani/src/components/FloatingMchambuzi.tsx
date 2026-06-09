@@ -59,13 +59,13 @@ export default function FloatingMchambuzi({ variant = "home" }: FloatingMchambuz
     : "border-[#FFD700]/30 bg-[#0d1118]/96 shadow-[0_24px_80px_rgba(0,0,0,0.45)]";
 
   const dockPosition = variant === "home"
-    ? "fixed bottom-64 left-3 z-50 md:bottom-6 md:left-6"
-    : "fixed bottom-24 right-3 z-50 md:bottom-6 md:right-6";
+    ? "fixed bottom-[88px] right-3 z-50 md:bottom-8 md:right-6"
+    : "fixed bottom-[88px] right-3 z-50 md:bottom-8 md:right-6";
 
   return (
     <div className={dockPosition}>
       {open ? (
-        <div className={`w-[calc(100vw-1.5rem)] max-w-[390px] overflow-hidden rounded-3xl border text-white backdrop-blur-2xl ${panelTone}`}>
+        <div className={`w-[min(calc(100vw-1.5rem),390px)] overflow-hidden rounded-3xl border text-white backdrop-blur-2xl ${panelTone}`}>
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/15 text-primary">
