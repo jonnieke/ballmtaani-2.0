@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar, ExternalLink } from "lucide-react";
+import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar, ExternalLink, Smartphone, Wifi, ShirtIcon, TrendingUp, Target, Swords } from "lucide-react";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useLeaderboard } from "../hooks/useData";
 import { fetchTodaysFixtures, type LiveMatch } from "../lib/football-api";
 import { fetchFootballNews, fetchPartnerArticles, timeAgo, type NewsArticle } from "../lib/news-api";
@@ -423,62 +423,130 @@ export default function HomePage() {
       </section>
 
       {/* ──────────────────────── REWARDS TEASER ────────────────────────── */}
-      <section className="relative overflow-hidden border-b border-white/6 bg-[#07080d] py-8">
-        {/* Gold glow */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(255,214,0,0.07),transparent)]" />
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            {/* Left copy */}
-            <div className="max-w-md">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFD700]/15 text-sm">🏆</span>
-                <span className="text-[9px] font-black uppercase tracking-[0.28em] text-[#FFD700]/70">Earn &amp; Redeem</span>
-              </div>
-              <h2 className="mb-2 text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
-                Turn Your MTC Into <span className="text-[#FFD700]">Real Rewards</span>
-              </h2>
-              <p className="mb-4 text-sm leading-relaxed text-white/45">
-                Predict matches, win duels, debate goals — every action earns MTC status points.
-                Redeem them for <span className="font-bold text-white/70">airtime, data bundles</span> and <span className="font-bold text-white/70">BallMtaani merch</span>.
-              </p>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/25">In partnership with</span>
-                <span className="rounded-full border border-[#FFD700]/20 bg-[#FFD700]/8 px-3 py-1 text-[10px] font-black text-[#FFD700]/70">credoFaster</span>
-              </div>
-            </div>
+      <section className="relative overflow-hidden border-b border-white/6 bg-[#07080d] py-10 md:py-14">
+        {/* Ambient glows */}
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-1/3 bg-[radial-gradient(ellipse_80%_60%_at_0%_50%,rgba(255,214,0,0.05),transparent)]" />
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 bg-[radial-gradient(ellipse_80%_60%_at_100%_50%,rgba(179,0,0,0.06),transparent)]" />
+        {/* Fine grid texture */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.025]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
 
-            {/* Right — reward preview cards */}
-            <div className="grid grid-cols-3 gap-2 sm:w-auto sm:gap-3">
-              {[
-                { emoji: "📱", label: "Airtime",     sub: "from 2,500 MTC",  color: "border-blue-500/20  bg-blue-500/5",  tc: "text-blue-400" },
-                { emoji: "🌐", label: "Data Bundle", sub: "from 2,000 MTC",  color: "border-green-500/20 bg-green-500/5", tc: "text-green-400" },
-                { emoji: "👕", label: "BM Merch",    sub: "from 10,000 MTC", color: "border-[#FFD700]/20 bg-[#FFD700]/5", tc: "text-[#FFD700]" },
-              ].map(r => (
-                <Link key={r.label} href="/store"
-                  className={`group flex flex-col items-center rounded-xl border p-3 text-center transition-all hover:-translate-y-0.5 hover:brightness-110 sm:p-4 ${r.color}`}>
-                  <span className="mb-1.5 text-2xl">{r.emoji}</span>
-                  <p className={`text-[10px] font-black uppercase tracking-wide ${r.tc}`}>{r.label}</p>
-                  <p className="mt-0.5 text-[9px] text-white/30">{r.sub}</p>
-                </Link>
-              ))}
+        <div className="relative mx-auto max-w-6xl px-4">
+
+          {/* Section header */}
+          <div className="mb-8 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-2.5">
+                <div className="h-px w-6 bg-[#FFD700]/50" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/60">Earn &amp; Redeem</span>
+              </div>
+              <h2 className="text-2xl font-black uppercase tracking-tight text-white md:text-3xl">
+                Turn Engagement Into <span className="text-[#FFD700]">Real Value</span>
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/40">
+                Every prediction, duel, and debate earns MTC — our status currency.
+                Redeem directly for <span className="text-white/65 font-semibold">airtime, data bundles</span> and <span className="text-white/65 font-semibold">exclusive merch</span>.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 md:mb-1">
+              <span className="text-[10px] text-white/20 uppercase tracking-widest">Partner</span>
+              <div className="flex items-center gap-1.5 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/6 px-3 py-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#FFD700] shadow-[0_0_6px_rgba(255,214,0,0.8)]" />
+                <span className="text-[10px] font-black tracking-widest text-[#FFD700]/80 uppercase">credoFaster</span>
+              </div>
             </div>
           </div>
 
-          {/* CTA bar */}
-          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <Link href="/store"
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#FFD700] py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_24px_rgba(255,214,0,0.2)] transition-all hover:shadow-[0_0_36px_rgba(255,214,0,0.35)] active:scale-[0.98] sm:flex-none sm:px-8">
-              🎁 View All Rewards
+          {/* Reward cards — photographic */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Airtime */}
+            <Link href="/store" className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-[0_8px_32px_rgba(59,130,246,0.12)]">
+              <div className="relative h-36 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80&auto=format&fit=crop"
+                  alt="Airtime top-up"
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 brightness-50"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c111a] via-[#0c111a]/40 to-transparent" />
+                <div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-500/30 backdrop-blur-sm">
+                  <Smartphone className="h-4 w-4 text-blue-400" />
+                </div>
+                <div className="absolute right-3 top-3 rounded-full bg-black/50 border border-white/10 px-2 py-0.5 text-[9px] font-black text-white/60 uppercase tracking-wider backdrop-blur-sm">from 2,500 MTC</div>
+              </div>
+              <div className="p-4">
+                <p className="text-sm font-black uppercase tracking-widest text-white">Airtime Top-Up</p>
+                <p className="mt-1 text-[11px] text-white/35">Safaricom, Airtel & Telkom Kenya — instant delivery</p>
+              </div>
             </Link>
-            <Link href="/store"
-              className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/4 py-3 text-xs font-black uppercase tracking-widest text-white/50 transition-all hover:bg-white/8 hover:text-white sm:px-6">
-              Check My MTC Balance
+
+            {/* Data Bundle */}
+            <Link href="/store" className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-1 hover:border-green-500/30 hover:shadow-[0_8px_32px_rgba(34,197,94,0.12)]">
+              <div className="relative h-36 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&q=80&auto=format&fit=crop"
+                  alt="Data bundle"
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 brightness-50"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c111a] via-[#0c111a]/40 to-transparent" />
+                <div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl bg-green-500/20 border border-green-500/30 backdrop-blur-sm">
+                  <Wifi className="h-4 w-4 text-green-400" />
+                </div>
+                <div className="absolute right-3 top-3 rounded-full bg-black/50 border border-white/10 px-2 py-0.5 text-[9px] font-black text-white/60 uppercase tracking-wider backdrop-blur-sm">from 2,000 MTC</div>
+              </div>
+              <div className="p-4">
+                <p className="text-sm font-black uppercase tracking-widest text-white">Data Bundle</p>
+                <p className="mt-1 text-[11px] text-white/35">Daily, weekly & monthly bundles — stay connected</p>
+              </div>
             </Link>
-            <div className="hidden flex-1 sm:block" />
-            <div className="flex flex-wrap justify-center gap-2 sm:justify-end">
-              {["Predict Matches +50", "Win a Duel +200", "Daily Login +50", "Join Debate +30"].map(a => (
-                <span key={a} className="rounded-full border border-white/8 bg-white/4 px-2.5 py-1 text-[9px] font-bold text-white/30">{a} MTC</span>
+
+            {/* BM Merch */}
+            <Link href="/store" className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-1 hover:border-[#FFD700]/30 hover:shadow-[0_8px_32px_rgba(255,214,0,0.10)]">
+              <div className="relative h-36 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=600&q=80&auto=format&fit=crop"
+                  alt="BallMtaani merch"
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 brightness-50"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c111a] via-[#0c111a]/40 to-transparent" />
+                <div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFD700]/15 border border-[#FFD700]/25 backdrop-blur-sm">
+                  <ShirtIcon className="h-4 w-4 text-[#FFD700]" />
+                </div>
+                <div className="absolute right-3 top-3 rounded-full bg-black/50 border border-white/10 px-2 py-0.5 text-[9px] font-black text-white/60 uppercase tracking-wider backdrop-blur-sm">from 10,000 MTC</div>
+              </div>
+              <div className="p-4">
+                <p className="text-sm font-black uppercase tracking-widest text-white">BM Merch</p>
+                <p className="mt-1 text-[11px] text-white/35">Exclusive jerseys, caps & fan gear — limited drops</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* Earn rate strip + CTA */}
+          <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/6 bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Earn actions */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { icon: Target,    label: "Predict Match", pts: "+50 MTC" },
+                { icon: Swords,    label: "Win a Duel",    pts: "+200 MTC" },
+                { icon: TrendingUp,label: "Daily Login",   pts: "+50 MTC" },
+                { icon: MessageSquare, label: "Join Debate", pts: "+30 MTC" },
+              ].map(({ icon: Icon, label, pts }) => (
+                <div key={label} className="flex items-center gap-1.5 rounded-lg border border-white/6 bg-white/3 px-2.5 py-1.5">
+                  <Icon className="h-3 w-3 text-[#FFD700]/60 shrink-0" />
+                  <span className="text-[10px] font-bold text-white/50">{label}</span>
+                  <span className="text-[10px] font-black text-[#FFD700]/80">{pts}</span>
+                </div>
               ))}
+            </div>
+            {/* CTAs */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/store"
+                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/50 transition-all hover:bg-white/10 hover:text-white">
+                My Balance
+              </Link>
+              <Link href="/store"
+                className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,214,0,0.25)] transition-all hover:shadow-[0_0_30px_rgba(255,214,0,0.4)] active:scale-[0.98]">
+                View All Rewards
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
         </div>
