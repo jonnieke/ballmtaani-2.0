@@ -1,9 +1,10 @@
-// BallMtaani Service Worker v8
-// KEY CHANGE from v7: index.html is NEVER pre-cached and NEVER served from cache.
-// Every navigation always fetches a fresh index.html from the network.
-// This prevents stale chunk 404s after deploys.
+// BallMtaani Service Worker v9
+// KEY CHANGE from v8: never manufacture fake 503 responses. On any fetch
+// failure, fall through to the real network error so the browser/app can
+// handle it, instead of synthesizing a 503 that broke SPA routes.
+// index.html is NEVER cached — every navigation fetches fresh.
 
-const CACHE_NAME = 'ballmtaani-v8';
+const CACHE_NAME = 'ballmtaani-v9';
 
 // Only cache true static assets that never change between deploys
 const STATIC_ASSETS = [
@@ -68,9 +69,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For everything else (manifest, logo, etc.) — cache-first
+  // For everything else (manifest, logo, etc.) — cache-first.
+  // On a cache miss, fetch from network. Do NOT manufacture a fake 503 on
+  // failure — just let the real network response/error pass through.
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request)).catch(() => new Response('', { status: 503 }))
+    caches.match(request).then((cached) => cached || fetch(request))
   );
 });
 
