@@ -229,6 +229,10 @@ function StandingsTab({ standingsData, matchLeague }: { standingsData: Record<st
    ─────────────────────────────────────────────────────────────*/
 import { getUserTier } from "../lib/tiers";
 import { useProfile } from "../hooks/useData";
+import MatchCommentary from "../components/MatchCommentary";
+import PredictionConsensus from "../components/PredictionConsensus";
+import MatchReport from "../components/MatchReport";
+import LiveLeaderboard from "../components/LiveLeaderboard";
 
 export default function LiveCenterPage() {
   const [, params] = useRoute("/live-center/:id");
@@ -587,6 +591,18 @@ export default function LiveCenterPage() {
                 </p>
               )}
             </div>
+
+            {/* Prediction Consensus */}
+            <PredictionConsensus matchId={fixtureId} homeTeam={match?.home} awayTeam={match?.away} />
+
+            {/* Live Match Commentary */}
+            <MatchCommentary matchId={fixtureId} />
+
+            {/* Match Report (if available) */}
+            <MatchReport matchId={fixtureId} homeTeam={match?.home} awayTeam={match?.away} />
+
+            {/* Live Leaderboard */}
+            <LiveLeaderboard />
 
             {/* Match Timeline */}
             <div className="bg-[#111111] rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl relative">
