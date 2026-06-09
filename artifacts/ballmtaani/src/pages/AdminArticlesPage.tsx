@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { timeAgo } from "../lib/news-api";
-import { Plus, Edit3, Eye, Trash2, Save, Globe, FileText, Send, CheckCircle2, XCircle, RotateCcw, Clock } from "lucide-react";
+import { Plus, Edit3, Eye, Trash2, Save, Globe, FileText, Send, CheckCircle2, XCircle, RotateCcw, Clock, Tag, Search, X as XIcon, ChevronDown, ChevronUp } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
 import { useContentRole } from "../hooks/useContentRole";
 
@@ -32,11 +32,19 @@ interface ArticleForm {
   thumbnail_url: string;
   author_name: string;
   partner_team_name: string;
-  tags: string;
+  tags: string[];
   is_wc26: boolean;
+  seo_title: string;
+  seo_description: string;
+  focus_keyword: string;
 }
 
-const EMPTY_FORM: ArticleForm = { title: "", content: "", excerpt: "", thumbnail_url: "", author_name: "BallMtaani", partner_team_name: "", tags: "", is_wc26: false };
+const EMPTY_FORM: ArticleForm = {
+  title: "", content: "", excerpt: "", thumbnail_url: "",
+  author_name: "BallMtaani", partner_team_name: "",
+  tags: [], is_wc26: false,
+  seo_title: "", seo_description: "", focus_keyword: "",
+};
 
 const STATUS_META: Record<ArticleStatus, { label: string; color: string }> = {
   draft:     { label: "Draft",     color: "text-white/35" },
@@ -67,6 +75,8 @@ export default function AdminArticlesPage() {
   const [rejectNote, setRejectNote] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"mine" | "queue" | "all">("mine");
+  const [seoOpen, setSeoOpen] = useState(false);
+  const [tagInput, setTagInput] = useState("");
 
   const loadArticles = useCallback(async () => {
     if (!user || !supabase) return;
@@ -88,9 +98,9 @@ export default function AdminArticlesPage() {
   function openEditor(article?: Article) {
     if (article) {
       setEditingId(article.id);
-      setForm({ title: article.title, content: "", excerpt: article.excerpt || "", thumbnail_url: article.thumbnail_url || "", author_name: article.author_name || "BallMtaani", partner_team_name: article.partner_team_name || "", tags: "", is_wc26: article.is_wc26 });
-      if (supabase) supabase.from("articles").select("content, tags").eq("id", article.id).single().then(({ data }) => {
-        if (data) setForm(f => ({ ...f, content: data.content, tags: (data.tags || []).join(", ") }));
+      setForm({ title: article.title, content: "", excerpt: article.excerpt || "", thumbnail_url: article.thumbnail_url || "", author_name: article.author_name || "BallMtaani", partner_team_name: article.partner_team_name || "", tags: [], is_wc26: article.is_wc26, seo_title: "", seo_description: "", focus_keyword: "" });
+      if (supabase) supabase.from("articles").select("content, tags, seo_title, seo_description, focus_keyword").eq("id", article.id).single().then(({ data }) => {
+        if (data) setForm(f => ({ ...f, content: data.content, tags: data.tags || [], seo_title: data.seo_title || "", seo_description: data.seo_description || "", focus_keyword: data.focus_keyword || "" }));
       });
     } else {
       setEditingId(null);
@@ -110,13 +120,16 @@ export default function AdminArticlesPage() {
       title: form.title.trim(), content: form.content,
       excerpt: form.excerpt.trim() || null, thumbnail_url: form.thumbnail_url.trim() || null,
       partner_team_name: form.partner_team_name.trim() || null,
-      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+      tags: form.tags,
       is_wc26: form.is_wc26,
       author_name: form.author_name.trim() || "BallMtaani",
       author_id: user.id,
       status: targetStatus,
       published_at: targetStatus === "published" ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
+      seo_title: form.seo_title.trim() || null,
+      seo_description: form.seo_description.trim() || null,
+      focus_keyword: form.focus_keyword.trim() || null,
     };
     if (slug) payload.slug = slug;
 
@@ -198,19 +211,162 @@ export default function AdminArticlesPage() {
             <FormField label="Author / Byline" value={form.author_name} onChange={v => setForm(f => ({ ...f, author_name: v }))} placeholder="BallMtaani" />
             <FormField label="Excerpt — shown on homepage card and as article standfirst" value={form.excerpt} onChange={v => setForm(f => ({ ...f, excerpt: v }))} placeholder="One compelling sentence about the article..." />
             <FormField label="Thumbnail URL" value={form.thumbnail_url} onChange={v => setForm(f => ({ ...f, thumbnail_url: v }))} placeholder="https://..." />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Team / Publication" value={form.partner_team_name} onChange={v => setForm(f => ({ ...f, partner_team_name: v }))} placeholder="e.g. KPL Digest" />
-              <FormField label="Tags (comma-separated)" value={form.tags} onChange={v => setForm(f => ({ ...f, tags: v }))} placeholder="EPL, Transfers, WC26" />
-            </div>
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/8 bg-[#0d1018] px-4 py-3">
-              <input type="checkbox" checked={form.is_wc26} onChange={e => setForm(f => ({ ...f, is_wc26: e.target.checked }))} className="h-4 w-4 accent-[#FFD700]" />
-              <span className="text-sm font-bold text-white/60">Tag as WC26 content <span className="text-[#FFD700]">(appears in WC26 section)</span></span>
-            </label>
+            <FormField label="Team / Publication" value={form.partner_team_name} onChange={v => setForm(f => ({ ...f, partner_team_name: v }))} placeholder="e.g. KPL Digest" />
+
             <div>
               <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-white/40">Article Content * (HTML supported)</label>
               <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-                placeholder="Write your article here. Separate paragraphs with a blank line. For formatting: use **bold**, or HTML tags like <h2>, <blockquote>, <strong>. Images: <img src='url' />."
+                placeholder="Write your article here. Separate paragraphs with a blank line. HTML tags like <h2>, <blockquote>, <strong> are supported."
                 rows={18} className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 font-mono text-sm text-white/80 placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
+            </div>
+
+            {/* ── SEO & TAGS SECTION ──────────────────────────────────── */}
+            <div className="rounded-xl border border-white/8 bg-[#090c12] overflow-hidden">
+              {/* Accordion header */}
+              <button type="button" onClick={() => setSeoOpen(o => !o)}
+                className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-white/4">
+                <div className="flex items-center gap-2">
+                  <Search className="h-3.5 w-3.5 text-[#FFD700]" />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-white/70">SEO &amp; Tags</span>
+                  {(form.focus_keyword || form.tags.length > 0 || form.seo_title) && (
+                    <span className="rounded-full bg-[#FFD700]/20 px-2 py-0.5 text-[8px] font-black text-[#FFD700]">
+                      {[form.focus_keyword && "keyword", form.tags.length && `${form.tags.length} tags`, form.seo_title && "title"].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                </div>
+                {seoOpen ? <ChevronUp className="h-4 w-4 text-white/30" /> : <ChevronDown className="h-4 w-4 text-white/30" />}
+              </button>
+
+              {seoOpen && (
+                <div className="space-y-4 border-t border-white/6 px-4 pb-5 pt-4">
+
+                  {/* Tags chip input */}
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-white/40">
+                      Tags
+                    </label>
+                    <div className="rounded-xl border border-white/10 bg-[#111] p-3">
+                      {/* Chip list */}
+                      {form.tags.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-1.5">
+                          {form.tags.map(tag => (
+                            <span key={tag} className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/8 pl-2.5 pr-1.5 py-0.5 text-[11px] font-bold text-white/70">
+                              {tag}
+                              <button type="button" onClick={() => setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))}
+                                className="flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-white/40 hover:bg-[#B30000]/40 hover:text-white transition-colors">
+                                <XIcon className="h-2.5 w-2.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* Input row */}
+                      <div className="flex gap-2">
+                        <input
+                          value={tagInput}
+                          onChange={e => setTagInput(e.target.value)}
+                          onKeyDown={e => {
+                            if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+                              e.preventDefault();
+                              const newTag = tagInput.trim().replace(/,$/, "");
+                              if (newTag && !form.tags.includes(newTag)) setForm(f => ({ ...f, tags: [...f.tags, newTag] }));
+                              setTagInput("");
+                            }
+                          }}
+                          placeholder='Type a tag and press Enter — e.g. EPL, Transfers, WC26'
+                          className="flex-1 bg-transparent text-sm text-white placeholder-white/20 focus:outline-none"
+                        />
+                        <button type="button"
+                          onClick={() => {
+                            const newTag = tagInput.trim();
+                            if (newTag && !form.tags.includes(newTag)) setForm(f => ({ ...f, tags: [...f.tags, newTag] }));
+                            setTagInput("");
+                          }}
+                          className="flex h-7 items-center gap-1 rounded-lg bg-white/8 px-2.5 text-[10px] font-black uppercase tracking-widest text-white/50 hover:bg-white/14 hover:text-white transition-colors">
+                          <Tag className="h-3 w-3" /> Add
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-[9px] text-white/20">Tags help readers discover related articles and improve search ranking.</p>
+                  </div>
+
+                  {/* WC26 toggle */}
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#FFD700]/12 bg-[#FFD700]/4 px-4 py-3 transition-colors hover:bg-[#FFD700]/8">
+                    <input type="checkbox" checked={form.is_wc26} onChange={e => setForm(f => ({ ...f, is_wc26: e.target.checked }))} className="h-4 w-4 accent-[#FFD700]" />
+                    <div>
+                      <p className="text-sm font-black text-white/70">World Cup 2026 content</p>
+                      <p className="text-[10px] text-white/30">Surfaces in the WC26 section on the homepage</p>
+                    </div>
+                  </label>
+
+                  {/* Slug preview */}
+                  {form.title && (
+                    <div>
+                      <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-white/40">URL Slug Preview</label>
+                      <div className="flex items-center gap-1.5 rounded-xl border border-white/8 bg-[#111] px-3 py-2.5">
+                        <span className="text-[11px] text-white/25">ballmtaani.com/article/</span>
+                        <span className="text-[11px] font-mono font-bold text-[#FFD700]/70">{slugify(form.title)}-…</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-t border-white/6 pt-4 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Search className="h-3 w-3 text-white/30" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/30">Search Engine Preview</span>
+                    </div>
+
+                    {/* Focus keyword */}
+                    <div>
+                      <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-white/40">Focus Keyword</label>
+                      <input value={form.focus_keyword} onChange={e => setForm(f => ({ ...f, focus_keyword: e.target.value }))}
+                        placeholder="e.g. Kenya World Cup 2026"
+                        className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
+                      <p className="mt-1 text-[9px] text-white/20">The main phrase you want this article to rank for in Google.</p>
+                    </div>
+
+                    {/* SEO Title */}
+                    <div>
+                      <div className="mb-1 flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40">SEO Title</label>
+                        <span className={`text-[9px] font-bold ${(form.seo_title || form.title).length > 60 ? "text-[#B30000]" : "text-white/20"}`}>
+                          {(form.seo_title || form.title).length}/60
+                        </span>
+                      </div>
+                      <input value={form.seo_title} onChange={e => setForm(f => ({ ...f, seo_title: e.target.value }))}
+                        placeholder={form.title || "Defaults to article title"}
+                        className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
+                      <p className="mt-1 text-[9px] text-white/20">Keep under 60 characters. Leave blank to use the article title.</p>
+                    </div>
+
+                    {/* Meta description */}
+                    <div>
+                      <div className="mb-1 flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Meta Description</label>
+                        <span className={`text-[9px] font-bold ${(form.seo_description || form.excerpt).length > 155 ? "text-[#B30000]" : "text-white/20"}`}>
+                          {(form.seo_description || form.excerpt).length}/155
+                        </span>
+                      </div>
+                      <textarea value={form.seo_description} onChange={e => setForm(f => ({ ...f, seo_description: e.target.value }))}
+                        placeholder={form.excerpt || "Defaults to excerpt"}
+                        rows={2} className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
+                      <p className="mt-1 text-[9px] text-white/20">Keep under 155 characters. Leave blank to use the excerpt.</p>
+                    </div>
+
+                    {/* SERP Preview */}
+                    <div className="rounded-xl border border-white/6 bg-[#0a0d14] p-3">
+                      <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-white/20">Google Preview</p>
+                      <p className="text-sm font-medium text-blue-400 leading-snug line-clamp-1">
+                        {form.seo_title || form.title || "Article Title"}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-green-600">ballmtaani.com/article/{form.title ? slugify(form.title) : "article-slug"}</p>
+                      <p className="mt-1 text-[11px] text-white/35 line-clamp-2 leading-relaxed">
+                        {form.seo_description || form.excerpt || "Meta description will appear here. Write something compelling that makes people click."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">

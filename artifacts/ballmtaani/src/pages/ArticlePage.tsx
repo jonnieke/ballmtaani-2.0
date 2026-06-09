@@ -17,6 +17,9 @@ interface Article {
   tags: string[];
   is_wc26: boolean;
   published_at: string;
+  seo_title: string | null;
+  seo_description: string | null;
+  focus_keyword: string | null;
 }
 
 const DEFAULT_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
@@ -103,9 +106,10 @@ export default function ArticlePage() {
   return (
     <>
       <SEO
-        title={article.title}
-        description={article.excerpt || article.title}
+        title={article.seo_title || article.title}
+        description={article.seo_description || article.excerpt || article.title}
         image={article.thumbnail_url || DEFAULT_IMAGE}
+        keywords={article.focus_keyword ? [article.focus_keyword, ...article.tags] : article.tags}
         type="article"
       />
 
