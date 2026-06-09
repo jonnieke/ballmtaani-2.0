@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calendar, ExternalLink } from "lucide-react";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useLeaderboard } from "../hooks/useData";
 import { fetchTodaysFixtures, type LiveMatch } from "../lib/football-api";
@@ -117,6 +117,9 @@ export default function HomePage() {
   const [todaysFixtures, setTodaysFixtures] = useState<any[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  const articleScrollRef = useRef<HTMLDivElement>(null);
+  const scrollArticles = (dir: "left" | "right") =>
+    articleScrollRef.current?.scrollBy({ left: dir === "right" ? 320 : -320, behavior: "smooth" });
 
   const { data: liveMatches = [], isLoading: isLoadingMatches } = useMatches();
   const { data: upcomingFixtures = [], isLoading: isLoadingUpcoming } = useUpcomingFixtures();
@@ -357,28 +360,41 @@ export default function HomePage() {
 
       {/* ─────────────────── LATEST ARTICLES SCROLLER ──────────────────────── */}
       {news.filter(a => a.isInternal).length > 0 && (
-        <section className="relative border-b border-white/6 bg-[#050709] py-4 overflow-hidden">
-          {/* Right fade */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#050709] to-transparent" />
-          {/* Left fade */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#050709] to-transparent" />
-
+        <section className="relative border-b border-white/6 bg-[#050709] py-4">
           <div className="mx-auto max-w-6xl px-4">
-            {/* Label */}
-            <div className="mb-3 flex items-center gap-3">
-              <span className="h-3 w-1 rounded-full bg-[#B30000]" />
-              <span className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">Latest from BallMtaani</span>
+
+            {/* Header row */}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-1 rounded-full bg-[#B30000]" />
+                <span className="text-[9px] font-black uppercase tracking-[0.28em] text-white/35">Latest from BallMtaani</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => scrollArticles("left")}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-95"
+                  aria-label="Scroll left">
+                  <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+                </button>
+                <button onClick={() => scrollArticles("right")}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white active:scale-95"
+                  aria-label="Scroll right">
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+                <Link href="/news"
+                  className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white/40 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white">
+                  View All <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
 
             {/* Scrollable strip */}
-            <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div ref={articleScrollRef} className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {news.filter(a => a.isInternal).slice(0, 5).map((article, i) => (
                 <Link
                   key={article.id}
                   href={`/article/${article.slug}`}
                   className="group relative flex w-[260px] shrink-0 snap-start overflow-hidden rounded-xl border border-white/8 bg-[#0c111a] transition-all duration-200 hover:-translate-y-0.5 hover:border-white/18 sm:w-[300px]"
                 >
-                  {/* Thumbnail */}
                   <div className="relative h-full w-24 shrink-0 overflow-hidden sm:w-28">
                     <img
                       src={article.thumbnail}
@@ -388,13 +404,10 @@ export default function HomePage() {
                       onError={e => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c111a]/60" />
-                    {/* Article index badge */}
                     <div className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#B30000] text-[9px] font-black text-white">
                       {i + 1}
                     </div>
                   </div>
-
-                  {/* Text */}
                   <div className="flex min-w-0 flex-1 flex-col justify-between p-3">
                     <div>
                       {article.isWC26 && (
@@ -412,6 +425,7 @@ export default function HomePage() {
                 </Link>
               ))}
             </div>
+
           </div>
         </section>
       )}
