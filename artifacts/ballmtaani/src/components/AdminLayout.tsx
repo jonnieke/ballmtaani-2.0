@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useIsAdmin } from "../hooks/useIsAdmin";
 import { useAuth } from "../context/AuthContext";
-import { LayoutDashboard, FileText, Megaphone, Users, FlaskConical, ChevronRight, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, FileText, Megaphone, Users, FlaskConical, ChevronRight, ShieldCheck, Gift } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/ads", label: "Ads", icon: Megaphone },
   { href: "/admin/partners", label: "Partners", icon: Users },
   { href: "/admin/roles", label: "Roles", icon: ShieldCheck },
+  { href: "/admin/rewards", label: "Rewards", icon: Gift },
   { href: "/diagnostics", label: "Diagnostics", icon: FlaskConical },
 ];
 

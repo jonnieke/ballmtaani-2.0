@@ -245,6 +245,67 @@ alter table partner_teams enable row level security;
 create policy "Partner teams are public" on partner_teams
   for select using (true);
 
+-- ─────────────────────────── REWARDS ENGINE ──────────────────────────────
+
+-- Reward catalog (managed by admins)
+create table if not exists reward_items (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  description text,
+  category text not null default 'merch', -- 'merch' | 'airtime' | 'data' | 'digital'
+  cost_mtc integer not null,
+  image_url text,
+  partner text,          -- e.g. 'credoFaster', 'BallMtaani'
+  stock integer,         -- null = unlimited
+  active boolean default true,
+  sort_order integer default 0,
+  created_at timestamp with time zone default now()
+);
+
+alter table reward_items enable row level security;
+create policy "Active reward items are public" on reward_items
+  for select using (active = true);
+
+-- User redemption requests
+create table if not exists reward_redemptions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) on delete set null,
+  user_email text,
+  display_name text,
+  item_id uuid references reward_items(id) on delete set null,
+  item_name text not null,
+  item_category text not null,
+  cost_mtc integer not null,
+  contact_phone text,
+  delivery_address text,
+  delivery_name text,
+  notes text,
+  status text default 'pending',    -- 'pending' | 'processing' | 'fulfilled' | 'cancelled'
+  admin_note text,
+  fulfilled_at timestamp with time zone,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+alter table reward_redemptions enable row level security;
+create policy "Users see own redemptions" on reward_redemptions
+  for select using (auth.uid() = user_id);
+create policy "Users create own redemptions" on reward_redemptions
+  for insert with check (auth.uid() = user_id);
+
+-- Seed reward catalog
+insert into reward_items (name, description, category, cost_mtc, partner, stock, sort_order) values
+  ('Ksh 50 Airtime',        'Instant airtime top-up to any Kenyan network',               'airtime', 2500,  'credoFaster', null, 10),
+  ('Ksh 100 Airtime',       'Instant airtime top-up to any Kenyan network',               'airtime', 5000,  'credoFaster', null, 11),
+  ('Ksh 200 Airtime',       'Instant airtime top-up to any Kenyan network',               'airtime', 9500,  'credoFaster', null, 12),
+  ('1 GB Data Bundle',      '1GB data valid for 1 day — any Kenyan network',              'data',    2000,  'credoFaster', null, 20),
+  ('2 GB Data Bundle',      '2GB data valid for 7 days — any Kenyan network',             'data',    3800,  'credoFaster', null, 21),
+  ('5 GB Data Bundle',      '5GB data valid for 30 days — any Kenyan network',            'data',    8500,  'credoFaster', null, 22),
+  ('BallMtaani T-Shirt',    'Official BallMtaani jersey — size M/L/XL, delivered Kenya',  'merch',   20000, 'BallMtaani',  100,  30),
+  ('BallMtaani Hoodie',     'Premium BallMtaani hoodie — delivered within Kenya',         'merch',   35000, 'BallMtaani',  50,   31),
+  ('BallMtaani Cap',        'Snapback cap with BallMtaani emblem — any colour',           'merch',   10000, 'BallMtaani',  200,  32)
+on conflict do nothing;
+
 -- Direct sponsor ad campaigns (override AdSense when active)
 create table if not exists ad_campaigns (
   id uuid primary key default uuid_generate_v4(),

@@ -422,6 +422,68 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ──────────────────────── REWARDS TEASER ────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-white/6 bg-[#07080d] py-8">
+        {/* Gold glow */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_100%,rgba(255,214,0,0.07),transparent)]" />
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left copy */}
+            <div className="max-w-md">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FFD700]/15 text-sm">🏆</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.28em] text-[#FFD700]/70">Earn &amp; Redeem</span>
+              </div>
+              <h2 className="mb-2 text-xl font-black uppercase tracking-tight text-white sm:text-2xl">
+                Turn Your MTC Into <span className="text-[#FFD700]">Real Rewards</span>
+              </h2>
+              <p className="mb-4 text-sm leading-relaxed text-white/45">
+                Predict matches, win duels, debate goals — every action earns MTC status points.
+                Redeem them for <span className="font-bold text-white/70">airtime, data bundles</span> and <span className="font-bold text-white/70">BallMtaani merch</span>.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/25">In partnership with</span>
+                <span className="rounded-full border border-[#FFD700]/20 bg-[#FFD700]/8 px-3 py-1 text-[10px] font-black text-[#FFD700]/70">credoFaster</span>
+              </div>
+            </div>
+
+            {/* Right — reward preview cards */}
+            <div className="grid grid-cols-3 gap-2 sm:w-auto sm:gap-3">
+              {[
+                { emoji: "📱", label: "Airtime",     sub: "from 2,500 MTC",  color: "border-blue-500/20  bg-blue-500/5",  tc: "text-blue-400" },
+                { emoji: "🌐", label: "Data Bundle", sub: "from 2,000 MTC",  color: "border-green-500/20 bg-green-500/5", tc: "text-green-400" },
+                { emoji: "👕", label: "BM Merch",    sub: "from 10,000 MTC", color: "border-[#FFD700]/20 bg-[#FFD700]/5", tc: "text-[#FFD700]" },
+              ].map(r => (
+                <Link key={r.label} href="/store"
+                  className={`group flex flex-col items-center rounded-xl border p-3 text-center transition-all hover:-translate-y-0.5 hover:brightness-110 sm:p-4 ${r.color}`}>
+                  <span className="mb-1.5 text-2xl">{r.emoji}</span>
+                  <p className={`text-[10px] font-black uppercase tracking-wide ${r.tc}`}>{r.label}</p>
+                  <p className="mt-0.5 text-[9px] text-white/30">{r.sub}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA bar */}
+          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            <Link href="/store"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#FFD700] py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_24px_rgba(255,214,0,0.2)] transition-all hover:shadow-[0_0_36px_rgba(255,214,0,0.35)] active:scale-[0.98] sm:flex-none sm:px-8">
+              🎁 View All Rewards
+            </Link>
+            <Link href="/store"
+              className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/4 py-3 text-xs font-black uppercase tracking-widest text-white/50 transition-all hover:bg-white/8 hover:text-white sm:px-6">
+              Check My MTC Balance
+            </Link>
+            <div className="hidden flex-1 sm:block" />
+            <div className="flex flex-wrap justify-center gap-2 sm:justify-end">
+              {["Predict Matches +50", "Win a Duel +200", "Daily Login +50", "Join Debate +30"].map(a => (
+                <span key={a} className="rounded-full border border-white/8 bg-white/4 px-2.5 py-1 text-[9px] font-bold text-white/30">{a} MTC</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─────────────────── LATEST ARTICLES SCROLLER ──────────────────────── */}
       {news.filter(a => a.isInternal).length > 0 && (
         <section className="relative border-b border-white/6 bg-[#050709] py-4">
