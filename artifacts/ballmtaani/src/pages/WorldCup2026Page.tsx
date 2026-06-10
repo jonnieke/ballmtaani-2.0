@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { CalendarDays, ChevronRight, MapPin, Shield, Sparkles, Trophy, Users, Zap } from "lucide-react";
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
+import WC26TeamExplorer from "../components/WC26TeamExplorer";
 import {
   fetchTournamentFixtures,
   fetchTournamentStandings,
@@ -438,6 +439,17 @@ export default function WorldCup2026Page() {
               No Kenya at WC26 — but Harambee Stars are building. Back an African team and keep the receipt when they go deep.
             </p>
           </div>
+        </section>
+
+        {/* ── TEAM EXPLORER ── */}
+        <section className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-black uppercase tracking-widest text-white">Explore Teams</h2>
+            <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
+              Search by name · View fixtures · Check squads and stadiums
+            </p>
+          </div>
+          <WC26TeamExplorer />
         </section>
 
         {/* ── GROUP STAGE ── */}
