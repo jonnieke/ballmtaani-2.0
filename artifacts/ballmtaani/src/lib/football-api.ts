@@ -10,6 +10,28 @@
 const API_BASE_URL = '/api/football';
 const API_KEY = 'proxied'; // actual key lives on the server only
 
+// ─── Request throttle: max N concurrent + 150ms gap ─────────
+// API-Sports Ultra allows 500 req/min but bursting 16 parallel
+// requests on page load still trips the per-second guard.
+// This helper runs tasks in batches of `concurrency` with a small
+// inter-batch delay so we never flood the API in one tick.
+async function throttledAll<T>(
+  tasks: (() => Promise<T>)[],
+  concurrency = 3,
+  delayMs = 150
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < tasks.length; i += concurrency) {
+    const batch = tasks.slice(i, i + concurrency);
+    const batchResults = await Promise.all(batch.map(t => t()));
+    results.push(...batchResults);
+    if (i + concurrency < tasks.length) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return results;
+}
+
 // ─── Major League IDs (API-Football) ────────────────────────
 export const MAJOR_LEAGUE_IDS = {
   "Premier League": 39,
@@ -352,10 +374,14 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
     [61, 2025],  // Ligue 1 2025-26
   ];
 
-  const results = await Promise.all(
+  // Throttle to 3 concurrent + 150ms between batches — avoids per-second
+  // rate-limit on API-Sports even on the Ultra plan.
+  const results = await throttledAll(
     leagueSeasons.map(([leagueId, season]) =>
-      apiFetch(`/fixtures?league=${leagueId}&season=${season}&next=5`).catch(() => null)
-    )
+      () => apiFetch(`/fixtures?league=${leagueId}&season=${season}&next=5`).catch(() => null)
+    ),
+    3,
+    150
   );
 
   const allFixtures: any[] = [];
@@ -511,10 +537,12 @@ export async function fetchRecentMatches(): Promise<any[]> {
     [61, 2025],  // Ligue 1 2025-26
   ];
 
-  const results = await Promise.all(
+  const results = await throttledAll(
     leagueSeasons.map(([leagueId, season]) =>
-      apiFetch(`/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`).catch(() => null)
-    )
+      () => apiFetch(`/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`).catch(() => null)
+    ),
+    3,
+    150
   );
 
   const allFixtures: any[] = [];
@@ -594,10 +622,12 @@ export async function fetchAllStandings(): Promise<Record<string, StandingEntry[
 
   const result: Record<string, StandingEntry[]> = {};
 
-  // Fetch all 5 leagues in parallel
+  // Throttle standings — 7 leagues, 3 at a time to stay under rate limit
   const entries = Object.entries(leagueMap);
-  const standings = await Promise.all(
-    entries.map(([, id]) => fetchStandings(id))
+  const standings = await throttledAll(
+    entries.map(([, id]) => () => fetchStandings(id)),
+    3,
+    150
   );
 
   entries.forEach(([name], idx) => {
