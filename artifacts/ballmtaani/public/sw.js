@@ -1,10 +1,11 @@
-// BallMtaani Service Worker v9
-// KEY CHANGE from v8: never manufacture fake 503 responses. On any fetch
-// failure, fall through to the real network error so the browser/app can
-// handle it, instead of synthesizing a 503 that broke SPA routes.
+// BallMtaani Service Worker v10
+// KEY CHANGE from v9: fixed offline fallback — caches.match() returns a
+// promise (always truthy), so the inline offline page was unreachable and
+// navigations rejected with a network error when offline. Also handle fetch
+// rejections on the cache-first path instead of leaving them uncaught.
 // index.html is NEVER cached — every navigation fetches fresh.
 
-const CACHE_NAME = 'ballmtaani-v9';
+const CACHE_NAME = 'ballmtaani-v10';
 
 // Only cache true static assets that never change between deploys
 const STATIC_ASSETS = [
@@ -58,13 +59,13 @@ self.addEventListener('fetch', (event) => {
   // Fall back to a simple offline page only if network is completely unavailable.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request, { cache: 'no-store' }).catch(() => {
+      fetch(request, { cache: 'no-store' }).catch(() =>
         // True offline fallback — only if network is down
-        return caches.match('/index.html') || new Response(
+        caches.match('/index.html').then((cached) => cached || new Response(
           '<html><body style="background:#070a0f;color:white;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:12px"><div style="font-size:2rem">⚽</div><div style="font-weight:bold;letter-spacing:0.2em;text-transform:uppercase">BallMtaani</div><div style="opacity:0.4;font-size:0.8rem">No internet connection</div></body></html>',
           { headers: { 'Content-Type': 'text/html' } }
-        );
-      })
+        ))
+      )
     );
     return;
   }
@@ -72,8 +73,11 @@ self.addEventListener('fetch', (event) => {
   // For everything else (manifest, logo, etc.) — cache-first.
   // On a cache miss, fetch from network. Do NOT manufacture a fake 503 on
   // failure — just let the real network response/error pass through.
+  // Response.error() is a genuine network-error response (not a fake status),
+  // so app code sees the same failure it would without the SW — just without
+  // an uncaught promise rejection in the console.
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request))
+    caches.match(request).then((cached) => cached || fetch(request)).catch(() => Response.error())
   );
 });
 
