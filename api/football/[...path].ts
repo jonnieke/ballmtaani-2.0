@@ -51,43 +51,6 @@ export default async function handler(req: any, res: any) {
     process.env.API_FOOTBALL_KEY ||
     process.env.VITE_API_FOOTBALL_KEY;
 
-  // Temporary diagnostics: /api/football/status?_debug=key reports how the
-  // key arrives in this runtime (length + edge chars only, never the value)
-  if (req.query._debug === "key") {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Cache-Control", "no-store");
-    res.end(JSON.stringify({
-      present: Boolean(key),
-      length: key ? key.length : 0,
-      head: key ? key.slice(0, 2) : "",
-      tail: key ? key.slice(-2) : "",
-      firstCharCode: key ? key.charCodeAt(0) : null,
-      source: process.env.API_FOOTBALL_KEY ? "API_FOOTBALL_KEY" : (process.env.VITE_API_FOOTBALL_KEY ? "VITE_API_FOOTBALL_KEY" : "none"),
-    }));
-    return;
-  }
-
-  // Temporary diagnostics: call upstream /status from this runtime and report
-  // the raw verdict plus the exact URL we would have hit for this request
-  if (req.query._debug === "upstream") {
-    try {
-      const probe = await fetch("https://v3.football.api-sports.io/status", {
-        headers: { "x-apisports-key": String(key) },
-      });
-      const body = await probe.text();
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "application/json");
-      res.setHeader("Cache-Control", "no-store");
-      res.end(JSON.stringify({ upstreamStatus: probe.status, upstreamBody: body.slice(0, 600), wouldFetch: upstream }));
-    } catch (err: any) {
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ probeError: String(err?.message || err), wouldFetch: upstream }));
-    }
-    return;
-  }
-
   if (!key) {
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
