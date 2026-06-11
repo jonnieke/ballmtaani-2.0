@@ -185,6 +185,9 @@ export interface LiveMatch {
   possession?: string;
   scorers?: string;
   status: string;
+  venue?: string;
+  time?: string;
+  date?: string;
 }
 
 export interface StandingEntry {
@@ -310,7 +313,8 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
     leagueLogo: item.league.logo,
     status: item.fixture.status.short,
     possession: "N/A",
-    scorers: ""
+    scorers: "",
+    venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
   }));
 }
 
@@ -410,6 +414,7 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
       leagueLogo: item.league.logo,
       date: formatRelativeDate(item.fixture.date),
       kickoffAt: new Date(item.fixture.date).getTime(),
+      venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
     }));
     allFixtures.push(...mapped);
   }
@@ -530,6 +535,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const toStr = toDate.toISOString().split('T')[0];
 
   const leagueSeasons: [number, number][] = [
+    [1, 2026],   // World Cup 2026
     [39, 2025],  // Premier League 2025-26
     [140, 2025], // La Liga 2025-26
     [135, 2025], // Serie A 2025-26
@@ -572,6 +578,8 @@ export async function fetchRecentMatches(): Promise<any[]> {
         hour12: true,
         timeZone: 'Africa/Nairobi'
       }),
+      status: item.fixture.status?.short || "FT",
+      venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
       timestamp: new Date(item.fixture.date).getTime()
     }));
     allFixtures.push(...mapped);

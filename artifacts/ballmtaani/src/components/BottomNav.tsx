@@ -12,7 +12,7 @@ export default function BottomNav() {
   const navItems = [
     { href: "/home", label: "Home", icon: Home },
     { href: "/matches", label: "Matches", icon: Trophy },
-    { href: "/rapid-fire", label: "Arcade", icon: LayoutGrid },
+    { href: "/fun-zone", label: "Arcade", icon: LayoutGrid },
     showWC26
       ? { href: "/world-cup-2026", label: now >= wc26Start ? "WC26 Live" : "WC26", icon: Star, highlight: true }
       : { href: "/rivalries", label: "Duels", icon: Swords },

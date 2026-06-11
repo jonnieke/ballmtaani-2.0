@@ -32,6 +32,7 @@ const LiveCenterPage     = lazy(() => import("./pages/LiveCenterPage"));
 const LiveCenterIndexPage= lazy(() => import("./pages/LiveCenterIndexPage"));
 const RivalriesPage      = lazy(() => import("./pages/RivalriesPage"));
 const RapidFirePage      = lazy(() => import("./pages/RapidFirePage"));
+const FunZonePage        = lazy(() => import("./pages/FunZonePage"));
 const TriviaPage         = lazy(() => import("./pages/TriviaPage"));
 const WarRoomPage        = lazy(() => import("./pages/WarRoomPage"));
 const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
@@ -51,6 +52,7 @@ const AdminRewardsPage   = lazy(() => import("./pages/AdminRewardsPage"));
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
 const SearchPage         = lazy(() => import("./pages/SearchPage"));
 const NewsPage           = lazy(() => import("./pages/NewsPage"));
+const VideosPage         = lazy(() => import("./pages/VideosPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
@@ -134,6 +136,7 @@ function AppShell() {
             <Route path="/live-center/:id" component={LiveCenterPage} />
             <Route path="/rivalries" component={RivalriesPage} />
             <Route path="/rapid-fire" component={RapidFirePage} />
+            <Route path="/fun-zone" component={FunZonePage} />
             <Route path="/war-room" component={WarRoomPage} />
             <Route path="/trivia" component={TriviaPage} />
             <Route path="/diagnostics" component={DiagnosticsPage} />
@@ -153,6 +156,7 @@ function AppShell() {
             <Route path="/admin/analytics" component={AdminAnalyticsPage} />
             <Route path="/search" component={SearchPage} />
             <Route path="/news" component={NewsPage} />
+            <Route path="/videos" component={VideosPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>

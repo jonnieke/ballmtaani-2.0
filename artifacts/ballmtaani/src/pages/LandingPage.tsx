@@ -84,7 +84,7 @@ const FEATURE_LINKS = [
   { href: "/mchambuzi-halisi", label: "Mchambuzi", sub: "Ask the analyst", icon: Sparkles },
   { href: "/predictions", label: "Predictions", sub: "Make your call", icon: Goal },
   { href: "/market-watch", label: "Market Watch", sub: "Signals, not betting", icon: ShieldCheck },
-  { href: "/rapid-fire", label: "Rapid Fire", sub: "Fan votes", icon: Zap },
+  { href: "/fun-zone", label: "Fun Zone", sub: "Games & quizzes", icon: Zap },
   { href: "/fan-zones", label: "Fan Zones", sub: "Club rooms", icon: Users },
 ];
 

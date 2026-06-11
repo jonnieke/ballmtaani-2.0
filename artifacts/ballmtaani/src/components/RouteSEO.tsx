@@ -31,6 +31,11 @@ const SEO_ROUTES: Record<string, {
     description: "Settle football rivalries with fan duels, club pride battles and Kenyan matchday banter.",
     keywords: ["football rivalries", "fan duels", "Kenyan football banter", "BallMtaani rivalries"],
   },
+  "/fun-zone": {
+    title: "Fun Zone | BallMtaani Arcade — Quizzes, Duels & Predictions",
+    description: "Football trivia, rapid-fire debates, fan duels, AI take ratings and match predictions — free games that earn MTC on BallMtaani.",
+    keywords: ["football games Kenya", "football trivia", "fan duels", "football predictions game", "BallMtaani arcade"],
+  },
   "/rapid-fire": {
     title: "Rapid Fire Football Debates | BallMtaani",
     description: "Vote fast on football debates, player comparisons and matchday arguments built for Kenyan fans.",
