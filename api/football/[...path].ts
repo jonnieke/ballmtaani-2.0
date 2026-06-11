@@ -59,8 +59,10 @@ export default async function handler(req: any, res: any) {
 
     // Check for API-level errors (rate-limit, token errors, etc.)
     // Do NOT cache these — they are transient and should be retried fresh
-    const hasErrors = data?.errors &&
-      (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0);
+    const hasErrors = (data?.errors &&
+      (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0)) ||
+      // Auth/quota errors come back in a legacy shape: {"api":{"error":"..."}}
+      Boolean(data?.api?.error);
 
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 200;

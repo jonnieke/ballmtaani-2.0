@@ -254,7 +254,8 @@ export default function HomePage() {
   const handleVideoUnavailable = (id: string) => setBlockedVideoIds(new Set(markVideoBlocked(id)));
 
   const liveMatch     = liveMatches[0] || null;
-  const nextFixture   = upcomingFixtures[0] || WC26_OPENER;
+  // The hardcoded opener is only a valid fallback until it has kicked off
+  const nextFixture   = upcomingFixtures[0] || (Date.now() < WC26_OPENER.kickoffAt ? WC26_OPENER : null);
   const lastResult    = recentMatches[0] || null;
   const featuredMatch = liveMatch || nextFixture;
   const isMatchLive   = !!liveMatch;
