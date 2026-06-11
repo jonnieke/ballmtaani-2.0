@@ -60,6 +60,26 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  // Temporary diagnostics: call upstream /status from this runtime and report
+  // the raw verdict plus the exact URL we would have hit for this request
+  if (req.query._debug === "upstream") {
+    try {
+      const probe = await fetch("https://v3.football.api-sports.io/status", {
+        headers: { "x-apisports-key": String(key) },
+      });
+      const body = await probe.text();
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "no-store");
+      res.end(JSON.stringify({ upstreamStatus: probe.status, upstreamBody: body.slice(0, 600), wouldFetch: upstream }));
+    } catch (err: any) {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ probeError: String(err?.message || err), wouldFetch: upstream }));
+    }
+    return;
+  }
+
   if (!key) {
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
