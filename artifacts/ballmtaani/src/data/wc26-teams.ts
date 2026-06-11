@@ -39,29 +39,29 @@ export interface WC26Stadium {
   note?: string;
 }
 
-// ─── Stadiums ────────────────────────────────────────────────
+// --- Stadiums ------------------------------------------------
 export const WC26_STADIUMS: WC26Stadium[] = [
-  { name: "MetLife Stadium",       city: "East Rutherford, NJ", country: "USA",    capacity: 82500, matchCount: 8,  finalVenue: true,  image: "https://images.unsplash.com/photo-1508098682722-e99c643e7f0b?w=600&q=80&auto=format&fit=crop", note: "FINAL — Jul 19" },
-  { name: "AT&T Stadium",          city: "Arlington, TX",        country: "USA",    capacity: 80000, matchCount: 7,  finalVenue: false, image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=600&q=80&auto=format&fit=crop" },
-  { name: "SoFi Stadium",          city: "Inglewood, CA",        country: "USA",    capacity: 70240, matchCount: 7,  finalVenue: false, image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&q=80&auto=format&fit=crop" },
-  { name: "Hard Rock Stadium",     city: "Miami Gardens, FL",    country: "USA",    capacity: 65326, matchCount: 7,  finalVenue: false, image: "https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=600&q=80&auto=format&fit=crop" },
-  { name: "Levi's Stadium",        city: "Santa Clara, CA",      country: "USA",    capacity: 68500, matchCount: 7,  finalVenue: false, image: "https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=600&q=80&auto=format&fit=crop" },
-  { name: "Lincoln Financial Field",city: "Philadelphia, PA",    country: "USA",    capacity: 69796, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=600&q=80&auto=format&fit=crop" },
-  { name: "Arrowhead Stadium",     city: "Kansas City, MO",      country: "USA",    capacity: 76416, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=600&q=80&auto=format&fit=crop" },
-  { name: "Gillette Stadium",      city: "Foxborough, MA",       country: "USA",    capacity: 65878, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?w=600&q=80&auto=format&fit=crop" },
-  { name: "Lumen Field",           city: "Seattle, WA",          country: "USA",    capacity: 72000, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1595436277006-5d2a5ccb2fbb?w=600&q=80&auto=format&fit=crop" },
-  { name: "NRG Stadium",           city: "Houston, TX",          country: "USA",    capacity: 72220, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?w=600&q=80&auto=format&fit=crop" },
-  { name: "Mercedes-Benz Stadium", city: "Atlanta, GA",          country: "USA",    capacity: 71000, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=600&q=80&auto=format&fit=crop" },
-  { name: "BMO Field",             city: "Toronto",              country: "Canada", capacity: 45000, matchCount: 7,  finalVenue: false, image: "https://images.unsplash.com/photo-1598901847919-b45a4f93dbca?w=600&q=80&auto=format&fit=crop" },
-  { name: "BC Place",              city: "Vancouver",            country: "Canada", capacity: 54500, matchCount: 7,  finalVenue: false, image: "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=600&q=80&auto=format&fit=crop" },
-  { name: "Estadio Azteca",        city: "Mexico City",          country: "Mexico", capacity: 87000, matchCount: 8,  finalVenue: false, note: "Opening Match", image: "https://images.unsplash.com/photo-1551958219-acbc595d9e99?w=600&q=80&auto=format&fit=crop" },
-  { name: "Estadio Akron",         city: "Guadalajara",          country: "Mexico", capacity: 49850, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1583425423977-9b1b87c80c0c?w=600&q=80&auto=format&fit=crop" },
-  { name: "Estadio BBVA",          city: "Monterrey",            country: "Mexico", capacity: 51350, matchCount: 6,  finalVenue: false, image: "https://images.unsplash.com/photo-1576406806742-29d1c70c6c51?w=600&q=80&auto=format&fit=crop" },
+  { name: "MetLife Stadium",         city: "East Rutherford, NJ", country: "USA",    capacity: 82500, matchCount: 8, finalVenue: true,  image: "/stadiums/metlife.png",      note: "FINAL  -  Jul 19" },
+  { name: "Estadio Azteca",          city: "Mexico City",          country: "Mexico", capacity: 87000, matchCount: 8, finalVenue: false, image: "/stadiums/azteca.png",       note: "Opening Match" },
+  { name: "AT&T Stadium",            city: "Arlington, TX",        country: "USA",    capacity: 80000, matchCount: 7, finalVenue: false, image: "/stadiums/att.png" },
+  { name: "SoFi Stadium",            city: "Inglewood, CA",        country: "USA",    capacity: 70240, matchCount: 7, finalVenue: false, image: "/stadiums/sofi.png" },
+  { name: "Hard Rock Stadium",       city: "Miami Gardens, FL",    country: "USA",    capacity: 65326, matchCount: 7, finalVenue: false, image: "/stadiums/hardrock.png" },
+  { name: "Levi's Stadium",          city: "Santa Clara, CA",      country: "USA",    capacity: 68500, matchCount: 7, finalVenue: false, image: "/stadiums/levis.png" },
+  { name: "BMO Field",               city: "Toronto",              country: "Canada", capacity: 45000, matchCount: 7, finalVenue: false, image: "/stadiums/bmo.png" },
+  { name: "BC Place",                city: "Vancouver",            country: "Canada", capacity: 54500, matchCount: 7, finalVenue: false, image: "/stadiums/bcplace.png" },
+  { name: "Lincoln Financial Field", city: "Philadelphia, PA",     country: "USA",    capacity: 69796, matchCount: 6, finalVenue: false, image: "/stadiums/lincoln.png" },
+  { name: "Arrowhead Stadium",       city: "Kansas City, MO",      country: "USA",    capacity: 76416, matchCount: 6, finalVenue: false, image: "/stadiums/arrowhead.png" },
+  { name: "Gillette Stadium",        city: "Foxborough, MA",       country: "USA",    capacity: 65878, matchCount: 6, finalVenue: false, image: "/stadiums/gillette.png" },
+  { name: "Lumen Field",             city: "Seattle, WA",          country: "USA",    capacity: 72000, matchCount: 6, finalVenue: false, image: "/stadiums/lumen.png" },
+  { name: "NRG Stadium",             city: "Houston, TX",          country: "USA",    capacity: 72220, matchCount: 6, finalVenue: false, image: "/stadiums/nrg.png" },
+  { name: "Mercedes-Benz Stadium",   city: "Atlanta, GA",          country: "USA",    capacity: 71000, matchCount: 6, finalVenue: false, image: "/stadiums/mercedesbenz.png" },
+  { name: "Estadio Akron",           city: "Guadalajara",          country: "Mexico", capacity: 49850, matchCount: 6, finalVenue: false, image: "/stadiums/akron.png" },
+  { name: "Estadio BBVA",            city: "Monterrey",            country: "Mexico", capacity: 51350, matchCount: 6, finalVenue: false, image: "/stadiums/bbva.png" },
 ];
 
-// ─── Teams ───────────────────────────────────────────────────
+// --- Teams ---------------------------------------------------
 export const WC26_TEAMS: WC26TeamData[] = [
-  // ── GROUP A ──
+  // -- GROUP A --
   {
     name: "Mexico", flag: "🇲🇽", logo: "https://media.api-sports.io/flags/mx.svg",
     group: "A", confederation: "CONCACAF",
@@ -131,7 +131,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP B ──
+  // -- GROUP B --
   {
     name: "Canada", flag: "🇨🇦", logo: "https://media.api-sports.io/flags/ca.svg",
     group: "B", confederation: "CONCACAF",
@@ -201,7 +201,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP C ──
+  // -- GROUP C --
   {
     name: "Brazil", flag: "🇧🇷", logo: "https://media.api-sports.io/flags/br.svg",
     group: "C", confederation: "CONMEBOL",
@@ -271,7 +271,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP D ──
+  // -- GROUP D --
   {
     name: "Argentina", flag: "🇦🇷", logo: "https://media.api-sports.io/flags/ar.svg",
     group: "D", confederation: "CONMEBOL",
@@ -341,7 +341,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP E ──
+  // -- GROUP E --
   {
     name: "France", flag: "🇫🇷", logo: "https://media.api-sports.io/flags/fr.svg",
     group: "E", confederation: "UEFA",
@@ -411,7 +411,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP F ──
+  // -- GROUP F --
   {
     name: "Netherlands", flag: "🇳🇱", logo: "https://media.api-sports.io/flags/nl.svg",
     group: "F", confederation: "UEFA",
@@ -481,7 +481,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP G ──
+  // -- GROUP G --
   {
     name: "Portugal", flag: "🇵🇹", logo: "https://media.api-sports.io/flags/pt.svg",
     group: "G", confederation: "UEFA",
@@ -551,7 +551,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── GROUP H ──
+  // -- GROUP H --
   {
     name: "Senegal", flag: "🇸🇳", logo: "https://media.api-sports.io/flags/sn.svg",
     group: "H", confederation: "CAF",
@@ -638,7 +638,7 @@ export const WC26_TEAMS: WC26TeamData[] = [
     ],
   },
 
-  // ── Additional teams (simplified) ──
+  // -- Additional teams (simplified) --
   {
     name: "Italy", flag: "🇮🇹", logo: "https://media.api-sports.io/flags/it.svg",
     group: "G", confederation: "UEFA",

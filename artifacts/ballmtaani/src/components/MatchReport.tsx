@@ -15,17 +15,18 @@ export default function MatchReport({ matchId, homeTeam, awayTeam }: { matchId: 
 
   useEffect(() => {
     if (!supabase || !matchId) return;
-    supabase.from("match_reports").select("summary, goals, standout_players, stats").eq("match_id", matchId).single()
-      .then(({ data }) => {
-        if (data) setReport({
-          summary: data.summary,
-          goals: data.goals || [],
-          standoutPlayers: data.standout_players || [],
-          stats: data.stats || [],
-        });
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    void Promise.resolve(
+      supabase.from("match_reports").select("summary, goals, standout_players, stats").eq("match_id", matchId).single()
+        .then(({ data }) => {
+          if (data) setReport({
+            summary: data.summary,
+            goals: data.goals || [],
+            standoutPlayers: data.standout_players || [],
+            stats: data.stats || [],
+          });
+          setLoading(false);
+        })
+    ).catch(() => setLoading(false));
   }, [matchId]);
 
   if (loading) return <div className="h-40 animate-pulse rounded-xl bg-white/5" />;

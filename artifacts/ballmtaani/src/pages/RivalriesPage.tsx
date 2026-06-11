@@ -305,14 +305,14 @@ export default function RivalriesPage() {
 
   const acceptDuel = async (id: string) => {
     setDuels(prev => prev.map(d => d.id === id ? { ...d, status: "active" } : d));
-    if (supabase && !id.startsWith("temp-")) await supabase.from("fan_duels").update({ status: "active" }).eq("id", id).catch(() => {});
+    if (supabase && !id.startsWith("temp-")) await Promise.resolve(supabase.from("fan_duels").update({ status: "active" }).eq("id", id)).catch(() => {});
   };
 
   const settleDuel = async (winner: string, score: string) => {
     if (!settlingDuel) return;
     const id = settlingDuel.id;
     setDuels(prev => prev.map(d => d.id === id ? { ...d, status: "completed", winner_name: winner, prediction: score } : d));
-    if (supabase && !id.startsWith("temp-")) await supabase.from("fan_duels").update({ status: "completed", winner_name: winner, prediction: score }).eq("id", id).catch(() => {});
+    if (supabase && !id.startsWith("temp-")) await Promise.resolve(supabase.from("fan_duels").update({ status: "completed", winner_name: winner, prediction: score }).eq("id", id)).catch(() => {});
     setSettlingDuel(null);
     loadDuels();
   };

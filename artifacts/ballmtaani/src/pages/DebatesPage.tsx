@@ -141,13 +141,14 @@ export default function DebatesPage() {
     if (!topic) return;
 
     setSubmitState("submitting");
-    const { error } = await supabase
-      .from("debate_suggestions")
-      .insert({ topic, status: "pending" })
-      .select()
-      .single()
+    const { error } = await Promise.resolve(
+      supabase
+        .from("debate_suggestions")
+        .insert({ topic, status: "pending" })
+        .select()
+        .single()
       // debate_suggestions may not exist yet — fall back to debates table with pending status
-      .catch(() => ({ error: { message: "fallback" }, data: null }));
+    ).catch(() => ({ error: { message: "fallback" }, data: null }));
 
     if (error) {
       // Fallback: insert into debates directly with pending_review status

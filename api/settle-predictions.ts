@@ -118,7 +118,10 @@ export default async function handler(req: any, res: any) {
   }
 
   // 2. Fetch actual scores from API-Football for finished matches
-  const matchIds = [...new Set(pending.map((p: any) => String(p.match_id)))];
+  // Filter to only numeric IDs — WC26 tournament predictions (e.g. "wc26-champion") are
+  // not real fixtures and must not be sent to the Football API
+  const allMatchIds = [...new Set(pending.map((p: any) => String(p.match_id)))];
+  const matchIds = allMatchIds.filter(id => /^\d+$/.test(id));
   const fixtureResults = await fetchFixtureResults(matchIds, apiKey);
 
   // 3. Settle each prediction and collect coin credits per user

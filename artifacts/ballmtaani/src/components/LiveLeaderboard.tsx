@@ -37,11 +37,15 @@ export default function LiveLeaderboard() {
             .select("id, username, display_name")
             .in("id", userIds);
 
-          setLeaders((profiles || []).map((p: any) => ({
-            id: p.id,
-            display_name: p.display_name || p.username || "Fan",
-            correct_this_week: counts[p.id] || 0
-          })));
+          setLeaders(
+            (profiles || []).map((p: any) => ({
+              id: p.id,
+              display_name: p.display_name || p.username || "Fan",
+              correct_this_week: counts[p.id] || 0
+            }))
+            // Sort descending so #1 is always the highest scorer
+            .sort((a, b) => b.correct_this_week - a.correct_this_week)
+          );
         }
       }
       setLoading(false);

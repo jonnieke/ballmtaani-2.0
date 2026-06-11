@@ -77,3 +77,9 @@ alter table public.prediction_stats enable row level security;
 create policy "Anyone can view prediction stats"
     on public.prediction_stats for select
     using (true);
+
+-- 4. PUSH ALERTS SENT TABLE (deduplication for kickoff notifications)
+create table if not exists public.push_alerts_sent (
+    fixture_id text primary key,
+    sent_at timestamptz default now()
+);

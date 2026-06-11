@@ -102,21 +102,22 @@ export default function AfricanFootballWidget({ compact = false }: Props) {
   useEffect(() => {
     if (!supabase) return;
     // Pull "wc26-africa" question picks to show who Kenyans are backing
-    supabase
-      .from("predictions")
-      .select("predicted_score")
-      .eq("match_id", "wc26-africa")
-      .then(({ data, error }) => {
-        if (error || !data) return;
-        const counts: Record<string, number> = {};
-        data.forEach((row: any) => {
-          const pick = row.predicted_score || "Unknown";
-          counts[pick] = (counts[pick] || 0) + 1;
-        });
-        setAfricaFans(counts);
-        setTotalVotes(data.length);
-      })
-      .catch(() => {});
+    void Promise.resolve(
+      supabase
+        .from("predictions")
+        .select("predicted_score")
+        .eq("match_id", "wc26-africa")
+        .then(({ data, error }) => {
+          if (error || !data) return;
+          const counts: Record<string, number> = {};
+          data.forEach((row: any) => {
+            const pick = row.predicted_score || "Unknown";
+            counts[pick] = (counts[pick] || 0) + 1;
+          });
+          setAfricaFans(counts);
+          setTotalVotes(data.length);
+        })
+    ).catch(() => {});
   }, []);
 
   const topAfricaPick = Object.entries(africaFans).sort(([, a], [, b]) => b - a)[0]?.[0];

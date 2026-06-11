@@ -70,7 +70,7 @@ export default function WC26TeamExplorer() {
               <div>
                 <h3 className="text-lg font-black text-white">{selectedTeam.name}</h3>
                 <p className="text-[10px] text-white/50">
-                  {selectedTeam.confederation} • Group {selectedTeam.group}
+                  {selectedTeam.confederation}  -  Group {selectedTeam.group}
                 </p>
               </div>
             </div>
@@ -102,11 +102,11 @@ export default function WC26TeamExplorer() {
                         <span className="text-[9px] text-white/50">MD {f.matchday}</span>
                       </div>
                       <div className="text-white/60">
-                        {f.date} · {f.time} EAT
+                        {f.date}  -  {f.time} EAT
                       </div>
                       <div className="mt-1 flex items-center gap-1 text-white/50">
                         <MapPin className="h-3 w-3" />
-                        {f.stadium} · {f.city}
+                        {f.stadium}  -  {f.city}
                       </div>
                     </div>
                   ))}

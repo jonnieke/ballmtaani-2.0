@@ -16,17 +16,27 @@ export default function PredictionConsensus({ matchId, homeTeam, awayTeam }: { m
   useEffect(() => {
     if (!supabase || !matchId) return;
     const loadConsensus = async () => {
-      const { data } = await supabase.from("predictions").select("result").eq("match_id", matchId).eq("status", "locked");
+      const { data } = await supabase.from("predictions").select("predicted_score").eq("match_id", matchId).eq("status", "locked");
       const preds = (data as any[]) || [];
-      const homeWin = preds.filter(p => p.result === "home").length;
-      const draw = preds.filter(p => p.result === "draw").length;
-      const awayWin = preds.filter(p => p.result === "away").length;
-      const total = preds.length || 1;
+
+      // Parse predicted_score (e.g. "2 - 1") to determine direction
+      function parseDirection(score: string): "home" | "draw" | "away" | null {
+        const m = String(score || "").match(/^(\d+)\s*[-–]\s*(\d+)$/);
+        if (!m) return null;
+        const h = parseInt(m[1], 10), a = parseInt(m[2], 10);
+        return h > a ? "home" : h < a ? "away" : "draw";
+      }
+
+      const directions = preds.map(p => parseDirection(p.predicted_score)).filter(Boolean);
+      const homeWin = directions.filter(d => d === "home").length;
+      const draw = directions.filter(d => d === "draw").length;
+      const awayWin = directions.filter(d => d === "away").length;
+      const total = directions.length || 1;
       setConsensus({
         homeWin: Math.round((homeWin / total) * 100),
         draw: Math.round((draw / total) * 100),
         awayWin: Math.round((awayWin / total) * 100),
-        totalPredictions: total,
+        totalPredictions: directions.length,
       });
       setLoading(false);
     };

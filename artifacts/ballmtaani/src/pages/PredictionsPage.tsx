@@ -167,25 +167,25 @@ export default function PredictionsPage() {
   useEffect(() => {
     if (!isLoggedIn || !user) return;
     const ids = WC26_QUESTIONS.map(q => q.id);
-    supabase.from("predictions")
-      .select("match_id, predicted_score")
-      .eq("user_id", user.id)
-      .in("match_id", ids)
-      .then(({ data, error }) => {
-        if (error || !data) return;
-        const picks: Record<string, string> = {};
-        const saved: Record<string, boolean> = {};
-        data.forEach((row: any) => {
-          picks[row.match_id] = row.predicted_score;
-          saved[row.match_id] = true;
-        });
-        setWc26Picks(picks);
-        setWc26Saved2(saved);
-      })
-      .catch(() => {
-        // Gracefully handle if predictions table doesn't exist yet
-        return;
-      });
+    void Promise.resolve(
+      supabase.from("predictions")
+        .select("match_id, predicted_score")
+        .eq("user_id", user.id)
+        .in("match_id", ids)
+        .then(({ data, error }) => {
+          if (error || !data) return;
+          const picks: Record<string, string> = {};
+          const saved: Record<string, boolean> = {};
+          data.forEach((row: any) => {
+            picks[row.match_id] = row.predicted_score;
+            saved[row.match_id] = true;
+          });
+          setWc26Picks(picks);
+          setWc26Saved2(saved);
+        })
+    ).catch(() => {
+      // Gracefully handle if predictions table doesn't exist yet
+    });
   }, [isLoggedIn, user]);
 
   const handleWC26Pick = async (questionId: string, pick: string) => {

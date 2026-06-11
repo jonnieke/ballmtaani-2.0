@@ -593,13 +593,13 @@ export default function LiveCenterPage() {
             </div>
 
             {/* Prediction Consensus */}
-            <PredictionConsensus matchId={fixtureId} homeTeam={match?.home} awayTeam={match?.away} />
+            <PredictionConsensus matchId={fixtureId ?? ""} homeTeam={match?.home} awayTeam={match?.away} />
 
             {/* Live Match Commentary */}
-            <MatchCommentary matchId={fixtureId} />
+            <MatchCommentary matchId={fixtureId ?? ""} />
 
             {/* Match Report (if available) */}
-            <MatchReport matchId={fixtureId} homeTeam={match?.home} awayTeam={match?.away} />
+            <MatchReport matchId={fixtureId ?? ""} homeTeam={match?.home} awayTeam={match?.away} />
 
             {/* Live Leaderboard */}
             <LiveLeaderboard />

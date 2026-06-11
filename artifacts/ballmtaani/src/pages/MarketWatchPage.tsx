@@ -141,22 +141,23 @@ export default function MarketWatchPage() {
   useEffect(() => {
     if (!supabase) { setSentimentLoading(false); return; }
     const wc26ids = ["wc26-champion", "wc26-africa", "wc26-shock", "wc26-horse", "wc26-kenya"];
-    supabase
-      .from("predictions")
-      .select("match_id, predicted_score")
-      .in("match_id", wc26ids)
-      .then(({ data, error }) => {
-        setSentimentLoading(false);
-        if (error || !data) return;
-        const counts: Record<string, Record<string, number>> = {};
-        data.forEach((row: any) => {
-          if (!counts[row.match_id]) counts[row.match_id] = {};
-          const pick = row.predicted_score || "Unknown";
-          counts[row.match_id][pick] = (counts[row.match_id][pick] || 0) + 1;
-        });
-        setSentiment(counts);
-      })
-      .catch(() => setSentimentLoading(false));
+    void Promise.resolve(
+      supabase
+        .from("predictions")
+        .select("match_id, predicted_score")
+        .in("match_id", wc26ids)
+        .then(({ data, error }) => {
+          setSentimentLoading(false);
+          if (error || !data) return;
+          const counts: Record<string, Record<string, number>> = {};
+          data.forEach((row: any) => {
+            if (!counts[row.match_id]) counts[row.match_id] = {};
+            const pick = row.predicted_score || "Unknown";
+            counts[row.match_id][pick] = (counts[row.match_id][pick] || 0) + 1;
+          });
+          setSentiment(counts);
+        })
+    ).catch(() => setSentimentLoading(false));
   }, []);
 
   // Champion picks — top 3

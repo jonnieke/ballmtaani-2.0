@@ -31,6 +31,7 @@ export default function WelcomeModal() {
       const t = setTimeout(() => setShow(true), 800);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [isLoggedIn]);
 
   const dismiss = () => {

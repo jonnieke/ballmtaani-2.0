@@ -21,12 +21,14 @@ export default function MatchCommentary({ matchId }: { matchId: string }) {
 
   useEffect(() => {
     if (!supabase || !matchId) return;
-    supabase.from("match_comments").select("*").eq("match_id", matchId).order("created_at", { ascending: false }).limit(50)
+    // Ascending order: oldest at top, newest at bottom
+    supabase.from("match_comments").select("*").eq("match_id", matchId).order("created_at", { ascending: true }).limit(50)
       .then(({ data }) => setComments((data as Comment[]) || []));
 
     const ch = supabase.channel(`match-${matchId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "match_comments", filter: `match_id=eq.${matchId}` },
-        (payload: any) => setComments(prev => [payload.new as Comment, ...prev]))
+        // Append new comments to end so newest is always at the bottom
+        (payload: any) => setComments(prev => [...prev, payload.new as Comment]))
       .subscribe();
 
     return () => { supabase.removeChannel(ch); };
@@ -99,7 +101,6 @@ export default function MatchCommentary({ matchId }: { matchId: string }) {
               placeholder="React to the match..."
               maxLength={280}
               className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-white/20 focus:border-white/20 focus:outline-none resize-none"
-              rows={1}
             />
             <button
               onClick={submitComment}

@@ -20,6 +20,14 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/** Generate a valid UUID-formatted test user ID from a numeric index.
+ *  Format: 00000000-0000-4000-8000-<12-char zero-padded index>
+ *  This satisfies Postgres UUID type constraints for load testing.
+ */
+function testUserId(userId: number): string {
+  return `00000000-0000-4000-8000-${userId.toString().padStart(12, "0")}`;
+}
+
 interface LoadTestConfig {
   concurrentUsers: number;
   duration: number; // seconds
@@ -95,23 +103,22 @@ async function simulateUser(
 
 async function testPrediction(userId: number) {
   const matchId = `match-${Math.floor(Math.random() * 100)}`;
-  const result = ["home", "draw", "away"][Math.floor(Math.random() * 3)];
+  const uid = testUserId(userId);
 
   // Check existing prediction
   const { data: existing } = await supabase
     .from("predictions")
     .select("id")
     .eq("match_id", matchId)
-    .eq("user_id", `user-${userId}`)
+    .eq("user_id", uid)
     .single();
 
   if (!existing) {
     // Insert prediction
     await supabase.from("predictions").insert({
       match_id: matchId,
-      user_id: `user-${userId}`,
+      user_id: uid,
       predicted_score: `${Math.floor(Math.random() * 5)}-${Math.floor(Math.random() * 5)}`,
-      result,
       status: "locked",
     });
   }
@@ -122,7 +129,7 @@ async function testComment(userId: number) {
 
   await supabase.from("match_comments").insert({
     match_id: matchId,
-    user_id: `user-${userId}`,
+    user_id: testUserId(userId),
     user_name: `Fan${userId}`,
     text: `Test comment ${Date.now()}`,
     reaction: ["goal", "save", "tackle"][Math.floor(Math.random() * 3)],
@@ -148,7 +155,7 @@ async function testPoll(userId: number) {
 
       await supabase.from("poll_votes").insert({
         poll_id: poll.id,
-        user_id: `user-${userId}`,
+        user_id: testUserId(userId),
         option_id: selectedOption.id,
       });
     }
@@ -170,7 +177,7 @@ async function testDebateFlag(userId: number) {
     try {
       await supabase.from("debate_flags").insert({
         debate_id: debate.id,
-        user_id: `user-${userId}`,
+        user_id: testUserId(userId),
         reason,
         details: `Test flag at ${new Date().toISOString()}`,
       });
