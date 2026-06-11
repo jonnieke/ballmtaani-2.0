@@ -43,6 +43,23 @@ export default async function handler(req: any, res: any) {
     process.env.API_FOOTBALL_KEY ||
     process.env.VITE_API_FOOTBALL_KEY;
 
+  // Temporary diagnostics: /api/football/status?_debug=key reports how the
+  // key arrives in this runtime (length + edge chars only, never the value)
+  if (req.query._debug === "key") {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(JSON.stringify({
+      present: Boolean(key),
+      length: key ? key.length : 0,
+      head: key ? key.slice(0, 2) : "",
+      tail: key ? key.slice(-2) : "",
+      firstCharCode: key ? key.charCodeAt(0) : null,
+      source: process.env.API_FOOTBALL_KEY ? "API_FOOTBALL_KEY" : (process.env.VITE_API_FOOTBALL_KEY ? "VITE_API_FOOTBALL_KEY" : "none"),
+    }));
+    return;
+  }
+
   if (!key) {
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
