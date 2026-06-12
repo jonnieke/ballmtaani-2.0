@@ -16,19 +16,29 @@ export interface SportyVideo {
   membersOnly?: boolean;
 }
 
+// SportyTV streams several sports; the homepage player is football-first
+const NON_FOOTBALL = /basket|liga acb|nba|euroleague|mma|pfl|ufc|boxing|wrestl|tennis|rugby|cricket|darts|nfl|baseball|hockey|esport|f1|formula/i;
+
+export function isFootballVideo(v: SportyVideo): boolean {
+  return !NON_FOOTBALL.test(v.title);
+}
+
 /**
- * Pick the hero stream: a free live stream first, otherwise the next free
- * scheduled stream by start time (YouTube's embed shows its own countdown
- * waiting room for those), otherwise the latest regular video.
+ * Pick the hero stream, football first: a free live football stream, then the
+ * next free scheduled football stream by start time (YouTube's embed shows its
+ * own countdown waiting room), then any other free live/scheduled stream, then
+ * the latest regular video.
  */
 export function pickHeroStream(videos: SportyVideo[]): SportyVideo | null {
   const free = videos.filter(v => !v.membersOnly);
-  const live = free.find(v => v.isLive);
-  if (live) return live;
-  const upcoming = free
-    .filter(v => v.isUpcoming && v.startsAt)
-    .sort((a, b) => (a.startsAt || 0) - (b.startsAt || 0));
-  if (upcoming.length) return upcoming[0];
+  const byStart = (a: SportyVideo, b: SportyVideo) => (a.startsAt || 0) - (b.startsAt || 0);
+
+  for (const pool of [free.filter(isFootballVideo), free]) {
+    const live = pool.find(v => v.isLive);
+    if (live) return live;
+    const upcoming = pool.filter(v => v.isUpcoming && v.startsAt).sort(byStart);
+    if (upcoming.length) return upcoming[0];
+  }
   return free.find(v => !v.isUpcoming) || videos[0] || null;
 }
 
