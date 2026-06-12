@@ -343,6 +343,40 @@ export default function WorldCup2026Page() {
 
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
 
+        {/* -- GROUP STAGE -- */}
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">Group Stage</h2>
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
+                {hasGroups ? "Live standings  -  Top 2 advance" : "Kicks off June 11  -  Tables update in real time"}
+              </p>
+            </div>
+            {!hasGroups && (
+              <div className="rounded-full border border-[#FFD700]/25 bg-[#FFD700]/8 px-3 py-1.5">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
+                  {cd.d}d {cd.h}h away
+                </span>
+              </div>
+            )}
+          </div>
+
+          {hasGroups ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(WC26_GROUPS).map(([name, rows]) => (
+                  <GroupTable key={name} name={name} rows={rows} />
+                ))}
+              </div>
+              <p className="text-center text-[10px] text-white/30">Live standings update as the tournament progresses  -  Tap to make group stage predictions</p>
+            </div>
+          )}
+        </section>
+
         {/* -- WC26 KNOWLEDGE BASE -- */}
         <section className="mb-8">
           <div className="mb-4 flex items-end justify-between gap-4">
@@ -521,40 +555,6 @@ export default function WorldCup2026Page() {
             </p>
           </div>
           <WC26TeamExplorer />
-        </section>
-
-        {/* -- GROUP STAGE -- */}
-        <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-black uppercase tracking-widest text-white">Group Stage</h2>
-              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {hasGroups ? "Live standings  -  Top 2 advance" : "Kicks off June 11  -  Tables update in real time"}
-              </p>
-            </div>
-            {!hasGroups && (
-              <div className="rounded-full border border-[#FFD700]/25 bg-[#FFD700]/8 px-3 py-1.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
-                  {cd.d}d {cd.h}h away
-                </span>
-              </div>
-            )}
-          </div>
-
-          {hasGroups ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {Object.entries(WC26_GROUPS).map(([name, rows]) => (
-                  <GroupTable key={name} name={name} rows={rows} />
-                ))}
-              </div>
-              <p className="text-center text-[10px] text-white/30">Live standings update as the tournament progresses  -  Tap to make group stage predictions</p>
-            </div>
-          )}
         </section>
 
         {/* -- STADIUMS SHOWCASE -- */}
