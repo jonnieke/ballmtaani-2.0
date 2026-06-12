@@ -34,6 +34,7 @@ async function throttledAll<T>(
 
 // ─── Major League IDs (API-Football) ────────────────────────
 export const MAJOR_LEAGUE_IDS = {
+  "FIFA World Cup": 1,
   "Premier League": 39,
   "La Liga": 140,
   "Serie A": 135,
@@ -326,7 +327,7 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
   if (!raw || !raw.length) return [];
 
   // 686 excluded — returns Czech teams not KPL. 288/332 excluded until verified.
-  const majorLeagues = new Set([2, 3, 12, 39, 140, 135, 78, 61]);
+  const majorLeagues = new Set([1, 2, 3, 12, 39, 140, 135, 78, 61]);
 
   return raw
     .filter((item: any) => majorLeagues.has(item.league?.id))
@@ -353,7 +354,7 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       kickoffAt: new Date(item.fixture.date).getTime(),
     }))
     .sort((a: any, b: any) => {
-      const priority: Record<number, number> = { 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
+      const priority: Record<number, number> = { 1:0, 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
       const pa = priority[a.leagueId] ?? 99;
       const pb = priority[b.leagueId] ?? 99;
       if (pa !== pb) return pa - pb;
