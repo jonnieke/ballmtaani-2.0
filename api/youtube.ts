@@ -93,7 +93,9 @@ async function fetchStreamsTab(): Promise<Video[]> {
           clientName: "WEB",
           clientVersion: "2.20240101.00.00",
           hl: "en",
-          gl: "US",
+          // gl=KE: SportyTV's streams are Africa-targeted; from US server IPs
+          // YouTube hides the upcoming items unless the geo context is Kenyan.
+          gl: "KE",
           timeZone: "UTC",
           utcOffsetMinutes: 0,
         },
