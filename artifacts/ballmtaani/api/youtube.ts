@@ -110,6 +110,8 @@ async function fetchStreamsTab(): Promise<Video[]> {
   const found = new Map<string, Video>();
   const walk = (node: any) => {
     if (!node || typeof node !== "object") return;
+
+    // Newer lockupViewModel shape
     const lv = node.lockupViewModel;
     if (lv?.contentId && !found.has(lv.contentId)) {
       const badges: string[] = [];
@@ -134,6 +136,37 @@ async function fetchStreamsTab(): Promise<Video[]> {
         });
       }
     }
+
+    // Older videoRenderer/gridVideoRenderer shape — some server IPs get this
+    // experiment bucket instead, with machine-readable upcomingEventData
+    const vr = node.videoRenderer || node.gridVideoRenderer;
+    if (vr?.videoId && !found.has(vr.videoId)) {
+      const title = (vr.title?.runs || []).map((r: any) => r.text).join("") || vr.title?.simpleText || "";
+      const startSecs = Number(vr.upcomingEventData?.startTime) || 0;
+      const startsAt = startSecs ? startSecs * 1000 : null;
+      const styles: string[] = [];
+      const collectStyles = (n: any) => {
+        if (!n || typeof n !== "object") return;
+        if (typeof n.style === "string") styles.push(n.style);
+        for (const v of Object.values(n)) collectStyles(v);
+      };
+      collectStyles(vr.thumbnailOverlays);
+      collectStyles(vr.badges);
+      const isLive = styles.some(s => /LIVE/i.test(s)) && !startsAt;
+      if (title) {
+        found.set(vr.videoId, {
+          id: vr.videoId,
+          title,
+          published: startsAt ? new Date(startsAt).toISOString() : "",
+          thumbnail: thumbOf(vr.videoId),
+          isLive,
+          isUpcoming: Boolean(startsAt),
+          startsAt,
+          membersOnly: looksMembersOnly(title, styles),
+        });
+      }
+    }
+
     for (const v of Object.values(node)) walk(v);
   };
   walk(data);
