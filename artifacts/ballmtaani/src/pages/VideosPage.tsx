@@ -5,6 +5,8 @@ import {
   fetchSportyVideos,
   getBlockedVideoIds,
   markVideoBlocked,
+  pickHeroStream,
+  formatStartTime,
   SPORTYTV_CHANNEL_URL,
   type SportyVideo,
 } from "../lib/youtube-api";
@@ -38,13 +40,22 @@ function VideoCard({ video, active, onPlay }: { video: SportyVideo; active: bool
             <Play className="h-5 w-5 translate-x-[1px] text-white" fill="currentColor" />
           </span>
         </div>
-        {video.isLive && (
+        {video.isLive ? (
           <span className="absolute left-2 top-2 flex items-center gap-1.5 rounded-md bg-[#B30000] px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Live
           </span>
+        ) : video.isUpcoming ? (
+          <span className="absolute left-2 top-2 rounded-md bg-[#FFD700] px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-black">
+            Upcoming
+          </span>
+        ) : null}
+        {video.membersOnly && (
+          <span className="absolute right-2 top-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-white/70 backdrop-blur-sm">
+            Members
+          </span>
         )}
-        <span className="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white/70 backdrop-blur-sm">
-          {timeAgo(video.published)}
+        <span className="absolute bottom-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white/80 backdrop-blur-sm tabular-nums">
+          {video.isUpcoming && video.startsAt ? formatStartTime(video.startsAt) : timeAgo(video.published)}
         </span>
       </div>
       <div className="p-3">
@@ -69,11 +80,13 @@ export default function VideosPage() {
     fetchSportyVideos().then(setVideos).finally(() => setLoading(false));
   }, []);
 
-  // Keep a playable video selected — also auto-advances if the current one gets blocked
+  // Keep a playable video selected — also auto-advances if the current one
+  // gets blocked. Default: free live stream > next free scheduled > latest.
   useEffect(() => {
     if (!playable.length) { setSelectedId(null); return; }
     if (!selectedId || !playable.some(v => v.id === selectedId)) {
-      setSelectedId((playable.find(v => v.isLive) || playable[0]).id);
+      const pick = pickHeroStream(playable);
+      if (pick) setSelectedId(pick.id);
     }
   }, [playable, selectedId]);
 
@@ -81,7 +94,10 @@ export default function VideosPage() {
 
   const selected = useMemo(() => playable.find(v => v.id === selectedId) || null, [playable, selectedId]);
   const liveVideos = playable.filter(v => v.isLive);
-  const highlights = playable.filter(v => !v.isLive);
+  const upcomingVideos = playable
+    .filter(v => v.isUpcoming && !v.isLive)
+    .sort((a, b) => (a.startsAt || Infinity) - (b.startsAt || Infinity));
+  const highlights = playable.filter(v => !v.isLive && !v.isUpcoming);
 
   const play = (id: string) => {
     setSelectedId(id);
@@ -135,11 +151,15 @@ export default function VideosPage() {
                 />
               </div>
               <div className="flex items-center gap-2 border-t border-white/8 px-4 py-3">
-                {selected.isLive && (
+                {selected.isLive ? (
                   <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-[#B30000] px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Live
                   </span>
-                )}
+                ) : selected.isUpcoming && selected.startsAt ? (
+                  <span className="shrink-0 rounded-md bg-[#FFD700] px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-black">
+                    Starts {formatStartTime(selected.startsAt)}
+                  </span>
+                ) : null}
                 <p className="truncate text-xs font-bold text-white/80">{selected.title}</p>
               </div>
             </div>
@@ -162,6 +182,20 @@ export default function VideosPage() {
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
               {liveVideos.map(v => <VideoCard key={v.id} video={v} active={v.id === selectedId} onPlay={() => play(v.id)} />)}
+            </div>
+          </section>
+        )}
+
+        {/* Upcoming streams */}
+        {upcomingVideos.length > 0 && (
+          <section className="mt-8">
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-[#FFD700]" />
+              <h2 className="text-xs font-black uppercase tracking-[0.24em] text-white/70">Upcoming Streams</h2>
+              <span className="rounded-full bg-[#FFD700]/15 px-2 py-0.5 text-[9px] font-black text-[#FFD700]">{upcomingVideos.length}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+              {upcomingVideos.map(v => <VideoCard key={v.id} video={v} active={v.id === selectedId} onPlay={() => play(v.id)} />)}
             </div>
           </section>
         )}

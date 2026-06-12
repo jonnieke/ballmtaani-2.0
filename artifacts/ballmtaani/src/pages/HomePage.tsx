@@ -6,7 +6,7 @@ import { Trophy, Users, MessageSquare, ChevronRight, Zap, Sparkles, Radio, Calen
 import { useMatches, useUpcomingFixtures, useRecentMatches, useLeaderboard } from "../hooks/useData";
 import { fetchTodaysFixtures, type LiveMatch } from "../lib/football-api";
 import { fetchFootballNews, fetchPartnerArticles, timeAgo, type NewsArticle } from "../lib/news-api";
-import { fetchSportyVideos, getBlockedVideoIds, markVideoBlocked, SPORTYTV_CHANNEL_URL, type SportyVideo } from "../lib/youtube-api";
+import { fetchSportyVideos, getBlockedVideoIds, markVideoBlocked, pickHeroStream, formatStartTime, SPORTYTV_CHANNEL_URL, type SportyVideo } from "../lib/youtube-api";
 import YouTubePlayer from "../components/YouTubePlayer";
 import { supabase } from "../lib/supabase";
 import TeamLogo from "../components/TeamLogo";
@@ -248,9 +248,10 @@ export default function HomePage() {
     venue: "Estadio Azteca, Mexico City",
   };
 
-  // Skip videos this viewer can't play (region-restricted or embed-disabled)
+  // Skip videos this viewer can't play (region-restricted or embed-disabled),
+  // then pick: free live stream > next free scheduled stream > latest video
   const playableVideos = sportyVideos.filter(v => !blockedVideoIds.has(v.id));
-  const heroVideo = playableVideos.find(v => v.isLive) || playableVideos[0] || null;
+  const heroVideo = pickHeroStream(playableVideos);
   const handleVideoUnavailable = (id: string) => setBlockedVideoIds(new Set(markVideoBlocked(id)));
 
   const liveMatch     = liveMatches[0] || null;
@@ -559,8 +560,12 @@ export default function HomePage() {
               <div className="flex items-center justify-between border-b border-white/8 px-4 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
                   {heroVideo?.isLive && <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-[#B30000]" />}
-                  <span className={`truncate text-[10px] font-black uppercase tracking-[0.18em] ${heroVideo?.isLive ? "text-[#B30000]" : "text-white/55"}`}>
-                    {heroVideo?.isLive ? "Live Match — SportyTV" : "Watch — SportyTV"}
+                  <span className={`truncate text-[10px] font-black uppercase tracking-[0.18em] ${heroVideo?.isLive ? "text-[#B30000]" : heroVideo?.isUpcoming ? "text-[#FFD700]/90" : "text-white/55"}`}>
+                    {heroVideo?.isLive
+                      ? "Live Match — SportyTV"
+                      : heroVideo?.isUpcoming && heroVideo.startsAt
+                      ? `Next Stream · ${formatStartTime(heroVideo.startsAt)}`
+                      : "Watch — SportyTV"}
                   </span>
                 </div>
                 <Link href="/videos" className="shrink-0 text-[10px] font-black uppercase tracking-widest text-[#FFD700]/80 transition-colors hover:text-[#FFD700]">

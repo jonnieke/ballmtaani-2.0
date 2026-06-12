@@ -11,6 +11,35 @@ export interface SportyVideo {
   published: string;
   thumbnail: string;
   isLive: boolean;
+  isUpcoming?: boolean;
+  startsAt?: number | null; // epoch ms for scheduled streams
+  membersOnly?: boolean;
+}
+
+/**
+ * Pick the hero stream: a free live stream first, otherwise the next free
+ * scheduled stream by start time (YouTube's embed shows its own countdown
+ * waiting room for those), otherwise the latest regular video.
+ */
+export function pickHeroStream(videos: SportyVideo[]): SportyVideo | null {
+  const free = videos.filter(v => !v.membersOnly);
+  const live = free.find(v => v.isLive);
+  if (live) return live;
+  const upcoming = free
+    .filter(v => v.isUpcoming && v.startsAt)
+    .sort((a, b) => (a.startsAt || 0) - (b.startsAt || 0));
+  if (upcoming.length) return upcoming[0];
+  return free.find(v => !v.isUpcoming) || videos[0] || null;
+}
+
+export function formatStartTime(startsAt: number): string {
+  const d = new Date(startsAt);
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" });
+  const day = d.toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" });
+  const time = d.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Africa/Nairobi" });
+  if (day === today) return `Today ${time} EAT`;
+  const label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "Africa/Nairobi" });
+  return `${label} · ${time} EAT`;
 }
 
 export const SPORTYTV_CHANNEL_ID = "UCwu87p766uwEyzG1p8dEMlg";
