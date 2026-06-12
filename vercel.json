@@ -1,5 +1,6 @@
 {
   "framework": "vite",
+  "regions": ["cpt1"],
   "buildCommand": "cd artifacts/ballmtaani && npm run build",
   "outputDirectory": "artifacts/ballmtaani/dist",
   "installCommand": "cd artifacts/ballmtaani && npm install --legacy-peer-deps",
