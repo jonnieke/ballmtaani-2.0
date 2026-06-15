@@ -158,7 +158,7 @@ function GroupTable({ name, rows }: { name: string; rows: TournamentStandingEntr
       <div className="flex items-center justify-between border-b border-white/6 px-3 py-2.5 bg-white/2">
         <h3 className="text-xs font-black uppercase tracking-[0.16em] text-white">{name}</h3>
         <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#22c55e]/70">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] animate-pulse" />Live
+          <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] animate-pulse" />API-Football
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -179,7 +179,7 @@ function GroupTable({ name, rows }: { name: string; rows: TournamentStandingEntr
                 <td className={`px-3 py-2 font-bold ${i < 2 ? "text-[#FFD700]" : "text-white/30"}`}>{r.rank}</td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-1.5">
-                    <img src={r.logo} alt={r.team} className="h-4 w-4 object-contain" loading="lazy" />
+                    <img src={r.logo} alt="" aria-hidden="true" className="h-4 w-4 object-contain" loading="lazy" />
                     <span className="font-semibold text-white text-[11px]">{r.team}</span>
                   </div>
                 </td>
@@ -202,6 +202,7 @@ export default function WorldCup2026Page() {
   const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>({});
   const [loading, setLoading] = useState(true);
   const [standingsError, setStandingsError] = useState<string | null>(null);
+  const [standingsSyncedAt, setStandingsSyncedAt] = useState<string | null>(null);
   const cd = useCountdown();
 
   useEffect(() => {
@@ -214,9 +215,15 @@ export default function WorldCup2026Page() {
       if (standingsResult.status === "fulfilled") {
         setStandings(standingsResult.value);
         setStandingsError(null);
+        setStandingsSyncedAt(new Date().toLocaleTimeString("en-KE", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "Africa/Nairobi",
+        }));
       } else {
         setStandings({});
         setStandingsError("API-Football standings are temporarily unavailable.");
+        setStandingsSyncedAt(null);
       }
 
       setLoading(false);
@@ -359,7 +366,9 @@ export default function WorldCup2026Page() {
             <div>
               <h2 className="text-lg font-black uppercase tracking-widest text-white">Group Stage</h2>
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {hasGroups ? "API-Football live standings  -  Top 2 advance" : "Waiting for API-Football standings"}
+                {hasGroups
+                  ? `Source: API-Football standings${standingsSyncedAt ? ` - synced ${standingsSyncedAt} EAT` : ""}`
+                  : "Waiting for API-Football standings"}
               </p>
             </div>
             {!hasGroups && (
