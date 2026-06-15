@@ -486,6 +486,11 @@ export async function fetchTournamentStandings(leagueId: number, season: number)
   if (!raw || raw.length === 0) return {};
 
   const groups = raw[0]?.league?.standings || [];
+  if (leagueId === 1 && season === 2026 && !hasTrustedWorldCupGroups(groups)) {
+    console.warn("API-Football returned untrusted World Cup 2026 standings; suppressing tables.");
+    return {};
+  }
+
   const result: Record<string, TournamentStandingEntry[]> = {};
 
   groups.forEach((groupRows: any[]) => {
@@ -511,6 +516,29 @@ export async function fetchTournamentStandings(leagueId: number, season: number)
   });
 
   return result;
+}
+
+function hasTrustedWorldCupGroups(groups: any[]): boolean {
+  if (!Array.isArray(groups) || groups.length !== 12) return false;
+
+  const expectedGroups = new Set(Array.from({ length: 12 }, (_, index) => `Group ${String.fromCharCode(65 + index)}`));
+  const seenGroups = new Set<string>();
+
+  for (const groupRows of groups) {
+    if (!Array.isArray(groupRows) || groupRows.length !== 4) return false;
+
+    const groupName = groupRows[0]?.group;
+    if (!expectedGroups.has(groupName) || seenGroups.has(groupName)) return false;
+    seenGroups.add(groupName);
+
+    for (const entry of groupRows) {
+      if (entry?.group !== groupName) return false;
+      if (!entry?.team?.name || !entry?.team?.logo) return false;
+      if (!entry?.all || typeof entry.all.played !== "number") return false;
+    }
+  }
+
+  return seenGroups.size === expectedGroups.size;
 }
 
 function formatRelativeDate(dateStr: string): string {

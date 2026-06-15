@@ -392,8 +392,8 @@ export default function WorldCup2026Page() {
               </h3>
               <p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-white/45">
                 {loading
-                  ? "Fetching the official World Cup 2026 tables from API-Football."
-                  : standingsError || "API-Football has not returned group standings for this view yet."}
+                  ? "Checking API-Football for official World Cup 2026 group tables."
+                  : standingsError || "API-Football has not returned a verified official WC26 standings table yet."}
               </p>
             </div>
           )}
