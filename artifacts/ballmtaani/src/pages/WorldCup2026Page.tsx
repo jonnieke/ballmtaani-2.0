@@ -19,8 +19,25 @@ const WC26_END   = new Date("2026-07-20T00:00:00Z");
 const ODDSPEDIA_WC26_STANDINGS = {
   widgetKey: "wc26-standings",
   title: "Verified WC26 Standings",
-  description: "Use this provider slot for the Oddspedia Standings or League widget. BallMtaani will not show API-Football's unverified WC26 table payload as official standings.",
+  description: "Live World Cup 2026 group tables from the Oddspedia standings widget. BallMtaani keeps API-Football's unverified WC26 table payload hidden.",
   preferredWidget: "Oddspedia standings",
+  selector: "oddspedia-widget-standings-league-id-3",
+  globalName: "oddspediaWidgetStandingsLeagueId3",
+  widgetId: "oddspediaWidgetStandingsLeagueId3",
+  config: {
+    api_token: "351d6b26a32409cc0db279adb48300f55efdb08627bdd3a653c84cedd297",
+    type: "standings",
+    domain: "ballmtaani.com",
+    selector: "oddspedia-widget-standings-league-id-3",
+    width: "350px",
+    theme: "1",
+    language: "en",
+    primary_color: "#0369C7",
+    accent_color: "#000000",
+    font: "Roboto",
+    league_id: "3",
+    visible_results: "4",
+  },
 };
 
 const TIMELINE = [
