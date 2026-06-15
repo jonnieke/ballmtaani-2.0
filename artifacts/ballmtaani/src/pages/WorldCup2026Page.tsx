@@ -201,14 +201,24 @@ export default function WorldCup2026Page() {
   const [fixtures, setFixtures] = useState<any[]>([]);
   const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>({});
   const [loading, setLoading] = useState(true);
+  const [standingsError, setStandingsError] = useState<string | null>(null);
   const cd = useCountdown();
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([fetchTournamentFixtures(1, 2026), fetchTournamentStandings(1, 2026)]).then(([f, s]) => {
+    Promise.allSettled([fetchTournamentFixtures(1, 2026), fetchTournamentStandings(1, 2026)]).then(([fixturesResult, standingsResult]) => {
       if (!mounted) return;
-      setFixtures(f);
-      setStandings(s);
+
+      if (fixturesResult.status === "fulfilled") setFixtures(fixturesResult.value);
+
+      if (standingsResult.status === "fulfilled") {
+        setStandings(standingsResult.value);
+        setStandingsError(null);
+      } else {
+        setStandings({});
+        setStandingsError("API-Football standings are temporarily unavailable.");
+      }
+
       setLoading(false);
     });
     return () => { mounted = false; };
@@ -349,7 +359,7 @@ export default function WorldCup2026Page() {
             <div>
               <h2 className="text-lg font-black uppercase tracking-widest text-white">Group Stage</h2>
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {hasGroups ? "Live standings  -  Top 2 advance" : "Kicks off June 11  -  Tables update in real time"}
+                {hasGroups ? "API-Football live standings  -  Top 2 advance" : "Waiting for API-Football standings"}
               </p>
             </div>
             {!hasGroups && (
@@ -366,13 +376,16 @@ export default function WorldCup2026Page() {
               {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {Object.entries(WC26_GROUPS).map(([name, rows]) => (
-                  <GroupTable key={name} name={name} rows={rows} />
-                ))}
-              </div>
-              <p className="text-center text-[10px] text-white/30">Live standings update as the tournament progresses  -  Tap to make group stage predictions</p>
+            <div className="rounded-2xl border border-[#FFD700]/18 bg-[#090d14] px-5 py-8 text-center">
+              <Trophy className="mx-auto mb-3 h-8 w-8 text-[#FFD700]/55" />
+              <h3 className="text-sm font-black uppercase tracking-widest text-white">
+                Live standings loading
+              </h3>
+              <p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-white/45">
+                {loading
+                  ? "Fetching the official World Cup 2026 tables from API-Football."
+                  : standingsError || "API-Football has not returned group standings for this view yet."}
+              </p>
             </div>
           )}
         </section>
