@@ -13,6 +13,7 @@ import { ScoreTicker } from "./components/ScoreTicker";
 import AdBanner from "./components/AdBanner";
 import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
+import OddspediaCredit from "./components/OddspediaCredit";
 import { lazy, Suspense } from "react";
 
 // ─── Route-level code splitting ───────────────────────────────────────────────
@@ -175,21 +176,25 @@ function AppShell() {
           </div>
         )}
 
-        {!quietPage && (
-          <footer className="border-t border-[#1B1B1B] bg-[#0B0B0B] mt-20 py-12">
-            <div className="max-w-6xl mx-auto px-4 text-center">
-              <h3 className="text-xl font-black tracking-widest text-white uppercase mb-4">
-                Ball<span className="text-[#B30000]">Mtaani</span>
-              </h3>
-              <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
-                Kenyan football fans predicting, debating, and keeping receipts around the biggest matches.
-              </p>
-              <p className="text-gray-600 text-xs">
-                (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
-              </p>
-            </div>
-          </footer>
-        )}
+        <footer className={`${quietPage ? "mt-10" : "mt-20 border-t border-[#1B1B1B]"} bg-[#0B0B0B] py-10`}>
+          <div className="max-w-6xl mx-auto px-4 text-center">
+            {!quietPage && (
+              <>
+                <h3 className="text-xl font-black tracking-widest text-white uppercase mb-4">
+                  Ball<span className="text-[#B30000]">Mtaani</span>
+                </h3>
+                <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
+                  Kenyan football fans predicting, debating, and keeping receipts around the biggest matches.
+                </p>
+              </>
+            )}
+            <OddspediaCredit className="mb-5" />
+            <p className="text-gray-600 text-xs">
+              (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
+            </p>
+          </div>
+        </footer>
+
       </div>
     </>
   );
