@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { CalendarDays, ChevronRight, MapPin, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star } from "lucide-react";
 import SEO from "../components/SEO";
 import WC26TeamExplorer from "../components/WC26TeamExplorer";
+import OddspediaWidgetSlot from "../components/OddspediaWidgetSlot";
 import {
   fetchTournamentFixtures,
   fetchTournamentStandings,
@@ -14,6 +15,13 @@ import { WC26_STADIUMS } from "../data/wc26-teams";
 // --- Static data ---
 const WC26_START = new Date("2026-06-11T17:00:00Z");
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
+
+const ODDSPEDIA_WC26_STANDINGS = {
+  widgetKey: "wc26-standings",
+  title: "Verified WC26 Standings",
+  description: "Use this provider slot for the Oddspedia Standings or League widget. BallMtaani will not show API-Football's unverified WC26 table payload as official standings.",
+  preferredWidget: "Oddspedia standings",
+};
 
 const TIMELINE = [
   { label: "Group Stage",    date: "Jun 11-27",    detail: "72 matches - 12 groups of 4" },
@@ -385,16 +393,19 @@ export default function WorldCup2026Page() {
               {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#FFD700]/18 bg-[#090d14] px-5 py-8 text-center">
-              <Trophy className="mx-auto mb-3 h-8 w-8 text-[#FFD700]/55" />
-              <h3 className="text-sm font-black uppercase tracking-widest text-white">
-                Live standings loading
-              </h3>
-              <p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-white/45">
-                {loading
-                  ? "Checking API-Football for official World Cup 2026 group tables."
-                  : standingsError || "API-Football has not returned a verified official WC26 standings table yet."}
-              </p>
+            <div className="space-y-4">
+              <OddspediaWidgetSlot {...ODDSPEDIA_WC26_STANDINGS} />
+              <div className="rounded-2xl border border-[#FFD700]/18 bg-[#090d14] px-5 py-8 text-center">
+                <Trophy className="mx-auto mb-3 h-8 w-8 text-[#FFD700]/55" />
+                <h3 className="text-sm font-black uppercase tracking-widest text-white">
+                  Verified standings pending
+                </h3>
+                <p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-white/45">
+                  {loading
+                    ? "Checking API-Football for official World Cup 2026 group tables."
+                    : standingsError || "API-Football has not returned a verified official WC26 standings table yet."}
+                </p>
+              </div>
             </div>
           )}
         </section>
