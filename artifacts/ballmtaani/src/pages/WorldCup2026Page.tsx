@@ -268,6 +268,10 @@ export default function WorldCup2026Page() {
   const [myReactions, setMyReactions] = useState<Record<string, string>>(() => {
     try { return JSON.parse(localStorage.getItem("bm_reactions") || "{}"); } catch { return {}; }
   });
+  const [ratings, setRatings] = useState<Record<string, { avg: number; count: number }>>({});
+  const [myRatings, setMyRatings] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem("bm_ratings") || "{}"); } catch { return {}; }
+  });
   const fingerprint = useMemo(() => {
     let fp = localStorage.getItem("bm_fp");
     if (!fp) { fp = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem("bm_fp", fp); }
@@ -311,6 +315,58 @@ export default function WorldCup2026Page() {
     void Promise.resolve(
       supabase.from("match_reactions")
         .upsert({ match_key: matchKey, emoji, fingerprint }, { onConflict: "match_key,fingerprint" })
+        .then()
+    ).catch(() => {});
+  };
+
+  // Load match ratings for completed fixtures in the current schedule tab
+  useEffect(() => {
+    if (!supabase) return;
+    const keys = (fixturesByRound[scheduleTab] ?? [])
+      .filter((f: any) => DONE_STATUSES.has(f.status))
+      .map((f: any) => `wc26_${f.id}`);
+    if (!keys.length) return;
+    void Promise.resolve(
+      supabase.from("match_ratings").select("match_key, rating")
+        .in("match_key", keys)
+        .then(({ data }) => {
+          if (!data) return;
+          const agg: Record<string, { sum: number; count: number }> = {};
+          for (const row of data) {
+            if (!agg[row.match_key]) agg[row.match_key] = { sum: 0, count: 0 };
+            agg[row.match_key].sum += row.rating;
+            agg[row.match_key].count += 1;
+          }
+          setRatings(prev => {
+            const next = { ...prev };
+            for (const [k, v] of Object.entries(agg)) {
+              next[k] = { avg: v.sum / v.count, count: v.count };
+            }
+            return next;
+          });
+        })
+    ).catch(() => {});
+  }, [scheduleTab, fixturesByRound]);
+
+  const rate = (matchKey: string, stars: number) => {
+    const updated = { ...myRatings, [matchKey]: stars };
+    setMyRatings(updated);
+    localStorage.setItem("bm_ratings", JSON.stringify(updated));
+    setRatings(prev => {
+      const old = prev[matchKey];
+      const prevMine = myRatings[matchKey];
+      if (old) {
+        const oldSum = old.avg * old.count;
+        const newSum = prevMine ? oldSum - prevMine + stars : oldSum + stars;
+        const newCount = prevMine ? old.count : old.count + 1;
+        return { ...prev, [matchKey]: { avg: newSum / newCount, count: newCount } };
+      }
+      return { ...prev, [matchKey]: { avg: stars, count: 1 } };
+    });
+    if (!supabase) return;
+    void Promise.resolve(
+      supabase.from("match_ratings")
+        .upsert({ match_key: matchKey, rating: stars, fingerprint }, { onConflict: "match_key,fingerprint" })
         .then()
     ).catch(() => {});
   };
@@ -866,21 +922,52 @@ export default function WorldCup2026Page() {
                         </button>
                       </div>
                     )}
-                    {/* Reactions */}
-                    <div className="mt-2 flex items-center gap-1 border-t border-white/5 pt-2">
-                      {REACTION_EMOJIS.map(e => {
-                        const count = reactions[key]?.[e] ?? 0;
-                        const mine = myReactions[key] === e;
-                        return (
-                          <button
-                            key={e}
-                            onClick={() => react(key, e)}
-                            className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] transition-all ${mine ? "bg-white/15 ring-1 ring-white/20 scale-110" : "bg-white/4 hover:bg-white/10"}`}
-                          >
-                            {e}{count > 0 && <span className="text-[8px] font-bold text-white/45 tabular-nums ml-0.5">{count}</span>}
-                          </button>
-                        );
-                      })}
+                    {/* Reactions (upcoming/live) OR Star rating (completed) */}
+                    <div className="mt-2 border-t border-white/5 pt-2">
+                      {isDone ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-0.5">
+                            {[1,2,3,4,5].map(star => (
+                              <button
+                                key={star}
+                                onClick={() => rate(key, star)}
+                                className="p-0.5 transition-transform hover:scale-125 active:scale-110"
+                                title={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                              >
+                                <svg className="h-4 w-4" viewBox="0 0 20 20">
+                                  <path
+                                    fill={star <= (myRatings[key] ?? 0) ? "#FFD700" : "rgba(255,255,255,0.12)"}
+                                    d="M10 1l2.39 4.84 5.34.78-3.86 3.76.91 5.32L10 13.27l-4.78 2.51.91-5.32L2.27 6.62l5.34-.78z"
+                                  />
+                                </svg>
+                              </button>
+                            ))}
+                          </div>
+                          {ratings[key] ? (
+                            <span className="text-[9px] font-bold text-white/35 tabular-nums">
+                              ★ {ratings[key].avg.toFixed(1)} · {ratings[key].count.toLocaleString()} ratings
+                            </span>
+                          ) : (
+                            <span className="text-[9px] text-white/20">Rate this match</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          {REACTION_EMOJIS.map(e => {
+                            const count = reactions[key]?.[e] ?? 0;
+                            const mine = myReactions[key] === e;
+                            return (
+                              <button
+                                key={e}
+                                onClick={() => react(key, e)}
+                                className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] transition-all ${mine ? "bg-white/15 ring-1 ring-white/20 scale-110" : "bg-white/4 hover:bg-white/10"}`}
+                              >
+                                {e}{count > 0 && <span className="text-[8px] font-bold text-white/45 tabular-nums ml-0.5">{count}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
