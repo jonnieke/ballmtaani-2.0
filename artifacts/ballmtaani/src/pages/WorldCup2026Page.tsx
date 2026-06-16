@@ -12,6 +12,9 @@ import {
 } from "../lib/football-api";
 import { WC26_GUIDES } from "../data/wc26-guides";
 import { WC26_STADIUMS, WC26_TEAMS, type WC26TeamData } from "../data/wc26-teams";
+import { supabase } from "../lib/supabase";
+
+const REACTION_EMOJIS = ["🔥", "❤️", "😱", "🤣"] as const;
 
 // --- Static data ---
 const WC26_START = new Date("2026-06-11T17:00:00Z");
@@ -261,7 +264,56 @@ export default function WorldCup2026Page() {
   const [standingsSyncedAt, setStandingsSyncedAt] = useState<string | null>(null);
   const [scheduleTab, setScheduleTab] = useState("Group Stage - Matchday 1");
   const [aiInsights, setAiInsights] = useState<Record<string, { text: string; loading: boolean }>>({});
+  const [reactions, setReactions] = useState<Record<string, Record<string, number>>>({});
+  const [myReactions, setMyReactions] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem("bm_reactions") || "{}"); } catch { return {}; }
+  });
+  const fingerprint = useMemo(() => {
+    let fp = localStorage.getItem("bm_fp");
+    if (!fp) { fp = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem("bm_fp", fp); }
+    return fp;
+  }, []);
   const cd = useCountdown();
+
+  // Load reaction counts for fixtures visible in the current schedule tab
+  useEffect(() => {
+    if (!supabase) return;
+    const keys = (fixturesByRound[scheduleTab] ?? []).map((f: any) => `wc26_${f.id}`);
+    if (!keys.length) return;
+    void Promise.resolve(
+      supabase.from("match_reactions").select("match_key, emoji")
+        .in("match_key", keys)
+        .then(({ data }) => {
+          if (!data) return;
+          const counts: Record<string, Record<string, number>> = {};
+          for (const row of data) {
+            if (!counts[row.match_key]) counts[row.match_key] = {};
+            counts[row.match_key][row.emoji] = (counts[row.match_key][row.emoji] || 0) + 1;
+          }
+          setReactions(prev => ({ ...prev, ...counts }));
+        })
+    ).catch(() => {});
+  }, [scheduleTab, fixturesByRound]);
+
+  const react = (matchKey: string, emoji: string) => {
+    const current = myReactions[matchKey];
+    if (current === emoji) return;
+    const updated = { ...myReactions, [matchKey]: emoji };
+    setMyReactions(updated);
+    localStorage.setItem("bm_reactions", JSON.stringify(updated));
+    setReactions(prev => {
+      const slot = { ...(prev[matchKey] ?? {}) };
+      if (current) slot[current] = Math.max(0, (slot[current] || 0) - 1);
+      slot[emoji] = (slot[emoji] || 0) + 1;
+      return { ...prev, [matchKey]: slot };
+    });
+    if (!supabase) return;
+    void Promise.resolve(
+      supabase.from("match_reactions")
+        .upsert({ match_key: matchKey, emoji, fingerprint }, { onConflict: "match_key,fingerprint" })
+        .then()
+    ).catch(() => {});
+  };
 
   const waShare = (home: string, away: string, date?: string, time?: string, venue?: string) => {
     const lines = [
@@ -686,6 +738,22 @@ export default function WorldCup2026Page() {
                         </button>
                       </div>
                     )}
+                    {/* Reactions */}
+                    <div className="mt-2 flex items-center gap-1 border-t border-white/5 pt-2">
+                      {REACTION_EMOJIS.map(e => {
+                        const count = reactions[key]?.[e] ?? 0;
+                        const mine = myReactions[key] === e;
+                        return (
+                          <button
+                            key={e}
+                            onClick={() => react(key, e)}
+                            className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] transition-all ${mine ? "bg-white/15 ring-1 ring-white/20 scale-110" : "bg-white/4 hover:bg-white/10"}`}
+                          >
+                            {e}{count > 0 && <span className="text-[8px] font-bold text-white/45 tabular-nums ml-0.5">{count}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
@@ -778,6 +846,22 @@ export default function WorldCup2026Page() {
                         </button>
                       </div>
                     )}
+                    {/* Reactions */}
+                    <div className="mt-2 flex items-center gap-1 border-t border-white/5 pt-2">
+                      {REACTION_EMOJIS.map(e => {
+                        const count = reactions[key]?.[e] ?? 0;
+                        const mine = myReactions[key] === e;
+                        return (
+                          <button
+                            key={e}
+                            onClick={() => react(key, e)}
+                            className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] transition-all ${mine ? "bg-white/15 ring-1 ring-white/20 scale-110" : "bg-white/4 hover:bg-white/10"}`}
+                          >
+                            {e}{count > 0 && <span className="text-[8px] font-bold text-white/45 tabular-nums ml-0.5">{count}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
