@@ -358,6 +358,17 @@ export default function WorldCup2026Page() {
 
   const groupEntries = useMemo(() => Object.entries(standings), [standings]);
 
+  // Map each CAF nation to its live standing entry (if standings are available)
+  const cafLiveData = useMemo(() => {
+    const map: Record<string, TournamentStandingEntry | null> = {};
+    for (const nation of CAF_NATIONS) {
+      const groupKey = `Group ${nation.group}`;
+      const rows = standings[groupKey] ?? [];
+      map[nation.name] = rows.find(r => r.team.toLowerCase() === nation.name.toLowerCase()) ?? null;
+    }
+    return map;
+  }, [standings]);
+
   // Featured stadiums  -  top 8 for the showcase
   const featuredStadiums = WC26_STADIUMS.slice(0, 8);
 
@@ -893,44 +904,92 @@ export default function WorldCup2026Page() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-0 sm:grid-cols-5 lg:grid-cols-9">
-            {CAF_NATIONS.map(n => (
-              <div key={n.name} className="group flex flex-col items-center gap-2 px-2 py-5 text-center transition-all hover:bg-[#006600]/12 cursor-pointer border-r border-b border-[#006600]/10 last:border-r-0">
-                <div className="relative">
-                  <img src={n.logo} alt={n.name} className="h-10 w-10 object-contain rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.5)]" loading="lazy" />
-                  {n.star && (
-                    <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[#FFD700] flex items-center justify-center">
-                      <Star className="h-2.5 w-2.5 text-black" fill="currentColor" />
+          <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-3">
+            {CAF_NATIONS.map(n => {
+              const live = cafLiveData[n.name];
+              const rank = live?.rank ?? null;
+              const qualifying = rank !== null && rank <= 2;
+              const thirdBest = rank === 3;
+              const eliminated = rank !== null && rank > 3;
+              const hasStats = live && live.played > 0;
+
+              const statusColor = qualifying
+                ? "border-[#22c55e]/40 bg-[#22c55e]/5"
+                : thirdBest
+                  ? "border-amber-500/30 bg-amber-500/5"
+                  : eliminated
+                    ? "border-red-600/20 bg-red-900/5"
+                    : "border-[#006600]/20 bg-transparent";
+
+              const rankBadgeColor = qualifying
+                ? "bg-[#22c55e]/20 text-[#22c55e]"
+                : thirdBest
+                  ? "bg-amber-500/20 text-amber-400"
+                  : eliminated
+                    ? "bg-red-900/20 text-red-400"
+                    : "bg-white/5 text-white/30";
+
+              return (
+                <div key={n.name} className={`flex gap-3 border-b border-r border-[#006600]/10 px-4 py-4 last:border-b-0 transition-all hover:bg-[#006600]/8 ${statusColor} rounded-none`}>
+                  {/* Flag + star */}
+                  <div className="relative shrink-0 pt-0.5">
+                    <img src={n.logo} alt={n.name} className="h-9 w-9 rounded-sm object-contain shadow-[0_2px_8px_rgba(0,0,0,0.5)]" loading="lazy" />
+                    {n.star && (
+                      <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#FFD700] flex items-center justify-center">
+                        <Star className="h-2 w-2 text-black" fill="currentColor" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Name + group + note */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black text-white leading-tight">{n.name}</span>
+                      {rank !== null && (
+                        <span className={`rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${rankBadgeColor}`}>
+                          {qualifying ? `${rank === 1 ? "1st" : "2nd"} ✓` : thirdBest ? "3rd" : `${rank}th`}
+                        </span>
+                      )}
                     </div>
-                  )}
+                    <div className="mt-0.5 text-[9px] text-[#22c55e]/55 font-bold uppercase tracking-wider">Group {n.group}</div>
+                    <div className="mt-1 text-[10px] text-white/38 leading-snug">{n.note}</div>
+
+                    {/* Live stats row */}
+                    {hasStats ? (
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="flex gap-2 text-[9px] font-bold text-white/50 tabular-nums">
+                          <span title="Played">{live!.played}P</span>
+                          <span title="Won" className="text-[#22c55e]/70">{live!.won}W</span>
+                          <span title="Drawn">{live!.draw}D</span>
+                          <span title="Lost" className="text-red-400/60">{live!.lost}L</span>
+                          <span title="Points" className={`font-black ${qualifying ? "text-[#22c55e]" : "text-white/70"}`}>{live!.points}pts</span>
+                        </div>
+                        {live!.form.length > 0 && (
+                          <div className="flex gap-0.5">
+                            {live!.form.slice(-5).map((r, i) => (
+                              <span key={i} className={`h-2 w-2 rounded-full ${r === "W" ? "bg-[#22c55e]" : r === "D" ? "bg-amber-400" : "bg-red-500"}`} title={r} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-2 text-[9px] text-white/20 italic">Awaiting kick-off</div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-black text-white/85 leading-tight">{n.name}</div>
-                  <div className="text-[8px] text-[#22c55e]/60 font-bold uppercase mt-0.5">Grp {n.group}</div>
-                </div>
-                {/* hover tooltip */}
-                <div className="hidden group-hover:block absolute mt-16 z-20 rounded-lg border border-[#22c55e]/20 bg-[#040d04]/95 px-2 py-1.5 text-[9px] text-white/70 leading-tight max-w-[100px] text-center shadow-xl backdrop-blur-sm pointer-events-none">
-                  {n.note}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* African team notes strip */}
-          <div className="flex items-center gap-4 overflow-x-auto px-5 py-3 border-t border-[#006600]/10 scrollbar-none">
-            {CAF_NATIONS.map(n => (
-              <div key={n.name} className="flex items-center gap-2 shrink-0">
-                <img src={n.logo} alt={n.name} className="h-4 w-4 object-contain" loading="lazy" />
-                <span className="text-[10px] text-white/40">{n.note}</span>
-                <span className="text-white/10"> - </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t border-[#006600]/10 px-5 py-3">
+          <div className="border-t border-[#006600]/10 px-5 py-3 flex items-center justify-between gap-4">
             <p className="text-[10px] text-white/28">
-              No Kenya at WC26  -  but Harambee Stars are building. Back an African team and keep the receipt when they go deep.
+              No Kenya at WC26 — but Harambee Stars are building. Back an African team and keep the receipt when they go deep.
             </p>
+            <div className="flex items-center gap-3 shrink-0 text-[9px] font-bold text-white/25">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#22c55e]" />Qualifying</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />3rd place</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" />Eliminated</span>
+            </div>
           </div>
         </section>
 
