@@ -194,21 +194,22 @@ export default function PredictionsPage() {
   // Fetch aggregate vote counts for all WC26 questions (public, no auth required)
   useEffect(() => {
     const ids = WC26_QUESTIONS.map(q => q.id);
-    supabase
-      .from("predictions")
-      .select("match_id, predicted_score")
-      .in("match_id", ids)
-      .then(({ data }) => {
-        if (!data) return;
-        const counts: Record<string, Record<string, number>> = {};
-        for (const row of data) {
-          if (!counts[row.match_id]) counts[row.match_id] = {};
-          const key = row.predicted_score as string;
-          counts[row.match_id][key] = (counts[row.match_id][key] || 0) + 1;
-        }
-        setWc26Consensus(counts);
-      })
-      .catch(() => {});
+    void Promise.resolve(
+      supabase
+        .from("predictions")
+        .select("match_id, predicted_score")
+        .in("match_id", ids)
+        .then(({ data }) => {
+          if (!data) return;
+          const counts: Record<string, Record<string, number>> = {};
+          for (const row of data) {
+            if (!counts[row.match_id]) counts[row.match_id] = {};
+            const key = row.predicted_score as string;
+            counts[row.match_id][key] = (counts[row.match_id][key] || 0) + 1;
+          }
+          setWc26Consensus(counts);
+        })
+    ).catch(() => {});
   }, []);
 
   const handleWC26Pick = async (questionId: string, pick: string) => {
