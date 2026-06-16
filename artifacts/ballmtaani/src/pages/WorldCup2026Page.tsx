@@ -562,6 +562,116 @@ export default function WorldCup2026Page() {
           </div>
         </section>
 
+        {/* -- FULL SCHEDULE -- */}
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">Full Schedule</h2>
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
+                {fixtures.length > 0 ? `${fixtures.length} matches · Jun 11 – Jul 19` : "Group Stage · Jun 11 – Jun 22"}
+              </p>
+            </div>
+          </div>
+
+          {/* Round tabs */}
+          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {(roundTabs.length > 0 ? roundTabs : ROUND_ORDER.slice(0, 3)).map(round => (
+              <button
+                key={round}
+                onClick={() => setScheduleTab(round)}
+                className={`shrink-0 rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  scheduleTab === round
+                    ? "bg-[#FFD700] text-black shadow-[0_0_12px_rgba(255,215,0,0.35)]"
+                    : "border border-white/10 bg-white/4 text-white/50 hover:bg-white/8"
+                }`}
+              >
+                {shortRound(round)}
+              </button>
+            ))}
+          </div>
+
+          {/* Match grid */}
+          {fixtures.length === 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {WC26_OPENING_FIXTURES.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-xl border border-white/8 bg-[#0b0f18] px-4 py-3">
+                  <span className="flex-1 truncate text-xs font-bold text-white">{f.home}</span>
+                  <div className="shrink-0 text-center">
+                    <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
+                    <div className="text-[9px] text-white/30">{f.time} EAT</div>
+                  </div>
+                  <span className="flex-1 truncate text-right text-xs font-bold text-white">{f.away}</span>
+                </div>
+              ))}
+            </div>
+          ) : (fixturesByRound[scheduleTab] ?? []).length === 0 ? (
+            <div className="rounded-2xl border border-white/8 bg-[#0b0f18] px-5 py-10 text-center text-xs text-white/30">
+              No matches scheduled for this round yet.
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {(fixturesByRound[scheduleTab] ?? []).map((f: any) => {
+                const isLive = LIVE_STATUSES.has(f.status);
+                const isDone = DONE_STATUSES.has(f.status);
+                return (
+                  <div
+                    key={f.id}
+                    className={`rounded-xl border px-4 py-3 transition-colors ${
+                      isLive ? "border-red-500/30 bg-red-950/15" : "border-white/8 bg-[#0b0f18] hover:bg-white/2"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {/* Home */}
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        {f.homeLogo && <img src={f.homeLogo} alt="" className="h-6 w-6 shrink-0 object-contain" loading="lazy" />}
+                        <span className="truncate text-xs font-bold text-white">{f.home}</span>
+                      </div>
+                      {/* Score or kickoff */}
+                      <div className="shrink-0 px-2 text-center">
+                        {(isLive || isDone) && f.homeScore !== null ? (
+                          <div className={`text-sm font-black tabular-nums ${isLive ? "text-red-400" : "text-white"}`}>
+                            {f.homeScore}–{f.awayScore}
+                            {isLive && f.minute ? <span className="ml-0.5 text-[9px] text-red-400/70">{f.minute}'</span> : null}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
+                            <div className="text-[9px] text-white/30">{f.time}</div>
+                          </>
+                        )}
+                      </div>
+                      {/* Away */}
+                      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                        <span className="truncate text-right text-xs font-bold text-white">{f.away}</span>
+                        {f.awayLogo && <img src={f.awayLogo} alt="" className="h-6 w-6 shrink-0 object-contain" loading="lazy" />}
+                      </div>
+                    </div>
+                    {f.venue && (
+                      <div className="mt-1.5 flex items-center gap-1 text-[9px] text-white/20">
+                        <MapPin className="h-2.5 w-2.5 shrink-0" />
+                        <span className="truncate">{f.venue}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Tournament roadmap strip */}
+          <div className="mt-4 overflow-hidden rounded-2xl border border-white/6 bg-[#080d14]">
+            <div className="flex overflow-x-auto scrollbar-none">
+              {TIMELINE.map((item, i) => (
+                <div key={item.label} className={`shrink-0 border-r border-white/5 px-5 py-3 last:border-0 ${i === TIMELINE.length - 1 ? "bg-[#FFD700]/5" : ""}`}>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${i === TIMELINE.length - 1 ? "text-[#FFD700]" : "text-white"}`}>{item.label}</div>
+                  <div className="text-[9px] text-[#FFD700]/50 mt-0.5">{item.date}</div>
+                  <div className="text-[9px] text-white/28 mt-0.5">{item.detail}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* -- GOLDEN BOOT -- */}
         <section className="mb-8">
           <div className="mb-4 flex items-center gap-3">
@@ -646,101 +756,6 @@ export default function WorldCup2026Page() {
                 </div>
               </Link>
             ))}
-          </div>
-        </section>
-
-        {/* -- FULL SCHEDULE -- */}
-        <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-black uppercase tracking-widest text-white">Full Schedule</h2>
-              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {fixtures.length > 0 ? `${fixtures.length} matches · Jun 11 – Jul 19` : "Group Stage · Jun 11 – Jun 22"}
-              </p>
-            </div>
-          </div>
-
-          {/* Round tabs */}
-          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {(roundTabs.length > 0 ? roundTabs : ROUND_ORDER.slice(0, 3)).map(round => (
-              <button
-                key={round}
-                onClick={() => setScheduleTab(round)}
-                className={`shrink-0 rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
-                  scheduleTab === round
-                    ? "bg-[#FFD700] text-black shadow-[0_0_12px_rgba(255,215,0,0.35)]"
-                    : "border border-white/10 bg-white/4 text-white/50 hover:bg-white/8"
-                }`}
-              >
-                {shortRound(round)}
-              </button>
-            ))}
-          </div>
-
-          {/* Match list for selected round */}
-          <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0b0f18]">
-            {fixtures.length === 0 ? (
-              // Static fallback when API hasn't loaded
-              <div>
-                {WC26_OPENING_FIXTURES.map((f, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/5 px-4 py-3.5 last:border-0 hover:bg-white/3 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white">{f.home}</span>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[11px] font-black text-[#FFD700]">{f.date}</div>
-                      <div className="text-[9px] text-white/30">{f.time} EAT</div>
-                    </div>
-                    <span className="text-right text-xs font-bold text-white">{f.away}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (fixturesByRound[scheduleTab] ?? []).length === 0 ? (
-              <div className="px-5 py-10 text-center text-xs text-white/30">No matches scheduled for this round yet.</div>
-            ) : (
-              (fixturesByRound[scheduleTab] ?? []).map((f: any) => {
-                const isLive = LIVE_STATUSES.has(f.status);
-                const isDone = DONE_STATUSES.has(f.status);
-                return (
-                  <div key={f.id} className={`grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/4 px-4 py-3.5 last:border-0 transition-colors hover:bg-white/2 ${isLive ? "bg-red-950/15" : ""}`}>
-                    <div className="flex min-w-0 items-center gap-2">
-                      {f.homeLogo && <img src={f.homeLogo} alt="" className="h-5 w-5 shrink-0 object-contain" loading="lazy" />}
-                      <span className="truncate text-xs font-bold text-white">{f.home}</span>
-                    </div>
-                    <div className="shrink-0 text-center">
-                      {(isLive || isDone) && f.homeScore !== null ? (
-                        <span className={`text-sm font-black tabular-nums ${isLive ? "text-red-400" : "text-white"}`}>
-                          {f.homeScore} – {f.awayScore}
-                          {isLive && f.minute ? <span className="ml-1 text-[9px] text-red-400/70">{f.minute}'</span> : null}
-                        </span>
-                      ) : (
-                        <div className="text-center">
-                          <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
-                          <div className="text-[9px] text-white/30">{f.time}</div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex min-w-0 items-center justify-end gap-2">
-                      <span className="truncate text-right text-xs font-bold text-white">{f.away}</span>
-                      {f.awayLogo && <img src={f.awayLogo} alt="" className="h-5 w-5 shrink-0 object-contain" loading="lazy" />}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Tournament roadmap strip */}
-          <div className="mt-4 overflow-hidden rounded-2xl border border-white/6 bg-[#080d14]">
-            <div className="flex overflow-x-auto scrollbar-none">
-              {TIMELINE.map((item, i) => (
-                <div key={item.label} className={`shrink-0 border-r border-white/5 px-5 py-3 last:border-0 ${i === TIMELINE.length - 1 ? "bg-[#FFD700]/5" : ""}`}>
-                  <div className={`text-[10px] font-black uppercase tracking-widest ${i === TIMELINE.length - 1 ? "text-[#FFD700]" : "text-white"}`}>{item.label}</div>
-                  <div className="text-[9px] text-[#FFD700]/50 mt-0.5">{item.date}</div>
-                  <div className="text-[9px] text-white/28 mt-0.5">{item.detail}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
