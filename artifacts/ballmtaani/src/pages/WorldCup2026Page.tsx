@@ -315,6 +315,21 @@ export default function WorldCup2026Page() {
     ).catch(() => {});
   };
 
+  const calendarLink = (f: { home: string; away: string; timestamp?: number; venue?: string; city?: string }) => {
+    const start = f.timestamp ? new Date(f.timestamp) : new Date();
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+    const loc = [f.venue, f.city].filter(Boolean).join(", ");
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: `WC26: ${f.home} vs ${f.away}`,
+      dates: `${fmt(start)}/${fmt(end)}`,
+      details: `Watch on BallMtaani → https://ballmtaani.com/world-cup-2026`,
+      location: loc || "World Cup 2026",
+    });
+    return `https://calendar.google.com/calendar/render?${params}`;
+  };
+
   const waShare = (home: string, away: string, date?: string, time?: string, venue?: string) => {
     const lines = [
       `⚽ WC26: ${home} vs ${away}`,
@@ -790,10 +805,15 @@ export default function WorldCup2026Page() {
                             {isLive && f.minute ? <span className="ml-0.5 text-[9px] text-red-400/70">{f.minute}'</span> : null}
                           </div>
                         ) : (
-                          <>
-                            <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
+                          <button
+                            onClick={() => window.open(calendarLink(f), "_blank")}
+                            title="Add to Google Calendar"
+                            className="group flex flex-col items-center gap-0.5"
+                          >
+                            <div className="text-[10px] font-black text-[#FFD700]/70 group-hover:text-[#FFD700] transition-colors">{f.date}</div>
                             <div className="text-[9px] text-white/30">{f.time}</div>
-                          </>
+                            <CalendarDays className="h-2.5 w-2.5 text-white/15 group-hover:text-[#FFD700]/60 transition-colors mt-0.5" />
+                          </button>
                         )}
                       </div>
                       {/* Away */}
