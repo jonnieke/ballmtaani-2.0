@@ -466,6 +466,9 @@ export async function fetchTournamentFixtures(leagueId: number, season: number):
     away: item.teams.away.name,
     awayLogo: item.teams.away.logo,
     awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+    homeScore: item.goals?.home ?? null,
+    awayScore: item.goals?.away ?? null,
+    minute: item.fixture.status?.elapsed ?? null,
     time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
       hour: 'numeric',
       minute: '2-digit',
@@ -479,6 +482,21 @@ export async function fetchTournamentFixtures(leagueId: number, season: number):
     round: item.league.round || "World Cup 2026",
     timestamp: new Date(item.fixture.date).getTime(),
   })).sort((a: any, b: any) => a.timestamp - b.timestamp);
+}
+
+export async function fetchWC26TopScorers(): Promise<any[]> {
+  const raw = await apiFetch(`/players/topscorers?league=1&season=2026`);
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+  return raw.slice(0, 10).map((item: any) => ({
+    name: item.player?.name || "Unknown",
+    photo: item.player?.photo || "",
+    nationality: item.player?.nationality || "",
+    team: item.statistics?.[0]?.team?.name || "",
+    teamLogo: item.statistics?.[0]?.team?.logo || "",
+    goals: item.statistics?.[0]?.goals?.total ?? 0,
+    assists: item.statistics?.[0]?.goals?.assists ?? 0,
+    played: item.statistics?.[0]?.games?.appearences ?? 0,
+  }));
 }
 
 export async function fetchTournamentStandings(leagueId: number, season: number): Promise<Record<string, TournamentStandingEntry[]>> {
@@ -519,26 +537,21 @@ export async function fetchTournamentStandings(leagueId: number, season: number)
 }
 
 function hasTrustedWorldCupGroups(groups: any[]): boolean {
-  if (!Array.isArray(groups) || groups.length !== 12) return false;
-
-  const expectedGroups = new Set(Array.from({ length: 12 }, (_, index) => `Group ${String.fromCharCode(65 + index)}`));
-  const seenGroups = new Set<string>();
+  // Require at least one group with at least one entry that has the
+  // minimum structure the renderer needs.  The pre-tournament guard that
+  // demanded exactly 12 groups × 4 teams was suppressing real in-progress
+  // data from API-Football (logos missing, group count != 12 mid-draw, etc.)
+  if (!Array.isArray(groups) || groups.length === 0) return false;
 
   for (const groupRows of groups) {
-    if (!Array.isArray(groupRows) || groupRows.length !== 4) return false;
-
-    const groupName = groupRows[0]?.group;
-    if (!expectedGroups.has(groupName) || seenGroups.has(groupName)) return false;
-    seenGroups.add(groupName);
-
+    if (!Array.isArray(groupRows) || groupRows.length === 0) return false;
     for (const entry of groupRows) {
-      if (entry?.group !== groupName) return false;
-      if (!entry?.team?.name || !entry?.team?.logo) return false;
+      if (!entry?.team?.name) return false;
       if (!entry?.all || typeof entry.all.played !== "number") return false;
     }
   }
 
-  return seenGroups.size === expectedGroups.size;
+  return true;
 }
 
 function formatRelativeDate(dateStr: string): string {

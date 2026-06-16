@@ -7,10 +7,11 @@ import OddspediaWidgetSlot from "../components/OddspediaWidgetSlot";
 import {
   fetchTournamentFixtures,
   fetchTournamentStandings,
+  fetchWC26TopScorers,
   type TournamentStandingEntry,
 } from "../lib/football-api";
 import { WC26_GUIDES } from "../data/wc26-guides";
-import { WC26_STADIUMS } from "../data/wc26-teams";
+import { WC26_STADIUMS, WC26_TEAMS, type WC26TeamData } from "../data/wc26-teams";
 
 // --- Static data ---
 const WC26_START = new Date("2026-06-11T17:00:00Z");
@@ -86,20 +87,29 @@ const WC26_OPENING_FIXTURES = [
   { home: "France",    away: "Senegal",      date: "Jun 17", time: "7:00 PM"  },
 ];
 
-const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = {
-  "Group A": [
-    { rank: 1, team: "Mexico",       logo: "https://media.api-sports.io/flags/mx.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 2, team: "South Africa", logo: "https://media.api-sports.io/flags/za.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 3, team: "USA",          logo: "https://media.api-sports.io/flags/us.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 4, team: "Colombia",     logo: "https://media.api-sports.io/flags/co.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-  ],
-  "Group B": [
-    { rank: 1, team: "Canada",      logo: "https://media.api-sports.io/flags/ca.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 2, team: "Venezuela",   logo: "https://media.api-sports.io/flags/ve.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 3, team: "Spain",       logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 4, team: "Costa Rica",  logo: "https://media.api-sports.io/flags/cr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-  ],
-};
+// Derive static group tables from WC26_TEAMS. WC26_TEAMS is the single source
+// of truth for squad data — build the zero-stat fallback from it so we don't
+// maintain a separate (and inevitably stale) duplicate list.
+// Only the first 4 entries per group letter are taken because the data file has
+// some overflow entries from an incomplete edit (extra teams appended to G & H).
+const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = (() => {
+  const acc: Record<string, WC26TeamData[]> = {};
+  for (const t of WC26_TEAMS) {
+    const key = `Group ${t.group.toUpperCase()}`;
+    if (!acc[key]) acc[key] = [];
+    if (acc[key].length < 4) acc[key].push(t);
+  }
+  const result: Record<string, TournamentStandingEntry[]> = {};
+  for (const [groupName, teams] of Object.entries(acc).sort(([a], [b]) => a.localeCompare(b))) {
+    result[groupName] = teams.map((t, i) => ({
+      rank: i + 1, team: t.name, logo: t.logo,
+      points: 0, played: 0, won: 0, draw: 0, lost: 0,
+      goalsFor: 0, goalsAgainst: 0, gd: "0", form: [],
+      group: t.group,
+    }));
+  }
+  return result;
+})();
 
 // --- Countdown hook ---
 function useCountdown() {
@@ -222,43 +232,112 @@ function GroupTable({ name, rows }: { name: string; rows: TournamentStandingEntr
 }
 
 // --- Page ---
+// Round label → short tab name
+const ROUND_TABS: Record<string, string> = {
+  "Group Stage - Matchday 1": "MD 1",
+  "Group Stage - Matchday 2": "MD 2",
+  "Group Stage - Matchday 3": "MD 3",
+  "Round of 32":   "R32",
+  "Round of 16":   "R16",
+  "Quarter-finals":"QF",
+  "Semi-finals":   "SF",
+  "3rd Place Final":"3rd",
+  "Final":         "Final",
+};
+const ROUND_ORDER = Object.keys(ROUND_TABS);
+
+function shortRound(round: string): string {
+  return ROUND_TABS[round] ?? round.replace("Group Stage - ", "").slice(0, 8);
+}
+
+const LIVE_STATUSES = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
+const DONE_STATUSES = new Set(["FT","AET","PEN"]);
+
 export default function WorldCup2026Page() {
   const [fixtures, setFixtures] = useState<any[]>([]);
-  const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>({});
+  const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>(WC26_GROUPS);
+  const [topScorers, setTopScorers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [standingsError, setStandingsError] = useState<string | null>(null);
   const [standingsSyncedAt, setStandingsSyncedAt] = useState<string | null>(null);
+  const [scheduleTab, setScheduleTab] = useState("Group Stage - Matchday 1");
   const cd = useCountdown();
 
   useEffect(() => {
     let mounted = true;
-    Promise.allSettled([fetchTournamentFixtures(1, 2026), fetchTournamentStandings(1, 2026)]).then(([fixturesResult, standingsResult]) => {
+    Promise.allSettled([
+      fetchTournamentFixtures(1, 2026),
+      fetchTournamentStandings(1, 2026),
+      fetchWC26TopScorers(),
+    ]).then(([fixturesRes, standingsRes, scorersRes]) => {
       if (!mounted) return;
-
-      if (fixturesResult.status === "fulfilled") setFixtures(fixturesResult.value);
-
-      if (standingsResult.status === "fulfilled") {
-        setStandings(standingsResult.value);
-        setStandingsError(null);
-        setStandingsSyncedAt(new Date().toLocaleTimeString("en-KE", {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "Africa/Nairobi",
-        }));
-      } else {
-        setStandings({});
-        setStandingsError("API-Football standings are temporarily unavailable.");
-        setStandingsSyncedAt(null);
+      if (fixturesRes.status === "fulfilled" && fixturesRes.value.length > 0) {
+        setFixtures(fixturesRes.value);
+        // Auto-select the first round that has live or upcoming matches
+        const liveRound = fixturesRes.value.find((f: any) => LIVE_STATUSES.has(f.status))?.round;
+        const nextRound = fixturesRes.value.find((f: any) => !DONE_STATUSES.has(f.status))?.round;
+        if (liveRound) setScheduleTab(liveRound);
+        else if (nextRound) setScheduleTab(nextRound);
       }
-
+      if (standingsRes.status === "fulfilled" && Object.keys(standingsRes.value).length > 0) {
+        setStandings(standingsRes.value);
+        setStandingsSyncedAt(new Date().toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Nairobi" }));
+      }
+      if (scorersRes.status === "fulfilled") setTopScorers(scorersRes.value);
       setLoading(false);
     });
     return () => { mounted = false; };
   }, []);
 
-  const nextFixtures = useMemo(() => fixtures.slice(0, 8), [fixtures]);
+  // Derived fixture slices
+  const liveFixtures   = useMemo(() => fixtures.filter(f => LIVE_STATUSES.has(f.status)), [fixtures]);
+  const todayFixtures  = useMemo(() => {
+    const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return fixtures.filter(f => f.date === today);
+  }, [fixtures]);
+  const completedCount = useMemo(() => fixtures.filter(f => DONE_STATUSES.has(f.status)).length, [fixtures]);
+
+  // Group fixtures by round for the schedule tab
+  const fixturesByRound = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const f of fixtures) {
+      if (!map[f.round]) map[f.round] = [];
+      map[f.round].push(f);
+    }
+    return map;
+  }, [fixtures]);
+
+  const roundTabs = useMemo(() => {
+    const keys = Object.keys(fixturesByRound);
+    // Sort by canonical order, unknown rounds go last
+    return keys.sort((a, b) => {
+      const ai = ROUND_ORDER.indexOf(a), bi = ROUND_ORDER.indexOf(b);
+      if (ai === -1 && bi === -1) return a.localeCompare(b);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }, [fixturesByRound]);
+
+  // Tournament pulse stats (computed from completed fixtures)
+  const pulse = useMemo(() => {
+    const done = fixtures.filter(f => DONE_STATUSES.has(f.status));
+    const totalGoals = done.reduce((s, f) => s + (f.homeScore ?? 0) + (f.awayScore ?? 0), 0);
+    const cleanSheets = done.filter(f => f.homeScore === 0 || f.awayScore === 0).length;
+    let biggestWin = { home: "", away: "", diff: 0, score: "" };
+    for (const f of done) {
+      const diff = Math.abs((f.homeScore ?? 0) - (f.awayScore ?? 0));
+      if (diff > biggestWin.diff) biggestWin = { home: f.home, away: f.away, diff, score: `${f.homeScore}–${f.awayScore}` };
+    }
+    return {
+      played: done.length,
+      totalGoals,
+      goalsPerGame: done.length ? (totalGoals / done.length).toFixed(2) : "–",
+      cleanSheets,
+      biggestWin,
+    };
+  }, [fixtures]);
+
   const groupEntries = useMemo(() => Object.entries(standings), [standings]);
-  const hasGroups    = groupEntries.length > 0;
 
   // Featured stadiums  -  top 8 for the showcase
   const featuredStadiums = WC26_STADIUMS.slice(0, 8);
@@ -385,44 +464,155 @@ export default function WorldCup2026Page() {
 
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
 
+        {/* -- TODAY / LIVE -- */}
+        {(liveFixtures.length > 0 || todayFixtures.length > 0) && (
+          <section className="mb-8">
+            <div className="mb-3 flex items-center gap-2">
+              {liveFixtures.length > 0 && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">
+                {liveFixtures.length > 0 ? "Live Now" : "Today at WC26"}
+              </h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {(liveFixtures.length > 0 ? liveFixtures : todayFixtures).map(f => {
+                const isLive = LIVE_STATUSES.has(f.status);
+                const isDone = DONE_STATUSES.has(f.status);
+                return (
+                  <div key={f.id} className={`rounded-2xl border p-4 ${isLive ? "border-red-500/35 bg-red-950/20" : "border-white/8 bg-[#0b0f18]"}`}>
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-white/30">{f.round?.replace("Group Stage - ","")}</span>
+                      {isLive ? (
+                        <span className="flex items-center gap-1 rounded-full bg-red-600/20 px-2 py-0.5 text-[9px] font-black text-red-400 uppercase tracking-widest">
+                          <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />{f.minute ? `${f.minute}'` : "Live"}
+                        </span>
+                      ) : isDone ? (
+                        <span className="text-[9px] font-black text-white/25 uppercase tracking-widest">FT</span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-[#FFD700]/60">{f.time} EAT</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        {f.homeLogo && <img src={f.homeLogo} alt="" className="h-7 w-7 shrink-0 object-contain" loading="lazy" />}
+                        <span className="truncate text-sm font-black text-white">{f.home}</span>
+                      </div>
+                      <div className="shrink-0 text-center">
+                        {(isLive || isDone) && f.homeScore !== null ? (
+                          <span className={`text-xl font-black tabular-nums ${isLive ? "text-red-400" : "text-white"}`}>
+                            {f.homeScore} – {f.awayScore}
+                          </span>
+                        ) : (
+                          <span className="text-sm font-black text-white/20">vs</span>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                        <span className="truncate text-right text-sm font-black text-white">{f.away}</span>
+                        {f.awayLogo && <img src={f.awayLogo} alt="" className="h-7 w-7 shrink-0 object-contain" loading="lazy" />}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-[9px] text-white/25">{f.venue}{f.city ? `, ${f.city}` : ""}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* -- TOURNAMENT PULSE -- */}
+        {pulse.played > 0 && (
+          <section className="mb-8 overflow-hidden rounded-2xl border border-[#FFD700]/18 bg-[#09090e]">
+            <div className="border-b border-[#FFD700]/10 px-5 py-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">Tournament Pulse</h2>
+              <p className="text-[9px] text-white/30 font-semibold uppercase tracking-widest">Live stats from {pulse.played} matches played</p>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-y divide-white/5 md:grid-cols-4">
+              {[
+                { label: "Total Goals",    value: String(pulse.totalGoals),       sub: `${completedCount} of ${fixtures.length} matches done` },
+                { label: "Goals / Game",   value: pulse.goalsPerGame,             sub: "Average this tournament" },
+                { label: "Clean Sheets",   value: String(pulse.cleanSheets),      sub: "Zero goals conceded" },
+                { label: "Biggest Win",    value: pulse.biggestWin.score || "–",  sub: pulse.biggestWin.diff > 0 ? `${pulse.biggestWin.home} v ${pulse.biggestWin.away}` : "No data yet" },
+              ].map(stat => (
+                <div key={stat.label} className="px-5 py-4">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-white/30">{stat.label}</div>
+                  <div className="mt-1 text-2xl font-black text-[#FFD700]">{stat.value}</div>
+                  <div className="mt-0.5 text-[9px] text-white/25 leading-tight">{stat.sub}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* -- GROUP STAGE -- */}
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black uppercase tracking-widest text-white">Group Stage</h2>
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {hasGroups
-                  ? `Source: API-Football standings${standingsSyncedAt ? ` - synced ${standingsSyncedAt} EAT` : ""}`
-                  : "Waiting for API-Football standings"}
+                {standingsSyncedAt
+                  ? `Source: API-Football — synced ${standingsSyncedAt} EAT`
+                  : loading
+                    ? "Fetching live standings…"
+                    : "Static draw — live standings pending"}
               </p>
             </div>
-            {!hasGroups && (
-              <div className="rounded-full border border-[#FFD700]/25 bg-[#FFD700]/8 px-3 py-1.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
-                  {cd.d}d {cd.h}h away
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
 
-          {hasGroups ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
+          </div>
+        </section>
+
+        {/* -- GOLDEN BOOT -- */}
+        <section className="mb-8">
+          <div className="mb-4 flex items-center gap-3">
+            <Trophy className="h-5 w-5 text-[#FFD700]" />
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">Golden Boot Race</h2>
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
+                {topScorers.length > 0 ? "Top scorers — API-Football live" : "Top scorers — standings update as matches complete"}
+              </p>
+            </div>
+          </div>
+          {topScorers.length > 0 ? (
+            <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0b0f18]">
+              {topScorers.map((s, i) => (
+                <div key={s.name} className={`flex items-center gap-4 px-4 py-3 border-b border-white/4 last:border-0 transition-colors hover:bg-white/3 ${i === 0 ? "bg-[#FFD700]/4" : ""}`}>
+                  <span className={`w-5 shrink-0 text-center text-xs font-black ${i === 0 ? "text-[#FFD700]" : "text-white/25"}`}>{i + 1}</span>
+                  {s.photo ? (
+                    <img src={s.photo} alt={s.name} className="h-9 w-9 shrink-0 rounded-full object-cover bg-white/5" loading="lazy" />
+                  ) : (
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/8 text-[10px] font-black text-white/40">
+                      {s.name.slice(0,2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-black text-white">{s.name}</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {s.teamLogo && <img src={s.teamLogo} alt="" className="h-3.5 w-3.5 object-contain" loading="lazy" />}
+                      <span className="text-[10px] text-white/40">{s.team}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-4 text-right">
+                    <div>
+                      <div className={`text-lg font-black tabular-nums ${i === 0 ? "text-[#FFD700]" : "text-white"}`}>{s.goals}</div>
+                      <div className="text-[8px] uppercase tracking-widest text-white/25">Goals</div>
+                    </div>
+                    <div className="hidden sm:block">
+                      <div className="text-sm font-black tabular-nums text-white/50">{s.assists}</div>
+                      <div className="text-[8px] uppercase tracking-widest text-white/25">Ast</div>
+                    </div>
+                    <div className="hidden sm:block">
+                      <div className="text-sm font-black tabular-nums text-white/30">{s.played}</div>
+                      <div className="text-[8px] uppercase tracking-widest text-white/25">GP</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="space-y-4">
-              <OddspediaWidgetSlot {...ODDSPEDIA_WC26_STANDINGS} />
-              <div className="rounded-2xl border border-[#FFD700]/18 bg-[#090d14] px-5 py-8 text-center">
-                <Trophy className="mx-auto mb-3 h-8 w-8 text-[#FFD700]/55" />
-                <h3 className="text-sm font-black uppercase tracking-widest text-white">
-                  Verified standings pending
-                </h3>
-                <p className="mx-auto mt-2 max-w-xl text-xs leading-6 text-white/45">
-                  {loading
-                    ? "Checking API-Football for official World Cup 2026 group tables."
-                    : standingsError || "API-Football has not returned a verified official WC26 standings table yet."}
-                </p>
-              </div>
+            <div className="rounded-2xl border border-white/8 bg-[#0b0f18] px-5 py-10 text-center">
+              <Trophy className="mx-auto mb-3 h-8 w-8 text-[#FFD700]/30" />
+              <p className="text-xs text-white/30">Scorers data loads as the group stage progresses.</p>
             </div>
           )}
         </section>
@@ -459,26 +649,44 @@ export default function WorldCup2026Page() {
           </div>
         </section>
 
-        {/* -- FIXTURES + TOURNAMENT ROADMAP -- */}
-        <div className="mb-8 grid gap-6 lg:grid-cols-2">
-          {/* Fixtures */}
-          <div className="overflow-hidden rounded-2xl border border-[#FFD700]/20 bg-[#0c0e0a]/90">
-            <div className="flex items-center justify-between border-b border-[#FFD700]/12 px-4 py-3">
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-widest text-white">WC26 Fixtures</h2>
-                <p className="text-[10px] text-[#FFD700]/55 font-semibold uppercase tracking-widest">Live tournament feed</p>
-              </div>
-              <Trophy className="h-5 w-5 text-[#FFD700]/50" />
+        {/* -- FULL SCHEDULE -- */}
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black uppercase tracking-widest text-white">Full Schedule</h2>
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
+                {fixtures.length > 0 ? `${fixtures.length} matches · Jun 11 – Jul 19` : "Group Stage · Jun 11 – Jun 22"}
+              </p>
             </div>
-            {loading ? (
-              <div className="p-8 text-center text-[10px] font-black uppercase tracking-widest text-white/30">Loading feed...</div>
-            ) : nextFixtures.length > 0 ? (
-              nextFixtures.map(f => <FixtureRow key={f.id} fixture={f} />)
-            ) : (
-              <div className="space-y-0">
+          </div>
+
+          {/* Round tabs */}
+          <div className="mb-4 flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {(roundTabs.length > 0 ? roundTabs : ROUND_ORDER.slice(0, 3)).map(round => (
+              <button
+                key={round}
+                onClick={() => setScheduleTab(round)}
+                className={`shrink-0 rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                  scheduleTab === round
+                    ? "bg-[#FFD700] text-black shadow-[0_0_12px_rgba(255,215,0,0.35)]"
+                    : "border border-white/10 bg-white/4 text-white/50 hover:bg-white/8"
+                }`}
+              >
+                {shortRound(round)}
+              </button>
+            ))}
+          </div>
+
+          {/* Match list for selected round */}
+          <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0b0f18]">
+            {fixtures.length === 0 ? (
+              // Static fallback when API hasn't loaded
+              <div>
                 {WC26_OPENING_FIXTURES.map((f, i) => (
                   <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/5 px-4 py-3.5 last:border-0 hover:bg-white/3 transition-colors">
-                    <span className="text-xs font-bold text-white">{f.home}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">{f.home}</span>
+                    </div>
                     <div className="text-center">
                       <div className="text-[11px] font-black text-[#FFD700]">{f.date}</div>
                       <div className="text-[9px] text-white/30">{f.time} EAT</div>
@@ -487,31 +695,106 @@ export default function WorldCup2026Page() {
                   </div>
                 ))}
               </div>
+            ) : (fixturesByRound[scheduleTab] ?? []).length === 0 ? (
+              <div className="px-5 py-10 text-center text-xs text-white/30">No matches scheduled for this round yet.</div>
+            ) : (
+              (fixturesByRound[scheduleTab] ?? []).map((f: any) => {
+                const isLive = LIVE_STATUSES.has(f.status);
+                const isDone = DONE_STATUSES.has(f.status);
+                return (
+                  <div key={f.id} className={`grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-white/4 px-4 py-3.5 last:border-0 transition-colors hover:bg-white/2 ${isLive ? "bg-red-950/15" : ""}`}>
+                    <div className="flex min-w-0 items-center gap-2">
+                      {f.homeLogo && <img src={f.homeLogo} alt="" className="h-5 w-5 shrink-0 object-contain" loading="lazy" />}
+                      <span className="truncate text-xs font-bold text-white">{f.home}</span>
+                    </div>
+                    <div className="shrink-0 text-center">
+                      {(isLive || isDone) && f.homeScore !== null ? (
+                        <span className={`text-sm font-black tabular-nums ${isLive ? "text-red-400" : "text-white"}`}>
+                          {f.homeScore} – {f.awayScore}
+                          {isLive && f.minute ? <span className="ml-1 text-[9px] text-red-400/70">{f.minute}'</span> : null}
+                        </span>
+                      ) : (
+                        <div className="text-center">
+                          <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
+                          <div className="text-[9px] text-white/30">{f.time}</div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex min-w-0 items-center justify-end gap-2">
+                      <span className="truncate text-right text-xs font-bold text-white">{f.away}</span>
+                      {f.awayLogo && <img src={f.awayLogo} alt="" className="h-5 w-5 shrink-0 object-contain" loading="lazy" />}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
 
-          {/* Tournament roadmap */}
-          <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#080d14]/90">
-            <div className="border-b border-white/6 px-4 py-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-white">Tournament Roadmap</h2>
-              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">Jun 11 - Jul 19, 2026</p>
-            </div>
-            <div className="divide-y divide-white/5">
+          {/* Tournament roadmap strip */}
+          <div className="mt-4 overflow-hidden rounded-2xl border border-white/6 bg-[#080d14]">
+            <div className="flex overflow-x-auto scrollbar-none">
               {TIMELINE.map((item, i) => (
-                <div key={item.label} className={`flex items-start gap-3 px-4 py-3.5 transition-colors ${i === TIMELINE.length - 1 ? "bg-[#FFD700]/6" : "hover:bg-white/2"}`}>
-                  <div className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${i === TIMELINE.length - 1 ? "bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.6)]" : "bg-white/20"}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className={`text-xs font-black uppercase ${i === TIMELINE.length - 1 ? "text-[#FFD700]" : "text-white"}`}>{item.label}</span>
-                      <span className="text-[9px] font-bold text-white/35">{item.date}</span>
-                    </div>
-                    <p className="text-[11px] text-white/38 mt-0.5">{item.detail}</p>
-                  </div>
+                <div key={item.label} className={`shrink-0 border-r border-white/5 px-5 py-3 last:border-0 ${i === TIMELINE.length - 1 ? "bg-[#FFD700]/5" : ""}`}>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${i === TIMELINE.length - 1 ? "text-[#FFD700]" : "text-white"}`}>{item.label}</div>
+                  <div className="text-[9px] text-[#FFD700]/50 mt-0.5">{item.date}</div>
+                  <div className="text-[9px] text-white/28 mt-0.5">{item.detail}</div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* -- KNOCKOUT BRACKET -- */}
+        <section className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-black uppercase tracking-widest text-white">Knockout Path</h2>
+            <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">R32 → R16 → QF → SF → Final · Jul 19 · MetLife</p>
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-white/8 bg-[#0b0f18] p-4">
+            <div className="flex min-w-[640px] items-start gap-2">
+              {[
+                { label: "R32", slots: 16, color: "border-white/10 text-white/50" },
+                { label: "R16", slots: 8,  color: "border-[#FFD700]/15 text-[#FFD700]/50" },
+                { label: "QF",  slots: 4,  color: "border-[#FFD700]/25 text-[#FFD700]/70" },
+                { label: "SF",  slots: 2,  color: "border-[#FFD700]/40 text-[#FFD700]/90" },
+                { label: "Final",slots: 1, color: "border-[#FFD700] text-[#FFD700]" },
+              ].map(col => {
+                const colFixtures = fixturesByRound[
+                  ROUND_ORDER.find(r => shortRound(r) === col.label || r === col.label) ?? ""
+                ] ?? [];
+                return (
+                  <div key={col.label} className="flex flex-1 flex-col gap-2">
+                    <div className="mb-1 text-center text-[9px] font-black uppercase tracking-widest text-white/30">{col.label}</div>
+                    {Array.from({ length: col.slots }).map((_, si) => {
+                      const f = colFixtures[si];
+                      const isDone = f && DONE_STATUSES.has(f.status);
+                      const isLive = f && LIVE_STATUSES.has(f.status);
+                      return (
+                        <div key={si} className={`rounded-xl border px-2 py-2 text-center text-[9px] font-bold ${col.color} ${f ? "bg-white/3" : "bg-transparent"}`}>
+                          {f ? (
+                            <div>
+                              <div className="truncate text-white/70">{f.home}</div>
+                              {(isDone || isLive) && f.homeScore !== null ? (
+                                <div className={`my-0.5 text-[10px] font-black tabular-nums ${isLive ? "text-red-400" : "text-white"}`}>
+                                  {f.homeScore} – {f.awayScore}
+                                </div>
+                              ) : (
+                                <div className="my-0.5 text-white/20">vs</div>
+                              )}
+                              <div className="truncate text-white/70">{f.away}</div>
+                            </div>
+                          ) : (
+                            <span className="text-white/15">TBD</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
         {/* -- AFRICA AT WC26  -  PREMIUM SECTION -- */}
         <section className="mb-8 overflow-hidden rounded-2xl border border-[#006600]/35 bg-[#030804]/95">
