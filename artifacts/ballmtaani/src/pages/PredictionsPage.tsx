@@ -3,11 +3,12 @@ import { useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
-import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2 } from "lucide-react";
+import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2, Users } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
+import { WC26BracketCard } from "../components/WC26BracketCard";
 
 const WC26_SPECIAL_ID = "wc26-2026-winner";
 const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
@@ -86,6 +87,8 @@ export default function PredictionsPage() {
   const [wc26Picks, setWc26Picks]   = useState<Record<string, string>>({});   // questionId → pick
   const [wc26Saved2, setWc26Saved2] = useState<Record<string, boolean>>({});   // questionId → saved
   const [wc26Saving2, setWc26Saving2] = useState<string | null>(null);         // questionId being saved
+  const [wc26Consensus, setWc26Consensus] = useState<Record<string, Record<string, number>>>({});
+  const [showBracketCard, setShowBracketCard] = useState(false);
 
   const { isLoggedIn, user, coins, updateCoins, awardCoins } = useAuth();
   const [, setLocation] = useLocation();
@@ -188,6 +191,26 @@ export default function PredictionsPage() {
     });
   }, [isLoggedIn, user]);
 
+  // Fetch aggregate vote counts for all WC26 questions (public, no auth required)
+  useEffect(() => {
+    const ids = WC26_QUESTIONS.map(q => q.id);
+    supabase
+      .from("predictions")
+      .select("match_id, predicted_score")
+      .in("match_id", ids)
+      .then(({ data }) => {
+        if (!data) return;
+        const counts: Record<string, Record<string, number>> = {};
+        for (const row of data) {
+          if (!counts[row.match_id]) counts[row.match_id] = {};
+          const key = row.predicted_score as string;
+          counts[row.match_id][key] = (counts[row.match_id][key] || 0) + 1;
+        }
+        setWc26Consensus(counts);
+      })
+      .catch(() => {});
+  }, []);
+
   const handleWC26Pick = async (questionId: string, pick: string) => {
     if (!isLoggedIn || !user) { sessionStorage.setItem("auth_return_url", window.location.pathname); setLocation('/login'); return; }
     if (wc26Saved2[questionId]) return;
@@ -199,6 +222,12 @@ export default function PredictionsPage() {
     );
     setWc26Saving2(null);
     setWc26Saved2(prev => ({ ...prev, [questionId]: true }));
+    // Optimistically update local consensus count
+    setWc26Consensus(prev => {
+      const qCounts = { ...(prev[questionId] || {}) };
+      qCounts[pick] = (qCounts[pick] || 0) + 1;
+      return { ...prev, [questionId]: qCounts };
+    });
     awardCoins('prediction_submitted');
   };
 
@@ -297,8 +326,18 @@ export default function PredictionsPage() {
     }
   }, [myReceipts, isLoggedIn, user]);
 
+  const wc26TotalMtc = WC26_QUESTIONS.filter(q => wc26Saved2[q.id]).reduce((s, q) => s + q.mtc, 0);
+
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-white pb-20">
+      {showBracketCard && (
+        <WC26BracketCard
+          picks={wc26Picks}
+          consensus={wc26Consensus}
+          questions={WC26_QUESTIONS}
+          onClose={() => setShowBracketCard(false)}
+        />
+      )}
       <SEO
         title="Predictions | BallMtaani Fan Calls & Receipts"
         description="Call the scoreline on the biggest football fixtures. Earn MTC status. Keep receipts. Kenya's fan prediction platform."
@@ -655,9 +694,9 @@ export default function PredictionsPage() {
                 </p>
               </div>
               {Object.keys(wc26Saved2).some(k => wc26Saved2[k]) && (
-                <button onClick={shareWC26Picks}
-                  className="flex items-center gap-1.5 rounded-xl bg-[#25D366]/12 border border-[#25D366]/25 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-[#25D366] hover:bg-[#25D366]/22 transition-all">
-                  <Share2 className="h-3.5 w-3.5" /> Share
+                <button onClick={() => setShowBracketCard(true)}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#FFD700]/12 border border-[#FFD700]/25 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:bg-[#FFD700]/22 transition-all">
+                  <Share2 className="h-3.5 w-3.5" /> Share Card
                 </button>
               )}
             </div>
@@ -697,10 +736,29 @@ export default function PredictionsPage() {
 
                 <div className="p-4">
                   {saved ? (
-                    // Locked state
-                    <div className="flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
-                      <span className="text-[#FFD700] font-black text-sm">{picked}</span>
-                      <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-[#FFD700]/50">Locked</span>
+                    // Locked state with consensus
+                    <div>
+                      <div className="flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
+                        <span className="text-[#FFD700] font-black text-sm">{picked}</span>
+                        <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-[#FFD700]/50">Locked</span>
+                      </div>
+                      {(() => {
+                        const qCounts = wc26Consensus[q.id] || {};
+                        const total = Object.values(qCounts).reduce((s, n) => s + n, 0);
+                        const pct = total > 0 ? Math.round(((qCounts[picked] || 0) / total) * 100) : 0;
+                        if (!total) return null;
+                        return (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-1 rounded-full bg-white/8 overflow-hidden">
+                              <div className="h-full rounded-full bg-[#FFD700]/50 transition-all duration-700" style={{ width: `${pct}%` }} />
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-white/30 font-bold shrink-0">
+                              <Users className="h-3 w-3" />
+                              <span>{pct}% of {total.toLocaleString()} fans agree</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     // Pick buttons
@@ -736,8 +794,8 @@ export default function PredictionsPage() {
                 Come back after June 11 for your receipts.{" "}
                 {WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.
               </p>
-              <button onClick={shareWC26Picks}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-6 py-3 text-sm font-black uppercase tracking-widest text-white shadow-[0_0_20px_rgba(37,211,102,0.3)] transition-all hover:shadow-[0_0_30px_rgba(37,211,102,0.5)]">
+              <button onClick={() => setShowBracketCard(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,215,0,0.35)] transition-all hover:shadow-[0_0_30px_rgba(255,215,0,0.55)]">
                 <Share2 className="h-4 w-4" /> Share My Bracket
               </button>
             </div>
