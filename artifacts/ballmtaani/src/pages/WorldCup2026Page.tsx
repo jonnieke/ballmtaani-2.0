@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { CalendarDays, ChevronRight, MapPin, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star } from "lucide-react";
+import { CalendarDays, ChevronRight, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star } from "lucide-react";
 import SEO from "../components/SEO";
 import WC26TeamExplorer from "../components/WC26TeamExplorer";
 import OddspediaWidgetSlot from "../components/OddspediaWidgetSlot";
@@ -262,6 +262,18 @@ export default function WorldCup2026Page() {
   const [scheduleTab, setScheduleTab] = useState("Group Stage - Matchday 1");
   const [aiInsights, setAiInsights] = useState<Record<string, { text: string; loading: boolean }>>({});
   const cd = useCountdown();
+
+  const waShare = (home: string, away: string, date?: string, time?: string, venue?: string) => {
+    const lines = [
+      `⚽ WC26: ${home} vs ${away}`,
+      date || time ? `📅 ${[date, time ? `${time} EAT` : ""].filter(Boolean).join(" · ")}` : null,
+      venue ? `🏟️ ${venue}` : null,
+      ``,
+      `Watch with your people 👇`,
+      `https://ballmtaani.com/world-cup-2026`,
+    ].filter(l => l !== null).join("\n");
+    window.open(`https://wa.me/?text=${encodeURIComponent(lines)}`, "_blank");
+  };
 
   const askAI = async (key: string, home: string, away: string, group?: string) => {
     if (aiInsights[key]?.text || aiInsights[key]?.loading) return;
@@ -637,25 +649,42 @@ export default function WorldCup2026Page() {
                       <span className="flex-1 truncate text-right text-xs font-bold text-white">{f.away}</span>
                     </div>
                     {insight?.text ? (
-                      <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
-                        <div className="mb-1 flex items-center gap-1.5">
-                          <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
-                          <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
+                      <>
+                        <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
+                          <div className="mb-1 flex items-center gap-1.5">
+                            <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
+                            <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
+                          </div>
+                          <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
                         </div>
-                        <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
-                      </div>
+                        <button
+                          onClick={() => waShare(f.home, f.away, f.date, f.time)}
+                          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#25D366]/20 bg-[#25D366]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#25D366]/70 transition-all hover:bg-[#25D366]/14 hover:text-[#25D366]"
+                        >
+                          <MessageCircle className="h-2.5 w-2.5" />Share on WhatsApp
+                        </button>
+                      </>
                     ) : (
-                      <button
-                        onClick={() => askAI(key, f.home, f.away)}
-                        disabled={insight?.loading}
-                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
-                      >
-                        {insight?.loading ? (
-                          <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
-                        ) : (
-                          <><Zap className="h-2.5 w-2.5" />AI Pick</>
-                        )}
-                      </button>
+                      <div className="mt-2 flex gap-1.5">
+                        <button
+                          onClick={() => askAI(key, f.home, f.away)}
+                          disabled={insight?.loading}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
+                        >
+                          {insight?.loading ? (
+                            <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
+                          ) : (
+                            <><Zap className="h-2.5 w-2.5" />AI Pick</>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => waShare(f.home, f.away, f.date, f.time)}
+                          className="flex shrink-0 items-center justify-center rounded-lg border border-[#25D366]/20 bg-[#25D366]/6 px-2.5 py-1.5 text-[#25D366]/70 transition-all hover:bg-[#25D366]/14 hover:text-[#25D366]"
+                          title="Share on WhatsApp"
+                        >
+                          <MessageCircle className="h-3 w-3" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
@@ -712,25 +741,42 @@ export default function WorldCup2026Page() {
                       </div>
                     )}
                     {insight?.text ? (
-                      <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
-                        <div className="mb-1 flex items-center gap-1.5">
-                          <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
-                          <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
+                      <>
+                        <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
+                          <div className="mb-1 flex items-center gap-1.5">
+                            <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
+                            <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
+                          </div>
+                          <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
                         </div>
-                        <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
-                      </div>
+                        <button
+                          onClick={() => waShare(f.home, f.away, f.date, f.time, f.venue)}
+                          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#25D366]/20 bg-[#25D366]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#25D366]/70 transition-all hover:bg-[#25D366]/14 hover:text-[#25D366]"
+                        >
+                          <MessageCircle className="h-2.5 w-2.5" />Share on WhatsApp
+                        </button>
+                      </>
                     ) : (
-                      <button
-                        onClick={() => askAI(key, f.home, f.away, f.group)}
-                        disabled={insight?.loading}
-                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
-                      >
-                        {insight?.loading ? (
-                          <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
-                        ) : (
-                          <><Zap className="h-2.5 w-2.5" />AI Pick</>
-                        )}
-                      </button>
+                      <div className="mt-2 flex gap-1.5">
+                        <button
+                          onClick={() => askAI(key, f.home, f.away, f.group)}
+                          disabled={insight?.loading}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
+                        >
+                          {insight?.loading ? (
+                            <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
+                          ) : (
+                            <><Zap className="h-2.5 w-2.5" />AI Pick</>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => waShare(f.home, f.away, f.date, f.time, f.venue)}
+                          className="flex shrink-0 items-center justify-center rounded-lg border border-[#25D366]/20 bg-[#25D366]/6 px-2.5 py-1.5 text-[#25D366]/70 transition-all hover:bg-[#25D366]/14 hover:text-[#25D366]"
+                          title="Share on WhatsApp"
+                        >
+                          <MessageCircle className="h-3 w-3" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 );
