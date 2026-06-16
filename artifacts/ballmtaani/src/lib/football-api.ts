@@ -485,18 +485,27 @@ export async function fetchTournamentFixtures(leagueId: number, season: number):
 }
 
 export async function fetchWC26TopScorers(): Promise<any[]> {
-  const raw = await apiFetch(`/players/topscorers?league=1&season=2026`);
-  if (!Array.isArray(raw) || raw.length === 0) return [];
-  return raw.slice(0, 10).map((item: any) => ({
-    name: item.player?.name || "Unknown",
-    photo: item.player?.photo || "",
-    nationality: item.player?.nationality || "",
-    team: item.statistics?.[0]?.team?.name || "",
-    teamLogo: item.statistics?.[0]?.team?.logo || "",
-    goals: item.statistics?.[0]?.goals?.total ?? 0,
-    assists: item.statistics?.[0]?.goals?.assists ?? 0,
-    played: item.statistics?.[0]?.games?.appearences ?? 0,
-  }));
+  // Uses a direct fetch (not apiFetch) so plan-limited 404s are silent —
+  // top scorers is a bonus display and should never error the console.
+  try {
+    const res = await fetch(`${API_BASE_URL}/players/topscorers?league=1&season=2026`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const raw = json?.response;
+    if (!Array.isArray(raw) || raw.length === 0) return [];
+    return raw.slice(0, 10).map((item: any) => ({
+      name: item.player?.name || "Unknown",
+      photo: item.player?.photo || "",
+      nationality: item.player?.nationality || "",
+      team: item.statistics?.[0]?.team?.name || "",
+      teamLogo: item.statistics?.[0]?.team?.logo || "",
+      goals: item.statistics?.[0]?.goals?.total ?? 0,
+      assists: item.statistics?.[0]?.goals?.assists ?? 0,
+      played: item.statistics?.[0]?.games?.appearences ?? 0,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchTournamentStandings(leagueId: number, season: number): Promise<Record<string, TournamentStandingEntry[]>> {
