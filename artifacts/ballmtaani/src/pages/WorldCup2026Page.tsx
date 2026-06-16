@@ -260,7 +260,26 @@ export default function WorldCup2026Page() {
   const [loading, setLoading] = useState(true);
   const [standingsSyncedAt, setStandingsSyncedAt] = useState<string | null>(null);
   const [scheduleTab, setScheduleTab] = useState("Group Stage - Matchday 1");
+  const [aiInsights, setAiInsights] = useState<Record<string, { text: string; loading: boolean }>>({});
   const cd = useCountdown();
+
+  const askAI = async (key: string, home: string, away: string, group?: string) => {
+    if (aiInsights[key]?.text || aiInsights[key]?.loading) return;
+    setAiInsights(prev => ({ ...prev, [key]: { text: "", loading: true } }));
+    try {
+      const q = `WC26 match preview in 2 lines: ${home} vs ${away}${group ? ` (Group ${group})` : ""}. Who has the edge and why?`;
+      const res = await fetch("/api/mchambuzi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q }),
+      });
+      const data = res.ok ? await res.json() : null;
+      const text = data?.answer ?? "Mchambuzi ni busy — try again.";
+      setAiInsights(prev => ({ ...prev, [key]: { text, loading: false } }));
+    } catch {
+      setAiInsights(prev => ({ ...prev, [key]: { text: "Mchambuzi ni busy — try again.", loading: false } }));
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -593,16 +612,43 @@ export default function WorldCup2026Page() {
           {/* Match grid */}
           {fixtures.length === 0 ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {WC26_OPENING_FIXTURES.map((f, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-xl border border-white/8 bg-[#0b0f18] px-4 py-3">
-                  <span className="flex-1 truncate text-xs font-bold text-white">{f.home}</span>
-                  <div className="shrink-0 text-center">
-                    <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
-                    <div className="text-[9px] text-white/30">{f.time} EAT</div>
+              {WC26_OPENING_FIXTURES.map((f, i) => {
+                const key = `static-${i}`;
+                const insight = aiInsights[key];
+                return (
+                  <div key={i} className="rounded-xl border border-white/8 bg-[#0b0f18] px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex-1 truncate text-xs font-bold text-white">{f.home}</span>
+                      <div className="shrink-0 text-center">
+                        <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
+                        <div className="text-[9px] text-white/30">{f.time} EAT</div>
+                      </div>
+                      <span className="flex-1 truncate text-right text-xs font-bold text-white">{f.away}</span>
+                    </div>
+                    {insight?.text ? (
+                      <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
+                        <div className="mb-1 flex items-center gap-1.5">
+                          <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
+                          <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
+                        </div>
+                        <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => askAI(key, f.home, f.away)}
+                        disabled={insight?.loading}
+                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
+                      >
+                        {insight?.loading ? (
+                          <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
+                        ) : (
+                          <><Zap className="h-2.5 w-2.5" />AI Pick</>
+                        )}
+                      </button>
+                    )}
                   </div>
-                  <span className="flex-1 truncate text-right text-xs font-bold text-white">{f.away}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (fixturesByRound[scheduleTab] ?? []).length === 0 ? (
             <div className="rounded-2xl border border-white/8 bg-[#0b0f18] px-5 py-10 text-center text-xs text-white/30">
@@ -613,6 +659,8 @@ export default function WorldCup2026Page() {
               {(fixturesByRound[scheduleTab] ?? []).map((f: any) => {
                 const isLive = LIVE_STATUSES.has(f.status);
                 const isDone = DONE_STATUSES.has(f.status);
+                const key = String(f.id);
+                const insight = aiInsights[key];
                 return (
                   <div
                     key={f.id}
@@ -651,6 +699,27 @@ export default function WorldCup2026Page() {
                         <MapPin className="h-2.5 w-2.5 shrink-0" />
                         <span className="truncate">{f.venue}</span>
                       </div>
+                    )}
+                    {insight?.text ? (
+                      <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
+                        <div className="mb-1 flex items-center gap-1.5">
+                          <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
+                          <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
+                        </div>
+                        <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => askAI(key, f.home, f.away, f.group)}
+                        disabled={insight?.loading}
+                        className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
+                      >
+                        {insight?.loading ? (
+                          <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
+                        ) : (
+                          <><Zap className="h-2.5 w-2.5" />AI Pick</>
+                        )}
+                      </button>
                     )}
                   </div>
                 );
