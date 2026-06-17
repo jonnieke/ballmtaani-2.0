@@ -562,50 +562,47 @@ export default function HomePage() {
           {/* Reward cards (stacked) + live match player */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
 
-            {/* Left — engagement cards stacked */}
+            {/* Left — latest 3 articles */}
             <div className="flex flex-col gap-3">
-              {[
-                {
-                  img: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&q=80&auto=format&fit=crop",
-                  alt: "Airtime top-up", icon: Smartphone,
-                  iconCls: "bg-blue-500/20 border-blue-500/30 text-blue-400",
-                  hover: "hover:border-blue-500/30 hover:shadow-[0_8px_32px_rgba(59,130,246,0.12)]",
-                  title: "Airtime Top-Up", sub: "Safaricom, Airtel & Telkom — instant delivery", price: "from 2,500 MTC",
-                },
-                {
-                  img: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&q=80&auto=format&fit=crop",
-                  alt: "Data bundle", icon: Wifi,
-                  iconCls: "bg-green-500/20 border-green-500/30 text-green-400",
-                  hover: "hover:border-green-500/30 hover:shadow-[0_8px_32px_rgba(34,197,94,0.12)]",
-                  title: "Data Bundle", sub: "Daily, weekly & monthly bundles", price: "from 2,000 MTC",
-                },
-                {
-                  img: "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=400&q=80&auto=format&fit=crop",
-                  alt: "BallMtaani merch", icon: ShirtIcon,
-                  iconCls: "bg-[#FFD700]/15 border-[#FFD700]/25 text-[#FFD700]",
-                  hover: "hover:border-[#FFD700]/30 hover:shadow-[0_8px_32px_rgba(255,214,0,0.10)]",
-                  title: "BM Merch", sub: "Jerseys, caps & fan gear — limited drops", price: "from 10,000 MTC",
-                },
-              ].map(({ img, alt, icon: Icon, iconCls, hover, title, sub, price }) => (
-                <Link key={title} href="/store"
-                  className={`group flex flex-1 items-stretch overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-0.5 ${hover}`}>
-                  <div className="relative w-28 shrink-0 overflow-hidden sm:w-36">
-                    <img src={img} alt={alt}
-                      className="h-full w-full object-cover brightness-50 transition-transform duration-700 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c111a]" />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 p-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border backdrop-blur-sm ${iconCls}`}>
-                        <Icon className="h-3.5 w-3.5" />
-                      </span>
-                      <p className="truncate text-sm font-black uppercase tracking-widest text-white">{title}</p>
+              {newsLoading
+                ? [0, 1, 2].map(i => (
+                    <div key={i} className="flex h-[88px] animate-pulse items-stretch overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a]">
+                      <div className="w-28 shrink-0 bg-white/5 sm:w-36" />
+                      <div className="flex flex-1 flex-col justify-center gap-2 p-4">
+                        <div className="h-2 w-16 rounded bg-white/8" />
+                        <div className="h-3 rounded bg-white/10" />
+                        <div className="h-3 w-3/4 rounded bg-white/8" />
+                      </div>
                     </div>
-                    <p className="truncate text-[11px] text-white/35">{sub}</p>
-                    <p className="text-[9px] font-black uppercase tracking-wider text-white/45">{price}</p>
-                  </div>
-                </Link>
-              ))}
+                  ))
+                : news.slice(0, 3).map(article => {
+                    const cardCls = "group flex flex-1 items-stretch overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_8px_32px_rgba(255,255,255,0.04)]";
+                    const inner = (
+                      <>
+                        <div className="relative w-28 shrink-0 overflow-hidden sm:w-36">
+                          <img src={article.thumbnail} alt={article.title} loading="lazy"
+                            className="h-full w-full object-cover brightness-70 transition-transform duration-700 group-hover:scale-105"
+                            onError={e => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"; }} />
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c111a]" />
+                        </div>
+                        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 p-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-white/28">{article.source}</span>
+                            <span className="text-white/15">·</span>
+                            <span className="text-[9px] text-white/25">{timeAgo(article.pubDate)}</span>
+                            {(article.isWC26 || isWC26(article.title)) && (
+                              <span className="rounded-sm bg-[#FFD700]/15 px-1 py-px text-[7px] font-black uppercase tracking-wider text-[#FFD700]">WC26</span>
+                            )}
+                          </div>
+                          <p className="line-clamp-2 text-sm font-black leading-snug text-white">{article.title}</p>
+                        </div>
+                      </>
+                    );
+                    return article.isInternal
+                      ? <Link key={article.id} href={`/article/${article.slug}`} className={cardCls}>{inner}</Link>
+                      : <a key={article.id} href={article.link} target="_blank" rel="noopener noreferrer" className={cardCls}>{inner}</a>;
+                  })
+              }
             </div>
 
             {/* Right — live match player via official SportyTV YouTube embed */}
