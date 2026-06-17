@@ -540,14 +540,14 @@ export default function HomePage() {
             <div>
               <div className="mb-2 flex items-center gap-2.5">
                 <div className="h-px w-6 bg-[#FFD700]/50" />
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/60">Earn &amp; Redeem</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/60">News &amp; Live</span>
               </div>
               <h2 className="text-2xl font-black uppercase tracking-tight text-white md:text-3xl">
-                Turn Engagement Into <span className="text-[#FFD700]">Real Value</span>
+                Read, Watch &amp; <span className="text-[#FFD700]">Earn</span>
               </h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/40">
-                Every prediction, duel, and debate earns MTC — our status currency.
-                Redeem directly for <span className="text-white/65 font-semibold">airtime, data bundles</span> and <span className="text-white/65 font-semibold">exclusive merch</span>.
+                Top football stories alongside <span className="text-white/65 font-semibold">live SportyTV coverage</span>, side by side.
+                Every prediction, duel, and debate you join earns <span className="text-white/65 font-semibold">MTC points</span>.
               </p>
             </div>
             <div className="flex items-center gap-2 md:mb-1">
