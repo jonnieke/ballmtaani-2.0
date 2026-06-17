@@ -214,6 +214,10 @@ export default function HomePage() {
     if (liveMatches.length || upcomingFixtures.length || recentMatches.length) setLastUpdated(new Date());
   }, [liveMatches, upcomingFixtures, recentMatches]);
 
+  const STADIUM_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg";
+  const [heroImages, setHeroImages] = useState<string[]>([STADIUM_IMAGE]);
+  const [heroIndex, setHeroIndex] = useState(0);
+
   const [sportyVideos, setSportyVideos] = useState<SportyVideo[]>([]);
   const [blockedVideoIds, setBlockedVideoIds] = useState<Set<string>>(() => getBlockedVideoIds());
 
@@ -235,6 +239,29 @@ export default function HomePage() {
     const t = window.setInterval(() => setClockTick(n => n + 1), 60000);
     return () => window.clearInterval(t);
   }, []);
+
+  // Fetch up to 5 latest article thumbnails for hero slider
+  useEffect(() => {
+    if (!supabase) return;
+    void Promise.resolve(
+      supabase.from("articles").select("thumbnail_url")
+        .eq("status", "published")
+        .not("thumbnail_url", "is", null)
+        .order("published_at", { ascending: false })
+        .limit(5)
+        .then(({ data }) => {
+          const urls = (data ?? []).map((a: any) => a.thumbnail_url as string).filter(Boolean);
+          if (urls.length) setHeroImages(urls);
+        })
+    ).catch(() => {});
+  }, []);
+
+  // Auto-advance hero slide every 6 seconds
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+    const t = setInterval(() => setHeroIndex(i => (i + 1) % heroImages.length), 6000);
+    return () => clearInterval(t);
+  }, [heroImages.length]);
 
   const freshnessLabel = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
@@ -293,9 +320,17 @@ export default function HomePage() {
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-white/8 bg-[#040508]">
-        {/* Stadium backdrop */}
-        <img src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg" alt="" decoding="async" loading="eager"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-55" />
+        {/* Article image slider backdrop */}
+        {heroImages.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt=""
+            decoding="async"
+            loading={i === 0 ? "eager" : "lazy"}
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ${i === heroIndex ? "opacity-55" : "opacity-0"}`}
+          />
+        ))}
         {/* Cinematic overlays */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(4,5,8,0.72)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-[#040508]/20 to-transparent" />
@@ -469,6 +504,24 @@ export default function HomePage() {
               {lastResult && <HeroMatchCard kind="finished" match={lastResult} />}
             </motion.div>
           </div>
+
+          {/* Slider dot indicators */}
+          {heroImages.length > 1 && (
+            <div className="flex justify-center gap-1.5 pb-4 pt-2">
+              {heroImages.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setHeroIndex(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === heroIndex
+                      ? "w-5 h-1.5 bg-[#FFD700]"
+                      : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"
+                  }`}
+                  aria-label={`Slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
