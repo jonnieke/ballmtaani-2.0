@@ -18,7 +18,6 @@ import FloatingMchambuzi from "../components/FloatingMchambuzi";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import { motion } from "framer-motion";
-import AfricanFootballWidget from "../components/AfricanFootballWidget";
 import HeroTicker from "../components/HeroTicker";
 
 const WC26_START = new Date("2026-06-11T17:00:00Z");
@@ -959,44 +958,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────────── KENYAN FOOTBALL STRIP ───────────────────── */}
-      <section className="border-b border-[#006600]/25 bg-[#040a04] py-8">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#006600]/40 bg-[#006600]/15 text-sm">🇰🇪</div>
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-widest text-white">African Football</h2>
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-[#22c55e]/60">CAF · Harambee Stars · Local</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Link href="/matches?league=CAF" className="group flex items-center gap-3 rounded-xl border border-[#006600]/18 bg-[#060d06] p-4 transition-all hover:border-[#006600]/40">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">🏆</div>
-              <div className="min-w-0">
-                <div className="text-xs font-black uppercase text-white">CAF Champions League</div>
-                <div className="text-[10px] text-white/35">Continental club football</div>
-              </div>
-              <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 group-hover:text-[#22c55e]" />
-            </Link>
-            <Link href="/matches" className="group flex items-center gap-3 rounded-xl border border-[#006600]/18 bg-[#060d06] p-4 transition-all hover:border-[#006600]/40">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">⚽</div>
-              <div className="min-w-0">
-                <div className="text-xs font-black uppercase text-white">Harambee Stars</div>
-                <div className="text-[10px] text-white/35">Kenya national team</div>
-              </div>
-              <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 group-hover:text-[#22c55e]" />
-            </Link>
-            <Link href="/fan-zones" className="group flex items-center gap-3 rounded-xl border border-[#006600]/18 bg-[#060d06] p-4 transition-all hover:border-[#006600]/40">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#006600]/15 text-lg">🔥</div>
-              <div className="min-w-0">
-                <div className="text-xs font-black uppercase text-white">Kenyan Fan Zones</div>
-                <div className="text-[10px] text-white/35">Gor · Leopards · Tusker · More</div>
-              </div>
-              <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 group-hover:text-[#22c55e]" />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* ─────────────────────── NEWS: WC26 FIRST ────────────────────────── */}
       <section className="border-b border-white/6 bg-[#05070b] py-10">
@@ -1045,16 +1006,115 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────────── AFRICAN FOOTBALL ────────────────────────── */}
-      <section className="border-b border-white/6 bg-[#04060a] py-8">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mb-4 flex items-center justify-between">
+      {/* ─────────────────────── AFRICA AT WC26 ─────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-white/6 bg-[#030507] py-12">
+        {/* Ambient glows */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-1/2 h-96 w-96 -translate-y-1/2 rounded-full bg-green-950/60 blur-3xl" />
+          <div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-[#FFD700]/5 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-4">
+
+          {/* ── Section header ── */}
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-black uppercase tracking-widest text-white">African <span className="text-orange-400">Lions</span> at WC26</h2>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">9 CAF nations · All with something to prove</p>
+              <div className="mb-2 flex items-center gap-2.5">
+                <div className="h-px w-8 bg-green-500/50" />
+                <span className="text-[9px] font-black uppercase tracking-[0.35em] text-green-400/60">CAF · World Cup 2026</span>
+              </div>
+              <h2 className="text-3xl font-black uppercase leading-none tracking-tight text-white md:text-4xl">
+                Africa's <span className="text-[#FFD700]">9</span> at the<br className="sm:hidden" /> World Cup
+              </h2>
+              <p className="mt-2 max-w-md text-sm leading-relaxed text-white/38">
+                One continent. Nine nations. Every match carries the weight of 1.4 billion people.
+              </p>
             </div>
+            <Link href="/world-cup-2026"
+              className="inline-flex items-center gap-2 self-start rounded-xl border border-[#FFD700]/30 bg-[#FFD700]/8 px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-[#FFD700] transition-all hover:bg-[#FFD700]/15 sm:self-auto">
+              Full WC26 Hub <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <AfricanFootballWidget compact={true} />
+
+          {/* ── 9 Nations grid ── */}
+          {(() => {
+            const CAF_NATIONS = [
+              { code: "ma", name: "Morocco",       group: "D", fixture: "vs Argentina",    date: "Jun 14", time: "22:00", note: "Qatar semi-finalists. Africa's most complete squad.", color: "#C1272D" },
+              { code: "sn", name: "Senegal",        group: "H", fixture: "vs Portugal",     date: "Jun 17", time: "19:00", note: "AFCON champions. Mané's farewell tournament?",       color: "#00853F" },
+              { code: "eg", name: "Egypt",          group: "D", fixture: "vs Uruguay",      date: "Jun 15", time: "01:00", note: "Salah's biggest stage. Pharaohs hunting history.",    color: "#CE1126" },
+              { code: "ng", name: "Nigeria",        group: "F", fixture: "vs Netherlands",  date: "Jun 15", time: "16:00", note: "Super Eagles — dangerous, hungry, unpredictable.",   color: "#008751" },
+              { code: "cm", name: "Cameroon",       group: "F", fixture: "vs Sweden",       date: "Jun 16", time: "22:00", note: "Indomitable Lions. Built to upset big nations.",      color: "#007A5E" },
+              { code: "za", name: "South Africa",   group: "A", fixture: "vs Mexico",       date: "Jun 11", time: "22:00", note: "First World Cup since 2010. Opened the tournament.", color: "#007A4D" },
+              { code: "ci", name: "Côte d'Ivoire",  group: "G", fixture: "vs Germany",      date: "Jun 16", time: "19:00", note: "AFCON holders. The Elephants charge again.",          color: "#F77F00" },
+              { code: "ml", name: "Mali",           group: "E", fixture: "vs England",      date: "Jun 15", time: "13:00", note: "Eagles soaring. Tactical, disciplined, dangerous.",   color: "#14B53A" },
+              { code: "tn", name: "Tunisia",        group: "B", fixture: "vs Spain",        date: "Jun 14", time: "16:00", note: "Eagles of Carthage facing European giants.",          color: "#E70013" },
+            ];
+            return (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {CAF_NATIONS.map(nation => (
+                  <div key={nation.name}
+                    className="group relative overflow-hidden rounded-2xl border border-white/8 bg-[#080d15] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/18 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                    {/* Nation color bar */}
+                    <div className="h-[2px] w-full" style={{ background: `linear-gradient(90deg, ${nation.color}, transparent)` }} />
+
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        {/* Flag image */}
+                        <div className="h-11 w-16 shrink-0 overflow-hidden rounded border border-white/10 bg-black/30">
+                          <img
+                            src={`https://media.api-sports.io/flags/${nation.code}.svg`}
+                            alt={`${nation.name}`}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        {/* Name + group chip */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-black uppercase tracking-tight text-white">{nation.name}</h3>
+                            <span className="rounded px-1.5 py-px text-[9px] font-black uppercase tracking-wider"
+                              style={{ color: nation.color, backgroundColor: nation.color + "22", border: `1px solid ${nation.color}40` }}>
+                              Grp {nation.group}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] leading-snug text-white/45">{nation.note}</p>
+                        </div>
+                      </div>
+
+                      {/* Fixture row */}
+                      <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-white/6 bg-black/30 px-3 py-2">
+                        <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: nation.color }} />
+                        <span className="text-[11px] font-bold text-white">{nation.fixture}</span>
+                        <span className="ml-auto whitespace-nowrap text-[10px] text-white/35">{nation.date} · {nation.time}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* ── Bottom nav strip ── */}
+          <div className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {[
+              { label: "CAF Champs League", sub: "Continental club football", href: "/matches", img: "https://media.api-sports.io/football/leagues/20.png" },
+              { label: "Harambee Stars",    sub: "Kenya national team",       href: "/matches", img: "https://media.api-sports.io/flags/ke.svg" },
+              { label: "Kenyan Fan Zones",  sub: "Gor · Leopards · Tusker",   href: "/fan-zones", img: "https://media.api-sports.io/football/leagues/357.png" },
+              { label: "WC26 Africa Hub",   sub: "All group fixtures & news",  href: "/world-cup-2026", img: "https://media.api-sports.io/football/leagues/1.png" },
+            ].map(link => (
+              <Link key={link.label} href={link.href}
+                className="group flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-3 transition-all hover:border-white/16 hover:bg-white/5">
+                <img src={link.img} alt="" className="h-7 w-7 shrink-0 rounded object-contain" loading="lazy"
+                  onError={e => { (e.target as HTMLImageElement).style.opacity = "0"; }} />
+                <div className="min-w-0">
+                  <div className="truncate text-[11px] font-black uppercase tracking-tight text-white">{link.label}</div>
+                  <div className="text-[9px] text-white/35">{link.sub}</div>
+                </div>
+                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-white/20 transition-colors group-hover:text-[#FFD700]" />
+              </Link>
+            ))}
+          </div>
+
         </div>
       </section>
 
