@@ -575,7 +575,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))
-                : news.slice(0, 3).map(article => {
+                : news.filter(a => a.isInternal).slice(0, 3).map(article => {
                     const cardCls = "group flex flex-1 items-stretch overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_8px_32px_rgba(255,255,255,0.04)]";
                     const inner = (
                       <>
