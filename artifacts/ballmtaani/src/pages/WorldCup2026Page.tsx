@@ -279,6 +279,16 @@ export default function WorldCup2026Page() {
   }, []);
   const cd = useCountdown();
 
+  // Must be declared before the useEffects that reference it in their dep arrays
+  const fixturesByRound = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    for (const f of fixtures) {
+      if (!map[f.round]) map[f.round] = [];
+      map[f.round].push(f);
+    }
+    return map;
+  }, [fixtures]);
+
   // Load reaction counts for fixtures visible in the current schedule tab
   useEffect(() => {
     if (!supabase) return;
@@ -449,16 +459,6 @@ export default function WorldCup2026Page() {
     return fixtures.filter(f => f.date === today);
   }, [fixtures]);
   const completedCount = useMemo(() => fixtures.filter(f => DONE_STATUSES.has(f.status)).length, [fixtures]);
-
-  // Group fixtures by round for the schedule tab
-  const fixturesByRound = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    for (const f of fixtures) {
-      if (!map[f.round]) map[f.round] = [];
-      map[f.round].push(f);
-    }
-    return map;
-  }, [fixtures]);
 
   const roundTabs = useMemo(() => {
     const keys = Object.keys(fixturesByRound);
