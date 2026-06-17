@@ -265,7 +265,7 @@ export default function HomePage() {
 
   const freshnessLabel = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
-  // WC26 opener shown when no API match available (off-season before June 11)
+  // WC26 opener — shown before June 11 when API has no data yet
   const WC26_OPENER = {
     id: "wc26-opener-preview",
     home: "Mexico", homeLogo: "https://media.api-sports.io/flags/mx.svg", homeInitial: "MEX", homeColor: "#006847",
@@ -275,16 +275,38 @@ export default function HomePage() {
     venue: "Estadio Azteca, Mexico City",
   };
 
+  // Group stage fallback — shown when WC26 is live but API returns no fixtures
+  const WC26_GROUP_FALLBACK = {
+    id: "wc26-group-stage",
+    home: "Morocco", homeLogo: "https://media.api-sports.io/flags/ma.svg", homeInitial: "MAR", homeColor: "#C1272D",
+    away: "Senegal", awayLogo: "https://media.api-sports.io/flags/sn.svg", awayInitial: "SEN", awayColor: "#00853F",
+    time: "Group Stage On",
+    league: "FIFA World Cup 2026",
+    venue: "USA · Canada · Mexico",
+  };
+
+  // Static WC26 match items for the ticker when the API returns empty during tournament
+  const wc26TickerFallback = wc26.isLive ? [
+    { id: "wc26-t1", home: "Morocco",   away: "Senegal",    time: "WC26" },
+    { id: "wc26-t2", home: "Nigeria",   away: "Egypt",      time: "WC26" },
+    { id: "wc26-t3", home: "S. Africa", away: "Mexico",     time: "WC26" },
+    { id: "wc26-t4", home: "Cameroon",  away: "Brazil",     time: "WC26" },
+    { id: "wc26-t5", home: "Tunisia",   away: "Argentina",  time: "WC26" },
+  ] : [];
+
   // Skip videos this viewer can't play (region-restricted or embed-disabled),
   // then pick: free live stream > next free scheduled stream > latest video
   const playableVideos = sportyVideos.filter(v => !blockedVideoIds.has(v.id));
   const heroVideo = pickHeroStream(playableVideos);
   const handleVideoUnavailable = (id: string) => setBlockedVideoIds(new Set(markVideoBlocked(id)));
 
-  const liveMatch     = liveMatches[0] || null;
-  // The hardcoded opener is only a valid fallback until it has kicked off
-  const nextFixture   = upcomingFixtures[0] || (Date.now() < WC26_OPENER.kickoffAt ? WC26_OPENER : null);
-  const lastResult    = recentMatches[0] || null;
+  const liveMatch   = liveMatches[0] || null;
+  const nextFixture = upcomingFixtures[0] || (
+    Date.now() < WC26_OPENER.kickoffAt ? WC26_OPENER :
+    wc26.isLive ? WC26_GROUP_FALLBACK :
+    null
+  );
+  const lastResult  = recentMatches[0] || null;
   const featuredMatch = liveMatch || nextFixture;
   const isMatchLive   = !!liveMatch;
 
@@ -315,7 +337,10 @@ export default function HomePage() {
       {/* ──────────────────────── HERO TICKER BELT ───────────────────────── */}
       <HeroTicker
         articles={useMemo(() => news.slice(0, 8), [news])}
-        matches={useMemo(() => [...liveMatches, ...upcomingFixtures].slice(0, 8), [liveMatches, upcomingFixtures])}
+        matches={useMemo(() => {
+          const api = [...liveMatches, ...upcomingFixtures];
+          return (api.length > 0 ? api : wc26TickerFallback).slice(0, 8);
+        }, [liveMatches, upcomingFixtures, wc26TickerFallback])}
       />
 
       {/* ─────────────────────────────── HERO ─────────────────────────────── */}
@@ -575,7 +600,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   ))
-                : news.filter(a => a.isInternal).slice(0, 3).map(article => {
+                : (news.filter(a => a.isInternal).length > 0 ? news.filter(a => a.isInternal) : news).slice(0, 3).map(article => {
                     const cardCls = "group flex flex-1 items-stretch overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_8px_32px_rgba(255,255,255,0.04)]";
                     const inner = (
                       <>
