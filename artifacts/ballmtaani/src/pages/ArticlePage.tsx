@@ -117,11 +117,11 @@ export default function ArticlePage() {
       <div className="min-h-screen bg-[#0B0B0B] pb-24">
 
         {/* ── HERO ─────────────────────────────────────────────────── */}
-        <div className="relative h-[50vh] min-h-[320px] w-full overflow-hidden sm:h-[58vh]">
+        <div className="relative w-full overflow-hidden bg-[#0B0B0B]">
           <img
             src={article.thumbnail_url || DEFAULT_IMAGE}
             alt={article.title}
-            className="h-full w-full object-cover"
+            className="w-full max-h-[75vh] object-contain"
             onError={e => { (e.target as HTMLImageElement).src = DEFAULT_IMAGE; }}
           />
           {/* Multi-layer gradient for depth */}
