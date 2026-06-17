@@ -355,10 +355,10 @@ export default function HomePage() {
             className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 ${i === heroIndex ? "opacity-55" : "opacity-0"}`}
           />
         ))}
-        {/* Cinematic overlays */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,transparent_20%,rgba(4,5,8,0.72)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-[#040508]/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#040508]/90 via-transparent to-[#040508]/50" />
+        {/* Cinematic overlays — strong left fade so text always wins */}
+        <div className="absolute inset-0 bg-[#040508]/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#040508]/95 via-[#040508]/70 to-[#040508]/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#040508] via-transparent to-[#040508]/40" />
         {/* WC26 gold shimmer */}
         <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-[#FFD700]/70 to-transparent" />
         {/* Subtle red glow bottom-left for energy */}
@@ -370,27 +370,20 @@ export default function HomePage() {
             {/* ── LEFT — headline, countdown, CTAs ── */}
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65 }}>
 
-              {/* Top badge row */}
-              <div className="mb-4 flex flex-wrap items-center gap-2">
-                {!wc26.isOver && (
-                  <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5
-                    ${wc26.isLive
-                      ? "border-[#FFD700]/50 bg-[#FFD700]/15 shadow-[0_0_16px_rgba(255,214,0,0.2)]"
-                      : "border-[#FFD700]/25 bg-[#FFD700]/8"}`}>
-                    {wc26.isLive
-                      ? <span className="h-2 w-2 animate-pulse rounded-full bg-[#FFD700]" />
-                      : <Trophy className="h-3 w-3 text-[#FFD700]" />}
-                    <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">
-                      {wc26.isLive ? "🏆 World Cup 2026 — Live Now!" : `🏆 FIFA World Cup 2026`}
-                    </span>
-                  </div>
-                )}
-                {/* Africa is here chip */}
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/8 px-3 py-1.5">
-                  <span className="text-[10px]">🌍</span>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-400">9 African Nations</span>
+              {/* Top badge */}
+              {!wc26.isOver && (
+                <div className={`mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5
+                  ${wc26.isLive
+                    ? "border-[#FFD700]/50 bg-[#FFD700]/15 shadow-[0_0_16px_rgba(255,214,0,0.2)]"
+                    : "border-[#FFD700]/25 bg-[#FFD700]/8"}`}>
+                  {wc26.isLive
+                    ? <span className="h-2 w-2 animate-pulse rounded-full bg-[#FFD700]" />
+                    : <Trophy className="h-3 w-3 text-[#FFD700]" />}
+                  <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">
+                    {wc26.isLive ? "World Cup 2026 — Live Now" : "FIFA World Cup 2026"}
+                  </span>
                 </div>
-              </div>
+              )}
 
               {/* ── HEADLINE — fan-first, WC26 spirit ── */}
               <h1 className="mb-3 text-4xl font-black leading-[0.88] tracking-tight text-white md:text-5xl lg:text-6xl">
@@ -426,9 +419,9 @@ export default function HomePage() {
 
               {/* ── COUNTDOWN — centrepiece when active ── */}
               {!wc26.isLive && !wc26.isOver && (
-                <div className="mb-5">
+                <div className="mb-6">
                   <p className="mb-2 text-[9px] font-black uppercase tracking-[0.3em] text-white/25">
-                    ⚡ Until Kickoff — Mexico vs South Africa, June 11
+                    Until Kickoff — Mexico vs South Africa, June 11
                   </p>
                   <div className="flex items-end gap-2">
                     <CountBox v={wc26.days}  l="Days" />
@@ -441,47 +434,6 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
-
-              {/* ── African nations at WC26 ── */}
-              {!wc26.isOver && (
-                <div className="mb-5">
-                  <p className="mb-2 text-[9px] font-black uppercase tracking-[0.28em] text-white/20">Africa at WC26 🌍</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { flag: "🇲🇦", name: "Morocco" },
-                      { flag: "🇸🇳", name: "Senegal" },
-                      { flag: "🇪🇬", name: "Egypt" },
-                      { flag: "🇳🇬", name: "Nigeria" },
-                      { flag: "🇨🇲", name: "Cameroon" },
-                      { flag: "🇿🇦", name: "S. Africa" },
-                      { flag: "🇨🇮", name: "Côte d'Ivoire" },
-                      { flag: "🇲🇱", name: "Mali" },
-                      { flag: "🇹🇳", name: "Tunisia" },
-                    ].map(n => (
-                      <Link key={n.name} href="/world-cup-2026"
-                        className="inline-flex items-center gap-1 rounded-full border border-white/8 bg-white/4 px-2 py-1 text-[9px] font-bold text-white/50 transition-all hover:border-white/16 hover:bg-white/8 hover:text-white">
-                        <span>{n.flag}</span> {n.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Feature pills ── */}
-              <div className="mb-5 flex flex-wrap gap-2">
-                {[
-                  { icon: "⚽", label: "Live Scores",  href: "/matches",          color: "text-white/70 border-white/15 bg-white/5 hover:bg-white/12" },
-                  { icon: "🏆", label: "WC26 Hub",     href: "/world-cup-2026",   color: "text-[#FFD700] border-[#FFD700]/25 bg-[#FFD700]/6 hover:bg-[#FFD700]/14" },
-                  { icon: "🤖", label: "AI Analyst",   href: "/mchambuzi-halisi", color: "text-green-400 border-green-400/20 bg-green-400/6 hover:bg-green-400/14" },
-                  { icon: "🔥", label: "Leaderboard",  href: "/leaderboard",      color: "text-orange-400 border-orange-400/20 bg-orange-400/6 hover:bg-orange-400/14" },
-                  { icon: "⚔️", label: "Fan Duels",    href: "/rivalries",        color: "text-[#B30000] border-[#B30000]/20 bg-[#B30000]/6 hover:bg-[#B30000]/14" },
-                ].map(f => (
-                  <Link key={f.label} href={f.href}
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition-all active:scale-95 ${f.color}`}>
-                    {f.icon} {f.label}
-                  </Link>
-                ))}
-              </div>
 
               {/* ── CTAs ── */}
               <div className="flex flex-wrap gap-3">
@@ -514,10 +466,6 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Social proof */}
-              <p className="mt-4 text-[10px] font-bold text-white/20">
-                🇰🇪 Kenya's loudest football fan room · Free to join · No password needed
-              </p>
             </motion.div>
 
             {/* Right — Match board: live now, up next, latest result */}
