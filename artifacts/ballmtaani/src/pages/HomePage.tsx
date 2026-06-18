@@ -214,8 +214,9 @@ export default function HomePage() {
   }, [liveMatches, upcomingFixtures, recentMatches]);
 
   const STADIUM_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg";
-  const [heroImages, setHeroImages] = useState<string[]>([STADIUM_IMAGE]);
+  const [heroSlides, setHeroSlides] = useState<{ url: string; title?: string; excerpt?: string }[]>([{ url: STADIUM_IMAGE }]);
   const [heroIndex, setHeroIndex] = useState(0);
+  const heroImages = heroSlides.map(s => s.url);
 
   const [sportyVideos, setSportyVideos] = useState<SportyVideo[]>([]);
   const [blockedVideoIds, setBlockedVideoIds] = useState<Set<string>>(() => getBlockedVideoIds());
@@ -243,14 +244,16 @@ export default function HomePage() {
   useEffect(() => {
     if (!supabase) return;
     void Promise.resolve(
-      supabase.from("articles").select("thumbnail_url")
+      supabase.from("articles").select("thumbnail_url, title, excerpt")
         .eq("status", "published")
         .not("thumbnail_url", "is", null)
         .order("published_at", { ascending: false })
         .limit(5)
         .then(({ data }) => {
-          const urls = (data ?? []).map((a: any) => a.thumbnail_url as string).filter(Boolean);
-          if (urls.length) setHeroImages(urls);
+          const slides = (data ?? [])
+            .filter((a: any) => a.thumbnail_url)
+            .map((a: any) => ({ url: a.thumbnail_url as string, title: a.title as string | undefined, excerpt: a.excerpt as string | undefined }));
+          if (slides.length) setHeroSlides(slides);
         })
     ).catch(() => {});
   }, []);
@@ -409,11 +412,14 @@ export default function HomePage() {
               </h1>
 
               {/* Sub-headline */}
-              <p className="mb-4 max-w-md text-sm leading-relaxed text-white/50 md:text-base">
+              <p className="mb-4 max-w-md text-sm leading-relaxed text-white/50 md:text-base transition-all duration-700">
                 {isMatchLive
                   ? "Pick the final score. Come back at full time. The receipt doesn't lie."
                   : wc26.isLive
-                  ? "Live scores, fan predictions and AI analysis for every World Cup match. Africa has 9 teams — make your calls."
+                  ? (() => {
+                      const slide = heroSlides[heroIndex];
+                      return slide?.excerpt || slide?.title || "Live scores, fan predictions and AI analysis for every World Cup match.";
+                    })()
                   : "Predict every World Cup match. Debate every goal. Keep the receipt on every Kenyan fan who got it wrong."}
               </p>
 
