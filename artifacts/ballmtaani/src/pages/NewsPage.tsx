@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
-import { ExternalLink, Search, Clock } from "lucide-react";
+import { ExternalLink, Search, Clock, ChevronRight } from "lucide-react";
 import SEO from "../components/SEO";
 
 interface PartnerArticle {
@@ -150,6 +150,33 @@ export default function NewsPage() {
                   {tab}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── EDITORIAL HERO ── */}
+        <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6" }}>
+          <img
+            src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#05070d]/95 via-[#05070d]/60 to-[#05070d]/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#05070d]/80 via-transparent to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B30000]/50 to-transparent" />
+          <div className="relative z-10 flex h-full items-center px-6 sm:px-10 lg:px-16">
+            <div>
+              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">WC26 · Special Edition</p>
+              <h2 className="mb-3 text-xl font-black uppercase leading-tight text-white sm:text-2xl lg:text-3xl">
+                Africa's World Cup.<br />
+                <span className="text-white/45">Every Story. Right Here.</span>
+              </h2>
+              <Link
+                href="/world-cup-2026"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-[#cc0000] active:scale-95"
+              >
+                Explore WC26 Hub <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
         </div>

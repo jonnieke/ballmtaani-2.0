@@ -527,6 +527,10 @@ export default function HomePage() {
                 Top football stories alongside <span className="text-white/65 font-semibold">live SportyTV coverage</span>, side by side.
                 Every prediction, duel, and debate you join earns <span className="text-white/65 font-semibold">MTC points</span>.
               </p>
+              <Link href="/news" className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
+                <span className="h-1 w-1 rounded-full bg-[#FFD700]/50" />
+                All News &amp; Stories <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
             <div className="flex items-center gap-2 md:mb-1">
               <span className="text-[10px] text-white/20 uppercase tracking-widest">Partner</span>
