@@ -46,14 +46,39 @@ export default function NewsPage() {
   }, []);
 
   const q = query.toLowerCase();
+
+  // Keyword sets for each tab — checked against title, tags, and partner_team_name
+  const TAB_KEYWORDS: Record<string, string[]> = {
+    "WC26":         ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+    "Analysis":     ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
+    "Match Reports":["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
+    "Africa":       ["africa", "afcon", "caf", "kenya", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire"],
+    "KPL":          ["kpl", "kenyan premier", "gor mahia", "afc leopards", "tusker", "harambee stars", "kakamega", "bandari", "city stars"],
+  };
+
+  function matchesTab(text: string): boolean {
+    if (activeTab === "All") return true;
+    const kws = TAB_KEYWORDS[activeTab];
+    if (!kws) return true;
+    const t = text.toLowerCase();
+    return kws.some(k => t.includes(k));
+  }
+
   const filteredPartner = partner.filter(a => {
-    const matchesQuery = !q || a.title.toLowerCase().includes(q) || (a.partner_team_name || "").toLowerCase().includes(q) || a.tags.some(t => t.toLowerCase().includes(q));
-    const matchesTab = activeTab === "All" || (activeTab === "WC26" && a.is_wc26) || a.tags.some(t => t.toLowerCase() === activeTab.toLowerCase());
-    return matchesQuery && matchesTab;
+    const haystack = [a.title, a.partner_team_name || "", ...(a.tags || [])].join(" ");
+    const matchesQuery = !q || haystack.toLowerCase().includes(q);
+    return matchesQuery && (
+      activeTab === "All" ||
+      (activeTab === "WC26" && a.is_wc26) ||
+      matchesTab(haystack)
+    );
   });
-  const filteredRss = rss.filter(a =>
-    !q || a.title.toLowerCase().includes(q) || a.source.toLowerCase().includes(q)
-  );
+
+  const filteredRss = rss.filter(a => {
+    const haystack = `${a.title} ${a.source}`;
+    const matchesQuery = !q || haystack.toLowerCase().includes(q);
+    return matchesQuery && matchesTab(haystack);
+  });
 
   const coverStory = filteredPartner[0];
   const features   = filteredPartner.slice(1, 3);
