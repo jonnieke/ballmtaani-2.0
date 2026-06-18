@@ -123,7 +123,7 @@ export default function NewsPage() {
             <div className="pb-4 text-center">
               <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi</p>
               <h1 className="text-[clamp(2.6rem,8vw,5rem)] font-black uppercase leading-none tracking-[0.03em] text-white">
-                The Touchline
+                BallMtaani News
               </h1>
               <div className="mt-2 flex items-center justify-center gap-3">
                 <div className="h-px w-16 bg-white/10" />
