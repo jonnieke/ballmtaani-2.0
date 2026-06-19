@@ -375,6 +375,7 @@ function FanCardFeature({ onBack }: { onBack: () => void }) {
   const [phase, setPhase] = useState<"form" | "generating" | "done">("form");
   const [form, setForm] = useState({ name: "", team: "Morocco", position: "FWD", number: "10", rating: "82" });
   const [card, setCard] = useState<{ imageUrl?: string; html: string } | null>(null);
+  const [statAttributes, setStatAttributes] = useState<{ label: string; value: number }[]>([]);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const POSITIONS = ["GK", "DEF", "MID", "FWD"];
@@ -387,6 +388,15 @@ function FanCardFeature({ onBack }: { onBack: () => void }) {
   const generateCard = () => {
     if (!form.name.trim()) { alert("Enter your name first!"); return; }
     setPhase("generating");
+    const r = Number(form.rating);
+    setStatAttributes([
+      { label: "PAC", value: Math.min(99, Math.max(50, r + Math.floor(Math.random() * 6) - 3)) },
+      { label: "SHO", value: Math.min(99, Math.max(50, r + Math.floor(Math.random() * 8) - 4)) },
+      { label: "PAS", value: Math.min(99, Math.max(50, r + Math.floor(Math.random() * 6) - 3)) },
+      { label: "DRI", value: Math.min(99, Math.max(50, r + Math.floor(Math.random() * 7) - 3)) },
+      { label: "DEF", value: Math.min(99, Math.max(50, r + Math.floor(Math.random() * 10) - 5)) },
+      { label: "PHY", value: Math.min(99, Math.max(50, r + Math.floor(Math.random() * 7) - 3)) },
+    ]);
     setTimeout(() => {
       setCard({ html: "ready" });
       setPhase("done");
@@ -395,15 +405,6 @@ function FanCardFeature({ onBack }: { onBack: () => void }) {
 
   const ratingColor = (r: number) => r >= 85 ? "#FFD700" : r >= 75 ? "#22c55e" : r >= 65 ? "#60a5fa" : "#c0c0c0";
   const ratingLabel = (r: number) => r >= 85 ? "GOLD" : r >= 75 ? "GREEN" : r >= 65 ? "BLUE" : "SILVER";
-
-  const statAttributes = [
-    { label: "PAC", value: Math.min(99, Number(form.rating) + Math.floor(Math.random() * 6) - 3) },
-    { label: "SHO", value: Math.min(99, Number(form.rating) + Math.floor(Math.random() * 8) - 4) },
-    { label: "PAS", value: Math.min(99, Number(form.rating) + Math.floor(Math.random() * 6) - 3) },
-    { label: "DRI", value: Math.min(99, Number(form.rating) + Math.floor(Math.random() * 7) - 3) },
-    { label: "DEF", value: Math.min(99, Number(form.rating) + Math.floor(Math.random() * 10) - 5) },
-    { label: "PHY", value: Math.min(99, Number(form.rating) + Math.floor(Math.random() * 7) - 3) },
-  ];
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] px-4 py-6">
@@ -552,7 +553,7 @@ function FanCardFeature({ onBack }: { onBack: () => void }) {
               <div className="grid grid-cols-3 gap-0 px-4 py-3">
                 {statAttributes.map((s) => (
                   <div key={s.label} className="text-center">
-                    <div className="text-base font-black text-white">{Math.max(50, Math.min(99, s.value))}</div>
+                    <div className="text-base font-black text-white">{s.value}</div>
                     <div className="text-[9px] font-bold text-white/40">{s.label}</div>
                   </div>
                 ))}

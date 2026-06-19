@@ -54,6 +54,7 @@ export function Navbar() {
       label: "Games",
       links: [
         { href: "/fun-zone", label: "Fun Zone" },
+        { href: "/ai-fan-zone", label: "AI Fan Zone" },
         { href: "/predictions", label: "Calls" },
         { href: "/war-room", label: "War Room" },
         { href: "/rapid-fire", label: "Rapid Fire" },
