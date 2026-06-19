@@ -171,9 +171,10 @@ function MatchRow({
   const [errA, setErrA] = useState(false);
 
   return (
-    <div
+    <Link
+      href={`/live-center/${match.id}`}
       onClick={onClick}
-      className={`flex cursor-pointer items-stretch border-b border-white/[0.045] transition-colors last:border-0 ${
+      className={`flex items-stretch border-b border-white/[0.045] transition-colors last:border-0 ${
         isSelected ? "bg-primary/8 border-l-2 border-l-primary" : isLive ? "hover:bg-red-900/10" : "hover:bg-white/[0.035]"
       }`}
     >
@@ -248,7 +249,7 @@ function MatchRow({
       <div className="flex shrink-0 items-center pr-2 pl-1">
         <ChevronRight className="h-3.5 w-3.5 text-white/12" />
       </div>
-    </div>
+    </Link>
   );
 }
 
