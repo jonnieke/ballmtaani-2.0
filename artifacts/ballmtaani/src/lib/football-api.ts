@@ -363,21 +363,29 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
 }
 
 // ─── 2. UPCOMING FIXTURES (next matches from major leagues) ─
+const WC26_LIVE_START = new Date("2026-06-11T17:00:00Z").getTime();
+const WC26_LIVE_END   = new Date("2026-07-20T00:00:00Z").getTime();
+
 export async function fetchUpcomingFixtures(): Promise<any[]> {
-  // WC26 (league 1, season 2026) + European leagues (season 2025) fetched IN PARALLEL
-  // Was: sequential loop × 3 season fallbacks = 24 API calls
-  // Now: parallel Promise.all = 8 API calls simultaneously
-  const leagueSeasons: [number, number][] = [
-    [1, 2026],   // World Cup 2026
-    [2, 2025],   // UCL
-    [3, 2025],   // UEL
-    [12, 2025],  // CAF Champions League
-    [39, 2025],  // Premier League 2025-26
-    [140, 2025], // La Liga 2025-26
-    [135, 2025], // Serie A 2025-26
-    [78, 2025],  // Bundesliga 2025-26
-    [61, 2025],  // Ligue 1 2025-26
-  ];
+  // During WC26: EPL, LaLiga, SerieA, Bundesliga, Ligue1 are in off-season — skip them.
+  // This cuts API calls from 9 → 2, preventing per-minute rate-limit bursts.
+  const wc26IsLive = Date.now() >= WC26_LIVE_START && Date.now() < WC26_LIVE_END;
+  const leagueSeasons: [number, number][] = wc26IsLive
+    ? [
+        [1, 2026],   // World Cup 2026
+        [12, 2025],  // CAF Champions League (final runs to July)
+      ]
+    : [
+        [1, 2026],   // World Cup 2026
+        [2, 2025],   // UCL
+        [3, 2025],   // UEL
+        [12, 2025],  // CAF Champions League
+        [39, 2025],  // Premier League 2025-26
+        [140, 2025], // La Liga 2025-26
+        [135, 2025], // Serie A 2025-26
+        [78, 2025],  // Bundesliga 2025-26
+        [61, 2025],  // Ligue 1 2025-26
+      ];
 
   // Throttle to 3 concurrent + 150ms between batches — avoids per-second
   // rate-limit on API-Sports even on the Ultra plan.
@@ -585,14 +593,21 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const fromStr = fromDate.toISOString().split('T')[0];
   const toStr = toDate.toISOString().split('T')[0];
 
-  const leagueSeasons: [number, number][] = [
-    [1, 2026],   // World Cup 2026
-    [39, 2025],  // Premier League 2025-26
-    [140, 2025], // La Liga 2025-26
-    [135, 2025], // Serie A 2025-26
-    [78, 2025],  // Bundesliga 2025-26
-    [61, 2025],  // Ligue 1 2025-26
-  ];
+  // During WC26: only WC26+CAF have live matches — skip off-season European leagues.
+  const wc26IsLive = Date.now() >= WC26_LIVE_START && Date.now() < WC26_LIVE_END;
+  const leagueSeasons: [number, number][] = wc26IsLive
+    ? [
+        [1, 2026],   // World Cup 2026
+        [12, 2025],  // CAF Champions League
+      ]
+    : [
+        [1, 2026],   // World Cup 2026
+        [39, 2025],  // Premier League 2025-26
+        [140, 2025], // La Liga 2025-26
+        [135, 2025], // Serie A 2025-26
+        [78, 2025],  // Bundesliga 2025-26
+        [61, 2025],  // Ligue 1 2025-26
+      ];
 
   const results = await throttledAll(
     leagueSeasons.map(([leagueId, season]) =>
