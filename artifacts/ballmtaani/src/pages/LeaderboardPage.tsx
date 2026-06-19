@@ -9,8 +9,11 @@ import SEO from "../components/SEO";
 
 type Tab = "weekly" | "global" | "wc26" | "country";
 
+const WC26_LIVE = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
+                  Date.now() <  new Date("2026-07-20T00:00:00Z").getTime();
+
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("weekly");
+  const [activeTab, setActiveTab] = useState<Tab>(WC26_LIVE ? "wc26" : "weekly");
   const { isLoggedIn, username, user } = useAuth();
   const [timeLeft, setTimeLeft] = useState("");
   const [sharePlayer, setSharePlayer] = useState<any | null>(null);

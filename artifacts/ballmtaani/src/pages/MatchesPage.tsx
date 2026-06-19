@@ -730,7 +730,13 @@ export default function MatchesPage() {
     if (tab === "fixtures") return "fixtures";
     return "all";
   });
-  const [leagueFilter, setLeagueFilter] = useState("all");
+  const [leagueFilter, setLeagueFilter] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "wc26") return "World Cup 2026";
+    const wc26Live = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
+                     Date.now() <  new Date("2026-07-20T00:00:00Z").getTime();
+    return wc26Live ? "World Cup 2026" : "all";
+  });
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [tableLeague, setTableLeague] = useState("Premier League");
   const [selected, setSelected] = useState<{ match: any; variant: "live" | "fixture" | "result" } | null>(null);
