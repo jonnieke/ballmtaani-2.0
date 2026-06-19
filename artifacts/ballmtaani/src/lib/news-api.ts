@@ -423,6 +423,18 @@ async function fetchServerNewsItems(): Promise<any[]> {
   }
 }
 
+function dedupeArticles(list: NewsArticle[]): NewsArticle[] {
+  const seen = new Set<string>();
+  return list.filter((article) => {
+    // Same story can arrive from multiple feeds; link is the stable identity
+    // (id falls back to link anyway when the feed has no guid).
+    const key = article.link && article.link !== "#" ? article.link : String(article.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export async function fetchFootballNews(options: { network?: boolean; fallback?: boolean } = {}): Promise<NewsArticle[]> {
   const network = options.network ?? true;
   const fallback = options.fallback ?? true;
@@ -431,7 +443,7 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
     if (cached) {
       const { data, timestamp, version } = JSON.parse(cached);
       if (version === CACHE_VERSION && Date.now() - timestamp < CACHE_TTL) {
-        return (data as NewsArticle[])
+        return dedupeArticles((data as NewsArticle[])
           .map((article) => ({
           ...article,
           slug: createArticleSlug(article),
@@ -439,7 +451,7 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
           imageQuality: article.imageQuality || "generic-fallback",
           description: article.description || "",
         }))
-          .filter((article) => !isTechnicalFootballStory(article));
+          .filter((article) => !isTechnicalFootballStory(article)));
       }
     }
   } catch {
@@ -471,12 +483,12 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
 
   if (articles.length === 0 && !fallback) return [];
 
-  const normalized = (articles.length > 0 ? articles : MOCK_HEADLINES).map((article) => ({
+  const normalized = dedupeArticles((articles.length > 0 ? articles : MOCK_HEADLINES).map((article) => ({
     ...article,
     slug: createArticleSlug(article),
     link: normalizeArticleLink(article.link, article.source),
     description: article.description || "",
-  })).filter((article) => !isTechnicalFootballStory(article));
+  })).filter((article) => !isTechnicalFootballStory(article)));
 
   const result = normalized.sort((a, b) => {
     const qualityDiff = getQualityRank(a.imageQuality) - getQualityRank(b.imageQuality);

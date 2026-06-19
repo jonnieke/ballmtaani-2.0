@@ -112,6 +112,35 @@ export default function ArticlePage() {
         image={article.thumbnail_url || DEFAULT_IMAGE}
         keywords={article.focus_keyword ? [article.focus_keyword, ...article.tags] : article.tags}
         type="article"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "headline": article.seo_title || article.title,
+          "description": article.seo_description || article.excerpt || "",
+          "image": article.thumbnail_url || DEFAULT_IMAGE,
+          "datePublished": article.published_at,
+          "dateModified": article.published_at,
+          "author": {
+            "@type": "Person",
+            "name": article.author_name
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "BallMtaani",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://ballmtaani.com/logo.png"
+            }
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": `https://ballmtaani.com/article/${article.slug}`
+          },
+          "keywords": article.tags.join(", "),
+          "articleSection": article.is_wc26 ? "World Cup 2026" : "Football",
+          "inLanguage": "en-KE",
+          "isAccessibleForFree": true
+        }}
       />
 
       <div className="min-h-screen bg-[#0B0B0B] pb-24">

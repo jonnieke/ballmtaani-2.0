@@ -6,6 +6,51 @@ const SEO_ROUTES: Record<string, {
   keywords: string[];
   noindex?: boolean;
 }> = {
+  "/home": {
+    title: "BallMtaani | Kenya's #1 Football App — Live Scores, WC26 & AI Analysis",
+    description: "BallMtaani — Kenya's home for live football. World Cup 2026 scores, Premier League fixtures, KPL updates, Africa WC26 tracking, fan predictions and Mchambuzi AI analysis. Free.",
+    keywords: ["Kenya football", "live football scores Kenya", "World Cup 2026 Kenya", "BallMtaani", "KPL", "Premier League Kenya", "Africa WC26"],
+  },
+  "/news": {
+    title: "BallMtaani News | Kenyan Football — WC26, KPL, Premier League & Africa",
+    description: "Latest football news for Kenyan fans — World Cup 2026 updates, KPL match reports, Premier League analysis, Africa football and Harambee Stars coverage on BallMtaani.",
+    keywords: ["Kenya football news", "World Cup 2026 news", "KPL news", "Premier League news Kenya", "Africa football news", "BallMtaani news", "Harambee Stars"],
+  },
+  "/videos": {
+    title: "Football Videos Kenya | Highlights, WC26 Goals & Analysis — BallMtaani",
+    description: "Watch football highlights, World Cup 2026 goals, KPL match clips and AI analysis videos on BallMtaani — Kenya's #1 football video platform.",
+    keywords: ["football videos Kenya", "World Cup 2026 highlights", "KPL highlights", "football goals Kenya", "BallMtaani videos"],
+  },
+  "/matches": {
+    title: "Live Football Scores & Fixtures Kenya | Premier League, WC26, KPL — BallMtaani",
+    description: "Live scores, today's fixtures, results and schedules for Premier League, World Cup 2026, Champions League, KPL and all major leagues — updated in real time on BallMtaani.",
+    keywords: ["live football scores Kenya", "football fixtures Kenya", "Premier League scores", "World Cup 2026 scores", "KPL fixtures", "BallMtaani matches", "today football Kenya"],
+  },
+  "/world-cup-2026": {
+    title: "World Cup 2026 | Africa Teams, Fixtures & Live Scores — BallMtaani",
+    description: "Complete World Cup 2026 guide for African fans — fixtures, results, Africa's 9 nations (Morocco, Nigeria, Senegal, Egypt, South Africa, Cameroon, Mali, Côte d'Ivoire, Tunisia), stadiums and squads.",
+    keywords: ["World Cup 2026", "WC26 Africa", "World Cup 2026 fixtures", "World Cup 2026 scores", "Africa WC26", "Morocco WC26", "Nigeria WC26", "Kenya World Cup 2026"],
+  },
+  "/mchambuzi-halisi": {
+    title: "Mchambuzi Halisi | AI Football Analyst for African Fans — BallMtaani",
+    description: "Mchambuzi Halisi is BallMtaani's AI football analyst — ask about tactics, match predictions, KPL form, World Cup 2026, or any football question with African context.",
+    keywords: ["AI football analysis", "Mchambuzi Halisi", "football AI Kenya", "BallMtaani AI", "football analysis Africa", "World Cup 2026 AI predictions"],
+  },
+  "/market-watch": {
+    title: "Football Transfer Market Watch | Latest Transfers & Rumours — BallMtaani",
+    description: "Track the latest football transfers, transfer rumours, squad moves and market values — Premier League, La Liga, Serie A and African transfers on BallMtaani.",
+    keywords: ["football transfers Kenya", "transfer news", "transfer rumours", "Premier League transfers", "African football transfers", "BallMtaani market watch"],
+  },
+  "/debates": {
+    title: "Football Debates Kenya | Join the Argument — BallMtaani",
+    description: "Join live football debates with Kenyan fans — hot takes, player rankings, WC26 predictions, EPL opinions, KPL controversies and more on BallMtaani.",
+    keywords: ["football debates Kenya", "football arguments", "Premier League debate", "KPL debate Kenya", "BallMtaani debates", "World Cup 2026 debate"],
+  },
+  "/search": {
+    title: "Search Football | BallMtaani",
+    description: "Search matches, articles, teams, players and competitions on BallMtaani — Kenya's football intelligence platform.",
+    keywords: ["search football Kenya", "find football match", "BallMtaani search"],
+  },
   "/predictions": {
     title: "Football Predictions Kenya | BallMtaani",
     description: "Make football predictions, compare fan calls and keep matchday receipts with BallMtaani's Kenyan football community.",

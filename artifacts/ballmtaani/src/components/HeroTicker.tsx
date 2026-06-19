@@ -65,7 +65,14 @@ function buildItems(articles: NewsArticle[], matches: TickerMatch[]): TickerItem
       isLive: false,
     });
   });
-  return out;
+  // Same article can arrive from multiple sources with the same id/link —
+  // keep the first occurrence so the belt never repeats within one set.
+  const seen = new Set<string>();
+  return out.filter(item => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
 const PIN_WIDTH = 110; // px — brand pin width

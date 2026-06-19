@@ -97,20 +97,45 @@ export default function SEO({
     const baseStructuredData = [
       {
         "@context": "https://schema.org",
-        "@type": "Organization",
+        "@type": ["Organization", "SportsOrganization", "NewsMediaOrganization"],
         "name": "BallMtaani",
+        "alternateName": "Ball Mtaani",
         "url": SITE_URL,
-        "logo": `${SITE_URL}/logo.png`,
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${SITE_URL}/logo.png`,
+          "width": 512,
+          "height": 512
+        },
+        "foundingDate": "2024",
+        "description": "Kenya's #1 football intelligence platform — live scores, World Cup 2026 tracking, fan predictions, debates, AI analysis, and football news.",
+        "areaServed": [
+          { "@type": "Country", "name": "Kenya" },
+          { "@type": "Country", "name": "United States" },
+          { "@type": "Continent", "name": "Africa" }
+        ],
+        "knowsAbout": [
+          "Football", "Soccer", "Kenyan Premier League", "Premier League", "UEFA Champions League",
+          "World Cup 2026", "Africa Cup of Nations", "CAF Champions League", "Harambee Stars"
+        ],
         "sameAs": [
+          "https://twitter.com/ballmtaani",
+          "https://www.facebook.com/ballmtaani",
+          "https://www.instagram.com/ballmtaani",
           "https://github.com/jonnieke/ballmtaani-2.0"
         ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "availableLanguage": ["English", "Swahili"]
+        }
       },
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "BallMtaani",
         "url": SITE_URL,
-        "inLanguage": "en-KE",
+        "inLanguage": ["en-KE", "en-US", "en"],
         "description": "Kenyan football intelligence, live scores, predictions, debates, fan zones and World Cup 2026 tracking.",
         "potentialAction": {
           "@type": "SearchAction",
@@ -124,7 +149,8 @@ export default function SEO({
         "name": "BallMtaani",
         "url": SITE_URL,
         "applicationCategory": "SportsApplication",
-        "operatingSystem": "Web",
+        "applicationSubCategory": "FootballApp",
+        "operatingSystem": "Web, Android, iOS",
         "inLanguage": "en-KE",
         "description": description,
         "offers": {
