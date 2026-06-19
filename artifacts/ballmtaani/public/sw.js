@@ -1,9 +1,9 @@
-// BallMtaani Service Worker v11
-// v11: force-evicts all v10 and older caches so stale JS bundles
-// (pre-horizontal-layout MatchesPage) are cleared from browser caches.
+// BallMtaani Service Worker v12
+// v12: force-evicts v11 and older caches after WC26 hub, news,
+// predictions, and homepage retention changes in this release.
 // index.html is NEVER cached — every navigation fetches fresh.
 
-const CACHE_NAME = 'ballmtaani-v11';
+const CACHE_NAME = 'ballmtaani-v12';
 
 // Only cache true static assets that never change between deploys
 const STATIC_ASSETS = [

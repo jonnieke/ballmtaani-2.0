@@ -164,11 +164,35 @@ export default async function handler(req: any, res: any) {
     }
   }
 
-  // 4. Increment coins in profiles for each earning user
+  // 4. Increment coins in profiles for each earning user + send receipt push
+  const base = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
+
+  const pushResults: { userId: string; ok: boolean }[] = [];
+
   for (const [userId, amount] of Object.entries(coinCredits)) {
     const profiles = await sbGet(`/profiles?id=eq.${userId}&select=coins`);
     const current = Array.isArray(profiles) && profiles[0] ? (profiles[0].coins || 0) : 0;
     await sbPatch(`/profiles?id=eq.${userId}`, { coins: current + amount });
+
+    // Notify the user their call settled with coins
+    try {
+      const pushRes = await fetch(`${base}/api/push-send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          title: "✅ Receipt In — You Called It!",
+          body: `+${amount} MTC earned. Check your receipts.`,
+          url: "/predictions",
+          tag: `settle-${userId}-${Date.now()}`,
+        }),
+      });
+      pushResults.push({ userId, ok: pushRes.ok });
+    } catch {
+      pushResults.push({ userId, ok: false });
+    }
   }
 
   return json(res, 200, {
@@ -176,5 +200,6 @@ export default async function handler(req: any, res: any) {
     pending: pending.length,
     matchesChecked: Object.keys(fixtureResults).length,
     coinsDistributed: Object.values(coinCredits).reduce((a, b) => a + b, 0),
+    pushSent: pushResults.filter(r => r.ok).length,
   });
 }

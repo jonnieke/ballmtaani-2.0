@@ -12,6 +12,8 @@ import { WC26BracketCard } from "../components/WC26BracketCard";
 
 const WC26_SPECIAL_ID = "wc26-2026-winner";
 const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
+const WC26_LOCK = new Date("2026-06-11T17:00:00Z");
+const wc26IsLive = Date.now() >= WC26_LOCK.getTime();
 
 // ─── WC26 Tournament Prediction Questions ─────────────────────────────────────
 interface WC26Question {
@@ -76,7 +78,7 @@ const WC26_QUESTIONS: WC26Question[] = [
 
 
 export default function PredictionsPage() {
-  const [activeTab, setActiveTab] = useState<"make" | "my" | "wc26">("wc26");
+  const [activeTab, setActiveTab] = useState<"make" | "my" | "wc26">(wc26IsLive ? "make" : "wc26");
 
   // Legacy WC26 winner pick (kept for backward compat)
   const [wc26Pick, setWc26Pick]   = useState<string>("");
@@ -430,26 +432,33 @@ export default function PredictionsPage() {
               <div className="flex items-center gap-3 border-b border-[#FFD700]/12 px-4 py-3">
                 <Trophy className="h-4 w-4 text-[#FFD700]" />
                 <div>
-                  <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">Call the WC26 Winner</div>
-                  <div className="text-[9px] text-white/30 font-semibold">Lock in your champion before June 11. Earn bonus MTC if they lift the trophy.</div>
+                  <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">WC26 Champion Pick</div>
+                  <div className="text-[9px] text-white/30 font-semibold">
+                    {wc26IsLive ? "WC26 is underway — picks closed. Receipts settle when the dust clears." : "Lock in your champion before June 11. Earn bonus MTC if they lift the trophy."}
+                  </div>
                 </div>
-                {wc26Saved && <span className="ml-auto flex items-center gap-1 text-[10px] font-black text-green-400"><CheckCircle2 className="h-3.5 w-3.5" /> Locked</span>}
+                {wc26Saved
+                  ? <span className="ml-auto flex items-center gap-1 text-[10px] font-black text-green-400"><CheckCircle2 className="h-3.5 w-3.5" /> Locked</span>
+                  : wc26IsLive && <span className="ml-auto text-[10px] font-black text-white/25 uppercase tracking-widest">Closed</span>
+                }
               </div>
               <div className="p-4">
                 <div className="mb-3 flex flex-wrap gap-2">
                   {WC26_NATIONS.map(n => (
-                    <button key={n} onClick={() => { if (!wc26Saved) setWc26Pick(n); }}
-                      className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"}`}>
+                    <button key={n} onClick={() => { if (!wc26Saved && !wc26IsLive) setWc26Pick(n); }}
+                      className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"} ${(wc26Saved || wc26IsLive) ? "pointer-events-none" : ""}`}>
                       {n}
                     </button>
                   ))}
                 </div>
-                <button onClick={handleWC26Winner}
-                  disabled={!wc26Pick || wc26Saved || wc26Saving}
-                  className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,214,0,0.3)] disabled:opacity-40 disabled:shadow-none transition-all hover:shadow-[0_0_30px_rgba(255,214,0,0.5)]">
-                  {wc26Saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                  {wc26Saved ? `${wc26Pick} locked in` : isLoggedIn ? "Lock In Pick" : "Log In to Pick"}
-                </button>
+                {!wc26IsLive && (
+                  <button onClick={handleWC26Winner}
+                    disabled={!wc26Pick || wc26Saved || wc26Saving}
+                    className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,214,0,0.3)] disabled:opacity-40 disabled:shadow-none transition-all hover:shadow-[0_0_30px_rgba(255,214,0,0.5)]">
+                    {wc26Saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    {wc26Saved ? `${wc26Pick} locked in` : isLoggedIn ? "Lock In Pick" : "Log In to Pick"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -684,6 +693,21 @@ export default function PredictionsPage() {
       ) : activeTab === "wc26" ? (
         // ── WC26 TOURNAMENT PREDICTION TAB ──────────────────────────────
         <div className="space-y-4 max-w-2xl mx-auto">
+          {/* Live banner — only shown while WC26 is on */}
+          {wc26IsLive && (
+            <div className="flex items-center justify-between rounded-2xl border border-[#B30000]/30 bg-[#B30000]/8 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 animate-ping rounded-full bg-[#B30000]" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#B30000]">WC26 is Live</span>
+                <span className="text-[10px] text-white/35">· Scoreline calls still open</span>
+              </div>
+              <button onClick={() => setActiveTab("make")}
+                className="flex items-center gap-1 rounded-lg bg-[#B30000]/20 border border-[#B30000]/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#B30000] hover:bg-[#B30000]/30 transition-all">
+                Call It <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
           {/* Header */}
           <div className="rounded-2xl border border-[#FFD700]/25 bg-gradient-to-br from-[#110d00] to-[#09080d] px-5 py-4">
             <div className="flex items-center justify-between">
@@ -715,6 +739,7 @@ export default function PredictionsPage() {
             const picked = wc26Picks[q.id];
             const saved  = wc26Saved2[q.id];
             const saving = wc26Saving2 === q.id;
+            const locked = saved || wc26IsLive;
             return (
               <div key={q.id} className={`overflow-hidden rounded-2xl border transition-all ${
                 saved ? "border-[#FFD700]/35 bg-[#0c0a00]/95" : "border-white/8 bg-[#0d0f14]/95"
@@ -731,22 +756,32 @@ export default function PredictionsPage() {
                     <span className={`text-[10px] font-black ${saved ? "text-[#FFD700]" : "text-white/30"}`}>
                       +{q.mtc.toLocaleString()} MTC
                     </span>
-                    {saved && <CheckCircle2 className="h-4 w-4 text-[#FFD700]" />}
+                    {saved
+                      ? <CheckCircle2 className="h-4 w-4 text-[#FFD700]" />
+                      : wc26IsLive && <span className="text-[10px] font-black text-white/20 uppercase">Closed</span>
+                    }
                   </div>
                 </div>
 
                 <div className="p-4">
-                  {saved ? (
-                    // Locked state with consensus
+                  {locked ? (
+                    // Locked state — show pick (or "no pick") + consensus
                     <div>
-                      <div className="flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
-                        <span className="text-[#FFD700] font-black text-sm">{picked}</span>
-                        <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-[#FFD700]/50">Locked</span>
-                      </div>
+                      {picked ? (
+                        <div className="flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
+                          <span className="text-[#FFD700] font-black text-sm">{picked}</span>
+                          <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-[#FFD700]/50">Locked</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3">
+                          <span className="text-white/25 font-black text-sm italic">No pick made</span>
+                          <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-white/15">Window closed</span>
+                        </div>
+                      )}
                       {(() => {
                         const qCounts = wc26Consensus[q.id] || {};
                         const total = Object.values(qCounts).reduce((s, n) => s + n, 0);
-                        const pct = total > 0 ? Math.round(((qCounts[picked] || 0) / total) * 100) : 0;
+                        const pct = picked && total > 0 ? Math.round(((qCounts[picked] || 0) / total) * 100) : 0;
                         if (!total) return null;
                         return (
                           <div className="mt-2 flex items-center gap-2">
@@ -755,14 +790,14 @@ export default function PredictionsPage() {
                             </div>
                             <div className="flex items-center gap-1 text-[10px] text-white/30 font-bold shrink-0">
                               <Users className="h-3 w-3" />
-                              <span>{pct}% of {total.toLocaleString()} fans agree</span>
+                              <span>{pct > 0 ? `${pct}% of ${total.toLocaleString()} fans agree` : `${total.toLocaleString()} fans picked`}</span>
                             </div>
                           </div>
                         );
                       })()}
                     </div>
                   ) : (
-                    // Pick buttons
+                    // Pick buttons — only shown pre-WC26
                     <div className="flex flex-wrap gap-2">
                       {q.options.map(opt => (
                         <button key={opt}
@@ -792,8 +827,10 @@ export default function PredictionsPage() {
               <div className="text-4xl mb-3">🏆</div>
               <h3 className="font-black text-[#FFD700] uppercase tracking-widest mb-2">All 6 calls locked.</h3>
               <p className="text-sm text-white/45 mb-5">
-                Come back after June 11 for your receipts.{" "}
-                {WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.
+                {wc26IsLive
+                  ? `WC26 is live — your receipts settle as results come in. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
+                  : `Come back after June 11 for your receipts. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
+                }
               </p>
               <button onClick={() => setShowBracketCard(true)}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3 text-sm font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,215,0,0.35)] transition-all hover:shadow-[0_0_30px_rgba(255,215,0,0.55)]">
@@ -803,7 +840,7 @@ export default function PredictionsPage() {
           )}
 
           <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/20 pb-2">
-            Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT
+            {wc26IsLive ? "WC26 underway · Tournament picks closed · Receipts settle after each match" : "Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT"}
           </p>
 
         </div>

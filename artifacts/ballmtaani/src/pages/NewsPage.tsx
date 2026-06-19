@@ -49,11 +49,11 @@ export default function NewsPage() {
 
   // Keyword sets for each tab — checked against title, tags, and partner_team_name
   const TAB_KEYWORDS: Record<string, string[]> = {
-    "WC26":         ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
-    "Analysis":     ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
+    "WC26":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+    "Analysis":    ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
     "Match Reports":["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
-    "Africa":       ["africa", "afcon", "caf", "kenya", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire"],
-    "KPL":          ["kpl", "kenyan premier", "gor mahia", "afc leopards", "tusker", "harambee stars", "kakamega", "bandari", "city stars"],
+    "Africa":      ["africa", "afcon", "caf", "kenya", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire"],
+    "East Africa": ["kenya", "tanzania", "uganda", "rwanda", "ethiopia", "harambee stars", "gor mahia", "afc leopards", "tusker", "simba", "yanga", "villa sc", "kpl", "ligi kuu", "fufa", "cecafa"],
   };
 
   function matchesTab(text: string): boolean {
@@ -75,17 +75,25 @@ export default function NewsPage() {
   });
 
   const filteredRss = rss.filter(a => {
-    const haystack = `${a.title} ${a.source}`;
+    const haystack = `${a.title} ${a.source} ${a.description || ""}`;
     const matchesQuery = !q || haystack.toLowerCase().includes(q);
-    return matchesQuery && matchesTab(haystack);
+    if (!matchesQuery) return false;
+    if (activeTab === "WC26") return !!(a.isWC26 || matchesTab(haystack));
+    return matchesTab(haystack);
   });
 
   const coverStory = filteredPartner[0];
   const features   = filteredPartner.slice(1, 3);
   const interior   = filteredPartner.slice(3);
 
+  // Hero uses the latest cover story image when available, else the stadium fallback
+  const heroImg = partner[0]?.thumbnail_url || DEFAULT_IMG;
+  const heroTitle = partner[0]?.title || "Africa's World Cup. Every Story. Right Here.";
+  const heroSubtitle = partner[0]?.excerpt || null;
+  const heroHref = partner[0]?.slug ? `/article/${partner[0].slug}` : "/world-cup-2026";
+
   const edition = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
-  const TABS = ["All", "WC26", "Analysis", "Match Reports", "Africa", "KPL"];
+  const TABS = ["All", "WC26", "Analysis", "Match Reports", "Africa", "East Africa"];
 
   return (
     <>
@@ -155,27 +163,32 @@ export default function NewsPage() {
         </div>
 
         {/* ── EDITORIAL HERO ── */}
-        <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6" }}>
+        <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6", minHeight: 140 }}>
           <img
-            src="https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg"
+            src={heroImg}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700"
+            onError={e => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-[#05070d]/95 via-[#05070d]/60 to-[#05070d]/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#05070d]/80 via-transparent to-transparent" />
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B30000]/50 to-transparent" />
           <div className="relative z-10 flex h-full items-center px-6 sm:px-10 lg:px-16">
-            <div>
-              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">WC26 · Special Edition</p>
-              <h2 className="mb-3 text-xl font-black uppercase leading-tight text-white sm:text-2xl lg:text-3xl">
-                Africa's World Cup.<br />
-                <span className="text-white/45">Every Story. Right Here.</span>
+            <div className="max-w-xl">
+              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">
+                {partner[0]?.is_wc26 ? "WC26 · Latest" : "Latest Story"}
+              </p>
+              <h2 className="mb-3 text-xl font-black leading-tight text-white sm:text-2xl lg:text-3xl line-clamp-2">
+                {heroTitle}
               </h2>
+              {heroSubtitle && (
+                <p className="mb-3 text-sm leading-relaxed text-white/45 line-clamp-2 hidden sm:block">{heroSubtitle}</p>
+              )}
               <Link
-                href="/world-cup-2026"
+                href={heroHref}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-[#cc0000] active:scale-95"
               >
-                Explore WC26 Hub <ChevronRight className="h-3.5 w-3.5" />
+                Read Story <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>
