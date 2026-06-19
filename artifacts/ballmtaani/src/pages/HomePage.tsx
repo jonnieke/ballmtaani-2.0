@@ -470,7 +470,7 @@ export default function HomePage() {
                       <div className="flex items-center gap-2">
                         <span className="h-2 w-2 animate-ping rounded-full bg-[#B30000]" />
                         <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#B30000]">
-                          {heroVideo.isLive ? "Live Now — SportyTV" : `Next Stream · ${formatStartTime(heroVideo.startsAt)}`}
+                          {heroVideo.isLive ? "Live Now — SportyTV" : heroVideo.startsAt ? `Next Stream · ${formatStartTime(heroVideo.startsAt)}` : "Up Next — SportyTV"}
                         </span>
                       </div>
                       <a href={SPORTYTV_CHANNEL_URL} target="_blank" rel="noopener noreferrer"
