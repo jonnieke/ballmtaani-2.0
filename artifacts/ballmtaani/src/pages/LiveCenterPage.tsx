@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import {
-  ChevronLeft, MessageSquare, Info, BarChart3, Users,
+  ChevronLeft, ChevronRight, MessageSquare, Info, BarChart3, Users,
   Flame, Heart, Trophy, Target, Timer, Zap,
   Send, TrendingUp, Shield, ListOrdered,
   Activity, Crown
