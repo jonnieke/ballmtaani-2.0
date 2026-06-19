@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { CalendarDays, ChevronRight, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star, ExternalLink } from "lucide-react";
+import { CalendarDays, ChevronRight, GitBranch, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star, ExternalLink } from "lucide-react";
 import SEO from "../components/SEO";
 import WC26TeamExplorer from "../components/WC26TeamExplorer";
 import { fetchPartnerArticles, fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
@@ -10,6 +10,7 @@ import {
   fetchWC26TopScorers,
   type TournamentStandingEntry,
 } from "../lib/football-api";
+import { useWC26Leaderboard } from "../hooks/useData";
 import { WC26_GUIDES } from "../data/wc26-guides";
 import { WC26_STADIUMS, WC26_TEAMS, type WC26TeamData } from "../data/wc26-teams";
 import { supabase } from "../lib/supabase";
@@ -244,6 +245,7 @@ const LIVE_STATUSES = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
 const DONE_STATUSES = new Set(["FT","AET","PEN"]);
 
 export default function WorldCup2026Page() {
+  const { data: wc26Board = [] } = useWC26Leaderboard();
   const [fixtures, setFixtures] = useState<any[]>([]);
   const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>(WC26_GROUPS);
   const [topScorers, setTopScorers] = useState<any[]>([]);
@@ -1441,12 +1443,13 @@ export default function WorldCup2026Page() {
             <h2 className="text-sm font-black uppercase tracking-widest text-white">Your WC26 Command Center</h2>
             <p className="text-[10px] text-white/30">Everything a Kenyan fan needs  -  live, on BallMtaani.</p>
           </div>
-          <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-white/6 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-white/6 sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { href: "/predictions",     color: "text-[#B30000]", border: "hover:bg-[#B30000]/8", icon: Zap,      label: "Call the Score",   sub: "Pick every group match. Earn MTC." },
-              { href: "/mchambuzi-halisi",color: "text-[#FFD700]", border: "hover:bg-[#FFD700]/5", icon: Sparkles, label: "Ask Mchambuzi",    sub: "WC26 AI analysis. Fan-first tone." },
-              { href: "/live-center",     color: "text-blue-400",  border: "hover:bg-blue-500/8",  icon: Trophy,   label: "Live Center",      sub: "Stats, events, lineups as they happen." },
-              { href: "/debates",         color: "text-purple-400",border: "hover:bg-purple-500/8",icon: Users,    label: "Debates Room",     sub: "Group of death takes. Banter receipts." },
+              { href: "/predictions",            color: "text-[#B30000]", border: "hover:bg-[#B30000]/8",  icon: Zap,        label: "Call the Score",   sub: "Pick every match. Earn MTC." },
+              { href: "/mchambuzi-halisi",       color: "text-[#FFD700]", border: "hover:bg-[#FFD700]/5",  icon: Sparkles,   label: "Ask Mchambuzi",    sub: "WC26 AI analysis. Fan-first tone." },
+              { href: "/live-center",            color: "text-blue-400",  border: "hover:bg-blue-500/8",   icon: Trophy,     label: "Live Center",      sub: "Stats, events, lineups live." },
+              { href: "/debates",                color: "text-purple-400",border: "hover:bg-purple-500/8", icon: Users,      label: "Debates Room",     sub: "Group of death takes. Banter." },
+              { href: "/world-cup-2026/bracket", color: "text-green-400", border: "hover:bg-green-500/8",  icon: GitBranch,  label: "Bracket",          sub: "Knockout rounds as they unfold." },
             ].map(({ href, color, border, icon: Icon, label, sub }) => (
               <Link key={href} href={href} className={`flex flex-col p-5 transition-all ${border}`}>
                 <Icon className={`mb-3 h-5 w-5 ${color}`} />
@@ -1479,6 +1482,38 @@ export default function WorldCup2026Page() {
             </div>
           </div>
         </section>
+
+        {/* -- WC26 TOP CALLERS -- */}
+        {wc26Board.length > 0 && (
+          <section className="mb-8 overflow-hidden rounded-2xl border border-white/8 bg-[#080d14]/90">
+            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">Top WC26 Callers</h2>
+                <p className="text-[10px] text-white/30">Ranked by correct tournament predictions</p>
+              </div>
+              <Link href="/leaderboard" className="rounded-full border border-white/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/50 transition-all hover:border-white/25 hover:text-white/80">
+                Full Board →
+              </Link>
+            </div>
+            <div className="divide-y divide-white/5">
+              {(wc26Board as any[]).slice(0, 5).map((row, i) => (
+                <Link key={row.userId} href={`/profile/${row.userId}`}
+                  className="flex items-center gap-3 px-5 py-3 transition-all hover:bg-white/[0.03]">
+                  <span className={`w-5 shrink-0 text-center text-[11px] font-black ${i === 0 ? "text-[#FFD700]" : i === 1 ? "text-white/60" : i === 2 ? "text-amber-600" : "text-white/25"}`}>
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[11px] font-black uppercase tracking-tight text-white">{row.name}</div>
+                    <div className="text-[9px] text-white/35">{row.correct}/{row.total} correct</div>
+                  </div>
+                  <div className="shrink-0 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/8 px-2.5 py-1 text-[10px] font-black text-[#FFD700]">
+                    {row.total > 0 ? `${Math.round((row.correct / row.total) * 100)}%` : "0%"}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <footer className="text-center text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
           <div>Data: API-Football  -  Tournament structure: FIFA WC2026</div>

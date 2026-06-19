@@ -143,7 +143,14 @@ export function Navbar() {
               href="/world-cup-2026"
               className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/40 bg-[#FFD700]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFD700] transition-colors hover:bg-[#FFD700]/20 shrink-0"
             >
-              <Trophy className="h-3 w-3" />
+              {now >= start ? (
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#FFD700]" />
+                </span>
+              ) : (
+                <Trophy className="h-3 w-3" />
+              )}
               {now >= start ? "WC26 Live" : `WC26 · ${daysUntil}d`}
             </Link>
           );
