@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { CalendarDays, ChevronRight, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star } from "lucide-react";
+import { CalendarDays, ChevronRight, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star, ExternalLink } from "lucide-react";
 import SEO from "../components/SEO";
 import WC26TeamExplorer from "../components/WC26TeamExplorer";
-import OddspediaWidgetSlot from "../components/OddspediaWidgetSlot";
+import { fetchPartnerArticles, fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
 import {
   fetchTournamentFixtures,
   fetchTournamentStandings,
@@ -19,30 +19,6 @@ const REACTION_EMOJIS = ["🔥", "❤️", "😱", "🤣"] as const;
 // --- Static data ---
 const WC26_START = new Date("2026-06-11T17:00:00Z");
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
-
-const ODDSPEDIA_WC26_STANDINGS = {
-  widgetKey: "wc26-standings",
-  title: "Verified WC26 Standings",
-  description: "Live World Cup 2026 group tables from the Oddspedia standings widget. BallMtaani keeps API-Football's unverified WC26 table payload hidden.",
-  preferredWidget: "Oddspedia standings",
-  selector: "oddspedia-widget-standings-league-id-3",
-  globalName: "oddspediaWidgetStandingsLeagueId3",
-  widgetId: "oddspediaWidgetStandingsLeagueId3",
-  config: {
-    api_token: "351d6b26a32409cc0db279adb48300f55efdb08627bdd3a653c84cedd297",
-    type: "standings",
-    domain: "ballmtaani.com",
-    selector: "oddspedia-widget-standings-league-id-3",
-    width: "350px",
-    theme: "1",
-    language: "en",
-    primary_color: "#0369C7",
-    accent_color: "#000000",
-    font: "Roboto",
-    league_id: "3",
-    visible_results: "4",
-  },
-};
 
 const TIMELINE = [
   { label: "Group Stage",    date: "Jun 11-27",    detail: "72 matches - 12 groups of 4" },
@@ -272,6 +248,7 @@ export default function WorldCup2026Page() {
   const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>(WC26_GROUPS);
   const [topScorers, setTopScorers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [wc26News, setWc26News] = useState<NewsArticle[]>([]);
   const [standingsSyncedAt, setStandingsSyncedAt] = useState<string | null>(null);
   const [scheduleTab, setScheduleTab] = useState("Group Stage - Matchday 1");
   const [aiInsights, setAiInsights] = useState<Record<string, { text: string; loading: boolean }>>({});
@@ -436,6 +413,20 @@ export default function WorldCup2026Page() {
       setAiInsights(prev => ({ ...prev, [key]: { text: "Mchambuzi ni busy — try again.", loading: false } }));
     }
   };
+
+  useEffect(() => {
+    Promise.allSettled([
+      fetchPartnerArticles(),
+      fetchFootballNews(),
+    ]).then(([partnerRes, rssRes]) => {
+      const WC26_KW = ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"];
+      const isWC26 = (title: string) => { const t = title.toLowerCase(); return WC26_KW.some(k => t.includes(k)); };
+      const partner = partnerRes.status === "fulfilled" ? partnerRes.value.filter(a => a.isWC26) : [];
+      const rss     = rssRes.status === "fulfilled"     ? rssRes.value.filter(a => a.isWC26 || isWC26(a.title)) : [];
+      const partnerIds = new Set(partner.map(a => a.id));
+      setWc26News([...partner, ...rss.filter(a => !partnerIds.has(a.id))].slice(0, 10));
+    });
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -641,6 +632,60 @@ export default function WorldCup2026Page() {
           ))}
         </div>
       </section>
+
+      {/* -- WC26 NEWS BULLETIN -- */}
+      {wc26News.length > 0 && (
+        <section className="border-b border-white/6 bg-[#06080d] py-6">
+          <div className="mx-auto max-w-6xl px-4">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-1 rounded-full bg-[#FFD700]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD700]">WC26 Bulletin</span>
+              </div>
+              <Link href="/news" className="text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white transition-colors">
+                All News →
+              </Link>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {wc26News.map(a => (
+                a.isInternal ? (
+                  <Link key={a.id} href={`/article/${a.slug}`}
+                    className="group relative flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-white/8 bg-[#0c111a] transition-all hover:-translate-y-0.5 hover:border-[#FFD700]/30 sm:w-64">
+                    <div className="relative h-32 overflow-hidden">
+                      <img src={a.thumbnail} alt="" loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={e => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg"; }} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                      <span className="absolute bottom-2 left-2 rounded bg-[#FFD700] px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-black">WC26</span>
+                    </div>
+                    <div className="flex flex-1 flex-col p-3">
+                      <p className="mb-1 text-[8px] font-bold uppercase tracking-widest text-white/28">{a.source} · {timeAgo(a.pubDate)}</p>
+                      <p className="flex-1 text-[12px] font-black leading-snug text-white line-clamp-3">{a.title}</p>
+                    </div>
+                  </Link>
+                ) : (
+                  <a key={a.id} href={a.link} target="_blank" rel="noopener noreferrer"
+                    className="group relative flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-white/8 bg-[#0c111a] transition-all hover:-translate-y-0.5 hover:border-[#FFD700]/30 sm:w-64">
+                    <div className="relative h-32 overflow-hidden">
+                      <img src={a.thumbnail} alt="" loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={e => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/World_Cup_stadium_interior_flood.jpeg"; }} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                      <span className="absolute bottom-2 left-2 rounded bg-[#FFD700] px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-black">WC26</span>
+                    </div>
+                    <div className="flex flex-1 flex-col p-3">
+                      <div className="mb-1 flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest text-white/28">
+                        <ExternalLink className="h-2.5 w-2.5" />{a.source} · {timeAgo(a.pubDate)}
+                      </div>
+                      <p className="flex-1 text-[12px] font-black leading-snug text-white line-clamp-3">{a.title}</p>
+                    </div>
+                  </a>
+                )
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
 
@@ -1057,6 +1102,44 @@ export default function WorldCup2026Page() {
               <p className="text-xs text-white/30">Scorers data loads as the group stage progresses.</p>
             </div>
           )}
+        </section>
+
+        {/* -- CROWD PICKS -- */}
+        <section className="mb-8 overflow-hidden rounded-2xl border border-[#FFD700]/15 bg-[#08090d]">
+          <div className="border-b border-[#FFD700]/10 px-5 py-3.5 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-white">BallMtaani Crowd Picks</h2>
+              <p className="text-[9px] text-white/30 mt-0.5 font-bold uppercase tracking-widest">Who do Kenyan fans back to lift the trophy?</p>
+            </div>
+            <Link href="/predictions" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
+              Add Your Pick →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 divide-x divide-y divide-white/5 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { flag: "https://media.api-sports.io/flags/br.svg",  name: "Brazil",    pct: 22 },
+              { flag: "https://media.api-sports.io/flags/ar.svg",  name: "Argentina", pct: 19 },
+              { flag: "https://media.api-sports.io/flags/fr.svg",  name: "France",    pct: 15 },
+              { flag: "https://media.api-sports.io/flags/ma.svg",  name: "Morocco",   pct: 14 },
+              { flag: "https://media.api-sports.io/flags/gb-eng.svg", name: "England", pct: 11 },
+              { flag: "https://media.api-sports.io/flags/de.svg",  name: "Germany",   pct: 9  },
+            ].map((pick, i) => (
+              <div key={pick.name} className={`flex flex-col items-center gap-2 px-4 py-4 hover:bg-white/3 transition-colors ${i === 0 ? "bg-[#FFD700]/4" : ""}`}>
+                <img src={pick.flag} alt={pick.name} className="h-9 w-9 rounded-sm object-contain shadow-[0_2px_8px_rgba(0,0,0,0.4)]" loading="lazy" />
+                <div className="text-center">
+                  <div className={`text-xs font-black ${i === 0 ? "text-[#FFD700]" : "text-white"}`}>{pick.name}</div>
+                  <div className={`mt-0.5 text-lg font-black tabular-nums ${i === 0 ? "text-[#FFD700]" : "text-white/60"}`}>{pick.pct}%</div>
+                </div>
+                <div className="w-full rounded-full bg-white/8 h-1">
+                  <div className="h-1 rounded-full transition-all duration-700"
+                    style={{ width: `${pick.pct}%`, background: i === 0 ? "#FFD700" : "rgba(255,255,255,0.3)" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-white/5 px-5 py-2.5 text-[9px] text-white/20 text-center">
+            Based on BallMtaani prediction calls · Updates as the tournament progresses
+          </div>
         </section>
 
         {/* -- WC26 KNOWLEDGE BASE -- */}
