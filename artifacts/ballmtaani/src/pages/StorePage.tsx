@@ -38,6 +38,10 @@ const REDEEM_ITEMS = [
   { id: 4, name: "Match Analyst Badge", cost: 1500, emoji: "Stats", description: "Unlock the analyst title on your profile" },
   { id: 5, name: "Caption the Player Card", cost: 4000, emoji: "Card", description: "Create a custom player card with your photo" },
   { id: 6, name: "Duel Receipt Skin", cost: 1000, emoji: "Duel", description: "Give your fan duel receipts a premium look" },
+  { id: 7, name: "WC26 Golden Boot Caller", cost: 3500, emoji: "Boot", description: "For fans who called the WC26 top scorer before kickoff" },
+  { id: 8, name: "Africa Goes Far Badge", cost: 1500, emoji: "CAF", description: "Show your African football pride at WC26" },
+  { id: 9, name: "WC26 Champion Caller", cost: 5000, emoji: "Trophy", description: "For fans who called the WC26 winner before kickoff" },
+  { id: 10, name: "Group Stage Receipts Frame", cost: 1000, emoji: "Receipt", description: "Celebrate every correct WC26 group-stage call" },
 ];
 
 export default function StorePage() {
