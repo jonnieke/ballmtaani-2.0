@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { Swords, Trophy, Zap, Activity, ScrollText, Plus, X, CheckCircle2, Clock, Share2, Users, Flame } from "lucide-react";
+import { Swords, Trophy, Activity, ScrollText, Plus, X, CheckCircle2, Clock, Share2, Users, Flame, UserCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
@@ -45,6 +46,7 @@ function DuelCard({ duel, currentUser, onAccept, onSettle }: {
 
   return (
     <div className={`relative overflow-hidden rounded-2xl border bg-[#0a0d14] transition-all duration-200
+      ${isMyDuel ? "ring-1 ring-[#FFD700]/20" : ""}
       ${duel.status === "active" ? "border-[#B30000]/40 shadow-[0_0_24px_rgba(179,0,0,0.12)]" :
         duel.status === "completed" ? "border-[#FFD700]/20" :
         "border-white/8"}`}>
@@ -63,14 +65,22 @@ function DuelCard({ duel, currentUser, onAccept, onSettle }: {
            duel.status === "completed" ? <><Trophy className="h-3 w-3" /> Settled</> :
            <><Clock className="h-3 w-3" /> Awaiting Response</>}
         </span>
-        <span className="text-[9px] text-white/20">{ago(duel.created_at)}</span>
+        <div className="flex items-center gap-2">
+          {isMyDuel && (
+            <span className="flex items-center gap-1 rounded-full bg-[#FFD700]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-[#FFD700]">
+              <UserCheck className="h-2.5 w-2.5" /> You
+            </span>
+          )}
+          <span className="text-[9px] text-white/20">{ago(duel.created_at)}</span>
+        </div>
       </div>
 
       {/* Fighters */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-5">
         {/* Challenger */}
         <div className="flex flex-col items-center gap-1.5 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-blue-500/50 bg-blue-500/10 text-lg font-black text-white shadow-[0_0_16px_rgba(59,130,246,0.2)]">
+          <div className={`flex h-14 w-14 items-center justify-center rounded-full border-2 bg-blue-500/10 text-lg font-black text-white
+            ${isChallenger ? "border-[#FFD700]/60 shadow-[0_0_16px_rgba(255,215,0,0.2)]" : "border-blue-500/50 shadow-[0_0_16px_rgba(59,130,246,0.2)]"}`}>
             {initials(duel.challenger_name)}
           </div>
           <p className="max-w-[80px] truncate text-[11px] font-black text-white">{duel.challenger_name}</p>
@@ -88,7 +98,8 @@ function DuelCard({ duel, currentUser, onAccept, onSettle }: {
         {/* Defender */}
         <div className="flex flex-col items-center gap-1.5 text-center">
           <div className={`flex h-14 w-14 items-center justify-center rounded-full border-2 bg-[#B30000]/10 text-lg font-black text-white
-            ${duel.status === "pending" ? "border-white/10 opacity-50 grayscale" : "border-[#B30000]/50 shadow-[0_0_16px_rgba(179,0,0,0.2)]"}`}>
+            ${isDefender ? "border-[#FFD700]/60 shadow-[0_0_16px_rgba(255,215,0,0.2)]" :
+              duel.status === "pending" ? "border-white/10 opacity-50 grayscale" : "border-[#B30000]/50 shadow-[0_0_16px_rgba(179,0,0,0.2)]"}`}>
             {initials(duel.defender_name)}
           </div>
           <p className="max-w-[80px] truncate text-[11px] font-black text-white">{duel.defender_name}</p>
@@ -147,12 +158,20 @@ function CreateDuelModal({ username, onClose, onCreate }: {
   onClose: () => void;
   onCreate: (d: Omit<Duel, "id" | "created_at">) => void;
 }) {
+  const { data: fixtures = [] } = useUpcomingFixtures();
   const [defender, setDefender] = useState("");
   const [home, setHome] = useState("");
   const [away, setAway] = useState("");
   const [prediction, setPrediction] = useState("");
   const [brag, setBrag] = useState("");
+  const [pickedFixture, setPickedFixture] = useState<string | null>(null);
   const valid = defender.trim() && home.trim() && away.trim() && prediction.trim();
+
+  const pickFixture = (f: any) => {
+    setPickedFixture(f.id);
+    setHome(f.home);
+    setAway(f.away);
+  };
 
   const submit = () => {
     if (!valid) return;
@@ -172,7 +191,7 @@ function CreateDuelModal({ username, onClose, onCreate }: {
           <button onClick={onClose} className="text-white/30 hover:text-white"><X className="h-4 w-4" /></button>
         </div>
 
-        <div className="space-y-3 p-5">
+        <div className="max-h-[80vh] overflow-y-auto space-y-3 p-5">
           <div>
             <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Challenge Who?</label>
             <input value={defender} onChange={e => setDefender(e.target.value)}
@@ -180,15 +199,35 @@ function CreateDuelModal({ username, onClose, onCreate }: {
               className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#B30000]/50 focus:outline-none" />
           </div>
 
+          {/* Quick-pick from upcoming fixtures */}
+          {fixtures.length > 0 && (
+            <div>
+              <label className="mb-1.5 block text-[9px] font-black uppercase tracking-widest text-white/35">Quick Pick a Match</label>
+              <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+                {fixtures.slice(0, 8).map((f: any) => (
+                  <button key={f.id} onClick={() => pickFixture(f)}
+                    className={`w-full flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-all
+                      ${pickedFixture === f.id
+                        ? "border-[#FFD700]/50 bg-[#FFD700]/8 text-white"
+                        : "border-white/8 bg-white/[0.02] text-white/50 hover:border-white/20 hover:text-white"}`}>
+                    <span className="text-xs font-black">{f.home} <span className="text-white/30">vs</span> {f.away}</span>
+                    <span className="text-[9px] font-bold text-white/25 shrink-0 ml-2">{f.league}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[9px] text-white/20">Or type custom teams below</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Home Team</label>
-              <input value={home} onChange={e => setHome(e.target.value)} placeholder="Arsenal"
+              <input value={home} onChange={e => { setHome(e.target.value); setPickedFixture(null); }} placeholder="Arsenal"
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#B30000]/50 focus:outline-none" />
             </div>
             <div>
               <label className="mb-1 block text-[9px] font-black uppercase tracking-widest text-white/35">Away Team</label>
-              <input value={away} onChange={e => setAway(e.target.value)} placeholder="Chelsea"
+              <input value={away} onChange={e => { setAway(e.target.value); setPickedFixture(null); }} placeholder="Chelsea"
                 className="w-full rounded-xl border border-white/10 bg-[#111] px-3 py-2.5 text-sm text-white placeholder-white/20 focus:border-[#B30000]/50 focus:outline-none" />
             </div>
           </div>
@@ -262,7 +301,7 @@ export default function RivalriesPage() {
   const { username, isLoggedIn } = useAuth();
   const [duels, setDuels] = useState<Duel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"live" | "all" | "receipts">("live");
+  const [tab, setTab] = useState<"live" | "mine" | "all" | "receipts">("live");
   const [showCreate, setShowCreate] = useState(false);
   const [settlingDuel, setSettlingDuel] = useState<Duel | null>(null);
   const [stats, setStats] = useState({ total: 0, active: 0, settled: 0 });
@@ -298,9 +337,35 @@ export default function RivalriesPage() {
     if (supabase && isLoggedIn) {
       try {
         const { data } = await supabase.from("fan_duels").insert({ challenger_name: payload.challenger_name, defender_name: payload.defender_name, home_team: payload.home_team, away_team: payload.away_team, prediction: payload.prediction, brag_line: payload.brag_line, status: "pending" }).select("*").single();
-        if (data) setDuels(prev => prev.map(d => d.id === tempId ? data as Duel : d));
+        if (data) {
+          setDuels(prev => prev.map(d => d.id === tempId ? data as Duel : d));
+
+          // Notify the defender via push (fire-and-forget — non-blocking)
+          notifyDefender(payload).catch(() => {});
+        }
       } catch { /* local only */ }
     }
+  };
+
+  const notifyDefender = async (payload: Omit<Duel, "id" | "created_at">) => {
+    if (!supabase) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", payload.defender_name)
+      .maybeSingle();
+    if (!profile?.id) return;
+    await fetch("/api/push-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: profile.id,
+        title: `⚔️ ${payload.challenger_name} just challenged you!`,
+        body: `${payload.home_team} vs ${payload.away_team} — They called ${payload.prediction}. Accept on BallMtaani.`,
+        url: "/rivalries",
+        tag: `duel-challenge-${profile.id}-${Date.now()}`,
+      }),
+    });
   };
 
   const acceptDuel = async (id: string) => {
@@ -317,8 +382,11 @@ export default function RivalriesPage() {
     loadDuels();
   };
 
+  const myDuelsCount = duels.filter(d => d.challenger_name === username || d.defender_name === username).length;
+
   const filtered = duels.filter(d => {
     if (tab === "live") return d.status === "pending" || d.status === "active";
+    if (tab === "mine") return d.challenger_name === username || d.defender_name === username;
     if (tab === "receipts") return d.status === "completed";
     return true;
   });
@@ -353,9 +421,9 @@ export default function RivalriesPage() {
               {/* Stats */}
               <div className="flex gap-3">
                 {[
-                  { label: "Total Duels",   value: stats.total,   icon: Users,    color: "text-white" },
-                  { label: "Live Now",       value: stats.active,  icon: Flame,    color: "text-[#B30000]" },
-                  { label: "Receipts Kept", value: stats.settled, icon: Trophy,   color: "text-[#FFD700]" },
+                  { label: "Total Duels",   value: stats.total,   icon: Users,  color: "text-white" },
+                  { label: "Live Now",       value: stats.active,  icon: Flame,  color: "text-[#B30000]" },
+                  { label: "Receipts Kept", value: stats.settled, icon: Trophy, color: "text-[#FFD700]" },
                 ].map(({ label, value, icon: Icon, color }) => (
                   <div key={label} className="rounded-xl border border-white/8 bg-black/40 px-4 py-3 text-center">
                     <Icon className={`mx-auto mb-1 h-3.5 w-3.5 ${color}`} />
@@ -369,7 +437,7 @@ export default function RivalriesPage() {
             {/* How it works */}
             <div className="mt-6 grid grid-cols-3 gap-3">
               {[
-                { n: "1", label: "Issue Challenge", sub: "Pick a rival fan, name the match, call the score", icon: Swords },
+                { n: "1", label: "Issue Challenge", sub: "Pick a rival fan, choose a fixture, call the score", icon: Swords },
                 { n: "2", label: "They Accept", sub: "Rival confirms the duel — both predictions locked in", icon: CheckCircle2 },
                 { n: "3", label: "Keep Receipt", sub: "After the final whistle, settle it and keep the receipt", icon: ScrollText },
               ].map(({ n, label, sub, icon: Icon }) => (
@@ -393,15 +461,18 @@ export default function RivalriesPage() {
         {/* ── TABS + CREATE ────────────────────────────────────────────── */}
         <div className="mx-auto max-w-6xl px-4 pt-6">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex gap-1 rounded-xl border border-white/6 bg-[#0d1018] p-1">
+            <div className="flex gap-1 rounded-xl border border-white/6 bg-[#0d1018] p-1 overflow-x-auto hide-scrollbar">
               {([
-                { key: "live",     label: "Live & Pending", icon: Activity },
-                { key: "all",      label: "All Duels",      icon: Swords },
-                { key: "receipts", label: "Receipt Book",   icon: ScrollText },
+                { key: "live", label: "Live & Pending", icon: Activity },
+                ...(isLoggedIn ? [{ key: "mine" as const, label: myDuelsCount ? `My Duels (${myDuelsCount})` : "My Duels", icon: UserCheck }] : []),
+                { key: "all",  label: "All Duels", icon: Swords },
+                { key: "receipts", label: "Receipt Book", icon: ScrollText },
               ] as const).map(({ key, label, icon: Icon }) => (
-                <button key={key} onClick={() => setTab(key)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all
-                    ${tab === key ? "bg-white/10 text-white" : "text-white/30 hover:text-white/60"}`}>
+                <button key={key} onClick={() => setTab(key as any)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0
+                    ${tab === key
+                      ? key === "mine" ? "bg-[#FFD700]/15 text-[#FFD700]" : "bg-white/10 text-white"
+                      : "text-white/30 hover:text-white/60"}`}>
                   <Icon className="h-3 w-3" /> <span className="hidden sm:inline">{label}</span>
                   <span className="sm:hidden">{label.split(" ")[0]}</span>
                 </button>
@@ -410,7 +481,7 @@ export default function RivalriesPage() {
 
             {isLoggedIn && (
               <button onClick={() => setShowCreate(true)}
-                className="flex items-center gap-2 rounded-xl bg-[#B30000] px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-[0_0_16px_rgba(179,0,0,0.3)] transition-all hover:bg-[#cc0000] hover:shadow-[0_0_24px_rgba(179,0,0,0.4)] active:scale-95">
+                className="flex shrink-0 items-center gap-2 rounded-xl bg-[#B30000] px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-[0_0_16px_rgba(179,0,0,0.3)] transition-all hover:bg-[#cc0000] hover:shadow-[0_0_24px_rgba(179,0,0,0.4)] active:scale-95">
                 <Plus className="h-3.5 w-3.5" /> New Duel
               </button>
             )}
@@ -431,6 +502,18 @@ export default function RivalriesPage() {
                       <p className="font-black uppercase tracking-widest text-white/25">Receipt Book Empty</p>
                       <p className="mt-1 text-xs text-white/15">Settled duels appear here. Win a duel to fill it.</p>
                     </div>
+                  </>
+                ) : tab === "mine" ? (
+                  <>
+                    <Swords className="h-10 w-10 text-white/10" />
+                    <div>
+                      <p className="font-black uppercase tracking-widest text-white/25">No Duels Yet</p>
+                      <p className="mt-1 text-xs text-white/15">Issue your first challenge to see it here.</p>
+                    </div>
+                    <button onClick={() => setShowCreate(true)}
+                      className="flex items-center gap-2 rounded-xl bg-[#B30000] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white hover:bg-[#cc0000]">
+                      <Plus className="h-3.5 w-3.5" /> Issue First Duel
+                    </button>
                   </>
                 ) : (
                   <>
