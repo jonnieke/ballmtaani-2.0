@@ -7,7 +7,7 @@
   "crons": [
     {
       "path": "/api/settle-predictions",
-      "schedule": "0 9 * * *"
+      "schedule": "0 9,21 * * *"
     },
     {
       "path": "/api/push-kickoff",
