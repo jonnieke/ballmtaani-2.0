@@ -32,6 +32,15 @@ export function Navbar() {
 
   const menuCategories = [
     {
+      label: "News",
+      links: [
+        { href: "/news", label: "All Stories" },
+        { href: "/videos", label: "Videos" },
+        { href: "/world-cup-2026", label: "WC26 Hub" },
+        { href: "/search", label: "Search" },
+      ]
+    },
+    {
       label: "Matches",
       links: [
         { href: "/matches", label: "Directory" },
