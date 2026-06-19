@@ -779,7 +779,8 @@ export default function MatchesPage() {
 
   const filteredPool = useMemo(() =>
     basePool.filter(m => {
-      const matchesLeague = leagueFilter === "all" || m.league === leagueFilter;
+      const matchesLeague = leagueFilter === "all" || m.league === leagueFilter ||
+        (leagueFilter === "World Cup 2026" && m.league === "FIFA World Cup");
       const hay = `${m.home || ""} ${m.away || ""} ${m.league || ""}`.toLowerCase();
       const matchesQ = !query.trim() || hay.includes(query.toLowerCase());
       return matchesLeague && matchesQ;
