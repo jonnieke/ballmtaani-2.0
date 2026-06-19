@@ -34,6 +34,7 @@ async function throttledAll<T>(
 
 // ─── Major League IDs (API-Football) ────────────────────────
 export const MAJOR_LEAGUE_IDS = {
+  "FIFA World Cup": 1,
   "Premier League": 39,
   "La Liga": 140,
   "Serie A": 135,
@@ -185,6 +186,9 @@ export interface LiveMatch {
   possession?: string;
   scorers?: string;
   status: string;
+  venue?: string;
+  time?: string;
+  date?: string;
 }
 
 export interface StandingEntry {
@@ -310,7 +314,8 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
     leagueLogo: item.league.logo,
     status: item.fixture.status.short,
     possession: "N/A",
-    scorers: ""
+    scorers: "",
+    venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
   }));
 }
 
@@ -322,7 +327,7 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
   if (!raw || !raw.length) return [];
 
   // 686 excluded — returns Czech teams not KPL. 288/332 excluded until verified.
-  const majorLeagues = new Set([2, 3, 12, 39, 140, 135, 78, 61]);
+  const majorLeagues = new Set([1, 2, 3, 12, 39, 140, 135, 78, 61]);
 
   return raw
     .filter((item: any) => majorLeagues.has(item.league?.id))
@@ -349,7 +354,7 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       kickoffAt: new Date(item.fixture.date).getTime(),
     }))
     .sort((a: any, b: any) => {
-      const priority: Record<number, number> = { 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
+      const priority: Record<number, number> = { 1:0, 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
       const pa = priority[a.leagueId] ?? 99;
       const pb = priority[b.leagueId] ?? 99;
       if (pa !== pb) return pa - pb;
@@ -410,6 +415,7 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
       leagueLogo: item.league.logo,
       date: formatRelativeDate(item.fixture.date),
       kickoffAt: new Date(item.fixture.date).getTime(),
+      venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
     }));
     allFixtures.push(...mapped);
   }
@@ -460,6 +466,9 @@ export async function fetchTournamentFixtures(leagueId: number, season: number):
     away: item.teams.away.name,
     awayLogo: item.teams.away.logo,
     awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+    homeScore: item.goals?.home ?? null,
+    awayScore: item.goals?.away ?? null,
+    minute: item.fixture.status?.elapsed ?? null,
     time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
       hour: 'numeric',
       minute: '2-digit',
@@ -475,11 +484,40 @@ export async function fetchTournamentFixtures(leagueId: number, season: number):
   })).sort((a: any, b: any) => a.timestamp - b.timestamp);
 }
 
+export async function fetchWC26TopScorers(): Promise<any[]> {
+  // Uses a direct fetch (not apiFetch) so plan-limited 404s are silent —
+  // top scorers is a bonus display and should never error the console.
+  try {
+    const res = await fetch(`${API_BASE_URL}/players/topscorers?league=1&season=2026`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const raw = json?.response;
+    if (!Array.isArray(raw) || raw.length === 0) return [];
+    return raw.slice(0, 10).map((item: any) => ({
+      name: item.player?.name || "Unknown",
+      photo: item.player?.photo || "",
+      nationality: item.player?.nationality || "",
+      team: item.statistics?.[0]?.team?.name || "",
+      teamLogo: item.statistics?.[0]?.team?.logo || "",
+      goals: item.statistics?.[0]?.goals?.total ?? 0,
+      assists: item.statistics?.[0]?.goals?.assists ?? 0,
+      played: item.statistics?.[0]?.games?.appearences ?? 0,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchTournamentStandings(leagueId: number, season: number): Promise<Record<string, TournamentStandingEntry[]>> {
   const raw = await apiFetch(`/standings?league=${leagueId}&season=${season}`);
   if (!raw || raw.length === 0) return {};
 
   const groups = raw[0]?.league?.standings || [];
+  if (leagueId === 1 && season === 2026 && !hasTrustedWorldCupGroups(groups)) {
+    console.warn("API-Football returned untrusted World Cup 2026 standings; suppressing tables.");
+    return {};
+  }
+
   const result: Record<string, TournamentStandingEntry[]> = {};
 
   groups.forEach((groupRows: any[]) => {
@@ -507,6 +545,24 @@ export async function fetchTournamentStandings(leagueId: number, season: number)
   return result;
 }
 
+function hasTrustedWorldCupGroups(groups: any[]): boolean {
+  // Require at least one group with at least one entry that has the
+  // minimum structure the renderer needs.  The pre-tournament guard that
+  // demanded exactly 12 groups × 4 teams was suppressing real in-progress
+  // data from API-Football (logos missing, group count != 12 mid-draw, etc.)
+  if (!Array.isArray(groups) || groups.length === 0) return false;
+
+  for (const groupRows of groups) {
+    if (!Array.isArray(groupRows) || groupRows.length === 0) return false;
+    for (const entry of groupRows) {
+      if (!entry?.team?.name) return false;
+      if (!entry?.all || typeof entry.all.played !== "number") return false;
+    }
+  }
+
+  return true;
+}
+
 function formatRelativeDate(dateStr: string): string {
   const matchDate = new Date(dateStr);
   const now = new Date();
@@ -530,6 +586,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const toStr = toDate.toISOString().split('T')[0];
 
   const leagueSeasons: [number, number][] = [
+    [1, 2026],   // World Cup 2026
     [39, 2025],  // Premier League 2025-26
     [140, 2025], // La Liga 2025-26
     [135, 2025], // Serie A 2025-26
@@ -572,6 +629,8 @@ export async function fetchRecentMatches(): Promise<any[]> {
         hour12: true,
         timeZone: 'Africa/Nairobi'
       }),
+      status: item.fixture.status?.short || "FT",
+      venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
       timestamp: new Date(item.fixture.date).getTime()
     }));
     allFixtures.push(...mapped);

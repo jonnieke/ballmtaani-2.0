@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useDebates } from "../hooks/useData";
 import { useLocation } from "wouter";
@@ -82,6 +82,37 @@ export default function DebatesPage() {
     };
   }, [visibleDebates, localVotes]);
 
+  // ── Realtime: re-fetch whenever any debate row is updated ──────────────
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel("debates-live")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "debates" }, () => {
+        refetch();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [refetch]);
+
+  // ── Load this user's existing votes from DB so they survive refresh ────
+  // Requires a debate_votes table: (user_id uuid, debate_id text, side text,
+  //   primary key (user_id, debate_id))
+  useEffect(() => {
+    if (!isLoggedIn || !user || !supabase) return;
+    void Promise.resolve(
+      supabase
+        .from("debate_votes")
+        .select("debate_id, side")
+        .eq("user_id", user.id)
+        .then(({ data }) => {
+          if (!data?.length) return;
+          const loaded: Record<string, "left" | "right"> = {};
+          data.forEach((v: any) => { loaded[v.debate_id] = v.side; });
+          setLocalVotes(prev => ({ ...loaded, ...prev }));
+        })
+    ).catch(() => {});
+  }, [isLoggedIn, user]);
+
   const handleVote = async (debateId: string, side: 'left' | 'right') => {
     if (!isLoggedIn) {
       sessionStorage.setItem("auth_return_url", window.location.pathname);
@@ -113,6 +144,16 @@ export default function DebatesPage() {
           total_votes: (parseInt(debate.totalVotes.replace(',', '')) || 0) + 1
         }).eq("id", debateId);
       }
+    }
+
+    // Persist vote so it survives page refresh (fails silently if table absent)
+    if (user) {
+      void Promise.resolve(
+        supabase.from("debate_votes").upsert(
+          { user_id: user.id, debate_id: debateId, side },
+          { onConflict: "user_id,debate_id" }
+        ).then(() => {})
+      ).catch(() => {});
     }
 
     // Prompt sharing when a user's side needs backup.
@@ -408,15 +449,24 @@ export default function DebatesPage() {
                   </button>
                 </div>
 
-                {/* Moderation UI */}
-                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                {/* Bottom bar: moderation + vote count + share */}
+                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between gap-3">
                   <DebateModerationUI
                     debateId={debate.id}
                     onFlagSuccess={() => refetch()}
                   />
-                  <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                    {totalVotesRaw} Total Votes
+                  <div className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest tabular-nums shrink-0">
+                    {totalVotesRaw.toLocaleString()} votes
                   </div>
+                  <button
+                    onClick={() => {
+                      const text = `🔥 "${debate.title}" on BallMtaani\n${finalLeft}% for ${debate.left} · ${finalRight}% for ${debate.right}\n\nWhere do you stand? → https://ballmtaani.com/debates`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                    }}
+                    className="flex items-center gap-1 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#25D366] transition-all hover:bg-[#25D366]/20 shrink-0"
+                  >
+                    <MessageCircle className="h-3 w-3" /> Share
+                  </button>
                 </div>
 
                 {/* Group-chat backup UI */}

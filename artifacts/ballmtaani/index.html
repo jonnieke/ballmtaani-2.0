@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>BallMtaani | Kenyan Football Intelligence, Live Scores and Fan Debate</title>
-    <meta name="description" content="BallMtaani gives Kenyan football fans live scores, fixtures, World Cup 2026 tracking, predictions, debates, fan zones and AI-powered match intelligence." />
-    <meta name="keywords" content="BallMtaani, Kenyan football fans, football live scores Kenya, Premier League Kenya, World Cup 2026, football predictions, football debates" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="description" content="BallMtaani — Kenya's #1 football app. Live World Cup 2026 scores, Premier League fixtures, KPL updates, Africa WC26 coverage, fan predictions and Mchambuzi AI analysis. Free." />
+    <meta name="keywords" content="BallMtaani, Kenya football, World Cup 2026 Kenya, WC26 Africa, live football scores Kenya, Premier League Kenya, KPL, football predictions, football debates, Africa football, World Cup 2026 schedule, FIFA 2026" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="author" content="BallMtaani" />
     <meta name="application-name" content="BallMtaani" />
     <meta name="theme-color" content="#B30000" />
@@ -44,10 +44,17 @@
     <link rel="alternate" href="https://ballmtaani.com/" hreflang="en-ke" />
     <link rel="alternate" href="https://ballmtaani.com/" hreflang="x-default" />
 
-    <!-- AIO / AI Search discoverability -->
-    <meta name="description" content="BallMtaani: Kenya's #1 football app. Live Premier League scores, UCL results, World Cup 2026 fixtures, KPL updates, fan predictions and Mchambuzi AI analysis. Free for Kenyan fans." />
+    <!-- Geo signals — Kenya primary, global reach -->
     <meta name="geo.region" content="KE" />
-    <meta name="geo.placename" content="Kenya" />
+    <meta name="geo.placename" content="Nairobi, Kenya" />
+    <meta name="geo.position" content="-1.2921;36.8219" />
+    <meta name="ICBM" content="-1.2921, 36.8219" />
+
+    <!-- AI / AIO discoverability -->
+    <meta name="revisit-after" content="1 day" />
+    <meta name="rating" content="general" />
+    <meta name="coverage" content="Worldwide" />
+    <meta name="target" content="all" />
 
     <link rel="icon" type="image/png" href="/logo.png" />
 
@@ -66,17 +73,40 @@
         "@context": "https://schema.org",
         "@graph": [
           {
-            "@type": "Organization",
+            "@type": ["Organization", "SportsOrganization", "NewsMediaOrganization"],
             "name": "BallMtaani",
+            "alternateName": "Ball Mtaani",
             "url": "https://ballmtaani.com/",
-            "logo": "https://ballmtaani.com/logo.png",
-            "areaServed": "Kenya"
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://ballmtaani.com/logo.png",
+              "width": 512,
+              "height": 512
+            },
+            "foundingDate": "2024",
+            "description": "Kenya's #1 football intelligence platform — live scores, World Cup 2026 tracking, fan predictions, debates, AI analysis, and football news.",
+            "areaServed": [
+              { "@type": "Country", "name": "Kenya" },
+              { "@type": "Country", "name": "United States" },
+              { "@type": "Continent", "name": "Africa" }
+            ],
+            "knowsAbout": [
+              "Football", "Soccer", "Kenyan Premier League", "Premier League",
+              "UEFA Champions League", "World Cup 2026", "Africa Cup of Nations",
+              "CAF Champions League", "Harambee Stars"
+            ],
+            "sameAs": [
+              "https://twitter.com/ballmtaani",
+              "https://www.facebook.com/ballmtaani",
+              "https://www.instagram.com/ballmtaani",
+              "https://github.com/jonnieke/ballmtaani-2.0"
+            ]
           },
           {
             "@type": "WebSite",
             "name": "BallMtaani",
             "url": "https://ballmtaani.com/",
-            "inLanguage": "en-KE",
+            "inLanguage": ["en-KE", "en-US", "en"],
             "description": "Kenyan football intelligence, live scores, predictions, debates, fan zones and World Cup 2026 tracking.",
             "potentialAction": {
               "@type": "SearchAction",
@@ -89,8 +119,14 @@
             "name": "BallMtaani",
             "url": "https://ballmtaani.com/",
             "applicationCategory": "SportsApplication",
-            "operatingSystem": "Web",
-            "inLanguage": "en-KE"
+            "applicationSubCategory": "FootballApp",
+            "operatingSystem": "Web, Android, iOS",
+            "inLanguage": "en-KE",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "KES"
+            }
           }
         ]
       }

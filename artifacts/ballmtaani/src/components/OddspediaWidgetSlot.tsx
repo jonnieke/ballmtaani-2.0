@@ -1,4 +1,4 @@
-import { useEffect, useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 import OddspediaCredit from "./OddspediaCredit";
 
@@ -33,9 +33,17 @@ export default function OddspediaWidgetSlot({
 }: OddspediaWidgetSlotProps) {
   const reactId = useId();
   const elementId = selector || `oddspedia-${widgetKey}-${reactId.replace(/:/g, "")}`;
+  const configuredDomain = config?.domain;
+  const [domainAllowed, setDomainAllowed] = useState(true);
 
   useEffect(() => {
     if (!config || !globalName || !widgetId) return;
+    const hostname = window.location.hostname.replace(/^www\./, "");
+    const allowedHostname = configuredDomain?.replace(/^www\./, "");
+    const isAllowedDomain = !allowedHostname || hostname === allowedHostname;
+
+    setDomainAllowed(isAllowedDomain);
+    if (!isAllowedDomain) return;
 
     window[globalName] = config;
 
@@ -48,7 +56,7 @@ export default function OddspediaWidgetSlot({
     return () => {
       script.remove();
     };
-  }, [config, globalName, widgetId]);
+  }, [config, configuredDomain, globalName, widgetId]);
 
   return (
     <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#0c121b]/88 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
@@ -64,9 +72,32 @@ export default function OddspediaWidgetSlot({
         </div>
       </div>
 
-      <div id={elementId} data-oddspedia-widget={widgetKey} className="min-h-[260px] bg-black/24 p-4">
-        {config ? (
-          <OddspediaCredit className="mb-3" />
+      <div className="bg-black/24 p-4">
+        {config && domainAllowed ? (
+          <>
+            <div
+              id={elementId}
+              data-oddspedia-widget={widgetKey}
+              className="mx-auto min-h-[280px] w-full overflow-hidden rounded-2xl border border-white/8 bg-[#05070b]"
+            />
+            <OddspediaCredit className="mt-4" />
+          </>
+        ) : config ? (
+          <div className="flex min-h-[230px] flex-col items-center justify-center rounded-2xl border border-[#FFD700]/18 bg-[#090d14] p-5 text-center">
+            <div className="text-sm font-bold uppercase tracking-[0.16em] text-white">Standings widget is domain restricted</div>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/52">
+              Oddspedia allows this embed on {configuredDomain}. Local preview keeps the verified standings slot hidden so a provider warning is not shown as match data.
+            </p>
+            <a
+              href={`https://${configuredDomain || "ballmtaani.com"}/world-cup-2026`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-primary"
+            >
+              View live page <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+            <OddspediaCredit className="mt-5 justify-center" />
+          </div>
         ) : (
           <div className="flex min-h-[230px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/14 bg-white/[0.03] p-5 text-center">
             <div className="text-sm font-bold uppercase tracking-[0.16em] text-white">Oddspedia widget slot ready</div>

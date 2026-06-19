@@ -194,6 +194,70 @@ export function useLeaderboard() {
   });
 }
 
+const WC26_QUESTION_IDS = [
+  "wc26-champion", "wc26-africa", "wc26-boot",
+  "wc26-shock", "wc26-horse", "wc26-kenya",
+];
+
+// Ranks users by WC26 prediction accuracy (correct calls / total locked in).
+// Falls back to participation count when no results are settled yet.
+export function useWC26Leaderboard() {
+  return useQuery({
+    queryKey: ["wc26-leaderboard"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (!supabase) return [];
+      try {
+        // 1. Fetch all WC26 predictions
+        const { data: preds, error: predErr } = await supabase
+          .from("predictions")
+          .select("user_id, match_id, result")
+          .in("match_id", WC26_QUESTION_IDS);
+        if (predErr || !preds?.length) return [];
+
+        // 2. Aggregate per user
+        const userMap: Record<string, { total: number; correct: number }> = {};
+        for (const row of preds) {
+          if (!userMap[row.user_id]) userMap[row.user_id] = { total: 0, correct: 0 };
+          userMap[row.user_id].total += 1;
+          if (row.result === "correct") userMap[row.user_id].correct += 1;
+        }
+
+        // 3. Fetch profiles for top user IDs (sorted by correct desc then total desc)
+        const sortedIds = Object.entries(userMap)
+          .sort(([, a], [, b]) => b.correct - a.correct || b.total - a.total)
+          .slice(0, 50)
+          .map(([id]) => id);
+
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username, country, coins, streak")
+          .in("id", sortedIds);
+
+        const profileMap: Record<string, any> = {};
+        for (const p of profiles || []) profileMap[p.id] = p;
+
+        return sortedIds.map((uid, idx) => {
+          const p = profileMap[uid] || {};
+          const stats = userMap[uid];
+          return {
+            rank: idx + 1,
+            userId: uid,
+            name: p.username || "Fan",
+            country: p.country || "KEN",
+            streak: p.streak || 0,
+            pts: Number(p.coins ?? 0),
+            correct: stats.correct,
+            total: stats.total,
+          };
+        });
+      } catch {
+        return [];
+      }
+    },
+  });
+}
+
 export function useFanZones() {
   return useQuery({
     queryKey: ["fan-zones"],

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation, Link } from "wouter";
 import {
-  ChevronLeft, MessageSquare, Info, BarChart3, Users,
+  ChevronLeft, ChevronRight, MessageSquare, Info, BarChart3, Users,
   Flame, Heart, Trophy, Target, Timer, Zap,
   Send, TrendingUp, Shield, ListOrdered,
   Activity, Crown
@@ -227,12 +227,92 @@ function StandingsTab({ standingsData, matchLeague }: { standingsData: Record<st
 /* ─────────────────────────────────────────────────────────────
    MAIN PAGE
    ─────────────────────────────────────────────────────────────*/
+import SEO from "../components/SEO";
 import { getUserTier } from "../lib/tiers";
 import { useProfile } from "../hooks/useData";
 import MatchCommentary from "../components/MatchCommentary";
 import PredictionConsensus from "../components/PredictionConsensus";
 import MatchReport from "../components/MatchReport";
 import LiveLeaderboard from "../components/LiveLeaderboard";
+
+// ── Live match card for the /live-center landing ──────────────────────────────
+function LiveMatchCard({ match }: { match: any }) {
+  const homeScore = match.homeScore ?? 0;
+  const awayScore = match.awayScore ?? 0;
+  const homeWins  = homeScore > awayScore;
+  const awayWins  = awayScore > homeScore;
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-red-500/22 bg-gradient-to-b from-red-950/18 to-[#0a0d14] transition-all hover:border-red-500/40 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(220,38,38,0.12)]">
+      {/* Pulsing live bar at top */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-red-600 via-red-400 to-red-600 animate-pulse" />
+
+      <div className="p-4">
+        {/* League + minute */}
+        <div className="mb-3 flex items-center justify-between">
+          <span className="max-w-[120px] truncate text-[9px] font-black uppercase tracking-widest text-white/28">
+            {match.league}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+            </span>
+            <span className="text-[10px] font-black text-red-400">
+              {match.minute ? `${match.minute}'` : "LIVE"}
+            </span>
+          </div>
+        </div>
+
+        {/* Teams + score */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          {/* Home */}
+          <div className="min-w-0 text-center">
+            <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
+              {match.homeLogo ? (
+                <img src={match.homeLogo} alt="" className="h-9 w-9 object-contain" />
+              ) : (
+                <span className="text-[8px] font-black text-white/30">{String(match.home || "H").slice(0, 3)}</span>
+              )}
+            </div>
+            <p className={`truncate text-[11px] font-bold leading-tight ${homeWins ? "text-white" : "text-white/50"}`}>
+              {match.home}
+            </p>
+          </div>
+
+          {/* Score */}
+          <div className="shrink-0 text-center">
+            <div className="text-2xl font-black tabular-nums leading-none">
+              <span className={homeWins ? "text-white" : awayWins ? "text-white/28" : "text-white/75"}>{homeScore}</span>
+              <span className="mx-1 text-white/15">–</span>
+              <span className={awayWins ? "text-white" : homeWins ? "text-white/28" : "text-white/75"}>{awayScore}</span>
+            </div>
+            <p className="mt-1 text-[9px] font-black text-red-400/70 uppercase tracking-widest">Live</p>
+          </div>
+
+          {/* Away */}
+          <div className="min-w-0 text-center">
+            <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
+              {match.awayLogo ? (
+                <img src={match.awayLogo} alt="" className="h-9 w-9 object-contain" />
+              ) : (
+                <span className="text-[8px] font-black text-white/30">{String(match.away || "A").slice(0, 3)}</span>
+              )}
+            </div>
+            <p className={`truncate text-[11px] font-bold leading-tight ${awayWins ? "text-white" : "text-white/50"}`}>
+              {match.away}
+            </p>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-3.5 flex items-center justify-center gap-1.5 rounded-xl border border-red-500/18 bg-red-500/8 py-2 text-[10px] font-black uppercase tracking-widest text-red-400 transition-colors group-hover:bg-red-500/15 group-hover:border-red-500/30">
+          Open Live Center <ChevronRight className="h-3 w-3" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LiveCenterPage() {
   const [, params] = useRoute("/live-center/:id");
@@ -299,18 +379,117 @@ export default function LiveCenterPage() {
 
   if (!match) {
     return (
-      <div className="min-h-screen bg-[#0B0B0B] text-white pb-20">
-        <div className="max-w-5xl mx-auto px-4 py-12">
-          <Link href="/live-center" className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-xs font-black uppercase tracking-widest mb-8">
-            <ChevronLeft className="w-4 h-4" /> Back
-          </Link>
-          <div className="bg-[#111] border border-white/10 p-8 text-center">
-            <h1 className="text-2xl md:text-3xl font-black uppercase tracking-wider text-white mb-3">No Live Match Found</h1>
-            <p className="text-gray-400 text-sm mb-6">This match is not active right now or real-time data is unavailable.</p>
-            <Link href="/matches" className="inline-flex items-center justify-center bg-primary text-white px-5 py-3 text-xs font-black uppercase tracking-widest">
-              Open Match Directory
+      <div className="min-h-screen bg-[#080d16] text-white pb-24">
+        <SEO
+          title="Live Center | Real-Time Football Scores — BallMtaani"
+          description="BallMtaani Live Center — real-time scores, match stats, lineups, and fan banter for every live football match."
+          keywords={["live football scores", "live center", "match stats Kenya", "BallMtaani live"]}
+          path="/live-center"
+        />
+
+        {/* ── Header ── */}
+        <div className="sticky top-0 z-30 border-b border-white/8 bg-[#080d16]/95 backdrop-blur-xl">
+          <div className="mx-auto max-w-4xl px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                {matches.length > 0 && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                )}
+                <h1 className="text-[13px] font-black uppercase tracking-widest text-white">Live Center</h1>
+              </div>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-white/28 mt-0.5">
+                Real-time match intelligence
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {matches.length > 0 && (
+                <span className="rounded-full bg-red-500/15 px-3 py-1 text-[10px] font-black text-red-400">
+                  {matches.length} Live
+                </span>
+              )}
+              <Link href="/matches" className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-[10px] font-bold text-white/42 transition-colors hover:text-white">
+                All Fixtures <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto max-w-4xl px-4 pt-6">
+
+          {matches.length > 0 ? (
+            <>
+              {/* Live match grid */}
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-widest text-white">Live Matches</span>
+                <span className="text-[10px] text-white/28">· Click to open full detail</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {matches.map((m: any) => (
+                  <Link key={m.id} href={`/live-center/${m.id}`}>
+                    <LiveMatchCard match={m} />
+                  </Link>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl border border-white/8 bg-[#0b0f18] px-6 py-14 text-center">
+              <div className="mb-4 text-4xl opacity-20">⚽</div>
+              <h2 className="text-base font-black uppercase tracking-widest text-white/40">No live matches right now</h2>
+              <p className="mt-2 text-sm text-white/22">
+                The whistle hasn't blown yet — check upcoming fixtures or WC26 schedule.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link href="/matches" className="inline-flex items-center gap-2 rounded-xl bg-white/6 border border-white/10 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">
+                  View Fixtures
+                </Link>
+                <Link href="/world-cup-2026" className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/20 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
+                  <Trophy className="h-3.5 w-3.5" /> WC26 Hub
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* ── Quick links ── */}
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <Link href="/matches" className="flex items-center gap-3 rounded-xl border border-white/8 bg-[#0b0f18] p-4 hover:bg-white/4 transition-colors">
+              <Activity className="h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <div className="text-xs font-black uppercase tracking-widest text-white">Match Hub</div>
+                <div className="text-[10px] text-white/35 mt-0.5">Fixtures, results, standings</div>
+              </div>
+            </Link>
+            <Link href="/world-cup-2026" className="flex items-center gap-3 rounded-xl border border-[#FFD700]/18 bg-[#0b0f18] p-4 hover:bg-[#FFD700]/4 transition-colors">
+              <Trophy className="h-5 w-5 shrink-0 text-[#FFD700]" />
+              <div>
+                <div className="text-xs font-black uppercase tracking-widest text-white">WC26 Hub</div>
+                <div className="text-[10px] text-white/35 mt-0.5">Groups, schedule, Africa</div>
+              </div>
+            </Link>
+            <Link href="/mchambuzi-halisi" className="flex items-center gap-3 rounded-xl border border-white/8 bg-[#0b0f18] p-4 hover:bg-white/4 transition-colors">
+              <Zap className="h-5 w-5 shrink-0 text-[#FFD700]" />
+              <div>
+                <div className="text-xs font-black uppercase tracking-widest text-white">Mchambuzi AI</div>
+                <div className="text-[10px] text-white/35 mt-0.5">Ask about any match</div>
+              </div>
             </Link>
           </div>
+
+          {/* ── WC26 promo when no live matches ── */}
+          {matches.length === 0 && (
+            <div className="mt-6 overflow-hidden rounded-2xl border border-[#FFD700]/20 bg-gradient-to-br from-[#1a1200]/80 to-[#07090e]">
+              <div className="px-5 py-6 text-center">
+                <Trophy className="mx-auto mb-3 h-9 w-9 text-[#FFD700]/60" />
+                <h3 className="text-base font-black uppercase tracking-widest text-white">World Cup 2026</h3>
+                <p className="mt-1.5 text-xs text-white/40">Jun 11 – Jul 19 · 104 matches · 48 nations</p>
+                <Link href="/world-cup-2026" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-6 py-2.5 text-xs font-black uppercase tracking-widest text-black hover:opacity-90 transition-opacity">
+                  WC26 Command Center <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

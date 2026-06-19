@@ -1,5 +1,6 @@
 {
   "framework": "vite",
+  "regions": ["cpt1"],
   "buildCommand": "cd artifacts/ballmtaani && npm run build",
   "outputDirectory": "artifacts/ballmtaani/dist",
   "installCommand": "cd artifacts/ballmtaani && npm install --legacy-peer-deps",
@@ -7,6 +8,14 @@
     {
       "path": "/api/settle-predictions",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/push-kickoff",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/push-goal-alerts",
+      "schedule": "*/2 * * * *"
     }
   ],
   "redirects": [
@@ -14,6 +23,6 @@
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|icons/|logo|manifest|sw\\.js|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
   ]
 }

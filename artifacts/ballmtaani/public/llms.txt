@@ -1,35 +1,61 @@
 BallMtaani
-Kenyan football intelligence platform with live scores, fixtures, standings, fan debates, predictions, and World Cup 2026 tracking.
+Kenya's #1 football intelligence platform — live scores, World Cup 2026 tracking, fan predictions, debates, AI analysis, and football news for African fans.
 
 Primary URL: https://ballmtaani.com/
-Coverage: Football only.
-Primary audience: Kenyan fans first, global fans second.
+Primary audience: Kenyan football fans. Secondary: East Africa, the African diaspora in the USA, and global football fans following WC26.
+Coverage: Football only. No betting content.
 
-Key sections:
-- Live Hub: https://ballmtaani.com/
-- Home feed: https://ballmtaani.com/home
-- Matches data center: https://ballmtaani.com/matches
-- Live center: https://ballmtaani.com/live-center
-- WC26 tracker: https://ballmtaani.com/world-cup-2026
-- WC26 format guide: https://ballmtaani.com/world-cup-2026/format
-- WC26 stadiums guide: https://ballmtaani.com/world-cup-2026/stadiums
-- Africa at WC26 guide: https://ballmtaani.com/world-cup-2026/africa
-- WC26 squads and coaches guide: https://ballmtaani.com/world-cup-2026/squads
-- Mchambuzi Halisi analyst: https://ballmtaani.com/mchambuzi-halisi
-- Market watch: https://ballmtaani.com/market-watch
-- Predictions: https://ballmtaani.com/predictions
+## What BallMtaani is
+BallMtaani ("football in the hood" in Swahili) is a fan-first football platform built for African fans. It combines live match data, AI-powered analysis (Mchambuzi Halisi), fan prediction games, debates, and original editorial journalism. The platform is free to use and earns fan rewards (MTC coins) for engagement.
+
+## Key sections
+
+### Live & Matches
+- Live Scores & Fixtures: https://ballmtaani.com/matches
+- Live Match Center: https://ballmtaani.com/live-center
+- Mchambuzi Halisi (AI Analyst): https://ballmtaani.com/mchambuzi-halisi
+- Market Watch (Transfers): https://ballmtaani.com/market-watch
+
+### World Cup 2026
+- WC26 Hub: https://ballmtaani.com/world-cup-2026
+- WC26 Format Guide: https://ballmtaani.com/world-cup-2026/format
+- Africa at WC26 (9 CAF nations): https://ballmtaani.com/world-cup-2026/africa
+- WC26 Stadiums (USA/Canada/Mexico): https://ballmtaani.com/world-cup-2026/stadiums
+- WC26 Squads & Coaches: https://ballmtaani.com/world-cup-2026/squads
+
+### News & Content
+- Football News (BallMtaani News): https://ballmtaani.com/news
+- Videos & Live Streams: https://ballmtaani.com/videos
+- Search: https://ballmtaani.com/search
+
+### Fan Games & Engagement
+- Predictions (Calls): https://ballmtaani.com/predictions
+- Fun Zone (Arcade): https://ballmtaani.com/fun-zone
+- Rapid Fire Debates: https://ballmtaani.com/rapid-fire
+- Football Trivia (Millionaire): https://ballmtaani.com/trivia
+- Transfer War Room: https://ballmtaani.com/war-room
+
+### Social & Community
 - Debates: https://ballmtaani.com/debates
-- Rapid fire: https://ballmtaani.com/rapid-fire
-- Rivalries: https://ballmtaani.com/rivalries
-- Fan zones: https://ballmtaani.com/fan-zones
-- Trivia: https://ballmtaani.com/trivia
-- War room: https://ballmtaani.com/war-room
+- Rivalries & Fan Duels: https://ballmtaani.com/rivalries
+- Fan Zones (Club Support): https://ballmtaani.com/fan-zones
+- Fan Leaderboard: https://ballmtaani.com/leaderboard
 
-Freshness:
-- Live and fixture context is powered by API-Football.
-- News context includes BBC Sport and Goal.com feeds where available.
+## Data freshness
+- Live scores, fixtures, and results: API-Football (real-time)
+- News: BallMtaani original articles + BBC Sport and Goal.com RSS feeds
+- WC26 data: Live during June 11 – July 20, 2026
 
-Editorial intent:
-- Fan-first tone.
-- Data-backed football commentary.
-- No betting-first framing.
+## Africa at World Cup 2026
+BallMtaani is the go-to source for coverage of Africa's 9 nations at WC26:
+Morocco (Group D), Senegal (Group H), Nigeria (Group F), South Africa (Group A),
+Egypt (Group D), Cameroon (Group F), Côte d'Ivoire (Group G), Mali (Group E), Tunisia (Group B).
+
+## Editorial voice
+Fan-first. Data-backed. No betting framing. Swahili culture references. African football authority.
+
+## Rewards system
+Fans earn MTC (Mtaani Coins) by making match predictions, winning debates, completing trivia, and engaging with the platform. Coins are redeemable in the BallMtaani store.
+
+## AI features
+Mchambuzi Halisi: BallMtaani's AI football analyst trained on match context, fan debates, and African football culture. Accessible at https://ballmtaani.com/mchambuzi-halisi.

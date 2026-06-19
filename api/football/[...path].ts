@@ -21,19 +21,27 @@ import { loadEnv } from "../_env-loader";
 loadEnv();
 
 export default async function handler(req: any, res: any) {
-  // Build the upstream path from the catch-all segments
-  const segments: string[] = Array.isArray(req.query.path)
-    ? req.query.path
-    : req.query.path
-    ? [req.query.path]
+  // Build the upstream path. Vercel surfaces the catch-all segment under the
+  // literal key "...path" (not "path"), so check both, and fall back to the
+  // request URL itself.
+  const rawSegs = req.query["...path"] ?? req.query.path;
+  const segments: string[] = Array.isArray(rawSegs)
+    ? rawSegs
+    : rawSegs
+    ? String(rawSegs).split("/")
     : [];
 
-  const endpoint = "/" + segments.join("/");
+  let endpoint = "/" + segments.join("/");
+  if (endpoint === "/") {
+    const incoming = new URL(req.url || "/", "http://localhost");
+    const fromPath = incoming.pathname.replace(/^\/api\/football/, "");
+    if (fromPath && fromPath !== "/") endpoint = fromPath;
+  }
 
-  // Forward all query params EXCEPT the internal `path` param
+  // Forward all query params EXCEPT the internal catch-all/debug params
   const parts: string[] = [];
   for (const [k, v] of Object.entries(req.query as Record<string, string>)) {
-    if (k === "path") continue;
+    if (k === "path" || k === "...path" || k === "_debug") continue;
     parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
   }
   const qs = parts.join("&");
@@ -59,8 +67,10 @@ export default async function handler(req: any, res: any) {
 
     // Check for API-level errors (rate-limit, token errors, etc.)
     // Do NOT cache these — they are transient and should be retried fresh
-    const hasErrors = data?.errors &&
-      (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0);
+    const hasErrors = (data?.errors &&
+      (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0)) ||
+      // Auth/quota errors come back in a legacy shape: {"api":{"error":"..."}}
+      Boolean(data?.api?.error);
 
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 200;

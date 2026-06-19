@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import { answerMchambuzi } from "./api/_mchambuzi-core";
 import newsHandler from "./api/news";
+import youtubeHandler from "./api/youtube";
 import sitemapHandler from "./api/sitemap";
 
 const port = Number(process.env.PORT || 5173);
@@ -55,6 +56,12 @@ export default defineConfig({
       name: "ballmtaani-news-api",
       configureServer(server) {
         server.middlewares.use("/api/news", async (req, res) => newsHandler(req, res));
+      },
+    },
+    {
+      name: "ballmtaani-youtube-api",
+      configureServer(server) {
+        server.middlewares.use("/api/youtube", async (req, res) => youtubeHandler(req, res));
       },
     },
     {
