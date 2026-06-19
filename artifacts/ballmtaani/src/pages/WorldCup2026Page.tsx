@@ -203,30 +203,41 @@ function GroupTable({ name, rows }: { name: string; rows: TournamentStandingEntr
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-white/5 text-[9px] font-bold uppercase tracking-widest text-white/25">
-              <th className="px-3 py-1.5 text-left">#</th>
-              <th className="px-3 py-1.5 text-left">Team</th>
-              <th className="px-3 py-1.5 text-center">P</th>
-              <th className="px-3 py-1.5 text-center">W</th>
-              <th className="px-3 py-1.5 text-center">GD</th>
-              <th className="px-3 py-1.5 text-center font-black text-[#FFD700]/40">Pts</th>
+              <th className="px-2 py-1.5 text-left">#</th>
+              <th className="px-2 py-1.5 text-left">Team</th>
+              <th className="px-2 py-1.5 text-center">P</th>
+              <th className="px-2 py-1.5 text-center">W</th>
+              <th className="px-2 py-1.5 text-center">D</th>
+              <th className="px-2 py-1.5 text-center">L</th>
+              <th className="px-2 py-1.5 text-center">GD</th>
+              <th className="px-2 py-1.5 text-center font-black text-[#FFD700]/40">Pts</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {rows.map((r, i) => {
+              const gd = Number(r.gd);
+              return (
               <tr key={r.team} className={`border-b border-white/4 last:border-0 transition-colors hover:bg-white/3 ${i < 2 ? "bg-[#FFD700]/3" : ""}`}>
-                <td className={`px-3 py-2 font-bold ${i < 2 ? "text-[#FFD700]" : "text-white/30"}`}>{r.rank}</td>
-                <td className="px-3 py-2">
+                <td className="pl-2 pr-1 py-2">
+                  <span className={`text-[11px] font-bold ${i < 2 ? "text-[#FFD700]" : "text-white/30"}`}>{r.rank}</span>
+                </td>
+                <td className="px-2 py-2">
                   <div className="flex items-center gap-1.5">
                     <img src={r.logo} alt="" aria-hidden="true" className="h-4 w-4 object-contain" loading="lazy" />
-                    <span className="font-semibold text-white text-[11px]">{r.team}</span>
+                    <span className={`font-semibold text-[11px] ${i < 2 ? "text-white" : "text-white/75"}`}>{r.team}</span>
                   </div>
                 </td>
-                <td className="px-3 py-2 text-center text-white/40">{r.played}</td>
-                <td className="px-3 py-2 text-center text-white/40">{r.won}</td>
-                <td className="px-3 py-2 text-center text-white/40">{r.gd}</td>
-                <td className="px-3 py-2 text-center font-black text-[#FFD700]">{r.points}</td>
+                <td className="px-2 py-2 text-center text-white/38">{r.played}</td>
+                <td className="px-2 py-2 text-center text-white/38">{r.won}</td>
+                <td className="px-2 py-2 text-center text-white/38">{r.draw}</td>
+                <td className="px-2 py-2 text-center text-white/38">{r.lost}</td>
+                <td className={`px-2 py-2 text-center text-[11px] font-semibold ${gd > 0 ? "text-emerald-400/75" : gd < 0 ? "text-red-400/65" : "text-white/38"}`}>
+                  {gd > 0 ? `+${gd}` : gd}
+                </td>
+                <td className={`px-2 py-2 text-center font-black ${i < 2 ? "text-[#FFD700]" : "text-white/80"}`}>{r.points}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
