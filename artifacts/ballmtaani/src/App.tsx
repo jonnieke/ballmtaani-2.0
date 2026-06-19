@@ -39,6 +39,7 @@ const TermsPage          = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
 const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
 const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
+const AIFanZonePage      = lazy(() => import("./pages/AIFanZonePage"));
 const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
 const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
 const ArticlePage        = lazy(() => import("./pages/ArticlePage"));
@@ -117,6 +118,7 @@ function AppShell() {
             <Route path="/hub" component={LandingPage} />
             <Route path="/world-cup-2026" component={WorldCup2026Page} />
             <Route path="/world-cup-2026/:guide" component={WorldCupGuidePage} />
+            <Route path="/ai-fan-zone" component={AIFanZonePage} />
             <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
             <Route path="/login" component={LoginPage} />
             <Route path="/verify" component={VerifyOTPPage} />

@@ -157,6 +157,7 @@ export default function HomePage() {
     home: "Mexico", homeLogo: "https://media.api-sports.io/flags/mx.svg", homeInitial: "MEX", homeColor: "#006847",
     away: "South Africa", awayLogo: "https://media.api-sports.io/flags/za.svg", awayInitial: "RSA", awayColor: "#007A4D",
     homeScore: 0, awayScore: 0, league: "FIFA World Cup 2026 - Opening Match",
+    date: "June 11, 2026",
     time: "10:00 PM EAT", kickoffAt: new Date("2026-06-11T19:00:00Z").getTime(),
   };
 
@@ -389,7 +390,19 @@ export default function HomePage() {
                             <div className="mt-1 text-[10px] font-black uppercase text-[#B30000]">{featuredMatch.minute}</div>
                           </>
                         ) : (
-                          <div className="rounded-xl border border-white/10 px-4 py-2 text-xl font-black text-white/22">VS</div>
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="rounded-xl border border-white/10 px-4 py-2 text-xl font-black text-white/22 mb-1">VS</div>
+                            {(featuredMatch as any).time && (
+                              <div className="text-[10px] font-black uppercase tracking-wider text-[#FFD700]">
+                                {(featuredMatch as any).date || "Upcoming"}
+                              </div>
+                            )}
+                            {(featuredMatch as any).time && (
+                              <div className="text-[9px] font-bold text-white/40 mt-0.5">
+                                {(featuredMatch as any).time}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="flex flex-col items-center gap-2 text-center">

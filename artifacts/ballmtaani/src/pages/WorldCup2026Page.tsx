@@ -319,6 +319,10 @@ export default function WorldCup2026Page() {
               className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-7 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10 active:scale-95">
               <Sparkles className="h-4 w-4" /> Ask Mchambuzi
             </Link>
+            <Link href="/ai-fan-zone"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/10 active:scale-95">
+              &#127914; AI Fan Zone
+            </Link>
           </div>
         </div>
       </section>
