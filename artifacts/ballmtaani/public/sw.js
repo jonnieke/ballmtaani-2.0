@@ -1,11 +1,9 @@
-// BallMtaani Service Worker v10
-// KEY CHANGE from v9: fixed offline fallback — caches.match() returns a
-// promise (always truthy), so the inline offline page was unreachable and
-// navigations rejected with a network error when offline. Also handle fetch
-// rejections on the cache-first path instead of leaving them uncaught.
+// BallMtaani Service Worker v11
+// v11: force-evicts all v10 and older caches so stale JS bundles
+// (pre-horizontal-layout MatchesPage) are cleared from browser caches.
 // index.html is NEVER cached — every navigation fetches fresh.
 
-const CACHE_NAME = 'ballmtaani-v10';
+const CACHE_NAME = 'ballmtaani-v11';
 
 // Only cache true static assets that never change between deploys
 const STATIC_ASSETS = [

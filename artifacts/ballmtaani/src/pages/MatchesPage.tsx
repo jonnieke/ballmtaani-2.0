@@ -149,20 +149,27 @@ function StatusBadge({ match, variant }: { match: any; variant: "live" | "fixtur
   );
 }
 
-// ── Compact match row — home | score | away horizontal layout ─────────────────
-function TeamCrest({ logo, name, wins, dimmed }: { logo?: string; name: string; wins: boolean; dimmed: boolean }) {
+// ── Team crest + name — side-aware so home mirrors away ───────────────────────
+function TeamCrest({
+  logo, name, wins, dimmed, side,
+}: {
+  logo?: string; name: string; wins: boolean; dimmed: boolean; side: "home" | "away";
+}) {
   const [err, setErr] = useState(false);
+  const crest = !err && logo ? (
+    <img src={logo} alt="" className="h-[22px] w-[22px] shrink-0 object-contain" onError={() => setErr(true)} />
+  ) : (
+    <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-[7px] font-black text-white/35">
+      {String(name || "?").slice(0, 2).toUpperCase()}
+    </div>
+  );
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      {!err && logo ? (
-        <img src={logo} alt="" className="h-6 w-6 shrink-0 object-contain" onError={() => setErr(true)} />
-      ) : (
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[8px] font-black text-white/40">
-          {String(name || "?").slice(0, 2).toUpperCase()}
-        </div>
-      )}
-      <span className={`truncate text-[13px] leading-tight transition-colors ${
-        wins ? "font-bold text-white" : dimmed ? "text-white/38" : "font-medium text-white/80"
+    // home: flex-row-reverse so order is [name] [logo], pushed right
+    // away: flex-row so order is [logo] [name], from left
+    <div className={`flex min-w-0 items-center gap-2 ${side === "home" ? "flex-row-reverse" : ""}`}>
+      {crest}
+      <span className={`min-w-0 truncate text-[13px] leading-snug ${
+        wins ? "font-bold text-white" : dimmed ? "text-white/35" : "font-medium text-white/80"
       }`}>
         {name}
       </span>
@@ -170,6 +177,7 @@ function TeamCrest({ logo, name, wins, dimmed }: { logo?: string; name: string; 
   );
 }
 
+// ── Match row — TIME | Home name logo | SCORE | logo Away name | › ─────────────
 function MatchRow({
   match,
   variant,
@@ -193,53 +201,59 @@ function MatchRow({
     <Link
       href={`/live-center/${match.id}`}
       onClick={onClick}
-      className={`group flex items-center border-b border-white/[0.04] transition-colors last:border-0 ${
+      className={`group flex items-center border-b border-white/[0.04] transition-all last:border-0 ${
         isSelected
-          ? "border-l-2 border-l-primary bg-primary/8"
+          ? "border-l-[3px] border-l-primary bg-primary/10"
           : isLive
-          ? "hover:bg-red-950/30"
-          : "hover:bg-white/[0.03]"
+          ? "border-l-[3px] border-l-red-500 hover:bg-red-950/25"
+          : "border-l-[3px] border-l-transparent hover:bg-white/[0.028]"
       }`}
     >
-      {/* Status column — fixed 58px */}
-      <div className="flex w-[58px] shrink-0 flex-col items-center justify-center gap-0.5 border-r border-white/[0.04] py-3.5 px-2">
+      {/* Status — 56px */}
+      <div className="flex w-[56px] shrink-0 flex-col items-center justify-center border-r border-white/[0.04] py-3 px-1.5">
         <StatusBadge match={match} variant={variant} />
       </div>
 
-      {/* Home team — right-aligned, flex-1 */}
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-2 px-3 py-3">
-        <TeamCrest logo={match.homeLogo} name={match.home} wins={homeWins} dimmed={hasScore && !homeWins} />
+      {/* Home — name then logo, right-justified */}
+      <div className="flex min-w-0 flex-1 items-center justify-end px-3 py-2.5">
+        <TeamCrest
+          logo={match.homeLogo} name={match.home}
+          wins={homeWins} dimmed={hasScore && !homeWins} side="home"
+        />
       </div>
 
-      {/* Score / vs — fixed center, 72px */}
-      <div className="flex w-[72px] shrink-0 flex-col items-center justify-center py-3">
+      {/* Score pill / vs */}
+      <div className="flex w-[80px] shrink-0 items-center justify-center py-2.5">
         {hasScore ? (
-          <>
-            <span className={`text-[17px] font-black leading-none tabular-nums tracking-tight ${
+          <div className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 ${
+            isLive
+              ? "border-red-500/35 bg-red-950/40"
+              : "border-white/[0.09] bg-white/[0.04]"
+          }`}>
+            <span className={`text-[15px] font-black tabular-nums leading-none ${
               homeWins ? "text-white" : awayWins ? "text-white/28" : "text-white/75"
-            }`}>
-              {match.homeScore ?? 0}
-            </span>
-            <span className="my-0.5 text-[9px] font-black text-white/18">—</span>
-            <span className={`text-[17px] font-black leading-none tabular-nums tracking-tight ${
+            }`}>{match.homeScore ?? 0}</span>
+            <span className={`text-[11px] font-bold ${isLive ? "text-red-500/50" : "text-white/20"}`}>-</span>
+            <span className={`text-[15px] font-black tabular-nums leading-none ${
               awayWins ? "text-white" : homeWins ? "text-white/28" : "text-white/75"
-            }`}>
-              {match.awayScore ?? 0}
-            </span>
-          </>
+            }`}>{match.awayScore ?? 0}</span>
+          </div>
         ) : (
-          <span className="text-[11px] font-bold tracking-widest text-white/20">vs</span>
+          <span className="text-[11px] font-black tracking-[0.2em] text-white/18">vs</span>
         )}
       </div>
 
-      {/* Away team — left-aligned, flex-1 */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-3">
-        <TeamCrest logo={match.awayLogo} name={match.away} wins={awayWins} dimmed={hasScore && !awayWins} />
+      {/* Away — logo then name, left-justified */}
+      <div className="flex min-w-0 flex-1 items-center px-3 py-2.5">
+        <TeamCrest
+          logo={match.awayLogo} name={match.away}
+          wins={awayWins} dimmed={hasScore && !awayWins} side="away"
+        />
       </div>
 
       {/* Chevron */}
-      <div className="flex shrink-0 items-center pr-3">
-        <ChevronRight className="h-3.5 w-3.5 text-white/12 transition-colors group-hover:text-white/30" />
+      <div className="flex shrink-0 items-center pr-3 pl-1">
+        <ChevronRight className="h-3.5 w-3.5 text-white/10 transition-colors group-hover:text-white/35" />
       </div>
     </Link>
   );
