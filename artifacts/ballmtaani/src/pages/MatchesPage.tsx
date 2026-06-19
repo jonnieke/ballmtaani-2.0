@@ -12,7 +12,7 @@ import {
   Trophy,
   X,
 } from "lucide-react";
-import { useMatches, useRecentMatches, useUpcomingFixtures, useStandings } from "../hooks/useData";
+import { useMatches, useRecentMatches, useUpcomingFixtures, useStandings, useFixtureDetail } from "../hooks/useData";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
 import DataFreshnessChip from "../components/DataFreshnessChip";
@@ -369,6 +369,8 @@ function MatchDetailPanel({
   standings: Record<string, any[]>;
   onClose: () => void;
 }) {
+  const { data: detail, isLoading: detailLoading } = useFixtureDetail(match?.id);
+
   if (!match) {
     return (
       <div className="hidden w-[300px] shrink-0 flex-col items-center justify-center border-l border-white/8 xl:flex">
@@ -381,41 +383,45 @@ function MatchDetailPanel({
     );
   }
 
-  const isResult  = variant === "result";
-  const isLive    = variant === "live";
-  const homeScore = Number(match.homeScore ?? 0);
-  const awayScore = Number(match.awayScore ?? 0);
-  const homeWins  = (isResult || isLive) && homeScore > awayScore;
-  const awayWins  = (isResult || isLive) && awayScore > homeScore;
+  const isResult   = variant === "result";
+  const isLive     = variant === "live";
+  const isFixture  = variant === "fixture";
+  const homeScore  = Number(match.homeScore ?? 0);
+  const awayScore  = Number(match.awayScore ?? 0);
+  const homeWins   = (isResult || isLive) && homeScore > awayScore;
+  const awayWins   = (isResult || isLive) && awayScore > homeScore;
   const leagueLogo = LEAGUE_LOGOS[match.league];
   const leagueRows = standings[match.league] || [];
+
+  const goalEvents = (detail?.events || []).filter((e: any) => e.type === "goal");
+  const cardEvents = (detail?.events || []).filter((e: any) => e.type === "yellow" || e.type === "red");
+  const keyStats   = (detail?.stats  || []).slice(0, 5);
+  const homeForm   = detail?.lineups?.home?.formation;
+  const awayForm   = detail?.lineups?.away?.formation;
+  const homePlayers = detail?.lineups?.home?.players || [];
+  const awayPlayers = detail?.lineups?.away?.players || [];
 
   return (
     <div className="hidden w-[300px] shrink-0 flex-col border-l border-white/8 xl:flex overflow-y-auto">
       {/* League bar */}
       <div className="flex shrink-0 items-center gap-2 border-b border-white/8 bg-[#0c1828] px-4 py-2.5">
-        {leagueLogo && (
-          <img src={leagueLogo} alt={match.league} className="h-5 w-5 object-contain" />
-        )}
+        {leagueLogo && <img src={leagueLogo} alt={match.league} className="h-5 w-5 object-contain" />}
         <span className="min-w-0 truncate text-[10px] font-black uppercase tracking-widest text-white/42">
           {match.league}
         </span>
-        <button
-          onClick={onClose}
-          className="ml-auto shrink-0 text-white/22 transition-colors hover:text-white"
-        >
+        <button onClick={onClose} className="ml-auto shrink-0 text-white/22 transition-colors hover:text-white">
           <X className="h-4 w-4" />
         </button>
       </div>
 
       {/* Score block */}
-      <div className="shrink-0 px-5 pb-4 pt-6">
+      <div className="shrink-0 px-5 pb-4 pt-5">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {/* Home */}
           <div className="text-center">
-            <div className="mx-auto mb-2.5 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
+            <div className="mx-auto mb-2 flex h-[50px] w-[50px] items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
               {match.homeLogo ? (
-                <img src={match.homeLogo} alt={match.home} className="h-10 w-10 object-contain" />
+                <img src={match.homeLogo} alt={match.home} className="h-9 w-9 object-contain" />
               ) : (
                 <span className="text-[10px] font-black text-white/30">{String(match.home || "H").slice(0, 3)}</span>
               )}
@@ -423,9 +429,10 @@ function MatchDetailPanel({
             <p className={`text-[12px] font-bold leading-tight ${homeWins ? "text-white" : (isResult || isLive) ? "text-white/42" : "text-white/80"}`}>
               {match.home}
             </p>
+            {homeForm && <p className="mt-0.5 text-[9px] text-white/22">{homeForm}</p>}
           </div>
 
-          {/* Score */}
+          {/* Score / time */}
           <div className="text-center">
             {isResult || isLive ? (
               <>
@@ -443,7 +450,7 @@ function MatchDetailPanel({
                     <span className="text-[10px] font-black text-red-400">{match.minute ? `${match.minute}'` : "LIVE"}</span>
                   </div>
                 ) : (
-                  <p className="mt-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-400/60">Finished</p>
+                  <p className="mt-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-400/60">Full Time</p>
                 )}
               </>
             ) : (
@@ -456,9 +463,9 @@ function MatchDetailPanel({
 
           {/* Away */}
           <div className="text-center">
-            <div className="mx-auto mb-2.5 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
+            <div className="mx-auto mb-2 flex h-[50px] w-[50px] items-center justify-center rounded-full bg-white/[0.06] ring-1 ring-white/10">
               {match.awayLogo ? (
-                <img src={match.awayLogo} alt={match.away} className="h-10 w-10 object-contain" />
+                <img src={match.awayLogo} alt={match.away} className="h-9 w-9 object-contain" />
               ) : (
                 <span className="text-[10px] font-black text-white/30">{String(match.away || "A").slice(0, 3)}</span>
               )}
@@ -466,45 +473,149 @@ function MatchDetailPanel({
             <p className={`text-[12px] font-bold leading-tight ${awayWins ? "text-white" : (isResult || isLive) ? "text-white/42" : "text-white/80"}`}>
               {match.away}
             </p>
+            {awayForm && <p className="mt-0.5 text-[9px] text-white/22">{awayForm}</p>}
           </div>
         </div>
 
-        {match.date && (
-          <p className="mt-3 text-center text-[10px] text-white/22">{match.date}</p>
-        )}
+        {match.date && <p className="mt-2.5 text-center text-[10px] text-white/22">{match.date}</p>}
 
-        {/* CTA */}
+        {/* CTA — context-aware routing */}
         <Link
-          href={isLive ? `/live-center/${match.id}` : "/live-center"}
+          href={`/live-center/${match.id}`}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary/15 py-2.5 text-[11px] font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/25"
         >
-          {isLive ? "Watch Live" : "Match Detail"} <ChevronRight className="h-3.5 w-3.5" />
+          {isLive ? "Watch Live" : isResult ? "Match Report" : "Match Preview"}
+          <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
-      {/* League standings */}
+      {/* ── Goal events ─────────────────────────────────────────── */}
+      {(isResult || isLive) && (
+        <div className="shrink-0 border-t border-white/8">
+          <div className="flex items-center gap-2 border-b border-white/[0.045] px-4 py-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/28">Goals</span>
+            {detailLoading && <RotateCw className="ml-auto h-3 w-3 animate-spin text-white/20" />}
+          </div>
+          {goalEvents.length === 0 && !detailLoading ? (
+            <p className="px-4 py-3 text-[11px] text-white/22">{isLive ? "Waiting for goals…" : "No goals recorded"}</p>
+          ) : (
+            <div className="divide-y divide-white/[0.03]">
+              {goalEvents.map((e: any, i: number) => (
+                <div key={i} className={`flex items-center gap-2 px-4 py-2 ${e.team === "away" ? "flex-row-reverse" : ""}`}>
+                  <span className="shrink-0 text-[9px] font-black tabular-nums text-white/28">{e.min}'</span>
+                  <span className="shrink-0 text-[11px]">⚽</span>
+                  <div className={`min-w-0 flex-1 ${e.team === "away" ? "text-right" : ""}`}>
+                    <p className="truncate text-[11px] font-bold text-white">{e.player}</p>
+                    {e.assist && <p className="truncate text-[9px] text-white/30">{e.assist}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Match stats bars ─────────────────────────────────────── */}
+      {(isResult || isLive) && keyStats.length > 0 && (
+        <div className="shrink-0 border-t border-white/8">
+          <div className="border-b border-white/[0.045] px-4 py-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/28">Match Stats</span>
+          </div>
+          <div className="divide-y divide-white/[0.03] px-4 py-0.5">
+            {keyStats.map((s: any) => {
+              const total  = (s.home + s.away) || 1;
+              const homePct = Math.round((s.home / total) * 100);
+              return (
+                <div key={s.label} className="py-2">
+                  <div className="mb-1 flex justify-between text-[9px]">
+                    <span className="font-black tabular-nums text-white/60">{s.home}{s.unit}</span>
+                    <span className="text-white/22">{s.label}</span>
+                    <span className="font-black tabular-nums text-white/60">{s.away}{s.unit}</span>
+                  </div>
+                  <div className="flex h-[5px] overflow-hidden rounded-full bg-white/8">
+                    <div className="h-full rounded-l-full bg-primary/65 transition-all" style={{ width: `${homePct}%` }} />
+                    <div className="h-full flex-1 rounded-r-full bg-white/18" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Bookings ─────────────────────────────────────────────── */}
+      {(isResult || isLive) && cardEvents.length > 0 && (
+        <div className="shrink-0 border-t border-white/8">
+          <div className="border-b border-white/[0.045] px-4 py-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/28">Bookings</span>
+          </div>
+          <div className="divide-y divide-white/[0.03]">
+            {cardEvents.map((e: any, i: number) => (
+              <div key={i} className={`flex items-center gap-2 px-4 py-2 ${e.team === "away" ? "flex-row-reverse" : ""}`}>
+                <span className="shrink-0 text-[9px] font-black tabular-nums text-white/28">{e.min}'</span>
+                <div className={`shrink-0 h-3.5 w-2.5 rounded-sm ${e.type === "red" ? "bg-red-500" : "bg-yellow-400"}`} />
+                <p className={`min-w-0 flex-1 truncate text-[11px] text-white/65 ${e.team === "away" ? "text-right" : ""}`}>{e.player}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Lineups ──────────────────────────────────────────────── */}
+      {(homePlayers.length > 0 || awayPlayers.length > 0) && (
+        <div className="shrink-0 border-t border-white/8">
+          <div className="border-b border-white/[0.045] px-4 py-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/28">Lineups</span>
+          </div>
+          <div className="grid grid-cols-2 gap-0 divide-x divide-white/[0.045] px-0 py-2">
+            {[
+              { name: match.home, form: homeForm, players: homePlayers, align: "left" },
+              { name: match.away, form: awayForm, players: awayPlayers, align: "right" },
+            ].map(({ name, form, players, align }) => (
+              <div key={name} className={`px-3 ${align === "right" ? "text-right" : ""}`}>
+                <p className="truncate text-[9px] font-black uppercase tracking-wider text-white/30">{name}</p>
+                {form && <p className="text-[14px] font-black text-white/70">{form}</p>}
+                <div className="mt-1.5 space-y-0.5">
+                  {players.slice(0, 11).map((p: any, i: number) => (
+                    <p key={i} className="truncate text-[9px] text-white/40">
+                      <span className="font-bold text-white/25">{p.number} </span>{p.name}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Mini standings ───────────────────────────────────────── */}
       {leagueRows.length > 0 && (
         <div className="shrink-0 border-t border-white/8">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.045]">
+          <div className="flex items-center gap-2 border-b border-white/[0.045] px-4 py-2">
             {leagueLogo && <img src={leagueLogo} alt="" className="h-4 w-4 object-contain" />}
             <span className="text-[9px] font-black uppercase tracking-widest text-white/28">Standings</span>
-          </div>
-          {leagueRows.slice(0, 6).map((team: any) => (
-            <div
-              key={`${team.rank}-${team.team}`}
-              className="flex items-center gap-2 border-b border-white/[0.035] px-4 py-2 last:border-0 hover:bg-white/[0.02]"
+            <button
+              onClick={() => {/* parent can wire this up */}}
+              className="ml-auto text-[9px] font-bold text-primary/60 hover:text-primary transition-colors"
             >
-              <span className="w-4 shrink-0 text-[10px] text-white/28">{team.rank}</span>
-              <img
-                src={team.logo}
-                alt=""
-                className="h-5 w-5 shrink-0 object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-              <span className="min-w-0 flex-1 truncate text-[12px] text-white/70">{team.team}</span>
-              <span className="shrink-0 text-[12px] font-black text-white">{team.points}</span>
-            </div>
-          ))}
+              Full →
+            </button>
+          </div>
+          {leagueRows.slice(0, 6).map((team: any) => {
+            const isHome = team.team === match.home;
+            const isAway = team.team === match.away;
+            return (
+              <div
+                key={`${team.rank}-${team.team}`}
+                className={`flex items-center gap-2 border-b border-white/[0.03] px-4 py-1.5 last:border-0 ${isHome || isAway ? "bg-white/[0.025]" : "hover:bg-white/[0.015]"}`}
+              >
+                <span className="w-4 shrink-0 text-[10px] text-white/25">{team.rank}</span>
+                <img src={team.logo} alt="" className="h-4 w-4 shrink-0 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <span className={`min-w-0 flex-1 truncate text-[11px] ${isHome || isAway ? "font-bold text-white/90" : "text-white/55"}`}>{team.team}</span>
+                <span className={`shrink-0 text-[11px] font-black ${isHome || isAway ? "text-white" : "text-white/60"}`}>{team.points}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
