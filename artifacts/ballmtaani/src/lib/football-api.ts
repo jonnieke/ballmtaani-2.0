@@ -657,7 +657,8 @@ export async function fetchRecentMatches(): Promise<any[]> {
 // ─── 3. STANDINGS (per league) ──────────────────────────────
 // Season map: explicit seasons per league (avoids 3-call season fallback loop)
 const LEAGUE_SEASON_MAP: Record<number, number> = {
-  39: 2025, 140: 2025, 135: 2025, 78: 2025, 61: 2025, 686: 2025, 288: 2025,
+  39: 2025, 140: 2025, 135: 2025, 78: 2025, 61: 2025, 288: 2025,
+  // 686 excluded — returns Czech teams, not KPL
 };
 
 export async function fetchStandings(leagueId: number): Promise<StandingEntry[]> {
@@ -689,14 +690,13 @@ export async function fetchAllStandings(): Promise<Record<string, StandingEntry[
     "Serie A": 135,
     "Bundesliga": 78,
     "Ligue 1": 61,
-    // African leagues
-    "KPL": 686,
-    "SA PSL": 288,
+    // KPL (686) removed — returns Czech teams, not Kenya Premier League
+    // SA PSL and Nigeria NPFL excluded — standings data unreliable mid-season
   };
 
   const result: Record<string, StandingEntry[]> = {};
 
-  // Throttle standings — 7 leagues, 3 at a time to stay under rate limit
+  // Throttle standings — 5 leagues, 3 at a time to stay under rate limit
   const entries = Object.entries(leagueMap);
   const standings = await throttledAll(
     entries.map(([, id]) => () => fetchStandings(id)),
@@ -709,6 +709,14 @@ export async function fetchAllStandings(): Promise<Record<string, StandingEntry[
       result[name] = standings[idx];
     }
   });
+
+  // WC26 group standings — fetched separately (tournament format, multi-group)
+  try {
+    const wc26Groups = await fetchTournamentStandings(1, 2026);
+    Object.assign(result, wc26Groups);
+  } catch {
+    // Suppress — WC26 groups are shown via static fallback in the UI
+  }
 
   return result;
 }

@@ -738,7 +738,11 @@ export default function MatchesPage() {
     return wc26Live ? "World Cup 2026" : "all";
   });
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
-  const [tableLeague, setTableLeague] = useState("Premier League");
+  const [tableLeague, setTableLeague] = useState(() => {
+    const wc26Live = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
+                     Date.now() <  new Date("2026-07-20T00:00:00Z").getTime();
+    return wc26Live ? "World Cup 2026" : "Premier League";
+  });
   const [selected, setSelected] = useState<{ match: any; variant: "live" | "fixture" | "result" } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
@@ -749,7 +753,12 @@ export default function MatchesPage() {
   const { data: standings = {} as Record<string, any[]>, isFetching: standingsFetching } = useStandings();
 
   const fixturesWithFallback = useMemo(() => upcomingFixtures.length ? upcomingFixtures : WC26_OPENING_FIXTURES, [upcomingFixtures]);
-  const standingsWithFallback = useMemo(() => Object.keys(standings).length ? standings : WC26_GROUPS, [standings]);
+  const standingsWithFallback = useMemo(() => {
+    if (!Object.keys(standings).length) return WC26_GROUPS;
+    // If API returned league standings but WC26 groups failed, inject static groups as fallback
+    const hasGroups = Object.keys(standings).some(k => k.startsWith("Group "));
+    return hasGroups ? standings : { ...WC26_GROUPS, ...standings };
+  }, [standings]);
   const hasApiData = liveMatches.length || recentMatches.length || upcomingFixtures.length || Object.keys(standings).length;
   const fetching   = liveFetching || recentFetching || upcomingFetching || standingsFetching;
 
@@ -804,7 +813,8 @@ export default function MatchesPage() {
   const tableEntries = Object.entries(standingsWithFallback).filter(([, r]) => r?.length > 0);
   const selectedStandings = standingsWithFallback[tableLeague] || [];
 
-  const TOP_LEAGUES = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "KPL", "World Cup 2026"];
+  const TOP_LEAGUES = ["World Cup 2026", "Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"];
+  // KPL removed — league ID 686 returns Czech teams, correct KPL ID unavailable from API
 
   const navItems = [
     { id: "all" as HubView,      label: "All",      count: liveMatches.length + recentMatches.length + fixturesWithFallback.length },
@@ -927,7 +937,25 @@ export default function MatchesPage() {
                   })}
               </div>
 
-              {selectedStandings.length ? (
+              {tableLeague === "World Cup 2026" ? (
+                (() => {
+                  const groups = Object.entries(standingsWithFallback).filter(([k]) => k.startsWith("Group "));
+                  return groups.length ? (
+                    <div>
+                      {groups.map(([group, rows]) => (
+                        <div key={group}>
+                          <div className="border-b border-white/5 bg-[#0a0f1c] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#FFD700]/60">
+                            {group}
+                          </div>
+                          <FullStandings rows={rows} league={group} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState title="WC26 groups loading" body="Group standings are being fetched — try again in a moment." />
+                  );
+                })()
+              ) : selectedStandings.length ? (
                 <FullStandings rows={selectedStandings} league={tableLeague} />
               ) : (
                 <EmptyState title="No table loaded" body="Choose another league or wait for the data feed." />
