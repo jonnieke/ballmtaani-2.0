@@ -6,6 +6,8 @@ import { timeAgo } from "../lib/news-api";
 import { Plus, Edit3, Eye, Trash2, Save, Globe, FileText, Send, CheckCircle2, XCircle, RotateCcw, Clock, Tag, Search, X as XIcon, ChevronDown, ChevronUp } from "lucide-react";
 import AdminLayout from "../components/AdminLayout";
 import { useContentRole } from "../hooks/useContentRole";
+import CloudinaryImageUpload from "../components/CloudinaryImageUpload";
+import CloudinaryArticleImages from "../components/CloudinaryArticleImages";
 
 type ArticleStatus = "draft" | "submitted" | "approved" | "rejected" | "published" | "archived";
 
@@ -210,7 +212,7 @@ export default function AdminArticlesPage() {
             <FormField label="Title *" value={form.title} onChange={v => setForm(f => ({ ...f, title: v }))} placeholder="Article headline..." bold />
             <FormField label="Author / Byline" value={form.author_name} onChange={v => setForm(f => ({ ...f, author_name: v }))} placeholder="BallMtaani" />
             <FormField label="Excerpt — shown on homepage card and as article standfirst" value={form.excerpt} onChange={v => setForm(f => ({ ...f, excerpt: v }))} placeholder="One compelling sentence about the article..." />
-            <FormField label="Thumbnail URL" value={form.thumbnail_url} onChange={v => setForm(f => ({ ...f, thumbnail_url: v }))} placeholder="https://..." />
+            <CloudinaryImageUpload label="Cover Image (thumbnail)" value={form.thumbnail_url} onChange={v => setForm(f => ({ ...f, thumbnail_url: v }))} />
             <FormField label="Team / Publication" value={form.partner_team_name} onChange={v => setForm(f => ({ ...f, partner_team_name: v }))} placeholder="e.g. KPL Digest" />
 
             <div>
@@ -219,6 +221,8 @@ export default function AdminArticlesPage() {
                 placeholder="Write your article here. Separate paragraphs with a blank line. HTML tags like <h2>, <blockquote>, <strong> are supported."
                 rows={18} className="w-full rounded-xl border border-white/10 bg-[#111] px-4 py-3 font-mono text-sm text-white/80 placeholder-white/20 focus:border-[#FFD700]/40 focus:outline-none" />
             </div>
+
+            <CloudinaryArticleImages />
 
             {/* ── SEO & TAGS SECTION ──────────────────────────────────── */}
             <div className="rounded-xl border border-white/8 bg-[#090c12] overflow-hidden">
