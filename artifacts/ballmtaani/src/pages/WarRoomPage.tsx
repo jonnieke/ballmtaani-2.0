@@ -10,21 +10,21 @@ type PickSide = "true" | "cap";
 const TODAY_KEY = new Date().toISOString().slice(0, 10);
 
 const rumorSet = [
-  "Club X signing will flop in EPL pace.",
-  "This move is pure agent noise, no serious bid.",
-  "This transfer fits tactically from day one.",
+  "Morocco will outlast at least two European giants before bowing out.",
+  "Brazil exits before the quarterfinals — South American chaos continues.",
+  "USA rides the host advantage to an unlikely semifinal berth.",
 ];
 
 const lineupSet = [
-  "Best front three combo for preseason opener?",
-  "Who should start as holding midfielder?",
-  "Back four balance: pace or physicality?",
+  "Best tactical system to use against Brazil at WC26?",
+  "Who exits the Group of Death first — and why?",
+  "What single factor will ultimately decide the WC26 champion?",
 ];
 
 const receiptSet = [
-  "New striker reaches 10+ league goals by Dec 31.",
-  "Club finishes top 4 this season.",
-  "Manager survives until end of season.",
+  "A first-time finalist lifts the trophy at WC26.",
+  "European football wins the World Cup for the 5th time in 6 editions.",
+  "At least one African side reaches the quarterfinals.",
 ];
 
 function loadState() {
@@ -147,15 +147,15 @@ export default function WarRoomPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-3 md:px-4 py-6 md:py-10">
-      <SEO title="Transfer War Room | BallMtaani" description="Daily offseason loop for transfer rumors, lineup builds, and receipt predictions." />
+      <SEO title="WC26 War Room | BallMtaani" description="Daily WC26 loop: bold tournament calls, group picks, and World Cup receipts." />
       <div className="mb-6 md:mb-8 border border-white/10 bg-[#111] p-4 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <h1 className="text-2xl md:text-4xl font-black uppercase tracking-wider">Transfer War Room</h1>
+          <h1 className="text-2xl md:text-4xl font-black uppercase tracking-wider">WC26 War Room</h1>
           <button onClick={resetToday} className="inline-flex items-center gap-2 border border-white/10 bg-black px-3 py-2 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white">
             <RefreshCw className="w-3.5 h-3.5" /> Reset Today
           </button>
         </div>
-        <p className="text-gray-400 text-sm font-bold uppercase tracking-wider">Offseason daily loop: True/Cap, lineup challenge, and receipt pick.</p>
+        <p className="text-gray-400 text-sm font-bold uppercase tracking-wider">WC26 daily loop: bold tournament calls, group picks, and World Cup receipts.</p>
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="border border-white/10 bg-black/40 p-2.5 text-center"><p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Done</p><p className="text-sm font-black">{completed}/3</p></div>
           <div className="border border-white/10 bg-black/40 p-2.5 text-center"><p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Streak</p><p className="text-sm font-black text-orange-300 inline-flex items-center gap-1"><Flame className="w-3.5 h-3.5" />{streak}</p></div>

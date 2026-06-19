@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useProfile } from "../hooks/useData";
+import { useProfile, useMatches } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 
 import { LogOut, Trophy, Settings, Flame, Target, Sword, Loader2, Activity, UserPlus, Check, Coins, Package, Swords } from "lucide-react";
@@ -28,6 +28,12 @@ export default function ProfilePage() {
   const isOwnProfile = !profileId || profileId === user?.id;
 
   const { data: profile, isLoading } = useProfile(targetId);
+  const { data: liveMatches = [] } = useMatches();
+  const matchLookup = useMemo(() => {
+    const map: Record<string, { home: string; away: string }> = {};
+    (liveMatches as any[]).forEach((m) => { map[String(m.id)] = { home: m.home, away: m.away }; });
+    return map;
+  }, [liveMatches]);
 
 
   useEffect(() => {
@@ -153,7 +159,39 @@ export default function ProfilePage() {
               rivalName={displayUsername}
               rivalId={targetId!}
               onClose={() => setShowChallengeModal(false)}
-              onChallenge={() => {
+              onChallenge={async (matchId, prediction, bragLine) => {
+                const match = matchLookup[String(matchId)];
+                if (supabase && isLoggedIn) {
+                  try {
+                    await supabase.from("fan_duels").insert({
+                      challenger_name: username,
+                      defender_name: displayUsername,
+                      home_team: match?.home || "Match TBD",
+                      away_team: match?.away || "",
+                      prediction,
+                      brag_line: bragLine,
+                      status: "pending",
+                    });
+                  } catch { /* ignore insert errors */ }
+                  let dp: { id: string } | null = null;
+                  try {
+                    const res = await supabase.from("profiles").select("id").eq("username", displayUsername).maybeSingle();
+                    dp = res.data;
+                  } catch { /* ignore */ }
+                  if (dp?.id) {
+                    fetch("/api/push-send", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        userId: dp.id,
+                        title: `⚔️ ${username} just challenged you!`,
+                        body: `${match?.home || "TBD"} vs ${match?.away || ""} · ${prediction} — Accept on BallMtaani.`,
+                        url: "/rivalries",
+                        tag: `duel-challenge-${dp.id}-${Date.now()}`,
+                      }),
+                    }).catch(() => {});
+                  }
+                }
                 setShowChallengeModal(false);
                 setChallengeSent(true);
                 setTimeout(() => setChallengeSent(false), 5000);
