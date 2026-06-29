@@ -41,6 +41,19 @@ export default function WorldCupGuidePage() {
         ]}
       />
 
+      {Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() && (
+        <div className="flex items-center justify-center gap-3 border-b border-[#FFD700]/20 bg-[#FFD700]/8 px-4 py-2.5">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFD700]" />
+          </span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFD700]">WC26 is live — tournament is underway</span>
+          <Link href="/world-cup-2026" className="rounded-full border border-[#FFD700]/40 bg-[#FFD700]/12 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-[#FFD700] hover:bg-[#FFD700]/25 transition-colors">
+            Live Hub →
+          </Link>
+        </div>
+      )}
+
       <section className="relative overflow-hidden border-b border-[#FFD700]/14 bg-[#040508]">
         <img src="/wc26-hero.jpg" alt="" className="absolute inset-0 h-full w-full object-cover opacity-36" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#05070b] via-[#05070b]/74 to-[#05070b]/30" />

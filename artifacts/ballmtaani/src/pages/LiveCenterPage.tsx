@@ -369,6 +369,12 @@ export default function LiveCenterPage() {
   
   const match = matches.find((m: any) => m.id?.toString() === fixtureId);
 
+  const wc26IsLive = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
+                     Date.now() <  new Date("2026-07-20T00:00:00Z").getTime();
+  const wc26Live = (matches as any[]).filter(m => m.league?.includes("World Cup") || m.league?.includes("FIFA World Cup"));
+  const [wc26Filter, setWc26Filter] = useState(wc26IsLive && wc26Live.length > 0);
+  const visibleMatches: any[] = wc26Filter && wc26Live.length > 0 ? wc26Live : (matches as any[]);
+
   // Fetch real match detail (stats, events, lineups) from API-Football
   const { data: fixtureDetail } = useFixtureDetail(fixtureId);
 
@@ -422,12 +428,26 @@ export default function LiveCenterPage() {
           {matches.length > 0 ? (
             <>
               {/* Live match grid */}
-              <div className="mb-2 flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-widest text-white">Live Matches</span>
-                <span className="text-[10px] text-white/28">· Click to open full detail</span>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-widest text-white">Live Matches</span>
+                  <span className="text-[10px] text-white/28">· Click for full detail</span>
+                </div>
+                {wc26IsLive && wc26Live.length > 0 && (
+                  <button
+                    onClick={() => setWc26Filter(v => !v)}
+                    className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-all ${
+                      wc26Filter
+                        ? "border-[#FFD700]/40 bg-[#FFD700]/12 text-[#FFD700]"
+                        : "border-white/10 bg-white/[0.03] text-white/40 hover:text-white/70"
+                    }`}
+                  >
+                    🏆 WC26 Only
+                  </button>
+                )}
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {matches.map((m: any) => (
+                {visibleMatches.map((m: any) => (
                   <Link key={m.id} href={`/live-center/${m.id}`}>
                     <LiveMatchCard match={m} />
                   </Link>

@@ -42,66 +42,7 @@ const LEAGUE_LOGOS: Record<string, string> = {
   "Kenyan Premier League":"https://media.api-sports.io/football/leagues/357.png",
 };
 
-// ── Fallback fixture data ─────────────────────────────────────────────────────
-const WC26_OPENING_FIXTURES = [
-  { home: "Mexico",    away: "South Africa", date: "Jun 11", time: "22:00", kickoff: "22:00", league: "World Cup 2026", id: "wc26-1" },
-  { home: "USA",       away: "Colombia",     date: "Jun 12", time: "01:00", kickoff: "01:00", league: "World Cup 2026", id: "wc26-2" },
-  { home: "Canada",    away: "Venezuela",    date: "Jun 12", time: "16:00", kickoff: "16:00", league: "World Cup 2026", id: "wc26-3" },
-  { home: "Brazil",    away: "Germany",      date: "Jun 13", time: "19:00", kickoff: "19:00", league: "World Cup 2026", id: "wc26-4" },
-  { home: "Argentina", away: "Morocco",      date: "Jun 14", time: "22:00", kickoff: "22:00", league: "World Cup 2026", id: "wc26-5" },
-  { home: "France",    away: "England",      date: "Jun 14", time: "01:00", kickoff: "01:00", league: "World Cup 2026", id: "wc26-6" },
-];
 
-const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = {
-  "Group A": [
-    { rank: 1, team: "Mexico",       logo: "https://media.api-sports.io/flags/mx.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 2, team: "South Africa", logo: "https://media.api-sports.io/flags/za.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 3, team: "USA",          logo: "https://media.api-sports.io/flags/us.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 4, team: "Colombia",     logo: "https://media.api-sports.io/flags/co.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-  ],
-  "Group B": [
-    { rank: 1, team: "Canada",     logo: "https://media.api-sports.io/flags/ca.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 2, team: "Venezuela",  logo: "https://media.api-sports.io/flags/ve.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 3, team: "Spain",      logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 4, team: "Costa Rica", logo: "https://media.api-sports.io/flags/cr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-  ],
-  "Group C": [
-    { rank: 1, team: "Brazil",  logo: "https://media.api-sports.io/flags/br.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-    { rank: 2, team: "Germany", logo: "https://media.api-sports.io/flags/de.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-    { rank: 3, team: "Japan",   logo: "https://media.api-sports.io/flags/jp.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-    { rank: 4, team: "Morocco", logo: "https://media.api-sports.io/flags/ma.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-  ],
-  "Group D": [
-    { rank: 1, team: "Argentina", logo: "https://media.api-sports.io/flags/ar.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-    { rank: 2, team: "Uruguay",   logo: "https://media.api-sports.io/flags/uy.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-    { rank: 3, team: "Paraguay",  logo: "https://media.api-sports.io/flags/py.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-    { rank: 4, team: "Egypt",     logo: "https://media.api-sports.io/flags/eg.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-  ],
-  "Group E": [
-    { rank: 1, team: "France",   logo: "https://media.api-sports.io/flags/fr.svg",     points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-    { rank: 2, team: "England",  logo: "https://media.api-sports.io/flags/gb-eng.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-    { rank: 3, team: "Belgium",  logo: "https://media.api-sports.io/flags/be.svg",     points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-    { rank: 4, team: "Slovakia", logo: "https://media.api-sports.io/flags/sk.svg",     points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-  ],
-  "Group F": [
-    { rank: 1, team: "Netherlands", logo: "https://media.api-sports.io/flags/nl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-    { rank: 2, team: "Sweden",      logo: "https://media.api-sports.io/flags/se.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-    { rank: 3, team: "Austria",     logo: "https://media.api-sports.io/flags/at.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-    { rank: 4, team: "Cameroon",    logo: "https://media.api-sports.io/flags/cm.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-  ],
-  "Group G": [
-    { rank: 1, team: "Spain",   logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-    { rank: 2, team: "Italy",   logo: "https://media.api-sports.io/flags/it.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-    { rank: 3, team: "Denmark", logo: "https://media.api-sports.io/flags/dk.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-    { rank: 4, team: "Serbia",  logo: "https://media.api-sports.io/flags/rs.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-  ],
-  "Group H": [
-    { rank: 1, team: "Portugal",       logo: "https://media.api-sports.io/flags/pt.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-    { rank: 2, team: "Poland",         logo: "https://media.api-sports.io/flags/pl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-    { rank: 3, team: "Czech Republic", logo: "https://media.api-sports.io/flags/cz.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-    { rank: 4, team: "Senegal",        logo: "https://media.api-sports.io/flags/sn.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-  ],
-};
 
 function groupByLeague(matches: any[]): [string, any[]][] {
   const map: Record<string, any[]> = {};
@@ -730,9 +671,19 @@ export default function MatchesPage() {
     if (tab === "fixtures") return "fixtures";
     return "all";
   });
-  const [leagueFilter, setLeagueFilter] = useState("all");
+  const [leagueFilter, setLeagueFilter] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "wc26") return "World Cup 2026";
+    const wc26Live = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
+                     Date.now() <  new Date("2026-07-20T00:00:00Z").getTime();
+    return wc26Live ? "World Cup 2026" : "all";
+  });
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
-  const [tableLeague, setTableLeague] = useState("Premier League");
+  const [tableLeague, setTableLeague] = useState(() => {
+    const wc26Live = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
+                     Date.now() <  new Date("2026-07-20T00:00:00Z").getTime();
+    return wc26Live ? "World Cup 2026" : "Premier League";
+  });
   const [selected, setSelected] = useState<{ match: any; variant: "live" | "fixture" | "result" } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
@@ -742,8 +693,8 @@ export default function MatchesPage() {
   const { data: upcomingFixtures = [], isFetching: upcomingFetching } = useUpcomingFixtures();
   const { data: standings = {} as Record<string, any[]>, isFetching: standingsFetching } = useStandings();
 
-  const fixturesWithFallback = useMemo(() => upcomingFixtures.length ? upcomingFixtures : WC26_OPENING_FIXTURES, [upcomingFixtures]);
-  const standingsWithFallback = useMemo(() => Object.keys(standings).length ? standings : WC26_GROUPS, [standings]);
+  const fixturesWithFallback = useMemo(() => upcomingFixtures, [upcomingFixtures]);
+  const standingsWithFallback = useMemo(() => standings, [standings]);
   const hasApiData = liveMatches.length || recentMatches.length || upcomingFixtures.length || Object.keys(standings).length;
   const fetching   = liveFetching || recentFetching || upcomingFetching || standingsFetching;
 
@@ -773,7 +724,8 @@ export default function MatchesPage() {
 
   const filteredPool = useMemo(() =>
     basePool.filter(m => {
-      const matchesLeague = leagueFilter === "all" || m.league === leagueFilter;
+      const matchesLeague = leagueFilter === "all" || m.league === leagueFilter ||
+        (leagueFilter === "World Cup 2026" && m.league === "FIFA World Cup");
       const hay = `${m.home || ""} ${m.away || ""} ${m.league || ""}`.toLowerCase();
       const matchesQ = !query.trim() || hay.includes(query.toLowerCase());
       return matchesLeague && matchesQ;
@@ -786,7 +738,8 @@ export default function MatchesPage() {
     const allMatches = [...liveMatches, ...recentMatches, ...fixturesWithFallback];
     const counts: Record<string, number> = {};
     for (const m of allMatches) {
-      if (m.league) counts[m.league] = (counts[m.league] || 0) + 1;
+      const league = m.league === "FIFA World Cup" ? "World Cup 2026" : m.league;
+      if (league) counts[league] = (counts[league] || 0) + 1;
     }
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
@@ -797,7 +750,8 @@ export default function MatchesPage() {
   const tableEntries = Object.entries(standingsWithFallback).filter(([, r]) => r?.length > 0);
   const selectedStandings = standingsWithFallback[tableLeague] || [];
 
-  const TOP_LEAGUES = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "KPL", "World Cup 2026"];
+  const TOP_LEAGUES = ["World Cup 2026", "Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"];
+  // KPL removed — league ID 686 returns Czech teams, correct KPL ID unavailable from API
 
   const navItems = [
     { id: "all" as HubView,      label: "All",      count: liveMatches.length + recentMatches.length + fixturesWithFallback.length },
@@ -920,7 +874,31 @@ export default function MatchesPage() {
                   })}
               </div>
 
-              {selectedStandings.length ? (
+              {tableLeague === "World Cup 2026" ? (
+                (() => {
+                  const groups = Object.entries(standingsWithFallback).filter(([k]) => k.startsWith("Group "));
+                  return groups.length ? (
+                    <div>
+                      {groups.map(([group, rows]) => (
+                        <div key={group}>
+                          <div className="border-b border-white/5 bg-[#0a0f1c] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#FFD700]/60">
+                            {group}
+                          </div>
+                          <FullStandings rows={rows} league={group} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-10 text-center">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-white/40">Group stage complete</p>
+                      <p className="mt-1 text-[10px] text-white/25">Final group standings are no longer available — the tournament is in the knockout rounds.</p>
+                      <a href="/world-cup-2026/bracket" className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-[#FFD700]/30 bg-[#FFD700]/8 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:bg-[#FFD700]/14 transition-all">
+                        View Knockout Bracket →
+                      </a>
+                    </div>
+                  );
+                })()
+              ) : selectedStandings.length ? (
                 <FullStandings rows={selectedStandings} league={tableLeague} />
               ) : (
                 <EmptyState title="No table loaded" body="Choose another league or wait for the data feed." />

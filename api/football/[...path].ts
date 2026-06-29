@@ -20,6 +20,19 @@ import { loadEnv } from "../_env-loader";
 
 loadEnv();
 
+// Module-level burst cache — shared across requests hitting the same warm function instance.
+// Catches the case where multiple simultaneous page loads all reach the proxy before the
+// Vercel CDN edge has cached the first response (cold-start burst).
+const BURST_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const BURST_INFLIGHT = new Map<string, Promise<any>>();
+
+function getBurstCacheTtl(path: string): number {
+  if (path.includes("live=all")) return 15_000;
+  if (path.includes("next=") || path.includes("from=")) return 60_000;
+  if (path.includes("standings")) return 300_000;
+  return 30_000;
+}
+
 export default async function handler(req: any, res: any) {
   // Build the upstream path. Vercel surfaces the catch-all segment under the
   // literal key "...path" (not "path"), so check both, and fall back to the
@@ -58,28 +71,57 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  const cacheKey = `${endpoint}?${qs}`;
+  const now = Date.now();
+
+  // Serve from burst cache if still fresh (same warm function instance)
+  const hit = BURST_CACHE.get(cacheKey);
+  if (hit && hit.expiresAt > now) {
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+    res.statusCode = 200;
+    res.end(JSON.stringify(hit.data));
+    return;
+  }
+
+  // Coalesce simultaneous requests for the same endpoint to one upstream call
+  const inflight = BURST_INFLIGHT.get(cacheKey);
+  if (inflight) {
+    try {
+      const data = await inflight;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+      res.statusCode = 200;
+      res.end(JSON.stringify(data));
+    } catch {
+      res.statusCode = 502;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "Upstream fetch failed" }));
+    }
+    return;
+  }
+
+  const fetchPromise = (async () => {
+    const upstream_res = await fetch(upstream, { headers: { "x-apisports-key": key } });
+    return upstream_res.json() as Promise<any>;
+  })();
+
+  BURST_INFLIGHT.set(cacheKey, fetchPromise);
+
   try {
-    const upstream_res = await fetch(upstream, {
-      headers: { "x-apisports-key": key },
-    });
+    const data = await fetchPromise;
 
-    const data = await upstream_res.json() as any;
-
-    // Check for API-level errors (rate-limit, token errors, etc.)
-    // Do NOT cache these — they are transient and should be retried fresh
     const hasErrors = (data?.errors &&
       (Array.isArray(data.errors) ? data.errors.length > 0 : Object.keys(data.errors).length > 0)) ||
-      // Auth/quota errors come back in a legacy shape: {"api":{"error":"..."}}
       Boolean(data?.api?.error);
 
     res.setHeader("Content-Type", "application/json");
     res.statusCode = 200;
 
     if (hasErrors) {
-      // Return error response without caching so the next request tries fresh
       res.setHeader("Cache-Control", "no-store");
     } else {
-      // Cache successful responses at CDN edge for 5 minutes
+      BURST_CACHE.set(cacheKey, { data, expiresAt: now + getBurstCacheTtl(cacheKey) });
       res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
     }
 
@@ -89,5 +131,7 @@ export default async function handler(req: any, res: any) {
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-store");
     res.end(JSON.stringify({ error: "Upstream fetch failed", detail: String(err?.message || err) }));
+  } finally {
+    BURST_INFLIGHT.delete(cacheKey);
   }
 }

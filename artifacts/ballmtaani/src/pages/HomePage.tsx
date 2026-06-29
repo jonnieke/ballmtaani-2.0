@@ -266,43 +266,15 @@ export default function HomePage() {
 
   const freshnessLabel = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
-  const WC26_OPENER = {
-    id: "wc26-opener-preview",
-    home: "Mexico", homeLogo: "https://media.api-sports.io/flags/mx.svg", homeInitial: "MEX", homeColor: "#006847",
-    away: "South Africa", awayLogo: "https://media.api-sports.io/flags/za.svg", awayInitial: "RSA", awayColor: "#007A4D",
-    homeScore: 0, awayScore: 0, league: "FIFA World Cup 2026 - Opening Match",
-    date: "June 11, 2026",
-    time: "10:00 PM EAT", kickoffAt: new Date("2026-06-11T19:00:00Z").getTime(),
-    venue: "Estadio Azteca, Mexico City",
-  };
+  // No stale pre-tournament fallbacks — show nothing rather than wrong teams
 
-  const WC26_GROUP_FALLBACK = {
-    id: "wc26-group-stage",
-    home: "Morocco", homeLogo: "https://media.api-sports.io/flags/ma.svg", homeInitial: "MAR", homeColor: "#C1272D",
-    away: "Senegal", awayLogo: "https://media.api-sports.io/flags/sn.svg", awayInitial: "SEN", awayColor: "#00853F",
-    time: "Group Stage On",
-    league: "FIFA World Cup 2026",
-    venue: "USA · Canada · Mexico",
-  };
-
-  const wc26TickerFallback = useMemo(() => wc26.isLive ? [
-    { id: "wc26-t1", home: "Morocco",   away: "Senegal",    time: "WC26" },
-    { id: "wc26-t2", home: "Nigeria",   away: "Egypt",      time: "WC26" },
-    { id: "wc26-t3", home: "S. Africa", away: "Mexico",     time: "WC26" },
-    { id: "wc26-t4", home: "Cameroon",  away: "Brazil",     time: "WC26" },
-    { id: "wc26-t5", home: "Tunisia",   away: "Argentina",  time: "WC26" },
-  ] : [], [wc26.isLive]);
 
   const playableVideos = sportyVideos.filter(v => !blockedVideoIds.has(v.id));
   const heroVideo = pickHeroStream(playableVideos);
   const handleVideoUnavailable = (id: string) => setBlockedVideoIds(new Set(markVideoBlocked(id)));
 
   const liveMatch   = liveMatches[0] || null;
-  const nextFixture = upcomingFixtures[0] || (
-    Date.now() < WC26_OPENER.kickoffAt ? WC26_OPENER :
-    wc26.isLive ? WC26_GROUP_FALLBACK :
-    null
-  );
+  const nextFixture = upcomingFixtures[0] || null;
   const lastResult  = recentMatches[0] || null;
   const isMatchLive = !!liveMatch;
 
@@ -331,8 +303,8 @@ export default function HomePage() {
   const tickerArticles = useMemo(() => news.slice(0, 8), [news]);
   const tickerMatches  = useMemo(() => {
     const api = [...liveMatches, ...upcomingFixtures];
-    return (api.length > 0 ? api : wc26TickerFallback).slice(0, 8);
-  }, [liveMatches, upcomingFixtures, wc26TickerFallback]);
+    return api.slice(0, 8);
+  }, [liveMatches, upcomingFixtures]);
 
   return (
     <div className="pb-24">
@@ -1044,7 +1016,18 @@ export default function HomePage() {
             );
           })()}
 
-          <div className="mt-8 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <Link href="/ai-fan-zone"
+            className="mt-6 flex items-center gap-4 overflow-hidden rounded-2xl border border-[#FFD700]/25 bg-gradient-to-r from-[#FFD700]/10 to-transparent px-5 py-4 transition-all hover:border-[#FFD700]/45 hover:from-[#FFD700]/16">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFD700]/12 text-xl">🤖</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/60">Mchambuzi Halisi · AI Fan Zone</div>
+              <div className="mt-0.5 text-sm font-black uppercase tracking-tight text-white">Got a burning WC26 question?</div>
+              <div className="mt-0.5 text-[11px] text-white/42">Ask the AI analyst — squads, groups, dark horses, predictions.</div>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-[#FFD700]/50" />
+          </Link>
+
+          <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {[
               { label: "CAF Champs League", sub: "Continental club football", href: "/matches",      img: "https://media.api-sports.io/football/leagues/20.png" },
               { label: "Harambee Stars",    sub: "Kenya national team",       href: "/matches",      img: "https://media.api-sports.io/flags/ke.svg" },

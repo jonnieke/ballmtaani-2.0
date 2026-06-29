@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { CalendarDays, ChevronRight, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star, ExternalLink } from "lucide-react";
+import { CalendarDays, ChevronRight, GitBranch, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star, ExternalLink } from "lucide-react";
 import SEO from "../components/SEO";
 import WC26TeamExplorer from "../components/WC26TeamExplorer";
 import { fetchPartnerArticles, fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
@@ -10,6 +10,7 @@ import {
   fetchWC26TopScorers,
   type TournamentStandingEntry,
 } from "../lib/football-api";
+import { useWC26Leaderboard } from "../hooks/useData";
 import { WC26_GUIDES } from "../data/wc26-guides";
 import { WC26_STADIUMS, WC26_TEAMS, type WC26TeamData } from "../data/wc26-teams";
 import { supabase } from "../lib/supabase";
@@ -56,15 +57,6 @@ const GROUPS_OF_DEATH = [
   { group: "L", teams: ["England", "Croatia", "Ghana", "Panama"],   reason: "England face Euro 2020 final demons again" },
 ];
 
-// Static fallback fixtures (opening round)
-const WC26_OPENING_FIXTURES = [
-  { home: "Mexico",    away: "South Africa", date: "Jun 11", time: "10:00 PM" },
-  { home: "USA",       away: "Colombia",     date: "Jun 12", time: "1:00 AM"  },
-  { home: "Canada",    away: "Venezuela",    date: "Jun 12", time: "4:00 PM"  },
-  { home: "Brazil",    away: "Morocco",      date: "Jun 14", time: "1:00 AM"  },
-  { home: "Argentina", away: "Algeria",      date: "Jun 17", time: "4:00 AM"  },
-  { home: "France",    away: "Senegal",      date: "Jun 17", time: "7:00 PM"  },
-];
 
 // Derive static group tables from WC26_TEAMS. WC26_TEAMS is the single source
 // of truth for squad data — build the zero-stat fallback from it so we don't
@@ -244,6 +236,7 @@ const LIVE_STATUSES = new Set(["1H","2H","HT","ET","P","BT","LIVE"]);
 const DONE_STATUSES = new Set(["FT","AET","PEN"]);
 
 export default function WorldCup2026Page() {
+  const { data: wc26Board = [] } = useWC26Leaderboard();
   const [fixtures, setFixtures] = useState<any[]>([]);
   const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>(WC26_GROUPS);
   const [topScorers, setTopScorers] = useState<any[]>([]);
@@ -817,77 +810,9 @@ export default function WorldCup2026Page() {
 
           {/* Match grid */}
           {fixtures.length === 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {WC26_OPENING_FIXTURES.map((f, i) => {
-                const key = `static-${i}`;
-                const insight = aiInsights[key];
-                return (
-                  <div key={i} className="rounded-xl border border-white/8 bg-[#0b0f18] px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="flex-1 truncate text-xs font-bold text-white">{f.home}</span>
-                      <div className="shrink-0 text-center">
-                        <div className="text-[10px] font-black text-[#FFD700]/70">{f.date}</div>
-                        <div className="text-[9px] text-white/30">{f.time} EAT</div>
-                      </div>
-                      <span className="flex-1 truncate text-right text-xs font-bold text-white">{f.away}</span>
-                    </div>
-                    {insight?.text ? (
-                      <>
-                        <div className="mt-2 rounded-lg border border-[#FFD700]/15 bg-[#FFD700]/5 px-3 py-2">
-                          <div className="mb-1 flex items-center gap-1.5">
-                            <Zap className="h-2.5 w-2.5 shrink-0 text-[#FFD700]" />
-                            <span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/60">Mchambuzi AI</span>
-                          </div>
-                          <p className="text-[10px] leading-relaxed text-white/70">{insight.text}</p>
-                        </div>
-                        <button
-                          onClick={() => waShare(f.home, f.away, f.date, f.time)}
-                          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#25D366]/20 bg-[#25D366]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#25D366]/70 transition-all hover:bg-[#25D366]/14 hover:text-[#25D366]"
-                        >
-                          <MessageCircle className="h-2.5 w-2.5" />Share on WhatsApp
-                        </button>
-                      </>
-                    ) : (
-                      <div className="mt-2 flex gap-1.5">
-                        <button
-                          onClick={() => askAI(key, f.home, f.away)}
-                          disabled={insight?.loading}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70 transition-all hover:bg-[#FFD700]/12 hover:text-[#FFD700] disabled:opacity-50"
-                        >
-                          {insight?.loading ? (
-                            <><span className="h-2 w-2 animate-spin rounded-full border border-[#FFD700]/50 border-t-[#FFD700]" />Analysing...</>
-                          ) : (
-                            <><Zap className="h-2.5 w-2.5" />AI Pick</>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => waShare(f.home, f.away, f.date, f.time)}
-                          className="flex shrink-0 items-center justify-center rounded-lg border border-[#25D366]/20 bg-[#25D366]/6 px-2.5 py-1.5 text-[#25D366]/70 transition-all hover:bg-[#25D366]/14 hover:text-[#25D366]"
-                          title="Share on WhatsApp"
-                        >
-                          <MessageCircle className="h-3 w-3" />
-                        </button>
-                      </div>
-                    )}
-                    {/* Reactions */}
-                    <div className="mt-2 flex items-center gap-1 border-t border-white/5 pt-2">
-                      {REACTION_EMOJIS.map(e => {
-                        const count = reactions[key]?.[e] ?? 0;
-                        const mine = myReactions[key] === e;
-                        return (
-                          <button
-                            key={e}
-                            onClick={() => react(key, e)}
-                            className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] transition-all ${mine ? "bg-white/15 ring-1 ring-white/20 scale-110" : "bg-white/4 hover:bg-white/10"}`}
-                          >
-                            {e}{count > 0 && <span className="text-[8px] font-bold text-white/45 tabular-nums ml-0.5">{count}</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="rounded-2xl border border-white/8 bg-[#0b0f18] px-5 py-10 text-center">
+              <div className="mb-2 h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-[#FFD700] mx-auto" />
+              <p className="text-xs text-white/30">Loading WC26 fixtures — try again in a moment.</p>
             </div>
           ) : (fixturesByRound[scheduleTab] ?? []).length === 0 ? (
             <div className="rounded-2xl border border-white/8 bg-[#0b0f18] px-5 py-10 text-center text-xs text-white/30">
@@ -1441,12 +1366,13 @@ export default function WorldCup2026Page() {
             <h2 className="text-sm font-black uppercase tracking-widest text-white">Your WC26 Command Center</h2>
             <p className="text-[10px] text-white/30">Everything a Kenyan fan needs  -  live, on BallMtaani.</p>
           </div>
-          <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-white/6 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-white/6 sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { href: "/predictions",     color: "text-[#B30000]", border: "hover:bg-[#B30000]/8", icon: Zap,      label: "Call the Score",   sub: "Pick every group match. Earn MTC." },
-              { href: "/mchambuzi-halisi",color: "text-[#FFD700]", border: "hover:bg-[#FFD700]/5", icon: Sparkles, label: "Ask Mchambuzi",    sub: "WC26 AI analysis. Fan-first tone." },
-              { href: "/live-center",     color: "text-blue-400",  border: "hover:bg-blue-500/8",  icon: Trophy,   label: "Live Center",      sub: "Stats, events, lineups as they happen." },
-              { href: "/debates",         color: "text-purple-400",border: "hover:bg-purple-500/8",icon: Users,    label: "Debates Room",     sub: "Group of death takes. Banter receipts." },
+              { href: "/predictions",            color: "text-[#B30000]", border: "hover:bg-[#B30000]/8",  icon: Zap,        label: "Call the Score",   sub: "Pick every match. Earn MTC." },
+              { href: "/mchambuzi-halisi",       color: "text-[#FFD700]", border: "hover:bg-[#FFD700]/5",  icon: Sparkles,   label: "Ask Mchambuzi",    sub: "WC26 AI analysis. Fan-first tone." },
+              { href: "/live-center",            color: "text-blue-400",  border: "hover:bg-blue-500/8",   icon: Trophy,     label: "Live Center",      sub: "Stats, events, lineups live." },
+              { href: "/debates",                color: "text-purple-400",border: "hover:bg-purple-500/8", icon: Users,      label: "Debates Room",     sub: "Group of death takes. Banter." },
+              { href: "/world-cup-2026/bracket", color: "text-green-400", border: "hover:bg-green-500/8",  icon: GitBranch,  label: "Bracket",          sub: "Knockout rounds as they unfold." },
             ].map(({ href, color, border, icon: Icon, label, sub }) => (
               <Link key={href} href={href} className={`flex flex-col p-5 transition-all ${border}`}>
                 <Icon className={`mb-3 h-5 w-5 ${color}`} />
@@ -1479,6 +1405,38 @@ export default function WorldCup2026Page() {
             </div>
           </div>
         </section>
+
+        {/* -- WC26 TOP CALLERS -- */}
+        {wc26Board.length > 0 && (
+          <section className="mb-8 overflow-hidden rounded-2xl border border-white/8 bg-[#080d14]/90">
+            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">Top WC26 Callers</h2>
+                <p className="text-[10px] text-white/30">Ranked by correct tournament predictions</p>
+              </div>
+              <Link href="/leaderboard" className="rounded-full border border-white/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/50 transition-all hover:border-white/25 hover:text-white/80">
+                Full Board →
+              </Link>
+            </div>
+            <div className="divide-y divide-white/5">
+              {(wc26Board as any[]).slice(0, 5).map((row, i) => (
+                <Link key={row.userId} href={`/profile/${row.userId}`}
+                  className="flex items-center gap-3 px-5 py-3 transition-all hover:bg-white/[0.03]">
+                  <span className={`w-5 shrink-0 text-center text-[11px] font-black ${i === 0 ? "text-[#FFD700]" : i === 1 ? "text-white/60" : i === 2 ? "text-amber-600" : "text-white/25"}`}>
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[11px] font-black uppercase tracking-tight text-white">{row.name}</div>
+                    <div className="text-[9px] text-white/35">{row.correct}/{row.total} correct</div>
+                  </div>
+                  <div className="shrink-0 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/8 px-2.5 py-1 text-[10px] font-black text-[#FFD700]">
+                    {row.total > 0 ? `${Math.round((row.correct / row.total) * 100)}%` : "0%"}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <footer className="text-center text-[9px] font-bold uppercase tracking-[0.18em] text-white/25">
           <div>Data: API-Football  -  Tournament structure: FIFA WC2026</div>

@@ -17,12 +17,12 @@ type ChatMessage = {
 };
 
 const WC26_QUESTIONS = [
-  "Who wins WC26 — give me your read.",
-  "Which African team goes furthest at WC26?",
-  "Who is the WC26 golden boot favourite right now?",
-  "Break down the Group of Death at WC26.",
-  "What is the biggest WC26 shock waiting to happen?",
-  "Is Morocco the African dark horse or overhyped?",
+  "Who's looking best after the first week of WC26?",
+  "Which African nation has surprised you most so far?",
+  "Who's the early golden boot frontrunner right now?",
+  "Any upsets already? Which team is shocking people?",
+  "Which group is the most entertaining to watch?",
+  "Give me one team that's quietly dangerous this WC26.",
 ];
 
 const GENERAL_QUESTIONS = [

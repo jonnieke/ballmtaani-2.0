@@ -290,8 +290,27 @@ export default function DebatesPage() {
           <MessageSquarePlus className="w-5 h-5 text-accent" />
           Start a Debate
         </h3>
-        <p className="text-gray-400 text-sm mb-6">Got a hot take? Drop it below and let the community decide.</p>
-        
+        <p className="text-gray-400 text-sm mb-4">Got a hot take? Drop it below and let the community decide.</p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            "Is Morocco Africa's best-ever WC squad?",
+            "Will WC26 produce a first-time champion?",
+            "USA — dark horse or group-stage exit?",
+            "Best African player at WC26?",
+            "Can any African nation reach the semi-finals?",
+          ].map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => setNewDebate(chip)}
+              className="rounded-full border border-[#FFD700]/30 bg-[#FFD700]/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#FFD700] hover:bg-[#FFD700]/18 transition-colors"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+
         {submitState === "done" ? (
           <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-6 text-center">
             <Check className="w-8 h-8 text-green-400 mx-auto mb-3" />

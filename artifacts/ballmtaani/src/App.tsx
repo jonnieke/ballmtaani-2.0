@@ -13,7 +13,6 @@ import { ScoreTicker } from "./components/ScoreTicker";
 import AdBanner from "./components/AdBanner";
 import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
-import OddspediaCredit from "./components/OddspediaCredit";
 import { lazy, Suspense } from "react";
 
 // ─── Route-level code splitting ───────────────────────────────────────────────
@@ -41,6 +40,7 @@ const TermsPage          = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
 const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
 const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
+const WorldCupBracketPage = lazy(() => import("./pages/WorldCupBracketPage"));
 const AIFanZonePage      = lazy(() => import("./pages/AIFanZonePage"));
 const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
 const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
@@ -74,8 +74,9 @@ function PageLoader() {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 0, // Disable retries — we have fallbacks (mock data, cached data, empty state)
-      // When API fails, show empty state instead of retrying 3x and hammering the API
+      retry: 0,                    // Fallbacks handle failure — no retry hammering
+      staleTime: 30_000,           // Don't refetch data younger than 30s (matches proxy burst cache)
+      refetchOnWindowFocus: false, // Don't burst all queries when user switches tabs
     },
   },
 });
@@ -120,6 +121,7 @@ function AppShell() {
             <Route path="/home" component={HomePage} />
             <Route path="/hub" component={LandingPage} />
             <Route path="/world-cup-2026" component={WorldCup2026Page} />
+            <Route path="/world-cup-2026/bracket" component={WorldCupBracketPage} />
             <Route path="/world-cup-2026/:guide" component={WorldCupGuidePage} />
             <Route path="/ai-fan-zone" component={AIFanZonePage} />
             <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
@@ -190,8 +192,7 @@ function AppShell() {
                 </p>
               </>
             )}
-            <OddspediaCredit className="mb-5" />
-            <p className="text-gray-600 text-xs">
+<p className="text-gray-600 text-xs">
               (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
             </p>
           </div>

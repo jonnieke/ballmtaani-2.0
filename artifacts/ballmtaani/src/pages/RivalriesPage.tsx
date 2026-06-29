@@ -369,8 +369,17 @@ export default function RivalriesPage() {
   };
 
   const acceptDuel = async (id: string) => {
+    const duel = duels.find(d => d.id === id);
     setDuels(prev => prev.map(d => d.id === id ? { ...d, status: "active" } : d));
-    if (supabase && !id.startsWith("temp-")) await Promise.resolve(supabase.from("fan_duels").update({ status: "active" }).eq("id", id)).catch(() => {});
+    if (supabase && !id.startsWith("temp-")) {
+      try { await supabase.from("fan_duels").update({ status: "active" }).eq("id", id); } catch {}
+      if (duel?.challenger_name) {
+        try {
+          const { data: cp } = await supabase.from("profiles").select("id").eq("username", duel.challenger_name).maybeSingle();
+          if (cp?.id) fetch("/api/push-send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: cp.id, title: `✅ ${username} accepted your duel!`, body: `${duel.home_team} vs ${duel.away_team} — Fight is on. May the best call win.`, url: "/rivalries", tag: `duel-accept-${cp.id}-${Date.now()}` }) }).catch(() => {});
+        } catch {}
+      }
+    }
   };
 
   const settleDuel = async (winner: string, score: string) => {

@@ -10,98 +10,9 @@ import {
   Target,
   Trophy,
   TrendingUp,
-  Zap,
 } from "lucide-react";
 import SEO from "../components/SEO";
 import { supabase } from "../lib/supabase";
-
-// ─── WC26 Pre-Match Intelligence ─────────────────────────────────────────────
-const OPENING_MATCHES = [
-  {
-    id: "wc26-1",
-    home: "Mexico",
-    away: "South Africa",
-    homeFlag: "🇲🇽",
-    awayFlag: "🇿🇦",
-    date: "Jun 11",
-    time: "10:00 PM",
-    heat: 95,
-    context: "South Africa's first WC since 2010 — on home continent soil. Mexico have never lost a WC opener in 5 attempts.",
-    watch: "Africa's emotional story vs CONCACAF experience",
-    edge: "Mexico",
-    group: "A",
-  },
-  {
-    id: "wc26-2",
-    home: "USA",
-    away: "Colombia",
-    homeFlag: "🇺🇸",
-    awayFlag: "🇨🇴",
-    date: "Jun 12",
-    time: "1:00 AM",
-    heat: 78,
-    context: "USA play on home turf with a squad finally built for a WC run. Colombia's James Rodriguez era is over — this is new generation.",
-    watch: "Host nation pressure vs Latam technical quality",
-    edge: "Colombia",
-    group: "A",
-  },
-  {
-    id: "wc26-3",
-    home: "Brazil",
-    away: "Germany",
-    homeFlag: "🇧🇷",
-    awayFlag: "🇩🇪",
-    date: "Jun 13",
-    time: "7:00 PM",
-    heat: 100,
-    context: "The 7-1 rematch narrative is everywhere. Brazil under Ancelotti, Vinicius Jr at peak. Germany with a rebuilt identity post-Qatar disaster.",
-    watch: "The biggest revenge story in football. WC2014 5-1 haunts Brazil.",
-    edge: "Even — coin flip",
-    group: "C",
-  },
-  {
-    id: "wc26-4",
-    home: "Canada",
-    away: "Venezuela",
-    homeFlag: "🇨🇦",
-    awayFlag: "🇻🇪",
-    date: "Jun 12",
-    time: "4:00 PM",
-    heat: 62,
-    context: "Canada's first WC since 1986. Davies, Johnston, David — a golden generation finally on the biggest stage.",
-    watch: "Sentimental favorite. Davies vs Venezuela's physical defensive block.",
-    edge: "Canada",
-    group: "B",
-  },
-  {
-    id: "wc26-5",
-    home: "Argentina",
-    away: "Morocco",
-    homeFlag: "🇦🇷",
-    awayFlag: "🇲🇦",
-    date: "Jun 14",
-    time: "10:00 PM",
-    heat: 92,
-    context: "Morocco — the team that broke Europe's monopoly in Qatar 2022. Argentina — the world champions. This is the defining Africa vs South America opener.",
-    watch: "Kenyan fans split between CAF pride (Morocco) and WC champion respect.",
-    edge: "Morocco upset risk is real",
-    group: "D",
-  },
-  {
-    id: "wc26-6",
-    home: "France",
-    away: "England",
-    homeFlag: "🇫🇷",
-    awayFlag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    date: "Jun 14",
-    time: "1:00 AM",
-    heat: 88,
-    context: "They met in the QF in Qatar. France won. England still haunted. Mbappe vs Bellingham. The defining rivalry of this generation.",
-    watch: "Africa's most followed match — Premier League fans vs Mbappe worshippers.",
-    edge: "France",
-    group: "E",
-  },
-];
 
 const CONTENDERS = [
   { flag: "🇧🇷", name: "Brazil", rating: 94, strength: "Vinicius, Rodrygo, depth", risk: "Defensive frailty", color: "text-green-400", border: "border-green-400/30" },
@@ -112,18 +23,6 @@ const CONTENDERS = [
   { flag: "🇲🇦", name: "Morocco", rating: 82, strength: "CAF's best team. Tactical discipline.", risk: "Attacking fire power plateau", color: "text-orange-300", border: "border-orange-300/30" },
 ];
 
-
-function HeatBar({ value }: { value: number }) {
-  const color = value >= 90 ? "bg-red-500" : value >= 75 ? "bg-orange-500" : "bg-yellow-500";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${value}%` }} />
-      </div>
-      <span className="w-8 text-right text-[10px] font-bold text-white/50">{value}</span>
-    </div>
-  );
-}
 
 function RatingBar({ value, color }: { value: number; color: string }) {
   return (
@@ -226,7 +125,7 @@ export default function MarketWatchPage() {
           </div>
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { icon: Flame, value: "6", label: "Opening fixtures", color: "border-red-400/35 text-red-300" },
+              { icon: Flame, value: "R16", label: "Knockout rounds", color: "border-red-400/35 text-red-300" },
               { icon: Target, value: "32", label: "Nations tracked", color: "border-[#FFD700]/35 text-[#FFD700]" },
               { icon: TrendingUp, value: "Live", label: "Fan sentiment", color: "border-green-400/35 text-green-300" },
             ].map(({ icon: Icon, value, label, color }) => (
@@ -343,60 +242,6 @@ export default function MarketWatchPage() {
           )}
         </section>
 
-        {/* Opening Fixture Intelligence */}
-        <section className="mb-6">
-          <div className="mb-3 flex items-center gap-3">
-            <Zap className="h-5 w-5 text-[#FFD700]" />
-            <h2 className="text-xl font-bold uppercase">Opening Fixture Intelligence</h2>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {OPENING_MATCHES.map((m) => (
-              <div key={m.id} className="rounded-2xl border border-white/10 bg-[#0d131c]/88 p-4 hover:border-white/20 transition-colors">
-                {/* Teams */}
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <div className="text-center">
-                    <div className="text-2xl">{m.homeFlag}</div>
-                    <div className="mt-1 text-xs font-bold text-white">{m.home}</div>
-                  </div>
-                  <div className="text-center flex-1">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-white/30">Group {m.group}</div>
-                    <div className="text-xs font-bold text-white/50">{m.date}</div>
-                    <div className="text-[10px] text-white/30">{m.time} EAT</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl">{m.awayFlag}</div>
-                    <div className="mt-1 text-xs font-bold text-white">{m.away}</div>
-                  </div>
-                </div>
-
-                {/* Heat */}
-                <div className="mb-3">
-                  <div className="mb-1 flex items-center justify-between text-[10px]">
-                    <span className="font-bold uppercase tracking-wider text-white/40">Match heat</span>
-                    <Flame className={`h-3.5 w-3.5 ${m.heat >= 90 ? "text-red-400" : m.heat >= 75 ? "text-orange-400" : "text-yellow-400"}`} />
-                  </div>
-                  <HeatBar value={m.heat} />
-                </div>
-
-                {/* Context */}
-                <p className="mb-2 text-[11px] leading-5 text-white/55">{m.context}</p>
-
-                {/* Watch for */}
-                <div className="mb-2 rounded-lg border border-blue-400/15 bg-blue-500/8 px-3 py-2">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-blue-300/70 mb-0.5">Watch for</div>
-                  <p className="text-[10px] leading-4 text-blue-100/70">{m.watch}</p>
-                </div>
-
-                {/* Edge */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-white/30">Fan edge</span>
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{m.edge}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Title Contenders */}
         <section className="mb-6">
           <div className="mb-3 flex items-center gap-3">
@@ -434,8 +279,8 @@ export default function MarketWatchPage() {
         {/* Make Your Calls CTA */}
         <section className="rounded-3xl border border-[#FFD700]/25 bg-[#FFD700]/5 p-5 text-center">
           <div className="text-2xl mb-2">⚽</div>
-          <h2 className="text-lg font-bold uppercase text-white">WC26 kicks off June 11</h2>
-          <p className="mt-2 text-sm text-white/50">Make your 6 bold calls now. Win MTC coins. Show on the Leaderboard.</p>
+          <h2 className="text-lg font-bold uppercase text-white">WC26 Knockout Rounds are live</h2>
+          <p className="mt-2 text-sm text-white/50">Predict every match. Win MTC coins. Show on the Leaderboard.</p>
           <Link
             href="/predictions"
             className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#FFD700] px-6 py-3 text-xs font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors"

@@ -78,7 +78,12 @@ const WC26_QUESTIONS: WC26Question[] = [
 
 
 export default function PredictionsPage() {
-  const [activeTab, setActiveTab] = useState<"make" | "my" | "wc26">(wc26IsLive ? "make" : "wc26");
+  const initialTab = (() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "my" || tab === "make" || tab === "wc26") return tab;
+    return wc26IsLive ? "make" : "wc26";
+  })();
+  const [activeTab, setActiveTab] = useState<"make" | "my" | "wc26">(initialTab);
 
   // Legacy WC26 winner pick (kept for backward compat)
   const [wc26Pick, setWc26Pick]   = useState<string>("");
