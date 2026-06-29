@@ -25,7 +25,7 @@ export const RAPID_FIRE_POOL: RapidFireDebate[] = [
   { id: "rf12", title: "The Special One", left: "Mourinho", right: "Ancelotti", leftVotes: 4200, rightVotes: 4500, totalVotes: "8,700" },
   { id: "rf13", title: "Best Goalkeeper", left: "Neuer", right: "Courtois", leftVotes: 2500, rightVotes: 2300, totalVotes: "4,800" },
   { id: "rf14", title: "Next Balon d'Or", left: "Vinicius Jr", right: "Phil Foden", leftVotes: 3100, rightVotes: 2800, totalVotes: "5,900" },
-  { id: "rf15", title: "Classic #10", left: "Ozil", right: "Brumo Fernandes", leftVotes: 4500, rightVotes: 3200, totalVotes: "7,700" },
+  { id: "rf15", title: "Classic #10", left: "Ozil", right: "Bruno Fernandes", leftVotes: 4500, rightVotes: 3200, totalVotes: "7,700" },
   { id: "rf16", title: "Invincibles vs Treble Winners", left: "Arsenal 03/04", right: "Man City 22/23", leftVotes: 3900, rightVotes: 4100, totalVotes: "8,000" },
   { id: "rf17", title: "AFCON Giant", left: "Egypt", right: "Senegal", leftVotes: 2100, rightVotes: 2400, totalVotes: "4,500" },
   { id: "rf18", title: "African Legend", left: "Eto'o", right: "Drogba", leftVotes: 3500, rightVotes: 3600, totalVotes: "7,100" },

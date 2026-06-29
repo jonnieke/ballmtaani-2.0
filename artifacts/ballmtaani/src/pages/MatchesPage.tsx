@@ -43,56 +43,6 @@ const LEAGUE_LOGOS: Record<string, string> = {
 };
 
 
-const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = {
-  "Group A": [
-    { rank: 1, team: "Mexico",       logo: "https://media.api-sports.io/flags/mx.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 2, team: "South Africa", logo: "https://media.api-sports.io/flags/za.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 3, team: "USA",          logo: "https://media.api-sports.io/flags/us.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-    { rank: 4, team: "Colombia",     logo: "https://media.api-sports.io/flags/co.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "A" },
-  ],
-  "Group B": [
-    { rank: 1, team: "Canada",     logo: "https://media.api-sports.io/flags/ca.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 2, team: "Venezuela",  logo: "https://media.api-sports.io/flags/ve.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 3, team: "Spain",      logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-    { rank: 4, team: "Costa Rica", logo: "https://media.api-sports.io/flags/cr.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "B" },
-  ],
-  "Group C": [
-    { rank: 1, team: "Brazil",  logo: "https://media.api-sports.io/flags/br.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-    { rank: 2, team: "Germany", logo: "https://media.api-sports.io/flags/de.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-    { rank: 3, team: "Japan",   logo: "https://media.api-sports.io/flags/jp.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-    { rank: 4, team: "Morocco", logo: "https://media.api-sports.io/flags/ma.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "C" },
-  ],
-  "Group D": [
-    { rank: 1, team: "Argentina", logo: "https://media.api-sports.io/flags/ar.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-    { rank: 2, team: "Uruguay",   logo: "https://media.api-sports.io/flags/uy.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-    { rank: 3, team: "Paraguay",  logo: "https://media.api-sports.io/flags/py.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-    { rank: 4, team: "Egypt",     logo: "https://media.api-sports.io/flags/eg.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "D" },
-  ],
-  "Group E": [
-    { rank: 1, team: "France",   logo: "https://media.api-sports.io/flags/fr.svg",     points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-    { rank: 2, team: "England",  logo: "https://media.api-sports.io/flags/gb-eng.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-    { rank: 3, team: "Belgium",  logo: "https://media.api-sports.io/flags/be.svg",     points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-    { rank: 4, team: "Slovakia", logo: "https://media.api-sports.io/flags/sk.svg",     points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "E" },
-  ],
-  "Group F": [
-    { rank: 1, team: "Netherlands", logo: "https://media.api-sports.io/flags/nl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-    { rank: 2, team: "Sweden",      logo: "https://media.api-sports.io/flags/se.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-    { rank: 3, team: "Austria",     logo: "https://media.api-sports.io/flags/at.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-    { rank: 4, team: "Cameroon",    logo: "https://media.api-sports.io/flags/cm.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "F" },
-  ],
-  "Group G": [
-    { rank: 1, team: "Spain",   logo: "https://media.api-sports.io/flags/es.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-    { rank: 2, team: "Italy",   logo: "https://media.api-sports.io/flags/it.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-    { rank: 3, team: "Denmark", logo: "https://media.api-sports.io/flags/dk.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-    { rank: 4, team: "Serbia",  logo: "https://media.api-sports.io/flags/rs.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "G" },
-  ],
-  "Group H": [
-    { rank: 1, team: "Portugal",       logo: "https://media.api-sports.io/flags/pt.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-    { rank: 2, team: "Poland",         logo: "https://media.api-sports.io/flags/pl.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-    { rank: 3, team: "Czech Republic", logo: "https://media.api-sports.io/flags/cz.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-    { rank: 4, team: "Senegal",        logo: "https://media.api-sports.io/flags/sn.svg", points: 0, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, gd: "0", form: [], group: "H" },
-  ],
-};
 
 function groupByLeague(matches: any[]): [string, any[]][] {
   const map: Record<string, any[]> = {};
@@ -744,12 +694,7 @@ export default function MatchesPage() {
   const { data: standings = {} as Record<string, any[]>, isFetching: standingsFetching } = useStandings();
 
   const fixturesWithFallback = useMemo(() => upcomingFixtures, [upcomingFixtures]);
-  const standingsWithFallback = useMemo(() => {
-    if (!Object.keys(standings).length) return WC26_GROUPS;
-    // If API returned league standings but WC26 groups failed, inject static groups as fallback
-    const hasGroups = Object.keys(standings).some(k => k.startsWith("Group "));
-    return hasGroups ? standings : { ...WC26_GROUPS, ...standings };
-  }, [standings]);
+  const standingsWithFallback = useMemo(() => standings, [standings]);
   const hasApiData = liveMatches.length || recentMatches.length || upcomingFixtures.length || Object.keys(standings).length;
   const fetching   = liveFetching || recentFetching || upcomingFetching || standingsFetching;
 
@@ -944,7 +889,13 @@ export default function MatchesPage() {
                       ))}
                     </div>
                   ) : (
-                    <EmptyState title="WC26 groups loading" body="Group standings are being fetched — try again in a moment." />
+                    <div className="px-4 py-10 text-center">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-white/40">Group stage complete</p>
+                      <p className="mt-1 text-[10px] text-white/25">Final group standings are no longer available — the tournament is in the knockout rounds.</p>
+                      <a href="/world-cup-2026/bracket" className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-[#FFD700]/30 bg-[#FFD700]/8 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:bg-[#FFD700]/14 transition-all">
+                        View Knockout Bracket →
+                      </a>
+                    </div>
                   );
                 })()
               ) : selectedStandings.length ? (
