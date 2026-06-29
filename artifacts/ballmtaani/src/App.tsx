@@ -13,7 +13,6 @@ import { ScoreTicker } from "./components/ScoreTicker";
 import AdBanner from "./components/AdBanner";
 import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
-import OddspediaCredit from "./components/OddspediaCredit";
 import { lazy, Suspense } from "react";
 
 // ─── Route-level code splitting ───────────────────────────────────────────────
@@ -192,8 +191,7 @@ function AppShell() {
                 </p>
               </>
             )}
-            <OddspediaCredit className="mb-5" />
-            <p className="text-gray-600 text-xs">
+<p className="text-gray-600 text-xs">
               (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
             </p>
           </div>
