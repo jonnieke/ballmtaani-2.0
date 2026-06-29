@@ -383,6 +383,22 @@ export default function LiveCenterPage() {
   const homeLineup = fixtureDetail?.lineups?.home || { formation: "N/A", players: [] };
   const awayLineup = fixtureDetail?.lineups?.away || { formation: "N/A", players: [] };
 
+  // These effects must be declared before any early return to satisfy Rules of Hooks
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveMinute(prev => (prev < 90 ? prev + 1 : prev));
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (pulseGoal) {
+      const t = setTimeout(() => setPulseGoal(false), 2000);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [pulseGoal]);
+
   if (!match) {
     return (
       <div className="min-h-screen bg-[#080d16] text-white pb-24">
@@ -514,23 +530,6 @@ export default function LiveCenterPage() {
       </div>
     );
   }
-
-  // Simulate live minute ticking
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveMinute(prev => (prev < 90 ? prev + 1 : prev));
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Goal celebration pulse
-  useEffect(() => {
-    if (pulseGoal) {
-      const t = setTimeout(() => setPulseGoal(false), 2000);
-      return () => clearTimeout(t);
-    }
-    return undefined;
-  }, [pulseGoal]);
 
   const handleSendBanter = () => {
     if (!banterInput.trim()) return;
