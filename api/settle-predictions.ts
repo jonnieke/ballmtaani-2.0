@@ -238,7 +238,7 @@ export default async function handler(req: any, res: any) {
           userId,
           title,
           body,
-          url: "/predictions",
+          url: "/predictions?tab=my",
           tag: `settle-${userId}-${Date.now()}`,
         }),
       });
