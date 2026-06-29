@@ -58,7 +58,7 @@ export default async function handler(req: any, res: any) {
     return json(res, 500, { error: "Failed to query profiles" });
   }
 
-  const profiles: { id: string; streak: number }[] = await profilesRes.json();
+  const profiles = (await profilesRes.json()) as { id: string; streak: number }[];
 
   if (!profiles.length) {
     return json(res, 200, { sent: 0, message: "No at-risk streaks today" });
@@ -71,7 +71,7 @@ export default async function handler(req: any, res: any) {
     { headers }
   );
 
-  const subs: { user_id: string }[] = subsRes.ok ? await subsRes.json() : [];
+  const subs = (subsRes.ok ? await subsRes.json() : []) as { user_id: string }[];
   const subscribedIds = new Set(subs.map(s => s.user_id));
 
   const eligible = profiles.filter(p => subscribedIds.has(p.id));
