@@ -786,7 +786,7 @@ export default function WorldCup2026Page() {
             <div>
               <h2 className="text-lg font-black uppercase tracking-widest text-white">Full Schedule</h2>
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {fixtures.length > 0 ? `${fixtures.length} matches · Jun 11 – Jul 19` : "Group Stage · Jun 11 – Jun 22"}
+                {fixtures.length > 0 ? `${fixtures.length} matches · Jun 11 – Jul 19` : "Jun 11 – Jul 19 · Loading…"}
               </p>
             </div>
           </div>

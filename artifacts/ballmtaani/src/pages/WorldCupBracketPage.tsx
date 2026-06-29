@@ -171,16 +171,14 @@ export default function WorldCupBracketPage() {
             ))}
           </div>
         ) : (
-          /* Empty state — before knockout rounds begin */
+          /* Empty state — API returned no knockout data yet */
           <div className="mx-auto max-w-md py-16 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/8">
               <GitBranch className="h-8 w-8 text-[#FFD700]/60" />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tight text-white">Bracket Unlocks Soon</h2>
+            <h2 className="text-xl font-black uppercase tracking-tight text-white">Bracket Loading…</h2>
             <p className="mt-3 text-sm leading-6 text-white/45">
-              {daysUntilKnockout > 0
-                ? `Group stage ends in ${daysUntilKnockout} day${daysUntilKnockout !== 1 ? "s" : ""}. Round of 32 kicks off Jun 28.`
-                : "Knockout fixtures loading — check back after today's group matches."}
+              Knockout results update live — refresh if fixtures haven't appeared yet.
             </p>
             <div className="mt-6 grid grid-cols-2 gap-2 text-left">
               {[
