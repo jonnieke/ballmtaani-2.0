@@ -111,7 +111,7 @@ function writePersistedResponse(endpoint: string, value: any) {
 
 function getEndpointCacheTtl(endpoint: string): number {
   if (endpoint.includes("/fixtures?live=all")) return 15 * 1000;
-  if (endpoint.includes("/fixtures/statistics") || endpoint.includes("/fixtures/events") || endpoint.includes("/fixtures/lineups") || endpoint.includes("/fixtures?id=")) return 60 * 1000;
+  if (endpoint.includes("_sub=statistics") || endpoint.includes("_sub=events") || endpoint.includes("_sub=lineups") || endpoint.includes("/fixtures?id=") || endpoint.includes("/fixtures?fixture=")) return 60 * 1000;
   if (endpoint.includes("/fixtures?date=") || endpoint.includes("&next=") || endpoint.includes("&from=") || endpoint.includes("&to=")) return 60 * 1000;
   if (endpoint.includes("/standings?")) return 5 * 60 * 1000;
   if (endpoint.includes("/teams/statistics?")) return 10 * 60 * 1000;
@@ -723,7 +723,7 @@ export async function fetchAllStandings(): Promise<Record<string, StandingEntry[
 
 // ─── 4. FIXTURE DETAIL (stats, events, lineups) ─────────────
 export async function fetchFixtureStats(fixtureId: string): Promise<FixtureStat[]> {
-  const raw = await apiFetch(`/fixtures/statistics?fixture=${fixtureId}`);
+  const raw = await apiFetch(`/fixtures?fixture=${fixtureId}&_sub=statistics`);
   if (!raw || raw.length < 2) return [];
 
   const homeStats = raw[0]?.statistics || [];
@@ -760,7 +760,7 @@ export async function fetchFixtureStats(fixtureId: string): Promise<FixtureStat[
 }
 
 export async function fetchFixtureEvents(fixtureId: string): Promise<FixtureEvent[]> {
-  const raw = await apiFetch(`/fixtures/events?fixture=${fixtureId}`);
+  const raw = await apiFetch(`/fixtures?fixture=${fixtureId}&_sub=events`);
   if (!raw || raw.length === 0) return [];
 
   const now = Date.now();
@@ -855,7 +855,7 @@ export async function fetchLiveEventSummary(fixtureId: string): Promise<LiveEven
 }
 
 export async function fetchFixtureLineups(fixtureId: string): Promise<{ home: TeamLineup | null; away: TeamLineup | null }> {
-  const raw = await apiFetch(`/fixtures/lineups?fixture=${fixtureId}`);
+  const raw = await apiFetch(`/fixtures?fixture=${fixtureId}&_sub=lineups`);
   if (!raw || raw.length < 2) return { home: null, away: null };
 
   const mapLineup = (team: any): TeamLineup => ({

@@ -51,14 +51,19 @@ export default async function handler(req: any, res: any) {
     if (fromPath && fromPath !== "/") endpoint = fromPath;
   }
 
-  // Forward all query params EXCEPT the internal catch-all/debug params
+  // Forward all query params EXCEPT internal catch-all/debug params and _sub
+  // _sub allows single-segment proxy paths to target nested API endpoints:
+  // e.g. /fixtures?fixture=123&_sub=events → /fixtures/events?fixture=123
+  const subResource = req.query["_sub"] ? String(req.query["_sub"]) : "";
+  const upstreamEndpoint = subResource ? `${endpoint}/${subResource}` : endpoint;
+
   const parts: string[] = [];
   for (const [k, v] of Object.entries(req.query as Record<string, string>)) {
-    if (k === "path" || k === "...path" || k === "_debug") continue;
+    if (k === "path" || k === "...path" || k === "_debug" || k === "_sub") continue;
     parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
   }
   const qs = parts.join("&");
-  const upstream = `https://v3.football.api-sports.io${endpoint}${qs ? "?" + qs : ""}`;
+  const upstream = `https://v3.football.api-sports.io${upstreamEndpoint}${qs ? "?" + qs : ""}`;
 
   const key =
     process.env.API_FOOTBALL_KEY ||
@@ -71,7 +76,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const cacheKey = `${endpoint}?${qs}`;
+  const cacheKey = `${upstreamEndpoint}?${qs}`;
   const now = Date.now();
 
   // Serve from burst cache if still fresh (same warm function instance)
