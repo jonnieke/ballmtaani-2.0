@@ -266,43 +266,14 @@ export default function HomePage() {
 
   const freshnessLabel = useMemo(() => formatFreshnessLabel(lastUpdated), [lastUpdated, clockTick]);
 
-  const WC26_OPENER = {
-    id: "wc26-opener-preview",
-    home: "Mexico", homeLogo: "https://media.api-sports.io/flags/mx.svg", homeInitial: "MEX", homeColor: "#006847",
-    away: "South Africa", awayLogo: "https://media.api-sports.io/flags/za.svg", awayInitial: "RSA", awayColor: "#007A4D",
-    homeScore: 0, awayScore: 0, league: "FIFA World Cup 2026 - Opening Match",
-    date: "June 11, 2026",
-    time: "10:00 PM EAT", kickoffAt: new Date("2026-06-11T19:00:00Z").getTime(),
-    venue: "Estadio Azteca, Mexico City",
-  };
-
-  const WC26_GROUP_FALLBACK = {
-    id: "wc26-group-stage",
-    home: "Morocco", homeLogo: "https://media.api-sports.io/flags/ma.svg", homeInitial: "MAR", homeColor: "#C1272D",
-    away: "Senegal", awayLogo: "https://media.api-sports.io/flags/sn.svg", awayInitial: "SEN", awayColor: "#00853F",
-    time: "Group Stage On",
-    league: "FIFA World Cup 2026",
-    venue: "USA · Canada · Mexico",
-  };
-
-  const wc26TickerFallback = useMemo(() => wc26.isLive ? [
-    { id: "wc26-t1", home: "Morocco",   away: "Senegal",    time: "WC26" },
-    { id: "wc26-t2", home: "Nigeria",   away: "Egypt",      time: "WC26" },
-    { id: "wc26-t3", home: "S. Africa", away: "Mexico",     time: "WC26" },
-    { id: "wc26-t4", home: "Cameroon",  away: "Brazil",     time: "WC26" },
-    { id: "wc26-t5", home: "Tunisia",   away: "Argentina",  time: "WC26" },
-  ] : [], [wc26.isLive]);
+  // No stale pre-tournament fallbacks — show nothing rather than wrong teams
 
   const playableVideos = sportyVideos.filter(v => !blockedVideoIds.has(v.id));
   const heroVideo = pickHeroStream(playableVideos);
   const handleVideoUnavailable = (id: string) => setBlockedVideoIds(new Set(markVideoBlocked(id)));
 
   const liveMatch   = liveMatches[0] || null;
-  const nextFixture = upcomingFixtures[0] || (
-    Date.now() < WC26_OPENER.kickoffAt ? WC26_OPENER :
-    wc26.isLive ? WC26_GROUP_FALLBACK :
-    null
-  );
+  const nextFixture = upcomingFixtures[0] || null;
   const lastResult  = recentMatches[0] || null;
   const isMatchLive = !!liveMatch;
 
@@ -331,8 +302,8 @@ export default function HomePage() {
   const tickerArticles = useMemo(() => news.slice(0, 8), [news]);
   const tickerMatches  = useMemo(() => {
     const api = [...liveMatches, ...upcomingFixtures];
-    return (api.length > 0 ? api : wc26TickerFallback).slice(0, 8);
-  }, [liveMatches, upcomingFixtures, wc26TickerFallback]);
+    return api.slice(0, 8);
+  }, [liveMatches, upcomingFixtures]);
 
   return (
     <div className="pb-24">

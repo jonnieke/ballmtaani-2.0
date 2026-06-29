@@ -42,15 +42,6 @@ const LEAGUE_LOGOS: Record<string, string> = {
   "Kenyan Premier League":"https://media.api-sports.io/football/leagues/357.png",
 };
 
-// ── Fallback fixture data ─────────────────────────────────────────────────────
-const WC26_OPENING_FIXTURES = [
-  { home: "Mexico",    away: "South Africa", date: "Jun 11", time: "22:00", kickoff: "22:00", league: "World Cup 2026", id: "wc26-1" },
-  { home: "USA",       away: "Colombia",     date: "Jun 12", time: "01:00", kickoff: "01:00", league: "World Cup 2026", id: "wc26-2" },
-  { home: "Canada",    away: "Venezuela",    date: "Jun 12", time: "16:00", kickoff: "16:00", league: "World Cup 2026", id: "wc26-3" },
-  { home: "Brazil",    away: "Germany",      date: "Jun 13", time: "19:00", kickoff: "19:00", league: "World Cup 2026", id: "wc26-4" },
-  { home: "Argentina", away: "Morocco",      date: "Jun 14", time: "22:00", kickoff: "22:00", league: "World Cup 2026", id: "wc26-5" },
-  { home: "France",    away: "England",      date: "Jun 14", time: "01:00", kickoff: "01:00", league: "World Cup 2026", id: "wc26-6" },
-];
 
 const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = {
   "Group A": [
@@ -752,7 +743,7 @@ export default function MatchesPage() {
   const { data: upcomingFixtures = [], isFetching: upcomingFetching } = useUpcomingFixtures();
   const { data: standings = {} as Record<string, any[]>, isFetching: standingsFetching } = useStandings();
 
-  const fixturesWithFallback = useMemo(() => upcomingFixtures.length ? upcomingFixtures : WC26_OPENING_FIXTURES, [upcomingFixtures]);
+  const fixturesWithFallback = useMemo(() => upcomingFixtures, [upcomingFixtures]);
   const standingsWithFallback = useMemo(() => {
     if (!Object.keys(standings).length) return WC26_GROUPS;
     // If API returned league standings but WC26 groups failed, inject static groups as fallback
@@ -802,7 +793,8 @@ export default function MatchesPage() {
     const allMatches = [...liveMatches, ...recentMatches, ...fixturesWithFallback];
     const counts: Record<string, number> = {};
     for (const m of allMatches) {
-      if (m.league) counts[m.league] = (counts[m.league] || 0) + 1;
+      const league = m.league === "FIFA World Cup" ? "World Cup 2026" : m.league;
+      if (league) counts[league] = (counts[league] || 0) + 1;
     }
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
