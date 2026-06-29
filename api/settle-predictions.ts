@@ -20,11 +20,18 @@ function direction(home: number, away: number): "home" | "draw" | "away" {
   return "draw";
 }
 
+interface FixtureResult {
+  homeScore: number;
+  awayScore: number;
+  home: string;
+  away: string;
+}
+
 async function fetchFixtureResults(
   matchIds: string[],
   apiKey: string,
-): Promise<Record<string, { homeScore: number; awayScore: number }>> {
-  const results: Record<string, { homeScore: number; awayScore: number }> = {};
+): Promise<Record<string, FixtureResult>> {
+  const results: Record<string, FixtureResult> = {};
 
   for (let i = 0; i < matchIds.length; i += BATCH_SIZE) {
     const batch = matchIds.slice(i, i + BATCH_SIZE);
@@ -40,6 +47,8 @@ async function fetchFixtureResults(
         results[String(item.fixture.id)] = {
           homeScore: item.goals.home ?? 0,
           awayScore: item.goals.away ?? 0,
+          home: item.teams?.home?.name || "Home",
+          away: item.teams?.away?.name || "Away",
         };
       }
     } catch {
@@ -124,9 +133,13 @@ export default async function handler(req: any, res: any) {
   const matchIds = allMatchIds.filter(id => /^\d+$/.test(id));
   const fixtureResults = await fetchFixtureResults(matchIds, apiKey);
 
-  // 3. Settle each prediction and collect coin credits per user
+  // 3. Settle each prediction; collect results and coin credits per user
   let settled = 0;
   const coinCredits: Record<string, number> = {};
+
+  // Track every settled result per user so we can send one smart push
+  interface UserResult { result: string; coinsAwarded: number; matchLabel: string; actualScore: string }
+  const userResults: Record<string, UserResult[]> = {};
 
   for (const prediction of pending) {
     const actual = fixtureResults[String(prediction.match_id)];
@@ -156,35 +169,75 @@ export default async function handler(req: any, res: any) {
       coins_awarded: coinsAwarded,
     });
 
-    if (ok) {
+    if (ok && prediction.user_id) {
       settled++;
-      if (coinsAwarded > 0 && prediction.user_id) {
+      if (coinsAwarded > 0) {
         coinCredits[prediction.user_id] = (coinCredits[prediction.user_id] || 0) + coinsAwarded;
       }
+      if (!userResults[prediction.user_id]) userResults[prediction.user_id] = [];
+      userResults[prediction.user_id].push({
+        result,
+        coinsAwarded,
+        matchLabel: `${actual.home} vs ${actual.away}`,
+        actualScore: actualScoreStr,
+      });
     }
   }
 
-  // 4. Increment coins in profiles for each earning user + send receipt push
+  // 4. Credit coins + send one tailored push to every affected user
   const base = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000";
 
   const pushResults: { userId: string; ok: boolean }[] = [];
 
+  // Credit coins first
   for (const [userId, amount] of Object.entries(coinCredits)) {
     const profiles = await sbGet(`/profiles?id=eq.${userId}&select=coins`);
     const current = Array.isArray(profiles) && profiles[0] ? (profiles[0].coins || 0) : 0;
     await sbPatch(`/profiles?id=eq.${userId}`, { coins: current + amount });
+  }
 
-    // Notify the user their call settled with coins
+  // Send one push per user covering all their settled predictions
+  for (const [userId, results] of Object.entries(userResults)) {
+    const totalCoins = coinCredits[userId] || 0;
+    const correct  = results.filter(r => r.result === "correct").length;
+    const partial  = results.filter(r => r.result === "partial").length;
+    const missed   = results.filter(r => r.result === "missed").length;
+
+    let title: string;
+    let body: string;
+
+    if (results.length === 1) {
+      const r = results[0];
+      if (r.result === "correct") {
+        title = "✅ You nailed it!";
+        body  = `${r.matchLabel} ended ${r.actualScore}. +${r.coinsAwarded} MTC earned.`;
+      } else if (r.result === "partial") {
+        title = "👌 Right result, wrong score";
+        body  = `${r.matchLabel} ended ${r.actualScore}. +${r.coinsAwarded} MTC earned.`;
+      } else {
+        title = "❌ Tough one";
+        body  = `${r.matchLabel} ended ${r.actualScore}. Better call next match.`;
+      }
+    } else {
+      // Multiple predictions settled — send a summary
+      const parts: string[] = [];
+      if (correct > 0) parts.push(`${correct} exact`);
+      if (partial > 0) parts.push(`${partial} right result`);
+      if (missed  > 0) parts.push(`${missed} missed`);
+      title = totalCoins > 0 ? `⚽ ${results.length} predictions settled` : `⚽ ${results.length} predictions settled`;
+      body  = parts.join(" · ") + (totalCoins > 0 ? ` — +${totalCoins} MTC earned` : " — Check your receipts");
+    }
+
     try {
       const pushRes = await fetch(`${base}/api/push-send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
-          title: "✅ Receipt In — You Called It!",
-          body: `+${amount} MTC earned. Check your receipts.`,
+          title,
+          body,
           url: "/predictions",
           tag: `settle-${userId}-${Date.now()}`,
         }),
