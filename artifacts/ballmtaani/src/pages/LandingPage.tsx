@@ -80,7 +80,7 @@ const DATA_LEAGUES = [
 const FEATURE_LINKS = [
   { href: "/matches", label: "Data Center", sub: "Fixtures, tables, results", icon: BarChart3 },
   { href: "/live-center", label: "Live Center", sub: "Match pulse", icon: Radio },
-  { href: "/world-cup-2026", label: "WC26", sub: "Groups, venues, fixtures", icon: Trophy },
+  { href: "/world-cup-2026", label: "WC26", sub: "Knockout bracket & fixtures", icon: Trophy },
   { href: "/mchambuzi-halisi", label: "Mchambuzi", sub: "Ask the analyst", icon: Sparkles },
   { href: "/predictions", label: "Predictions", sub: "Make your call", icon: Goal },
   { href: "/market-watch", label: "Market Watch", sub: "Signals, not betting", icon: ShieldCheck },
@@ -925,7 +925,7 @@ function WC26HeroBanner() {
             href="/world-cup-2026"
             className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-5 py-3 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10"
           >
-            {isActive ? "Live Groups & Scores" : "Groups & Fixtures"}
+            {isActive ? "Knockout Bracket" : "Groups & Fixtures"}
           </Link>
         </div>
         {/* Google sign-in CTA — only for logged-out fans */}
@@ -1453,8 +1453,12 @@ export default function LandingPage() {
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#FFD700]/20 bg-[#0a0800]/96 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_30px_rgba(0,0,0,0.6)]">
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-black text-[#FFD700] leading-tight">⚽ WC26 kicks off in 4 days</p>
-              <p className="text-[10px] text-white/40">Join free — make your bold calls before June 11</p>
+              <p className="text-xs font-black text-[#FFD700] leading-tight">
+                {Date.now() >= WC26_START.getTime() ? "⚽ WC26 Knockout Rounds Live" : "⚽ WC26 kicks off Jun 11"}
+              </p>
+              <p className="text-[10px] text-white/40">
+                {Date.now() >= WC26_START.getTime() ? "Join free — predict every knockout match" : "Join free — make your bold calls before June 11"}
+              </p>
             </div>
             <GoogleSignInButton size="sm" label="Join · Google" />
           </div>

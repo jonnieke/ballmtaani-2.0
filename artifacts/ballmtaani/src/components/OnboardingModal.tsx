@@ -23,7 +23,7 @@ const STEPS = [
     id: "wc26",
     badge: "🏆",
     title: "World Cup Is Here",
-    subtitle: "Group stage kicks off June 11. Lock your first prediction before kickoff and keep the receipt.",
+    subtitle: "Knockout rounds are live. Make your bold call on every match and keep the receipt.",
     color: "#FFD700",
     action: "Make First Call",
     route: "/predictions",
