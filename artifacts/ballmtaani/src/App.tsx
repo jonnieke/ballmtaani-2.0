@@ -74,8 +74,9 @@ function PageLoader() {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 0, // Disable retries — we have fallbacks (mock data, cached data, empty state)
-      // When API fails, show empty state instead of retrying 3x and hammering the API
+      retry: 0,                    // Fallbacks handle failure — no retry hammering
+      staleTime: 30_000,           // Don't refetch data younger than 30s (matches proxy burst cache)
+      refetchOnWindowFocus: false, // Don't burst all queries when user switches tabs
     },
   },
 });
