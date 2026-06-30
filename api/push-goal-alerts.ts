@@ -13,6 +13,7 @@
 
 import { loadEnv } from "./_env-loader";
 import { createClient } from "@supabase/supabase-js";
+import { sendTelegramMessage, teamFlag } from "./_telegram";
 
 loadEnv();
 
@@ -122,6 +123,7 @@ export default async function handler(req: any, res: any) {
     const bodyParts = [league, elapsed ? `${elapsed}'` : null].filter(Boolean);
 
     try {
+      // ── Push notification ──────────────────────────────────────────────
       const sendRes = await fetch(`${base}/api/push-send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,13 +138,32 @@ export default async function handler(req: any, res: any) {
       if (sendRes.ok) {
         const result = await sendRes.json() as any;
         totalSent += result?.sent ?? 0;
-
-        // Mark this score state as alerted so we don't fire again
-        await supabase.from("push_alerts_sent").insert({
-          fixture_id: goalKey(fixture.fixture.id, hGoals, aGoals),
-          sent_at: new Date().toISOString(),
-        }).then(() => {}); // fire-and-forget insert, unique violation is fine
       }
+
+      // ── Telegram alert ─────────────────────────────────────────────────
+      const hf    = teamFlag(home);
+      const af    = teamFlag(away);
+      const round = fixture.league?.round as string | undefined;
+      const roundClean = round ? round.replace(/\s*-\s*\d+$/, "").trim() : null;
+      const link  = isWC ? "https://ballmtaani.com/world-cup-2026" : "https://ballmtaani.com/matches";
+
+      const tgLines = [
+        `⚽ <b>GOAL!</b> · <i>${league}</i>`,
+        ``,
+        `${hf} <b>${home} ${hGoals} – ${aGoals} ${away}</b> ${af}`,
+        [elapsed ? `⏱ ${elapsed}'` : null, roundClean].filter(Boolean).join(" · "),
+        ``,
+        `📊 <a href="${link}">Live on BallMtaani</a>`,
+      ].filter(line => line !== null).join("\n");
+
+      // Telegram fire-and-forget — don't block push dedup on its result
+      sendTelegramMessage(tgLines, { disableWebPagePreview: true }).catch(() => {});
+
+      // Mark this score state as alerted so we don't fire again
+      await supabase.from("push_alerts_sent").insert({
+        fixture_id: goalKey(fixture.fixture.id, hGoals, aGoals),
+        sent_at: new Date().toISOString(),
+      }).then(() => {}); // fire-and-forget insert, unique violation is fine
     } catch {
       // Non-fatal: one fixture failing shouldn't stop the rest
     }
