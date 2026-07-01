@@ -30,10 +30,11 @@ function json(res: any, status: number, body: unknown) {
   res.end(JSON.stringify(body));
 }
 
-// Parse KES amount from item name e.g. "Airtime 50 KES" → 50
+// Parse KES amount from item name — handles "Ksh 50 Airtime" and "50 KES" formats
 function parseKesFromName(name: string): number | null {
-  const m = String(name).match(/(\d+)\s*KES/i);
-  return m ? parseInt(m[1], 10) : null;
+  const m = String(name).match(/(?:Ksh|KSH|KES)\s*(\d+)|(\d+)\s*(?:Ksh|KSH|KES)/i);
+  const raw = m?.[1] ?? m?.[2];
+  return raw ? parseInt(raw, 10) : null;
 }
 
 async function refundCoins(admin: ReturnType<typeof createClient>, userId: string, amount: number) {
