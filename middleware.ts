@@ -1,4 +1,17 @@
-/// <reference lib="webworker" />
+// Edge Runtime globals — declared inline because tsconfig.base.json sets "types":[]
+// which prevents the webworker lib reference from being reliably resolved by Vercel's build.
+declare class Request {
+  readonly url: string;
+  readonly headers: { get(name: string): string | null };
+}
+declare class Response {
+  constructor(body: string, init?: { headers?: Record<string, string>; status?: number });
+}
+declare class URL {
+  constructor(input: string);
+  readonly pathname: string;
+}
+
 /**
  * Vercel Edge Middleware — bot SEO injection
  *
