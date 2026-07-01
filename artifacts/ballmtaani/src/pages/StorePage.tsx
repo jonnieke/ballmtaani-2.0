@@ -58,6 +58,7 @@ export default function StorePage() {
   const [redeemForm, setRedeemForm] = useState<RedemptionForm>({ contact_phone: "", delivery_name: "", delivery_address: "", notes: "" });
   const [redeemSubmitting, setRedeemSubmitting] = useState(false);
   const [redeemDone, setRedeemDone] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) { setRewardLoading(false); return; }
@@ -70,9 +71,46 @@ export default function StorePage() {
   const needsAddress = (cat: string) => cat === "merch";
   const needsPhone   = (cat: string) => cat === "airtime" || cat === "data";
 
+  const resetRedeemModal = () => {
+    setRedeemingItem(null);
+    setRedeemForm({ contact_phone: "", delivery_name: "", delivery_address: "", notes: "" });
+    setRedeemError(null);
+  };
+
   async function submitRedemption() {
     if (!redeemingItem || !user || !supabase) return;
     setRedeemSubmitting(true);
+    setRedeemError(null);
+
+    // Airtime & data: server-side API handles Credofaster call + atomic coin deduction
+    if (needsPhone(redeemingItem.category)) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) { setRedeemSubmitting(false); setRedeemError("Session expired — please log in again."); return; }
+
+        const res = await fetch("/api/redeem-airtime", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ itemId: redeemingItem.id, phone: redeemForm.contact_phone, notes: redeemForm.notes || null }),
+        });
+        const data = await res.json() as any;
+
+        if (res.ok) {
+          updateCoins(-redeemingItem.cost_mtc);
+          setRedeemDone(true);
+          setTimeout(resetRedeemModal, 3500);
+        } else {
+          setRedeemError(data?.error ?? "Redemption failed — please try again.");
+        }
+      } catch {
+        setRedeemError("Network error — check your connection and try again.");
+      }
+      setRedeemSubmitting(false);
+      return;
+    }
+
+    // Merch: direct Supabase insert (fulfilled manually by admin within 3–7 days)
     await supabase.from("reward_redemptions").insert({
       user_id: user.id,
       user_email: user.email || null,
@@ -90,7 +128,7 @@ export default function StorePage() {
     updateCoins(-redeemingItem.cost_mtc);
     setRedeemSubmitting(false);
     setRedeemDone(true);
-    setTimeout(() => { setRedeemDone(false); setRedeemingItem(null); setRedeemForm({ contact_phone: "", delivery_name: "", delivery_address: "", notes: "" }); }, 3000);
+    setTimeout(resetRedeemModal, 3500);
   }
 
   const history = getCoinHistory();
@@ -190,7 +228,7 @@ export default function StorePage() {
               <span className="text-2xl">🤝</span>
               <div>
                 <p className="text-xs font-black text-[#FFD700]">In partnership with credoFaster</p>
-                <p className="text-[10px] text-white/40">Airtime &amp; data bundles delivered instantly to any Kenyan network</p>
+                <p className="text-[10px] text-white/40">Airtime &amp; data bundles delivered instantly to your Kenyan number</p>
               </div>
             </div>
 
@@ -247,7 +285,7 @@ export default function StorePage() {
             )}
 
             <p className="text-center text-[10px] text-white/20">
-              Earn MTC by predicting matches, winning duels and participating in debates. Real rewards are processed within 24 hours.
+              Earn MTC by predicting matches, winning duels and participating in debates. Airtime delivered instantly · Merch ships within 3–7 days.
             </p>
           </div>
         )}
@@ -367,7 +405,7 @@ export default function StorePage() {
 
     {/* ── Redemption modal ── */}
     {redeemingItem && (
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center p-4" onClick={e => e.target === e.currentTarget && setRedeemingItem(null)}>
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center p-4" onClick={e => e.target === e.currentTarget && resetRedeemModal()}>
         <div className="w-full max-w-md overflow-hidden rounded-t-2xl border border-white/10 bg-[#0d1018] sm:rounded-2xl">
           {redeemDone ? (
             <div className="flex flex-col items-center gap-4 py-12 px-6 text-center">
@@ -384,7 +422,7 @@ export default function StorePage() {
                   <span className="text-xl">{CATEGORY_EMOJI[redeemingItem.category]}</span>
                   <h2 className="text-sm font-black text-white">{redeemingItem.name}</h2>
                 </div>
-                <button onClick={() => setRedeemingItem(null)} className="text-white/30 hover:text-white"><X className="h-4 w-4" /></button>
+                <button onClick={resetRedeemModal} className="text-white/30 hover:text-white"><X className="h-4 w-4" /></button>
               </div>
 
               <div className="space-y-3 p-5">
@@ -440,12 +478,18 @@ export default function StorePage() {
                 </div>
 
                 <p className="text-[10px] text-white/25">
-                  {redeemingItem.category === "merch" ? "Delivery within Kenya only. Allow 3–7 business days." : "Processed within 24 hours courtesy of credoFaster."}
+                  {needsPhone(redeemingItem.category) ? "Airtime delivered instantly via credoFaster to any Kenyan network." : "Delivery within Kenya only. Allow 3–7 business days."}
                 </p>
+
+                {redeemError && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-xs text-red-400 font-bold">
+                    ⚠ {redeemError}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 border-t border-white/6 p-4">
-                <button onClick={() => setRedeemingItem(null)} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white/40 hover:text-white">Cancel</button>
+                <button onClick={resetRedeemModal} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white/40 hover:text-white">Cancel</button>
                 <button onClick={submitRedemption} disabled={redeemSubmitting ||
                   (needsPhone(redeemingItem.category) && !redeemForm.contact_phone) ||
                   (needsAddress(redeemingItem.category) && (!redeemForm.delivery_name || !redeemForm.delivery_address))}
