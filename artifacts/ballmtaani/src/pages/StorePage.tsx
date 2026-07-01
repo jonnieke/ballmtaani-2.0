@@ -228,7 +228,7 @@ export default function StorePage() {
               <span className="text-2xl">🤝</span>
               <div>
                 <p className="text-xs font-black text-[#FFD700]">In partnership with credoFaster</p>
-                <p className="text-[10px] text-white/40">Airtime &amp; data bundles delivered instantly to your Kenyan number</p>
+                <p className="text-[10px] text-white/40">Airtime &amp; data bundles sent to your Kenyan number within 24 hours</p>
               </div>
             </div>
 
@@ -285,7 +285,7 @@ export default function StorePage() {
             )}
 
             <p className="text-center text-[10px] text-white/20">
-              Earn MTC by predicting matches, winning duels and participating in debates. Airtime delivered instantly · Merch ships within 3–7 days.
+              Earn MTC by predicting matches, winning duels and participating in debates. Airtime within 24 hours · Merch ships within 3–7 days.
             </p>
           </div>
         )}
@@ -478,7 +478,7 @@ export default function StorePage() {
                 </div>
 
                 <p className="text-[10px] text-white/25">
-                  {needsPhone(redeemingItem.category) ? "Airtime delivered instantly via credoFaster to any Kenyan network." : "Delivery within Kenya only. Allow 3–7 business days."}
+                  {needsPhone(redeemingItem.category) ? "Sent to your number within 24 hours via credoFaster. Any Kenyan network." : "Delivery within Kenya only. Allow 3–7 business days."}
                 </p>
 
                 {redeemError && (
