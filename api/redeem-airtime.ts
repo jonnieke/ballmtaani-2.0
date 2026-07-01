@@ -38,10 +38,10 @@ function parseKesFromName(name: string): number | null {
   return raw ? parseInt(raw, 10) : null;
 }
 
-async function refundCoins(admin: ReturnType<typeof createClient>, userId: string, amount: number) {
-  const { error } = await admin.rpc("refund_coins", { p_user_id: userId, p_amount: amount });
+async function refundCoins(admin: any, userId: string, amount: number) {
+  const { error } = await (admin as any).rpc("refund_coins", { p_user_id: userId, p_amount: amount });
   if (error) {
-    const { data: p } = await admin.from("profiles").select("coins").eq("id", userId).single() as any;
+    const { data: p } = await admin.from("profiles").select("coins").eq("id", userId).single();
     const cur = (p as any)?.coins ?? 0;
     await admin.from("profiles").update({ coins: cur + amount }).eq("id", userId);
   }
@@ -93,7 +93,7 @@ export default async function handler(req: any, res: any) {
   }
 
   // ── 4. Atomic coin deduction ───────────────────────────────────────────────
-  const { data: rpcResult, error: rpcErr } = await admin.rpc("deduct_coins", {
+  const { data: rpcResult, error: rpcErr } = await (admin as any).rpc("deduct_coins", {
     p_user_id: user.id,
     p_amount:  item.cost_mtc,
   });
