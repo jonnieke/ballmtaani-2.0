@@ -38,6 +38,15 @@ const STEPS = [
     route: "/fan-zones",
   },
   {
+    id: "rewards",
+    badge: "📱",
+    title: "Win Real Airtime",
+    subtitle: "Every prediction, vote and debate earns MTC coins. Redeem for real Safaricom, Airtel or Telkom airtime — starting from Ksh 50.",
+    color: "#FFD700",
+    action: "See My Rewards",
+    route: "/store",
+  },
+  {
     id: "invite",
     badge: "📲",
     title: "Bring Your Crew",
@@ -169,6 +178,23 @@ export function OnboardingModal() {
           )}
 
           {step === 3 && (
+            <div className="mb-6 space-y-1.5 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/6 px-4 py-3">
+              {[
+                ["Daily login",         "+50 MTC"],
+                ["Correct prediction",  "+75 MTC"],
+                ["Trivia answer",       "+15 MTC"],
+                ["Invite a friend",    "+500 MTC"],
+              ].map(([label, coins]) => (
+                <div key={label} className="flex items-center justify-between text-xs">
+                  <span className="text-white/55">{label}</span>
+                  <span className="font-black text-[#FFD700]">{coins}</span>
+                </div>
+              ))}
+              <p className="pt-1 text-[10px] text-white/35">Redeem from <span className="font-black text-[#FFD700]">Ksh 50 airtime</span> — any Kenyan network.</p>
+            </div>
+          )}
+
+          {step === 4 && (
             <div className="mb-6 rounded-xl border border-green-500/25 bg-green-500/8 px-4 py-3 text-sm text-white/80">
               Earn <span className="font-black text-green-400">+500 MTC</span> for every fan who joins through your link.
             </div>

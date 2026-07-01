@@ -1419,6 +1419,40 @@ export default function LandingPage() {
             {/* KPL standings hidden — API-Football returns incorrect (Czech) data for league 686 */}
             {/* TODO: Fix KPL league ID mapping with API-Football or use alternate data source */}
 
+            {/* ── Rewards Engine CTA ── */}
+            <section className="relative overflow-hidden rounded-xl border border-[#FFD700]/20 bg-[#0d0b00] p-4">
+              <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-[#FFD700]/8 blur-2xl" />
+              <div className="relative z-10">
+                <p className="mb-1 text-[9px] font-black uppercase tracking-[0.22em] text-[#FFD700]/50">🤝 Powered by credoFaster</p>
+                <h3 className="text-base font-black uppercase leading-tight tracking-tight text-white">
+                  Earn Coins.<br />Win Airtime.
+                </h3>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-white/45">
+                  Predict matches, join debates & vote daily to earn MTC coins. Redeem for real Kenyan airtime — from <span className="font-black text-[#FFD700]">Ksh 50</span> on any network.
+                </p>
+
+                <div className="my-3 space-y-1.5 border-t border-white/5 pt-3">
+                  {[
+                    ["Daily login",         "+50 MTC"],
+                    ["Correct prediction",  "+75 MTC"],
+                    ["Invite a friend",    "+500 MTC"],
+                  ].map(([label, coins]) => (
+                    <div key={label} className="flex items-center justify-between text-[10px]">
+                      <span className="text-white/40">{label}</span>
+                      <span className="font-black text-[#FFD700]">{coins}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/store"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#FFD700] px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-black transition-all hover:bg-yellow-300 active:scale-95"
+                >
+                  Redeem from Ksh 50 <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </section>
+
             {eplStandings.length > 0 && (
               <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
                 <div className="border-b border-white/10 px-3 py-2.5">
@@ -1454,10 +1488,10 @@ export default function LandingPage() {
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black text-[#FFD700] leading-tight">
-                {Date.now() >= WC26_START.getTime() ? "⚽ WC26 Knockout Rounds Live" : "⚽ WC26 kicks off Jun 11"}
+                {Date.now() >= WC26_START.getTime() ? "⚽ WC26 Live · Predict & Win Ksh 50 Airtime" : "⚽ WC26 kicks off Jun 11 · Earn real airtime"}
               </p>
               <p className="text-[10px] text-white/40">
-                {Date.now() >= WC26_START.getTime() ? "Join free — predict every knockout match" : "Join free — make your bold calls before June 11"}
+                Join free — earn MTC coins and redeem for airtime on any Kenyan network
               </p>
             </div>
             <GoogleSignInButton size="sm" label="Join · Google" />
