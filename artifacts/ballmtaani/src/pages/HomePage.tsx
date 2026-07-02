@@ -615,6 +615,51 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* ── Rewards + AI strip (above Match Hub) ── */}
+      <section className="border-b border-white/6 bg-[#07060a] py-4">
+        <div className="mx-auto max-w-6xl space-y-3 px-4">
+          {/* Airtime rewards strip */}
+          <Link href="/store" className="group flex items-center gap-4 rounded-2xl border border-[#FFD700]/25 bg-[#0c0a00]/80 px-5 py-4 transition-all hover:border-[#FFD700]/45 hover:bg-[#0c0a00]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFD700]/12 text-2xl">📱</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-widest text-white">Earn MTC Coins · Redeem Real Airtime</p>
+              <p className="mt-0.5 text-[10px] text-white/40">Predict matches &amp; vote daily → redeem from <span className="font-black text-[#FFD700]">Ksh 50</span> on any Kenyan network · Powered by credoFaster</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  { icon: Target,        label: "Predict",    pts: "+50 MTC" },
+                  { icon: Swords,        label: "Duel Win",   pts: "+200 MTC" },
+                  { icon: TrendingUp,    label: "Daily Login", pts: "+50 MTC" },
+                  { icon: MessageSquare, label: "Debate",     pts: "+30 MTC" },
+                ].map(({ icon: Icon, label, pts }) => (
+                  <div key={label} className="flex items-center gap-1 rounded-lg border border-white/8 bg-white/[0.03] px-2 py-1">
+                    <Icon className="h-2.5 w-2.5 shrink-0 text-[#FFD700]/55" />
+                    <span className="text-[9px] font-bold text-white/40">{label}</span>
+                    <span className="text-[9px] font-black text-[#FFD700]/75">{pts}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="shrink-0">
+              <span className="rounded-xl bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black shadow-[0_0_16px_rgba(255,214,0,0.3)] transition-all group-hover:shadow-[0_0_24px_rgba(255,214,0,0.5)]">
+                Redeem Now
+              </span>
+            </div>
+          </Link>
+
+          {/* Mchambuzi AI card */}
+          <Link href="/ai-fan-zone"
+            className="group flex items-center gap-4 overflow-hidden rounded-2xl border border-[#FFD700]/25 bg-gradient-to-r from-[#FFD700]/10 to-transparent px-5 py-4 transition-all hover:border-[#FFD700]/45 hover:from-[#FFD700]/16">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFD700]/12 text-xl">🤖</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/60">Mchambuzi Halisi · AI Fan Zone</div>
+              <div className="mt-0.5 text-sm font-black uppercase tracking-tight text-white">Got a burning WC26 question?</div>
+              <div className="mt-0.5 text-[11px] text-white/42">Ask the AI analyst — squads, groups, dark horses, predictions.</div>
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-[#FFD700]/50" />
+          </Link>
+        </div>
+      </section>
+
       {/* ── 5. MATCH HUB ── */}
       <section className="border-b border-white/6 bg-[#0B0B0B] py-8">
         <div className="mx-auto max-w-6xl px-4">
@@ -884,33 +929,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Rewards strip — prominent airtime CTA */}
-          <Link href="/store" className="mt-6 group flex items-center gap-4 rounded-2xl border border-[#FFD700]/25 bg-[#0c0a00]/80 px-5 py-4 transition-all hover:border-[#FFD700]/45 hover:bg-[#0c0a00]">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFD700]/12 text-2xl">📱</div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-black uppercase tracking-widest text-white">Earn MTC Coins · Redeem Real Airtime</p>
-              <p className="mt-0.5 text-[10px] text-white/40">Predict matches &amp; vote daily → redeem from <span className="font-black text-[#FFD700]">Ksh 50</span> on any Kenyan network · Powered by credoFaster</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {[
-                  { icon: Target,        label: "Predict", pts: "+50 MTC" },
-                  { icon: Swords,        label: "Duel Win", pts: "+200 MTC" },
-                  { icon: TrendingUp,    label: "Daily Login", pts: "+50 MTC" },
-                  { icon: MessageSquare, label: "Debate", pts: "+30 MTC" },
-                ].map(({ icon: Icon, label, pts }) => (
-                  <div key={label} className="flex items-center gap-1 rounded-lg border border-white/8 bg-white/[0.03] px-2 py-1">
-                    <Icon className="h-2.5 w-2.5 text-[#FFD700]/55 shrink-0" />
-                    <span className="text-[9px] font-bold text-white/40">{label}</span>
-                    <span className="text-[9px] font-black text-[#FFD700]/75">{pts}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="shrink-0">
-              <span className="rounded-xl bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black shadow-[0_0_16px_rgba(255,214,0,0.3)] transition-all group-hover:shadow-[0_0_24px_rgba(255,214,0,0.5)]">
-                Redeem Now
-              </span>
-            </div>
-          </Link>
         </div>
       </section>
 
@@ -1022,17 +1040,6 @@ export default function HomePage() {
               </div>
             );
           })()}
-
-          <Link href="/ai-fan-zone"
-            className="mt-6 flex items-center gap-4 overflow-hidden rounded-2xl border border-[#FFD700]/25 bg-gradient-to-r from-[#FFD700]/10 to-transparent px-5 py-4 transition-all hover:border-[#FFD700]/45 hover:from-[#FFD700]/16">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFD700]/12 text-xl">🤖</div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/60">Mchambuzi Halisi · AI Fan Zone</div>
-              <div className="mt-0.5 text-sm font-black uppercase tracking-tight text-white">Got a burning WC26 question?</div>
-              <div className="mt-0.5 text-[11px] text-white/42">Ask the AI analyst — squads, groups, dark horses, predictions.</div>
-            </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-[#FFD700]/50" />
-          </Link>
 
           <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {[
