@@ -153,7 +153,7 @@ export default function NewsPage() {
             <div className="mb-4 grid grid-cols-3 gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-2">
               {[
                 { href: "/news",      icon: Newspaper,  label: "Read",       sub: "Mtaa Daily",   active: true,  color: "#B30000" },
-                { href: "/matches",   icon: BarChart2,  label: "Data",       sub: "Centre",       active: false, color: "#1E6FFF" },
+                { href: "/data-centre", icon: BarChart2,  label: "Data",       sub: "Centre",       active: false, color: "#1E6FFF" },
                 { href: "/fun-zone",  icon: Gamepad2,   label: "Play",       sub: "Fun Zone",     active: false, color: "#22c55e" },
               ].map(({ href, icon: Icon, label, sub, active, color }) => (
                 <Link key={href} href={href}
@@ -443,7 +443,7 @@ export default function NewsPage() {
           {!loading && (
             <div className="mt-12 grid grid-cols-3 gap-3 border-t border-white/6 pt-8">
               {[
-                { href: "/matches",  icon: BarChart2,  label: "Data Centre",  sub: "Live scores, fixtures & standings",  color: "#1E6FFF" },
+                { href: "/data-centre", icon: BarChart2, label: "Data Centre",  sub: "Live scores, fixtures & standings",  color: "#1E6FFF" },
                 { href: "/fun-zone", icon: Gamepad2,   label: "Fun Zone",     sub: "Trivia, duels, rapid fire & more",   color: "#22c55e" },
                 { href: "/store",    icon: Newspaper,  label: "Earn MTC",     sub: "Predict & redeem for airtime",       color: "#FFD700" },
               ].map(({ href, icon: Icon, label, sub, color }) => (

@@ -21,6 +21,7 @@ import { lazy, Suspense } from "react";
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 
+const DataCentrePage     = lazy(() => import("./pages/DataCentrePage"));
 const MatchesPage        = lazy(() => import("./pages/MatchesPage"));
 const PredictionsPage    = lazy(() => import("./pages/PredictionsPage"));
 const DebatesPage        = lazy(() => import("./pages/DebatesPage"));
@@ -128,6 +129,7 @@ function AppShell() {
             <Route path="/login" component={LoginPage} />
             <Route path="/verify" component={VerifyOTPPage} />
             <Route path="/auth/callback" component={AuthCallbackPage} />
+            <Route path="/data-centre" component={DataCentrePage} />
             <Route path="/matches" component={MatchesPage} />
             <Route path="/market-watch" component={MarketWatchPage} />
             <Route path="/predictions" component={PredictionsPage} />
