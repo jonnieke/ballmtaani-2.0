@@ -6,6 +6,7 @@ import { getCoinHistory, getTodayEarnings } from "../lib/coin-history";
 import { COIN_REWARDS } from "../lib/coins-config";
 import { InviteWidget } from "../components/InviteWidget";
 import { supabase } from "../lib/supabase";
+import { analytics } from "../lib/analytics";
 
 type StoreTab = "wallet" | "redeem" | "rewards";
 
@@ -98,6 +99,7 @@ export default function StorePage() {
 
         if (res.ok) {
           updateCoins(-redeemingItem.cost_mtc);
+          analytics.airtimeRedeemed(redeemingItem.cost_mtc);
           setRedeemDone(true);
           setTimeout(resetRedeemModal, 3500);
         } else {

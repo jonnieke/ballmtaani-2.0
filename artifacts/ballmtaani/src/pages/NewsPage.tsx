@@ -5,6 +5,7 @@ import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
 import { fetchTodaysFixtures } from "../lib/football-api";
 import { ExternalLink, Search, Clock, ChevronRight, BarChart2, Gamepad2, Newspaper } from "lucide-react";
 import SEO from "../components/SEO";
+import { analytics } from "../lib/analytics";
 
 interface PartnerArticle {
   id: string;
@@ -235,6 +236,7 @@ export default function NewsPage() {
               )}
               <Link
                 href={heroHref}
+                onClick={() => analytics.articleRead("partner", activeTab)}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-[#cc0000] active:scale-95"
               >
                 Read Story <ChevronRight className="h-3.5 w-3.5" />
@@ -273,7 +275,7 @@ export default function NewsPage() {
               {coverStory && (
                 <section className="mb-10">
                   <SectionRule label={activeTab === "WC26 Desk" ? "WC26 Desk · Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle · Top Story" : "Cover Story"} accent />
-                  <Link href={`/article/${coverStory.slug}`} className="group block">
+                  <Link href={`/article/${coverStory.slug}`} onClick={() => analytics.articleRead("partner", activeTab)} className="group block">
                     <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "21/9" }}>
                       <img
                         src={coverStory.thumbnail_url || DEFAULT_IMG}
@@ -322,7 +324,7 @@ export default function NewsPage() {
                   <SectionRule label="Features" />
                   <div className={`grid gap-5 ${features.length === 1 ? "" : "sm:grid-cols-2"}`}>
                     {features.map(a => (
-                      <Link key={a.id} href={`/article/${a.slug}`}
+                      <Link key={a.id} href={`/article/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
                         className="group overflow-hidden rounded-xl border border-white/7 bg-[#0c0f17] transition-all duration-200 hover:border-white/14 hover:shadow-xl hover:shadow-black/40">
                         <div className="relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
                           <img
@@ -365,7 +367,7 @@ export default function NewsPage() {
                   <SectionRule label="More Stories" />
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {interior.map(a => (
-                      <Link key={a.id} href={`/article/${a.slug}`}
+                      <Link key={a.id} href={`/article/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
                         className="group flex gap-3.5 rounded-xl border border-white/[0.06] bg-[#0c0f17] p-3 transition-all hover:border-white/12 hover:bg-[#0f131e]">
                         <div className="relative h-[4.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-lg">
                           <img
@@ -409,6 +411,7 @@ export default function NewsPage() {
                   <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 sm:gap-x-10 lg:gap-x-12 divide-y divide-white/[0.05] sm:divide-y-0">
                     {filteredRss.map((a, i) => (
                       <a key={a.id} href={a.link} target="_blank" rel="noopener noreferrer"
+                        onClick={() => analytics.articleRead(a.source || "rss", activeTab)}
                         className="group flex items-start gap-3 py-4 border-b border-white/[0.05] last:border-0 transition-colors hover:bg-transparent">
                         <span className="mt-0.5 shrink-0 text-[10px] font-black tabular-nums text-white/10 w-5">
                           {String(i + 1).padStart(2, "0")}
