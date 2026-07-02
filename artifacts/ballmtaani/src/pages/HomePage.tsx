@@ -19,6 +19,7 @@ import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import { motion } from "framer-motion";
 import HeroTicker from "../components/HeroTicker";
+import SponsorSlot from "../components/SponsorSlot";
 
 const WC26_START = new Date("2026-06-11T17:00:00Z");
 const WC26_END   = new Date("2026-07-20T00:00:00Z");
@@ -484,6 +485,11 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* ── SPONSOR SLOT — homepage hero ── */}
+      <div className="mx-auto max-w-6xl px-4 py-3">
+        <SponsorSlot placement="homepage-hero" />
+      </div>
 
       {/* ── 3. PERSONALIZATION STRIP (logged-in only) ── */}
       {isLoggedIn && (

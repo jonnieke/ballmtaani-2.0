@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import { Radio, Calendar, ChevronRight, TrendingUp, Target, Trophy, Clock, BarChart2 } from "lucide-react";
+import SponsorSlot from "../components/SponsorSlot";
 import { useMatches, useUpcomingFixtures, useRecentMatches, useStandings } from "../hooks/useData";
 import { fetchTodaysFixtures, fetchWC26TopScorers } from "../lib/football-api";
 import TeamLogo from "../components/TeamLogo";
@@ -404,6 +405,9 @@ export default function DataCentrePage() {
                   <ChevronRight className="h-4 w-4 shrink-0 text-white/25 transition-colors group-hover:text-white/60" />
                 </Link>
               </section>
+
+              {/* SPONSOR SLOT */}
+              <SponsorSlot placement="data-centre-sidebar" />
 
             </div>
           </div>

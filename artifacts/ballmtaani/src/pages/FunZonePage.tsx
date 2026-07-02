@@ -3,6 +3,8 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Gamepad2, Sparkles } from "lucide-react";
 import SEO from "../components/SEO";
+import SponsorSlot from "../components/SponsorSlot";
+import { analytics } from "../lib/analytics";
 
 // ─── Game catalogue — every card links to a live feature ───────────────────────
 // Card art generated via Vertex AI — regenerate with: node scripts/gen-funzone-cards.mjs
@@ -80,6 +82,7 @@ function GameCard({ game, index }: { game: (typeof GAMES)[number]; index: number
     >
       <Link
         href={game.href}
+        onClick={() => analytics.gameStarted(game.tag)}
         className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/8 bg-[#0c111a] transition-all duration-200 hover:-translate-y-1 hover:border-white/20"
         style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.4)" }}
       >
@@ -155,6 +158,11 @@ export default function FunZonePage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── SPONSOR SLOT — fun zone ── */}
+      <div className="mx-auto max-w-6xl px-4 pb-2 pt-4">
+        <SponsorSlot placement="fun-zone-hero" />
+      </div>
 
       {/* ── Game grid ── */}
       <section className="mx-auto max-w-6xl px-4 py-10">

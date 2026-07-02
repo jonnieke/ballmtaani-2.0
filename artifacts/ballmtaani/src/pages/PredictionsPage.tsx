@@ -9,6 +9,7 @@ import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 import { WC26BracketCard } from "../components/WC26BracketCard";
+import { analytics } from "../lib/analytics";
 
 const WC26_SPECIAL_ID = "wc26-2026-winner";
 const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
@@ -586,6 +587,7 @@ export default function PredictionsPage() {
                           onClick={() => {
                             const text = `⚽ I called ${fixture.home} ${hScore}–${aScore} ${fixture.away} on BallMtaani.\n\nReceipt locked. Make your call → https://ballmtaani.com/predictions`;
                             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                            analytics.shareWhatsapp("prediction");
                           }}
                           className="flex items-center gap-1.5 bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366]/20 text-[#25D366] font-black uppercase tracking-widest text-[9px] px-3 py-3 rounded-xl transition-all"
                           title="Share to WhatsApp"
