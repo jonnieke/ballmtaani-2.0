@@ -823,7 +823,7 @@ export default function HomePage() {
               <p className="ml-4 mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/28">WC26 First · Breaking Headlines</p>
             </div>
             <Link href="/news" className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
-              All News <ChevronRight className="h-3.5 w-3.5" />
+              Mtaa Daily <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 

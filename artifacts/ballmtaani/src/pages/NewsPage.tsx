@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
-import { ExternalLink, Search, Clock, ChevronRight } from "lucide-react";
+import { fetchTodaysFixtures } from "../lib/football-api";
+import { ExternalLink, Search, Clock, ChevronRight, BarChart2, Gamepad2, Newspaper } from "lucide-react";
 import SEO from "../components/SEO";
 
 interface PartnerArticle {
@@ -25,12 +26,23 @@ function readTime(text?: string | null) {
   return `${Math.max(1, Math.round(text.split(/\s+/).length / 200))} min`;
 }
 
+const TAB_KEYWORDS: Record<string, string[]> = {
+  "WC26 Desk":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+  "Analysis":         ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
+  "Match Reports":    ["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
+  "Kenyan Fan Angle": ["arsenal", "chelsea", "man utd", "man united", "liverpool", "man city", "manchester city", "real madrid", "barcelona", "bayern", "harambee", "gor mahia", "afc leopards", "tusker", "kenya", "nairobi", "kpl", "simba"],
+  "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
+};
+
+const TABS = ["Front Page", "WC26 Desk", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
+
 export default function NewsPage() {
   const [partner, setPartner] = useState<PartnerArticle[]>([]);
   const [rss, setRss] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("All");
+  const [activeTab, setActiveTab] = useState("Front Page");
+  const [fixtures, setFixtures] = useState<any[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -38,68 +50,63 @@ export default function NewsPage() {
         ? supabase.from("articles").select("id,slug,title,excerpt,thumbnail_url,author_name,partner_team_name,tags,is_wc26,published_at").eq("status", "published").order("published_at", { ascending: false }).limit(50).then(({ data }) => (data as PartnerArticle[]) || [])
         : Promise.resolve([]),
       fetchFootballNews(),
-    ]).then(([p, r]) => {
+      fetchTodaysFixtures(),
+    ]).then(([p, r, f]) => {
       setPartner(p);
       setRss(r);
+      setFixtures((f || []).slice(0, 6));
       setLoading(false);
     });
   }, []);
 
   const q = query.toLowerCase();
 
-  // Keyword sets for each tab — checked against title, tags, and partner_team_name
-  const TAB_KEYWORDS: Record<string, string[]> = {
-    "WC26":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
-    "Analysis":    ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
-    "Match Reports":["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
-    "Africa":      ["africa", "afcon", "caf", "kenya", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire"],
-    "East Africa": ["kenya", "tanzania", "uganda", "rwanda", "ethiopia", "harambee stars", "gor mahia", "afc leopards", "tusker", "simba", "yanga", "villa sc", "kpl", "ligi kuu", "fufa", "cecafa"],
-  };
-
   function matchesTab(text: string): boolean {
-    if (activeTab === "All") return true;
+    if (activeTab === "Front Page" || activeTab === "Wire") return true;
     const kws = TAB_KEYWORDS[activeTab];
     if (!kws) return true;
     const t = text.toLowerCase();
     return kws.some(k => t.includes(k));
   }
 
-  const filteredPartner = partner.filter(a => {
+  const filteredPartner = activeTab === "Wire" ? [] : partner.filter(a => {
     const haystack = [a.title, a.partner_team_name || "", ...(a.tags || [])].join(" ");
     const matchesQuery = !q || haystack.toLowerCase().includes(q);
-    return matchesQuery && (
-      activeTab === "All" ||
-      (activeTab === "WC26" && a.is_wc26) ||
-      matchesTab(haystack)
-    );
-  });
-
-  const filteredRss = rss.filter(a => {
-    const haystack = `${a.title} ${a.source} ${a.description || ""}`;
-    const matchesQuery = !q || haystack.toLowerCase().includes(q);
     if (!matchesQuery) return false;
-    if (activeTab === "WC26") return !!(a.isWC26 || matchesTab(haystack));
+    if (activeTab === "WC26 Desk") return a.is_wc26 || matchesTab(haystack);
     return matchesTab(haystack);
   });
+
+  const filteredRss = activeTab !== "Wire" && activeTab !== "Front Page"
+    ? rss.filter(a => {
+        const haystack = `${a.title} ${a.source} ${a.description || ""}`;
+        const matchesQuery = !q || haystack.toLowerCase().includes(q);
+        if (!matchesQuery) return false;
+        if (activeTab === "WC26 Desk") return !!(a.isWC26 || matchesTab(haystack));
+        return matchesTab(haystack);
+      })
+    : rss.filter(a => {
+        if (!q) return true;
+        return `${a.title} ${a.source}`.toLowerCase().includes(q);
+      });
 
   const coverStory = filteredPartner[0];
   const features   = filteredPartner.slice(1, 3);
   const interior   = filteredPartner.slice(3);
 
-  // Hero uses the latest cover story image when available, else the stadium fallback
-  const heroImg = partner[0]?.thumbnail_url || DEFAULT_IMG;
-  const heroTitle = partner[0]?.title || "Africa's World Cup. Every Story. Right Here.";
+  const heroImg      = partner[0]?.thumbnail_url || DEFAULT_IMG;
+  const heroTitle    = partner[0]?.title || "Africa's World Cup. Every Story. Right Here.";
   const heroSubtitle = partner[0]?.excerpt || null;
-  const heroHref = partner[0]?.slug ? `/article/${partner[0].slug}` : "/world-cup-2026";
+  const heroHref     = partner[0]?.slug ? `/article/${partner[0].slug}` : "/world-cup-2026";
 
+  const today = new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
   const edition = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
-  const TABS = ["All", "WC26", "Analysis", "Match Reports", "Africa", "East Africa"];
 
   return (
     <>
       <SEO
-        title="The Touchline | BallMtaani"
-        description="Latest football news, partner articles and breaking headlines on BallMtaani — Kenya's loudest fan room."
+        title="Mtaa Daily | BallMtaani — Football for the Kenyan Fan"
+        description="Today's football newspaper for Kenyan fans. Match recaps, World Cup explainers, Kenyan fan angles, live fixtures and weekly receipts — on BallMtaani."
         path="/news"
       />
 
@@ -114,14 +121,16 @@ export default function NewsPage() {
               <div className="flex items-center gap-2.5">
                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B30000]">BallMtaani</span>
                 <span className="text-white/12">·</span>
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/22">Edition {edition}</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/22">Mtaa Daily</span>
+                <span className="text-white/12">·</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/18">{today}</span>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-white/22" />
                 <input
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Search..."
+                  placeholder="Search stories..."
                   className="w-36 rounded-lg border border-white/8 bg-white/[0.04] py-1.5 pl-8 pr-3 text-xs text-white placeholder-white/18 focus:border-white/18 focus:outline-none sm:w-52"
                 />
               </div>
@@ -129,15 +138,32 @@ export default function NewsPage() {
 
             {/* Wordmark */}
             <div className="pb-4 text-center">
-              <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi</p>
+              <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi · {edition}</p>
               <h1 className="text-[clamp(2.6rem,8vw,5rem)] font-black uppercase leading-none tracking-[0.03em] text-white">
-                BallMtaani News
+                Mtaa Daily
               </h1>
               <div className="mt-2 flex items-center justify-center gap-3">
                 <div className="h-px w-16 bg-white/10" />
-                <p className="text-[9px] font-bold uppercase tracking-[0.38em] text-white/22">Football journalism for the Kenyan fan</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.38em] text-white/22">Today's football newspaper for the Kenyan fan</p>
                 <div className="h-px w-16 bg-white/10" />
               </div>
+            </div>
+
+            {/* Platform doors — Read / Data / Play */}
+            <div className="mb-4 grid grid-cols-3 gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-2">
+              {[
+                { href: "/news",      icon: Newspaper,  label: "Read",       sub: "Mtaa Daily",   active: true,  color: "#B30000" },
+                { href: "/matches",   icon: BarChart2,  label: "Data",       sub: "Centre",       active: false, color: "#1E6FFF" },
+                { href: "/fun-zone",  icon: Gamepad2,   label: "Play",       sub: "Fun Zone",     active: false, color: "#22c55e" },
+              ].map(({ href, icon: Icon, label, sub, active, color }) => (
+                <Link key={href} href={href}
+                  className={`flex flex-col items-center gap-1 rounded-lg py-2.5 transition-all ${active ? "bg-white/8" : "hover:bg-white/5"}`}>
+                  <Icon className="h-4 w-4" style={{ color: active ? color : "rgba(255,255,255,0.3)" }} />
+                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: active ? "white" : "rgba(255,255,255,0.35)" }}>
+                    {label} <span style={{ color: active ? color : "rgba(255,255,255,0.2)" }}>{sub}</span>
+                  </span>
+                </Link>
+              ))}
             </div>
 
           </div>
@@ -162,6 +188,29 @@ export default function NewsPage() {
           </div>
         </div>
 
+        {/* ── TODAY'S MATCHES STRIP (front page only) ── */}
+        {activeTab === "Front Page" && fixtures.length > 0 && (
+          <div className="border-b border-white/6 bg-[#04060a] py-3">
+            <div className="mx-auto max-w-6xl px-4">
+              <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
+                <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.28em] text-white/30">Today ·</span>
+                {fixtures.map((m: any) => (
+                  <Link key={m.id} href="/matches"
+                    className="flex shrink-0 items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-1.5 transition-all hover:border-white/15">
+                    <span className="text-[10px] font-bold text-white/50">{m.home}</span>
+                    <span className="text-[9px] font-black text-white/22">vs</span>
+                    <span className="text-[10px] font-bold text-white/50">{m.away}</span>
+                    {m.time && <span className="text-[9px] font-black text-[#FFD700]/70">{m.time}</span>}
+                  </Link>
+                ))}
+                <Link href="/matches" className="shrink-0 text-[9px] font-black uppercase tracking-widest text-[#B30000] hover:underline">
+                  All Fixtures →
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── EDITORIAL HERO ── */}
         <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6", minHeight: 140 }}>
           <img
@@ -176,7 +225,7 @@ export default function NewsPage() {
           <div className="relative z-10 flex h-full items-center px-6 sm:px-10 lg:px-16">
             <div className="max-w-xl">
               <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">
-                {partner[0]?.is_wc26 ? "WC26 · Latest" : "Latest Story"}
+                {partner[0]?.is_wc26 ? "WC26 Desk · Latest" : "Front Page · Latest"}
               </p>
               <h2 className="mb-3 text-xl font-black leading-tight text-white sm:text-2xl lg:text-3xl line-clamp-2">
                 {heroTitle}
@@ -209,7 +258,7 @@ export default function NewsPage() {
             <div className="flex flex-col items-center gap-4 py-24 text-center">
               <div className="text-4xl font-black text-white/10">⚽</div>
               <p className="font-black uppercase tracking-widest text-white/20">
-                {query ? `No results for "${query}"` : "No articles yet"}
+                {query ? `No results for "${query}"` : "No stories yet in this section"}
               </p>
               {query && (
                 <button onClick={() => setQuery("")} className="text-xs text-[#B30000] underline hover:text-white transition-colors">
@@ -220,10 +269,10 @@ export default function NewsPage() {
           ) : (
             <>
 
-              {/* ══ COVER STORY ══════════════════════════════════════════ */}
+              {/* ══ COVER STORY ══ */}
               {coverStory && (
                 <section className="mb-10">
-                  <SectionRule label="Cover Story" accent />
+                  <SectionRule label={activeTab === "WC26 Desk" ? "WC26 Desk · Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle · Top Story" : "Cover Story"} accent />
                   <Link href={`/article/${coverStory.slug}`} className="group block">
                     <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "21/9" }}>
                       <img
@@ -234,7 +283,6 @@ export default function NewsPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#05070d] via-[#05070d]/55 to-transparent" />
                       <div className="absolute inset-0 bg-gradient-to-r from-[#05070d]/85 via-[#05070d]/30 to-transparent" />
-
                       <div className="absolute bottom-0 left-0 p-6 sm:p-8 lg:p-10 max-w-2xl lg:max-w-3xl">
                         <div className="mb-3 flex flex-wrap items-center gap-2">
                           {coverStory.is_wc26 && (
@@ -268,7 +316,7 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ FEATURES ═════════════════════════════════════════════ */}
+              {/* ══ FEATURES ══ */}
               {features.length > 0 && (
                 <section className="mb-10">
                   <SectionRule label="Features" />
@@ -311,7 +359,7 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ MORE STORIES ═════════════════════════════════════════ */}
+              {/* ══ MORE STORIES ══ */}
               {interior.length > 0 && (
                 <section className="mb-12">
                   <SectionRule label="More Stories" />
@@ -344,10 +392,20 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ WIRE / RSS HEADLINES ════════════════════════════════ */}
+              {/* ══ SPONSOR SLOT ══ */}
+              {activeTab === "Front Page" && (
+                <div className="mb-8 flex items-center justify-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-3">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/18">Mtaa Daily is powered by</span>
+                  <span className="rounded border border-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white/25">Your Brand Here</span>
+                  <a href="mailto:info@ballmtaani.com" className="text-[8px] font-black uppercase tracking-widest text-[#B30000]/50 hover:text-[#B30000] transition-colors">Sponsor →</a>
+                </div>
+              )}
+
+              {/* ══ WIRE / RSS HEADLINES ══ */}
               {filteredRss.length > 0 && (
                 <section>
                   <SectionRule label="Wire · Football Headlines" dim />
+                  <p className="mb-4 text-[9px] font-bold uppercase tracking-widest text-white/18">External sources — clearly marked</p>
                   <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 sm:gap-x-10 lg:gap-x-12 divide-y divide-white/[0.05] sm:divide-y-0">
                     {filteredRss.map((a, i) => (
                       <a key={a.id} href={a.link} target="_blank" rel="noopener noreferrer"
@@ -379,6 +437,29 @@ export default function NewsPage() {
               )}
 
             </>
+          )}
+
+          {/* ── BOTTOM PLATFORM DOORS ── */}
+          {!loading && (
+            <div className="mt-12 grid grid-cols-3 gap-3 border-t border-white/6 pt-8">
+              {[
+                { href: "/matches",  icon: BarChart2,  label: "Data Centre",  sub: "Live scores, fixtures & standings",  color: "#1E6FFF" },
+                { href: "/fun-zone", icon: Gamepad2,   label: "Fun Zone",     sub: "Trivia, duels, rapid fire & more",   color: "#22c55e" },
+                { href: "/store",    icon: Newspaper,  label: "Earn MTC",     sub: "Predict & redeem for airtime",       color: "#FFD700" },
+              ].map(({ href, icon: Icon, label, sub, color }) => (
+                <Link key={href} href={href}
+                  className="group flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-4 text-center transition-all hover:border-white/14 hover:bg-white/5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: color + "18" }}>
+                    <Icon className="h-5 w-5" style={{ color }} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wide text-white">{label}</span>
+                  <span className="text-[9px] leading-snug text-white/30">{sub}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest transition-colors" style={{ color }}>
+                    Open →
+                  </span>
+                </Link>
+              ))}
+            </div>
           )}
         </div>
       </div>

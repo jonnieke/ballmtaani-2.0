@@ -32,9 +32,9 @@ export function Navbar() {
 
   const menuCategories = [
     {
-      label: "News",
+      label: "Mtaa Daily",
       links: [
-        { href: "/news", label: "All Stories" },
+        { href: "/news", label: "Mtaa Daily" },
         { href: "/videos", label: "Videos" },
         { href: "/world-cup-2026", label: "WC26 Hub" },
         { href: "/search", label: "Search" },

@@ -12,8 +12,8 @@ const SEO_ROUTES: Record<string, {
     keywords: ["Kenya football", "live football scores Kenya", "World Cup 2026 Kenya", "BallMtaani", "KPL", "Premier League Kenya", "Africa WC26"],
   },
   "/news": {
-    title: "BallMtaani News | Kenyan Football — WC26, KPL, Premier League & Africa",
-    description: "Latest football news for Kenyan fans — World Cup 2026 updates, KPL match reports, Premier League analysis, Africa football and Harambee Stars coverage on BallMtaani.",
+    title: "Mtaa Daily | BallMtaani — Today's Football for the Kenyan Fan",
+    description: "Today's football newspaper for Kenyan fans — World Cup 2026 desk, match reports, Kenyan fan angles, Africa coverage and wire headlines on BallMtaani Mtaa Daily.",
     keywords: ["Kenya football news", "World Cup 2026 news", "KPL news", "Premier League news Kenya", "Africa football news", "BallMtaani news", "Harambee Stars"],
   },
   "/videos": {
