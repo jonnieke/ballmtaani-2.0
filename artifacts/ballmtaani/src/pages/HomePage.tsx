@@ -403,11 +403,14 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-3">
                 {!isLoggedIn ? (
                   <>
-                    <GoogleSignInButton size="lg" label="Join Free · Make Your Call" />
+                    <GoogleSignInButton size="lg" label="Join Free · Get 50 MTC" />
                     <Link href="/world-cup-2026"
                       className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-5 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/65 hover:bg-[#FFD700]/10 active:scale-95">
                       WC26 Hub <ChevronRight className="h-4 w-4" />
                     </Link>
+                    <p className="w-full text-[10px] text-white/38 mt-1">
+                      ✓ Free to join · <span className="font-black text-[#FFD700]">50 MTC</span> on sign-up · Redeem for real Kenyan airtime
+                    </p>
                   </>
                 ) : (
                   <>
@@ -425,6 +428,10 @@ export default function HomePage() {
                     <Link href="/predictions"
                       className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:bg-white/10 active:scale-95">
                       Make Your Call
+                    </Link>
+                    <Link href="/store"
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-[#FFD700]/8 px-5 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/65 hover:bg-[#FFD700]/15 active:scale-95">
+                      📱 Redeem Airtime
                     </Link>
                   </>
                 )}
@@ -877,33 +884,33 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Earn strip */}
-          <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/6 bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { icon: Target,       label: "Predict Match", pts: "+50 MTC" },
-                { icon: Swords,       label: "Win a Duel",    pts: "+200 MTC" },
-                { icon: TrendingUp,   label: "Daily Login",   pts: "+50 MTC" },
-                { icon: MessageSquare,label: "Join Debate",   pts: "+30 MTC" },
-              ].map(({ icon: Icon, label, pts }) => (
-                <div key={label} className="flex items-center gap-1.5 rounded-lg border border-white/6 bg-white/3 px-2.5 py-1.5">
-                  <Icon className="h-3 w-3 text-[#FFD700]/60 shrink-0" />
-                  <span className="text-[10px] font-bold text-white/50">{label}</span>
-                  <span className="text-[10px] font-black text-[#FFD700]/80">{pts}</span>
-                </div>
-              ))}
+          {/* Rewards strip — prominent airtime CTA */}
+          <Link href="/store" className="mt-6 group flex items-center gap-4 rounded-2xl border border-[#FFD700]/25 bg-[#0c0a00]/80 px-5 py-4 transition-all hover:border-[#FFD700]/45 hover:bg-[#0c0a00]">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFD700]/12 text-2xl">📱</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-black uppercase tracking-widest text-white">Earn MTC Coins · Redeem Real Airtime</p>
+              <p className="mt-0.5 text-[10px] text-white/40">Predict matches &amp; vote daily → redeem from <span className="font-black text-[#FFD700]">Ksh 50</span> on any Kenyan network · Powered by credoFaster</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  { icon: Target,        label: "Predict", pts: "+50 MTC" },
+                  { icon: Swords,        label: "Duel Win", pts: "+200 MTC" },
+                  { icon: TrendingUp,    label: "Daily Login", pts: "+50 MTC" },
+                  { icon: MessageSquare, label: "Debate", pts: "+30 MTC" },
+                ].map(({ icon: Icon, label, pts }) => (
+                  <div key={label} className="flex items-center gap-1 rounded-lg border border-white/8 bg-white/[0.03] px-2 py-1">
+                    <Icon className="h-2.5 w-2.5 text-[#FFD700]/55 shrink-0" />
+                    <span className="text-[9px] font-bold text-white/40">{label}</span>
+                    <span className="text-[9px] font-black text-[#FFD700]/75">{pts}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link href="/store"
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/50 transition-all hover:bg-white/10 hover:text-white">
-                My Balance
-              </Link>
-              <Link href="/store"
-                className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,214,0,0.25)] transition-all hover:shadow-[0_0_30px_rgba(255,214,0,0.4)] active:scale-[0.98]">
-                View Rewards <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
+            <div className="shrink-0">
+              <span className="rounded-xl bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black shadow-[0_0_16px_rgba(255,214,0,0.3)] transition-all group-hover:shadow-[0_0_24px_rgba(255,214,0,0.5)]">
+                Redeem Now
+              </span>
             </div>
-          </div>
+          </Link>
         </div>
       </section>
 
