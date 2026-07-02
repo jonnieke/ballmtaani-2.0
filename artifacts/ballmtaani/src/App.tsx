@@ -15,49 +15,72 @@ import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
 import { lazy, Suspense } from "react";
 
+// ─── Stale-chunk guard ────────────────────────────────────────────────────────
+// After a Vercel deploy, old content-hashed chunk filenames (e.g. MatchesPage-Dn2FWjK6.js)
+// no longer exist. If a lazy import 404s, do one hard reload to pick up the new
+// HTML (which references the new filenames). A sessionStorage flag stops loops.
+function lazyPage<T extends React.ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> {
+  return lazy(async () => {
+    try {
+      return await importFn();
+    } catch {
+      const KEY = "chunk_reload_attempted";
+      if (!sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+        return new Promise(() => {}); // block — reload is in flight
+      }
+      sessionStorage.removeItem(KEY);
+      throw new Error("Chunk load failed after reload — please hard-refresh (Ctrl+Shift+R).");
+    }
+  });
+}
+
 // ─── Route-level code splitting ───────────────────────────────────────────────
 // Each page is loaded only when navigated to — reduces initial bundle by ~50%
 // LandingPage and HomePage are eagerly loaded (most visited, need fast paint)
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/HomePage";
 
-const DataCentrePage     = lazy(() => import("./pages/DataCentrePage"));
-const MatchesPage        = lazy(() => import("./pages/MatchesPage"));
-const PredictionsPage    = lazy(() => import("./pages/PredictionsPage"));
-const DebatesPage        = lazy(() => import("./pages/DebatesPage"));
-const FanZonesPage       = lazy(() => import("./pages/FanZonesPage"));
-const LeaderboardPage    = lazy(() => import("./pages/LeaderboardPage"));
-const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
-const StorePage          = lazy(() => import("./pages/StorePage"));
-const LiveCenterPage     = lazy(() => import("./pages/LiveCenterPage"));
-const LiveCenterIndexPage= lazy(() => import("./pages/LiveCenterIndexPage"));
-const RivalriesPage      = lazy(() => import("./pages/RivalriesPage"));
-const RapidFirePage      = lazy(() => import("./pages/RapidFirePage"));
-const FunZonePage        = lazy(() => import("./pages/FunZonePage"));
-const TriviaPage         = lazy(() => import("./pages/TriviaPage"));
-const WarRoomPage        = lazy(() => import("./pages/WarRoomPage"));
-const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
-const TermsPage          = lazy(() => import("./pages/TermsPage"));
-const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
-const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
-const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
-const WorldCupBracketPage = lazy(() => import("./pages/WorldCupBracketPage"));
-const AIFanZonePage      = lazy(() => import("./pages/AIFanZonePage"));
-const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
-const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
-const ArticlePage        = lazy(() => import("./pages/ArticlePage"));
-const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
-const AdminArticlesPage  = lazy(() => import("./pages/AdminArticlesPage"));
-const AdminAdsPage       = lazy(() => import("./pages/AdminAdsPage"));
-const AdminPartnersPage  = lazy(() => import("./pages/AdminPartnersPage"));
-const AdminRolesPage     = lazy(() => import("./pages/AdminRolesPage"));
-const AdminRewardsPage   = lazy(() => import("./pages/AdminRewardsPage"));
-const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
-const SearchPage         = lazy(() => import("./pages/SearchPage"));
-const NewsPage           = lazy(() => import("./pages/NewsPage"));
-const VideosPage         = lazy(() => import("./pages/VideosPage"));
-const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
-const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
+const DataCentrePage     = lazyPage(() => import("./pages/DataCentrePage"));
+const MatchesPage        = lazyPage(() => import("./pages/MatchesPage"));
+const PredictionsPage    = lazyPage(() => import("./pages/PredictionsPage"));
+const DebatesPage        = lazyPage(() => import("./pages/DebatesPage"));
+const FanZonesPage       = lazyPage(() => import("./pages/FanZonesPage"));
+const LeaderboardPage    = lazyPage(() => import("./pages/LeaderboardPage"));
+const ProfilePage        = lazyPage(() => import("./pages/ProfilePage"));
+const StorePage          = lazyPage(() => import("./pages/StorePage"));
+const LiveCenterPage     = lazyPage(() => import("./pages/LiveCenterPage"));
+const LiveCenterIndexPage= lazyPage(() => import("./pages/LiveCenterIndexPage"));
+const RivalriesPage      = lazyPage(() => import("./pages/RivalriesPage"));
+const RapidFirePage      = lazyPage(() => import("./pages/RapidFirePage"));
+const FunZonePage        = lazyPage(() => import("./pages/FunZonePage"));
+const TriviaPage         = lazyPage(() => import("./pages/TriviaPage"));
+const WarRoomPage        = lazyPage(() => import("./pages/WarRoomPage"));
+const DiagnosticsPage    = lazyPage(() => import("./pages/DiagnosticsPage"));
+const TermsPage          = lazyPage(() => import("./pages/TermsPage"));
+const PrivacyPage        = lazyPage(() => import("./pages/PrivacyPage"));
+const WorldCup2026Page   = lazyPage(() => import("./pages/WorldCup2026Page"));
+const WorldCupGuidePage  = lazyPage(() => import("./pages/WorldCupGuidePage"));
+const WorldCupBracketPage= lazyPage(() => import("./pages/WorldCupBracketPage"));
+const AIFanZonePage      = lazyPage(() => import("./pages/AIFanZonePage"));
+const MarketWatchPage    = lazyPage(() => import("./pages/MarketWatchPage"));
+const MchambuziHalisiPage= lazyPage(() => import("./pages/MchambuziHalisiPage"));
+const ArticlePage        = lazyPage(() => import("./pages/ArticlePage"));
+const AdminDashboardPage = lazyPage(() => import("./pages/AdminDashboardPage"));
+const AdminArticlesPage  = lazyPage(() => import("./pages/AdminArticlesPage"));
+const AdminAdsPage       = lazyPage(() => import("./pages/AdminAdsPage"));
+const AdminPartnersPage  = lazyPage(() => import("./pages/AdminPartnersPage"));
+const AdminRolesPage     = lazyPage(() => import("./pages/AdminRolesPage"));
+const AdminRewardsPage   = lazyPage(() => import("./pages/AdminRewardsPage"));
+const AdminAnalyticsPage = lazyPage(() => import("./pages/AdminAnalyticsPage"));
+const SearchPage         = lazyPage(() => import("./pages/SearchPage"));
+const NewsPage           = lazyPage(() => import("./pages/NewsPage"));
+const VideosPage         = lazyPage(() => import("./pages/VideosPage"));
+const LoginPage          = lazyPage(() => import("./pages/auth/LoginPage"));
+const VerifyOTPPage      = lazyPage(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
 import WelcomeModal from "./components/WelcomeModal";
 import ProfileSetupModal from "./components/ProfileSetupModal";
