@@ -62,6 +62,8 @@ const WarRoomPage        = lazyPage(() => import("./pages/WarRoomPage"));
 const DiagnosticsPage    = lazyPage(() => import("./pages/DiagnosticsPage"));
 const TermsPage          = lazyPage(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazyPage(() => import("./pages/PrivacyPage"));
+const AboutPage          = lazyPage(() => import("./pages/AboutPage"));
+const ContactPage        = lazyPage(() => import("./pages/ContactPage"));
 const WorldCup2026Page   = lazyPage(() => import("./pages/WorldCup2026Page"));
 const WorldCupGuidePage  = lazyPage(() => import("./pages/WorldCupGuidePage"));
 const WorldCupBracketPage= lazyPage(() => import("./pages/WorldCupBracketPage"));
@@ -187,6 +189,8 @@ function AppShell() {
             <Route path="/search" component={SearchPage} />
             <Route path="/news" component={NewsPage} />
             <Route path="/videos" component={VideosPage} />
+            <Route path="/about" component={AboutPage} />
+            <Route path="/contact" component={ContactPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>
@@ -215,9 +219,17 @@ function AppShell() {
                 <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
                   Kenyan football fans predicting, debating, and keeping receipts around the biggest matches.
                 </p>
+                <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-6 text-xs text-gray-600">
+                  <a href="/about"   className="hover:text-gray-400 transition-colors">About</a>
+                  <a href="/contact" className="hover:text-gray-400 transition-colors">Contact</a>
+                  <a href="/news"    className="hover:text-gray-400 transition-colors">Mtaa Daily</a>
+                  <a href="/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
+                  <a href="/terms"   className="hover:text-gray-400 transition-colors">Terms</a>
+                  <a href="mailto:info@ballmtaani.com" className="hover:text-gray-400 transition-colors">info@ballmtaani.com</a>
+                </div>
               </>
             )}
-<p className="text-gray-600 text-xs">
+            <p className="text-gray-600 text-xs">
               (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
             </p>
           </div>

@@ -69,6 +69,13 @@ export function Navbar() {
         { href: "/fan-zones", label: "Fan Zones" },
         { href: "/leaderboard", label: "Leaderboard" },
       ]
+    },
+    {
+      label: "BallMtaani",
+      links: [
+        { href: "/about",   label: "About Us" },
+        { href: "/contact", label: "Contact" },
+      ]
     }
   ];
 
