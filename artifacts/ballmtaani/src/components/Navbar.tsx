@@ -34,8 +34,9 @@ export function Navbar() {
     {
       label: "Mtaa Daily",
       links: [
-        { href: "/news", label: "Mtaa Daily" },
-        { href: "/videos", label: "Videos" },
+        { href: "/news",     label: "Mtaa Daily" },
+        { href: "/articles", label: "All Articles" },
+        { href: "/videos",   label: "Videos" },
         { href: "/world-cup-2026", label: "WC26 Hub" },
         { href: "/search", label: "Search" },
       ]

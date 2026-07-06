@@ -29,6 +29,12 @@
 
   <!-- ── Mtaa Daily — editorial content ── -->
   <url>
+    <loc>https://ballmtaani.com/articles</loc>
+    <lastmod>2026-07-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://ballmtaani.com/news</loc>
     <lastmod>2026-07-06</lastmod>
     <changefreq>hourly</changefreq>

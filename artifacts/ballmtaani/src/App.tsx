@@ -64,6 +64,7 @@ const TermsPage          = lazyPage(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazyPage(() => import("./pages/PrivacyPage"));
 const AboutPage          = lazyPage(() => import("./pages/AboutPage"));
 const ContactPage        = lazyPage(() => import("./pages/ContactPage"));
+const ArticlesPage       = lazyPage(() => import("./pages/ArticlesPage"));
 const WorldCup2026Page   = lazyPage(() => import("./pages/WorldCup2026Page"));
 const WorldCupGuidePage  = lazyPage(() => import("./pages/WorldCupGuidePage"));
 const WorldCupBracketPage= lazyPage(() => import("./pages/WorldCupBracketPage"));
@@ -191,6 +192,7 @@ function AppShell() {
             <Route path="/videos" component={VideosPage} />
             <Route path="/about" component={AboutPage} />
             <Route path="/contact" component={ContactPage} />
+            <Route path="/articles" component={ArticlesPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>

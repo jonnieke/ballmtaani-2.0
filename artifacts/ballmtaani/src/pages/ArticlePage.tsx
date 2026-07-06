@@ -2,9 +2,22 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { timeAgo } from "../lib/news-api";
-import { ArrowLeft, Share2 } from "lucide-react";
+import { ArrowLeft, Share2, ChevronRight } from "lucide-react";
 import SEO from "../components/SEO";
 import ArticleEngagement from "../components/ArticleEngagement";
+
+interface RelatedArticle {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string | null;
+  author_name: string;
+  published_at: string;
+  is_wc26: boolean;
+}
+
+const DEFAULT_AUTHOR = "Mtaa Daily Desk";
 
 interface Article {
   id: string;
@@ -48,6 +61,7 @@ function readingTime(content: string): string {
 export default function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const [article, setArticle] = useState<Article | null>(null);
+  const [related, setRelated] = useState<RelatedArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -60,9 +74,30 @@ export default function ArticlePage() {
       .eq("status", "published")
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error || !data) setNotFound(true);
-        else setArticle(data as Article);
+        if (error || !data) { setNotFound(true); setLoading(false); return; }
+        setArticle(data as Article);
         setLoading(false);
+        // Fetch related articles — same is_wc26 flag, exclude current
+        supabase
+          .from("articles")
+          .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26")
+          .eq("status", "published")
+          .eq("is_wc26", (data as Article).is_wc26)
+          .neq("slug", slug)
+          .order("published_at", { ascending: false })
+          .limit(3)
+          .then(({ data: rel }) => {
+            if (rel && rel.length > 0) { setRelated(rel as RelatedArticle[]); return; }
+            // Fallback: any 3 recent articles
+            supabase
+              .from("articles")
+              .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26")
+              .eq("status", "published")
+              .neq("slug", slug)
+              .order("published_at", { ascending: false })
+              .limit(3)
+              .then(({ data: fallback }) => setRelated((fallback || []) as RelatedArticle[]));
+          });
       });
   }, [slug]);
 
@@ -103,6 +138,7 @@ export default function ArticlePage() {
   const formattedContent = normalizeContent(article.content);
   const mins = readingTime(article.content);
   const publishDate = new Date(article.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const authorName = (!article.author_name || article.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : article.author_name;
 
   return (
     <>
@@ -122,7 +158,7 @@ export default function ArticlePage() {
           "dateModified": article.published_at,
           "author": {
             "@type": "Person",
-            "name": article.author_name
+            "name": authorName
           },
           "publisher": {
             "@type": "Organization",
@@ -203,10 +239,10 @@ export default function ArticlePage() {
             <div className="flex items-center gap-3">
               {/* Author avatar */}
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#B30000]/20 text-[11px] font-black text-[#B30000]">
-                {article.author_name.slice(0, 2).toUpperCase()}
+                {authorName.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <p className="text-xs font-black text-white">{article.author_name}</p>
+                <p className="text-xs font-black text-white">{authorName}</p>
                 <p className="text-[10px] text-white/30">{publishDate} · {mins}</p>
               </div>
             </div>
@@ -301,6 +337,48 @@ export default function ArticlePage() {
             </div>
           </div>
         </div>
+
+        {/* ── MORE FROM MTAA DAILY ─────────────────────────────────── */}
+        {related.length > 0 && (
+          <div className="mx-auto max-w-2xl px-4 pb-4 sm:px-8 mt-14">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="border-l-4 border-[#B30000] pl-3 text-base font-black uppercase tracking-wide text-white">
+                More from Mtaa Daily
+              </h2>
+              <Link href="/news" className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#B30000] hover:underline">
+                All Stories <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {related.map(r => {
+                const rAuthor = (!r.author_name || r.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : r.author_name;
+                return (
+                  <Link key={r.id} href={`/article/${r.slug}`}
+                    className="group flex flex-col overflow-hidden rounded-xl border border-white/6 bg-[#0d1018] transition-all hover:border-white/14 hover:-translate-y-0.5">
+                    <div className="relative h-32 overflow-hidden">
+                      <img
+                        src={r.thumbnail_url || "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"}
+                        alt={r.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        onError={e => { (e.target as HTMLImageElement).src = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg"; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      {r.is_wc26 && (
+                        <span className="absolute left-2 top-2 rounded-full bg-[#FFD700] px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-black">WC26</span>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col p-3">
+                      <p className="mb-1 text-[9px] font-bold uppercase tracking-widest text-white/25">{timeAgo(r.published_at)}</p>
+                      <h3 className="flex-1 text-[12px] font-black leading-snug text-white line-clamp-3 group-hover:text-white/90">{r.title}</h3>
+                      <p className="mt-2 text-[9px] font-bold uppercase tracking-widest text-white/30">{rAuthor}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
       </div>
     </>

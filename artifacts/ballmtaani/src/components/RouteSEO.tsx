@@ -96,6 +96,11 @@ const SEO_ROUTES: Record<string, {
     description: "Track transfer stories, squad debates and football rumours with context, receipts and fan reaction.",
     keywords: ["football transfers Kenya", "transfer news", "football rumours", "BallMtaani war room"],
   },
+  "/articles": {
+    title: "All Articles | Mtaa Daily — BallMtaani Football Reporting",
+    description: "All original articles from Mtaa Daily — World Cup 2026 analysis, match reports, African football coverage and Kenyan fan perspectives from BallMtaani.",
+    keywords: ["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "WC26 analysis", "African football reporting"],
+  },
   "/about": {
     title: "About BallMtaani | Kenya's Football Community Platform",
     description: "BallMtaani is Kenya's home for football — live WC26 scores, Mtaa Daily original reporting, fan predictions, Mchambuzi AI analysis and real airtime rewards. Built in Nairobi for African fans.",
