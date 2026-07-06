@@ -927,6 +927,12 @@ function WC26HeroBanner() {
           >
             {isActive ? "Knockout Bracket" : "Groups & Fixtures"}
           </Link>
+          <Link
+            href="/store"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/40 px-5 py-3 text-sm font-black uppercase tracking-[0.1em] text-white/70 backdrop-blur-sm transition-all hover:border-white/35 hover:text-white"
+          >
+            📱 Redeem Airtime
+          </Link>
         </div>
         {/* Google sign-in CTA — only for logged-out fans */}
         {!isLoggedIn && (
@@ -1207,6 +1213,24 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Rewards Engine Strip ── always visible, all screen sizes */}
+        <Link href="/store" className="group mb-3 flex items-center gap-4 rounded-xl border border-[#FFD700]/20 bg-[#0d0b00] px-4 py-3 transition-all hover:border-[#FFD700]/40 hover:bg-[#0d0b00]/80">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFD700]/10 text-xl">📱</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-widest text-white">
+              Earn MTC Coins · Redeem Real Airtime
+            </p>
+            <p className="mt-0.5 text-[10px] text-white/40">
+              Predict matches &amp; vote daily → redeem from <span className="font-black text-[#FFD700]">Ksh 50</span> on any Kenyan network · Powered by credoFaster
+            </p>
+          </div>
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <span className="rounded-lg bg-[#FFD700] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-black group-hover:bg-yellow-300 transition-colors">
+              Redeem Now
+            </span>
+          </div>
+        </Link>
+
         {/* Data-first match cards — only render when real data exists */}
         <div className="mb-3 grid gap-3 lg:grid-cols-2">
           <LiveNowCard matches={matches} />
@@ -1418,40 +1442,6 @@ export default function LandingPage() {
             <aside className={`space-y-3 transition-all duration-300 ${eplStandings.length > 0 ? 'opacity-100' : 'opacity-75'}`}>
             {/* KPL standings hidden — API-Football returns incorrect (Czech) data for league 686 */}
             {/* TODO: Fix KPL league ID mapping with API-Football or use alternate data source */}
-
-            {/* ── Rewards Engine CTA ── */}
-            <section className="relative overflow-hidden rounded-xl border border-[#FFD700]/20 bg-[#0d0b00] p-4">
-              <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-[#FFD700]/8 blur-2xl" />
-              <div className="relative z-10">
-                <p className="mb-1 text-[9px] font-black uppercase tracking-[0.22em] text-[#FFD700]/50">🤝 Powered by credoFaster</p>
-                <h3 className="text-base font-black uppercase leading-tight tracking-tight text-white">
-                  Earn Coins.<br />Win Airtime.
-                </h3>
-                <p className="mt-1.5 text-[11px] leading-relaxed text-white/45">
-                  Predict matches, join debates & vote daily to earn MTC coins. Redeem for real Kenyan airtime — from <span className="font-black text-[#FFD700]">Ksh 50</span> on any network.
-                </p>
-
-                <div className="my-3 space-y-1.5 border-t border-white/5 pt-3">
-                  {[
-                    ["Daily login",         "+50 MTC"],
-                    ["Correct prediction",  "+75 MTC"],
-                    ["Invite a friend",    "+500 MTC"],
-                  ].map(([label, coins]) => (
-                    <div key={label} className="flex items-center justify-between text-[10px]">
-                      <span className="text-white/40">{label}</span>
-                      <span className="font-black text-[#FFD700]">{coins}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href="/store"
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#FFD700] px-3 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-black transition-all hover:bg-yellow-300 active:scale-95"
-                >
-                  Redeem from Ksh 50 <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
-            </section>
 
             {eplStandings.length > 0 && (
               <section className="overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
