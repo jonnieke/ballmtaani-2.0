@@ -196,6 +196,24 @@ export default async function handler(req: any, res: any) {
     const profiles = await sbGet(`/profiles?id=eq.${userId}&select=coins`);
     const current = Array.isArray(profiles) && profiles[0] ? (profiles[0].coins || 0) : 0;
     await sbPatch(`/profiles?id=eq.${userId}`, { coins: current + amount });
+
+    // Notify the user their call settled with coins
+    try {
+      const pushRes = await fetch(`${base}/api/push-send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          title: "✅ Receipt In — You Called It!",
+          body: `+${amount} MTC earned. Check your receipts.`,
+          url: "/predictions",
+          tag: `settle-${userId}-${Date.now()}`,
+        }),
+      });
+      pushResults.push({ userId, ok: pushRes.ok });
+    } catch {
+      pushResults.push({ userId, ok: false });
+    }
   }
 
   // Send one push per user covering all their settled predictions

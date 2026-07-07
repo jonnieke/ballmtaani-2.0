@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useMatches, useUpcomingFixtures } from "../hooks/useData";
 import { Link } from "wouter";
 
@@ -36,7 +36,11 @@ export function ScoreTicker() {
         href: "/world-cup-2026",
         home: "World Cup 2026",
         away: "Standings, fixtures, live scores",
+        homeScore: null,
+        awayScore: null,
+        minute: null,
         status: "WC26 Hub",
+        date: null,
       });
     }
 
@@ -110,3 +114,4 @@ export function ScoreTicker() {
     </div>
   );
 }
+

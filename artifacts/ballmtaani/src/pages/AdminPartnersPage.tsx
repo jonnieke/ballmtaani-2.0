@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import AdminLayout from "../components/AdminLayout";
 import { Plus, CheckCircle2, XCircle, Trash2, Save, X } from "lucide-react";
@@ -27,6 +27,23 @@ function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").slice(0, 60);
 }
 
+async function adminPartnerRequest(path = "", init: RequestInit = {}) {
+  if (!supabase) throw new Error("Supabase is not configured");
+
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Please log in again before managing partners.");
+
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+
+  const response = await fetch(`/api/admin-partners${path}`, { ...init, headers });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Could not save partner team");
+  return payload;
+}
+
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<PartnerTeam[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,23 +52,27 @@ export default function AdminPartnersPage() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    if (!supabase) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("partner_teams")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setPartners((data as PartnerTeam[]) || []);
-    setLoading(false);
+    setError("");
+    try {
+      const data = await adminPartnerRequest();
+      setPartners((data.partners as PartnerTeam[]) || []);
+    } catch (err: any) {
+      setError(err?.message || "Could not load partner teams.");
+      setPartners([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   async function save() {
-    if (!supabase || !editing) return;
+    if (!editing) return;
     if (!editing.name?.trim()) { setError("Name required."); return; }
     setSaving(true);
     setError("");
+
     const slug = editing.id ? editing.slug : slugify(editing.name || "");
     const payload = {
       name: editing.name,
@@ -61,25 +82,50 @@ export default function AdminPartnersPage() {
       contact_email: editing.contact_email || null,
       approved: editing.approved ?? false,
     };
-    const { error: err } = editing.id
-      ? await supabase.from("partner_teams").update(payload).eq("id", editing.id)
-      : await supabase.from("partner_teams").insert(payload);
-    setSaving(false);
-    if (err) { setError(err.message); return; }
-    setEditing(null);
-    load();
+
+    try {
+      if (editing.id) {
+        await adminPartnerRequest(`?id=${encodeURIComponent(editing.id)}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await adminPartnerRequest("", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+      setEditing(null);
+      load();
+    } catch (err: any) {
+      setError(err?.message || "Could not save partner team.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function toggleApproval(p: PartnerTeam) {
-    if (!supabase) return;
-    await supabase.from("partner_teams").update({ approved: !p.approved }).eq("id", p.id);
-    load();
+    setError("");
+    try {
+      await adminPartnerRequest(`?id=${encodeURIComponent(p.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ approved: !p.approved }),
+      });
+      load();
+    } catch (err: any) {
+      setError(err?.message || "Could not update partner approval.");
+    }
   }
 
   async function remove(id: string) {
-    if (!supabase || !confirm("Delete this partner? Their articles will be unlinked.")) return;
-    await supabase.from("partner_teams").delete().eq("id", id);
-    load();
+    if (!confirm("Delete this partner? Their articles will be unlinked.")) return;
+    setError("");
+    try {
+      await adminPartnerRequest(`?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      load();
+    } catch (err: any) {
+      setError(err?.message || "Could not delete partner team.");
+    }
   }
 
   return (
@@ -95,6 +141,8 @@ export default function AdminPartnersPage() {
             <Plus className="h-3.5 w-3.5" /> Add Partner
           </button>
         </div>
+
+        {error && <p className="rounded-xl border border-[#B30000]/20 bg-[#B30000]/12 px-3 py-2 text-xs font-bold text-[#ff8a8a]">{error}</p>}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatPill label="Approved" value={partners.filter(p => p.approved).length} color="text-green-400" />
