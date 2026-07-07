@@ -927,6 +927,12 @@ function WC26HeroBanner() {
           >
             {isActive ? "Knockout Bracket" : "Groups & Fixtures"}
           </Link>
+          <Link
+            href="/store"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/40 px-5 py-3 text-sm font-black uppercase tracking-[0.1em] text-white/70 backdrop-blur-sm transition-all hover:border-white/35 hover:text-white"
+          >
+            📱 Redeem Airtime
+          </Link>
         </div>
         {/* Google sign-in CTA — only for logged-out fans */}
         {!isLoggedIn && (
@@ -1207,6 +1213,24 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Rewards Engine Strip ── always visible, all screen sizes */}
+        <Link href="/store" className="group mb-3 flex items-center gap-4 rounded-xl border border-[#FFD700]/20 bg-[#0d0b00] px-4 py-3 transition-all hover:border-[#FFD700]/40 hover:bg-[#0d0b00]/80">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFD700]/10 text-xl">📱</div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-widest text-white">
+              Earn MTC Coins · Redeem Real Airtime
+            </p>
+            <p className="mt-0.5 text-[10px] text-white/40">
+              Predict matches &amp; vote daily → redeem from <span className="font-black text-[#FFD700]">Ksh 50</span> on any Kenyan network · Powered by credoFaster
+            </p>
+          </div>
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <span className="rounded-lg bg-[#FFD700] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-black group-hover:bg-yellow-300 transition-colors">
+              Redeem Now
+            </span>
+          </div>
+        </Link>
+
         {/* Data-first match cards — only render when real data exists */}
         <div className="mb-3 grid gap-3 lg:grid-cols-2">
           <LiveNowCard matches={matches} />
@@ -1454,10 +1478,10 @@ export default function LandingPage() {
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black text-[#FFD700] leading-tight">
-                {Date.now() >= WC26_START.getTime() ? "⚽ WC26 Knockout Rounds Live" : "⚽ WC26 kicks off Jun 11"}
+                {Date.now() >= WC26_START.getTime() ? "⚽ WC26 Live · Predict & Win Ksh 50 Airtime" : "⚽ WC26 kicks off Jun 11 · Earn real airtime"}
               </p>
               <p className="text-[10px] text-white/40">
-                {Date.now() >= WC26_START.getTime() ? "Join free — predict every knockout match" : "Join free — make your bold calls before June 11"}
+                Join free — earn MTC coins and redeem for airtime on any Kenyan network
               </p>
             </div>
             <GoogleSignInButton size="sm" label="Join · Google" />

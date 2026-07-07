@@ -15,48 +15,75 @@ import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
 import { lazy, Suspense } from "react";
 
+// ─── Stale-chunk guard ────────────────────────────────────────────────────────
+// After a Vercel deploy, old content-hashed chunk filenames (e.g. MatchesPage-Dn2FWjK6.js)
+// no longer exist. If a lazy import 404s, do one hard reload to pick up the new
+// HTML (which references the new filenames). A sessionStorage flag stops loops.
+function lazyPage<T extends React.ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> {
+  return lazy(async () => {
+    try {
+      return await importFn();
+    } catch {
+      const KEY = "chunk_reload_attempted";
+      if (!sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+        return new Promise(() => {}); // block — reload is in flight
+      }
+      sessionStorage.removeItem(KEY);
+      throw new Error("Chunk load failed after reload — please hard-refresh (Ctrl+Shift+R).");
+    }
+  });
+}
+
 // ─── Route-level code splitting ───────────────────────────────────────────────
 // Each page is loaded only when navigated to — reduces initial bundle by ~50%
 // LandingPage and HomePage are eagerly loaded (most visited, need fast paint)
 import LandingPage from "./pages/LandingPage";
-import HomePage from "./pages/HomePage";
+import HomePage from "./pages/MarketHomePage";
 
-const MatchesPage        = lazy(() => import("./pages/MatchesPage"));
-const PredictionsPage    = lazy(() => import("./pages/PredictionsPage"));
-const DebatesPage        = lazy(() => import("./pages/DebatesPage"));
-const FanZonesPage       = lazy(() => import("./pages/FanZonesPage"));
-const LeaderboardPage    = lazy(() => import("./pages/LeaderboardPage"));
-const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
-const StorePage          = lazy(() => import("./pages/StorePage"));
-const LiveCenterPage     = lazy(() => import("./pages/LiveCenterPage"));
-const LiveCenterIndexPage= lazy(() => import("./pages/LiveCenterIndexPage"));
-const RivalriesPage      = lazy(() => import("./pages/RivalriesPage"));
-const RapidFirePage      = lazy(() => import("./pages/RapidFirePage"));
-const FunZonePage        = lazy(() => import("./pages/FunZonePage"));
-const TriviaPage         = lazy(() => import("./pages/TriviaPage"));
-const WarRoomPage        = lazy(() => import("./pages/WarRoomPage"));
-const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
-const TermsPage          = lazy(() => import("./pages/TermsPage"));
-const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
-const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
-const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
-const WorldCupBracketPage = lazy(() => import("./pages/WorldCupBracketPage"));
-const AIFanZonePage      = lazy(() => import("./pages/AIFanZonePage"));
-const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
-const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
-const ArticlePage        = lazy(() => import("./pages/ArticlePage"));
-const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
-const AdminArticlesPage  = lazy(() => import("./pages/AdminArticlesPage"));
-const AdminAdsPage       = lazy(() => import("./pages/AdminAdsPage"));
-const AdminPartnersPage  = lazy(() => import("./pages/AdminPartnersPage"));
-const AdminRolesPage     = lazy(() => import("./pages/AdminRolesPage"));
-const AdminRewardsPage   = lazy(() => import("./pages/AdminRewardsPage"));
-const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
-const SearchPage         = lazy(() => import("./pages/SearchPage"));
-const NewsPage           = lazy(() => import("./pages/NewsPage"));
-const VideosPage         = lazy(() => import("./pages/VideosPage"));
-const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
-const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
+const DataCentrePage     = lazyPage(() => import("./pages/DataCentrePage"));
+const MatchesPage        = lazyPage(() => import("./pages/MatchesPage"));
+const PredictionsPage    = lazyPage(() => import("./pages/PredictionsPage"));
+const DebatesPage        = lazyPage(() => import("./pages/DebatesPage"));
+const FanZonesPage       = lazyPage(() => import("./pages/FanZonesPage"));
+const LeaderboardPage    = lazyPage(() => import("./pages/LeaderboardPage"));
+const ProfilePage        = lazyPage(() => import("./pages/ProfilePage"));
+const StorePage          = lazyPage(() => import("./pages/StorePage"));
+const LiveCenterPage     = lazyPage(() => import("./pages/LiveCenterPage"));
+const LiveCenterIndexPage= lazyPage(() => import("./pages/LiveCenterIndexPage"));
+const RivalriesPage      = lazyPage(() => import("./pages/RivalriesPage"));
+const RapidFirePage      = lazyPage(() => import("./pages/RapidFirePage"));
+const FunZonePage        = lazyPage(() => import("./pages/FunZonePage"));
+const TriviaPage         = lazyPage(() => import("./pages/TriviaPage"));
+const WarRoomPage        = lazyPage(() => import("./pages/WarRoomPage"));
+const DiagnosticsPage    = lazyPage(() => import("./pages/DiagnosticsPage"));
+const TermsPage          = lazyPage(() => import("./pages/TermsPage"));
+const PrivacyPage        = lazyPage(() => import("./pages/PrivacyPage"));
+const AboutPage          = lazyPage(() => import("./pages/AboutPage"));
+const ContactPage        = lazyPage(() => import("./pages/ContactPage"));
+const ArticlesPage       = lazyPage(() => import("./pages/ArticlesPage"));
+const WorldCup2026Page   = lazyPage(() => import("./pages/WorldCup2026Page"));
+const WorldCupGuidePage  = lazyPage(() => import("./pages/WorldCupGuidePage"));
+const WorldCupBracketPage= lazyPage(() => import("./pages/WorldCupBracketPage"));
+const AIFanZonePage      = lazyPage(() => import("./pages/AIFanZonePage"));
+const MarketWatchPage    = lazyPage(() => import("./pages/MarketWatchPage"));
+const MchambuziHalisiPage= lazyPage(() => import("./pages/MchambuziHalisiPage"));
+const ArticlePage        = lazyPage(() => import("./pages/ArticlePage"));
+const AdminDashboardPage = lazyPage(() => import("./pages/AdminDashboardPage"));
+const AdminArticlesPage  = lazyPage(() => import("./pages/AdminArticlesPage"));
+const AdminAdsPage       = lazyPage(() => import("./pages/AdminAdsPage"));
+const AdminPartnersPage  = lazyPage(() => import("./pages/AdminPartnersPage"));
+const AdminRolesPage     = lazyPage(() => import("./pages/AdminRolesPage"));
+const AdminRewardsPage   = lazyPage(() => import("./pages/AdminRewardsPage"));
+const AdminAnalyticsPage = lazyPage(() => import("./pages/AdminAnalyticsPage"));
+const SearchPage         = lazyPage(() => import("./pages/SearchPage"));
+const NewsPage           = lazyPage(() => import("./pages/NewsPage"));
+const VideosPage         = lazyPage(() => import("./pages/VideosPage"));
+const LoginPage          = lazyPage(() => import("./pages/auth/LoginPage"));
+const VerifyOTPPage      = lazyPage(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
 import WelcomeModal from "./components/WelcomeModal";
 import ProfileSetupModal from "./components/ProfileSetupModal";
@@ -128,6 +155,7 @@ function AppShell() {
             <Route path="/login" component={LoginPage} />
             <Route path="/verify" component={VerifyOTPPage} />
             <Route path="/auth/callback" component={AuthCallbackPage} />
+            <Route path="/data-centre" component={DataCentrePage} />
             <Route path="/matches" component={MatchesPage} />
             <Route path="/market-watch" component={MarketWatchPage} />
             <Route path="/predictions" component={PredictionsPage} />
@@ -162,6 +190,9 @@ function AppShell() {
             <Route path="/search" component={SearchPage} />
             <Route path="/news" component={NewsPage} />
             <Route path="/videos" component={VideosPage} />
+            <Route path="/about" component={AboutPage} />
+            <Route path="/contact" component={ContactPage} />
+            <Route path="/articles" component={ArticlesPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>
@@ -190,9 +221,17 @@ function AppShell() {
                 <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
                   Kenyan football fans predicting, debating, and keeping receipts around the biggest matches.
                 </p>
+                <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-6 text-xs text-gray-600">
+                  <a href="/about"   className="hover:text-gray-400 transition-colors">About</a>
+                  <a href="/contact" className="hover:text-gray-400 transition-colors">Contact</a>
+                  <a href="/news"    className="hover:text-gray-400 transition-colors">Mtaa Daily</a>
+                  <a href="/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
+                  <a href="/terms"   className="hover:text-gray-400 transition-colors">Terms</a>
+                  <a href="mailto:info@ballmtaani.com" className="hover:text-gray-400 transition-colors">info@ballmtaani.com</a>
+                </div>
               </>
             )}
-<p className="text-gray-600 text-xs">
+            <p className="text-gray-600 text-xs">
               (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
             </p>
           </div>

@@ -12,8 +12,8 @@ const SEO_ROUTES: Record<string, {
     keywords: ["Kenya football", "live football scores Kenya", "World Cup 2026 Kenya", "BallMtaani", "KPL", "Premier League Kenya", "Africa WC26"],
   },
   "/news": {
-    title: "BallMtaani News | Kenyan Football — WC26, KPL, Premier League & Africa",
-    description: "Latest football news for Kenyan fans — World Cup 2026 updates, KPL match reports, Premier League analysis, Africa football and Harambee Stars coverage on BallMtaani.",
+    title: "Mtaa Daily | BallMtaani — Today's Football for the Kenyan Fan",
+    description: "Today's football newspaper for Kenyan fans — World Cup 2026 desk, match reports, Kenyan fan angles, Africa coverage and wire headlines on BallMtaani Mtaa Daily.",
     keywords: ["Kenya football news", "World Cup 2026 news", "KPL news", "Premier League news Kenya", "Africa football news", "BallMtaani news", "Harambee Stars"],
   },
   "/videos": {
@@ -96,6 +96,21 @@ const SEO_ROUTES: Record<string, {
     description: "Track transfer stories, squad debates and football rumours with context, receipts and fan reaction.",
     keywords: ["football transfers Kenya", "transfer news", "football rumours", "BallMtaani war room"],
   },
+  "/articles": {
+    title: "All Articles | Mtaa Daily — BallMtaani Football Reporting",
+    description: "All original articles from Mtaa Daily — World Cup 2026 analysis, match reports, African football coverage and Kenyan fan perspectives from BallMtaani.",
+    keywords: ["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "WC26 analysis", "African football reporting"],
+  },
+  "/about": {
+    title: "About BallMtaani | Kenya's Football Community Platform",
+    description: "BallMtaani is Kenya's home for football — live WC26 scores, Mtaa Daily original reporting, fan predictions, Mchambuzi AI analysis and real airtime rewards. Built in Nairobi for African fans.",
+    keywords: ["about BallMtaani", "Kenya football platform", "Nairobi football", "WC26 Kenya", "African football coverage"],
+  },
+  "/contact": {
+    title: "Contact BallMtaani | Get In Touch",
+    description: "Contact BallMtaani for editorial enquiries, sponsorship, bug reports or press requests. Email info@ballmtaani.com or use our contact form.",
+    keywords: ["contact BallMtaani", "BallMtaani email", "BallMtaani sponsorship"],
+  },
   "/login": {
     title: "Login | BallMtaani",
     description: "Log in to BallMtaani.",
@@ -112,6 +127,30 @@ const SEO_ROUTES: Record<string, {
     title: "Diagnostics | BallMtaani",
     description: "BallMtaani diagnostics.",
     keywords: ["BallMtaani diagnostics"],
+    noindex: true,
+  },
+  "/store": {
+    title: "MTC Store | BallMtaani",
+    description: "Redeem your MTC coins for Kenyan airtime and rewards on BallMtaani.",
+    keywords: ["BallMtaani store", "MTC coins", "redeem airtime Kenya"],
+    noindex: true,
+  },
+  "/profile": {
+    title: "Profile | BallMtaani",
+    description: "Your BallMtaani fan profile.",
+    keywords: ["BallMtaani profile"],
+    noindex: true,
+  },
+  "/leaderboard": {
+    title: "BallMtaani Leaderboard | Kenyan Football Fans",
+    description: "Track top BallMtaani fans by predictions, debates, trivia and football engagement rewards.",
+    keywords: ["BallMtaani leaderboard", "Kenyan football fans leaderboard", "football rewards Kenya"],
+    noindex: true,
+  },
+  "/search": {
+    title: "Search Football | BallMtaani",
+    description: "Search matches, articles, teams, players and competitions on BallMtaani.",
+    keywords: ["search football Kenya", "BallMtaani search"],
     noindex: true,
   },
 };

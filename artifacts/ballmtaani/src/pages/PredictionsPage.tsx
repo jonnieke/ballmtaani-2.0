@@ -9,6 +9,7 @@ import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 import { WC26BracketCard } from "../components/WC26BracketCard";
+import { analytics } from "../lib/analytics";
 
 const WC26_SPECIAL_ID = "wc26-2026-winner";
 const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
@@ -175,7 +176,7 @@ export default function PredictionsPage() {
 
   // Load existing WC26 tournament picks
   useEffect(() => {
-    if (!isLoggedIn || !user) return;
+    if (!isLoggedIn || !user || !supabase) return;
     const ids = WC26_QUESTIONS.map(q => q.id);
     void Promise.resolve(
       supabase.from("predictions")
@@ -200,6 +201,7 @@ export default function PredictionsPage() {
 
   // Fetch aggregate vote counts for all WC26 questions (public, no auth required)
   useEffect(() => {
+    if (!supabase) return;
     const ids = WC26_QUESTIONS.map(q => q.id);
     void Promise.resolve(
       supabase
@@ -575,12 +577,28 @@ export default function PredictionsPage() {
 
                   {isSaved ? (
                     <>
-                      <button
-                        onClick={() => setPredictions({...predictions, [fixture.id]: { ...predictions[fixture.id], saved: false }})}
-                        className="w-full bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] py-3 rounded-xl transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] relative z-10"
-                      >
-                        Edit Call
-                      </button>
+                      <div className="flex gap-2 relative z-10">
+                        <button
+                          onClick={() => setPredictions({...predictions, [fixture.id]: { ...predictions[fixture.id], saved: false }})}
+                          className="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black uppercase tracking-[0.2em] text-[10px] py-3 rounded-xl transition-all"
+                        >
+                          Edit Call
+                        </button>
+                        <button
+                          onClick={() => {
+                            const text = `⚽ I called ${fixture.home} ${hScore}–${aScore} ${fixture.away} on BallMtaani.\n\nReceipt locked. Make your call → https://ballmtaani.com/predictions`;
+                            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                            analytics.shareWhatsapp("prediction");
+                          }}
+                          className="flex items-center gap-1.5 bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366]/20 text-[#25D366] font-black uppercase tracking-widest text-[9px] px-3 py-3 rounded-xl transition-all"
+                          title="Share to WhatsApp"
+                        >
+                          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                          <span className="hidden sm:inline">Share</span>
+                        </button>
+                      </div>
                     </>
                   ) : (
                     <button
@@ -770,37 +788,60 @@ export default function PredictionsPage() {
 
                 <div className="p-4">
                   {locked ? (
-                    // Locked state — show pick (or "no pick") + consensus
-                    <div>
-                      {picked ? (
-                        <div className="flex items-center gap-3 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-4 py-3">
-                          <span className="text-[#FFD700] font-black text-sm">{picked}</span>
-                          <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-[#FFD700]/50">Locked</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3">
-                          <span className="text-white/25 font-black text-sm italic">No pick made</span>
-                          <span className="ml-auto text-[10px] font-black uppercase tracking-widest text-white/15">Window closed</span>
-                        </div>
-                      )}
-                      {(() => {
-                        const qCounts = wc26Consensus[q.id] || {};
-                        const total = Object.values(qCounts).reduce((s, n) => s + n, 0);
-                        const pct = picked && total > 0 ? Math.round(((qCounts[picked] || 0) / total) * 100) : 0;
-                        if (!total) return null;
-                        return (
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 h-1 rounded-full bg-white/8 overflow-hidden">
-                              <div className="h-full rounded-full bg-[#FFD700]/50 transition-all duration-700" style={{ width: `${pct}%` }} />
+                    // Locked state — full ranked breakdown of all options
+                    (() => {
+                      const qCounts = wc26Consensus[q.id] || {};
+                      const total = Object.values(qCounts).reduce((s: number, n) => s + (n as number), 0);
+                      const ranked = q.options
+                        .map(opt => ({ opt, count: (qCounts[opt] as number) || 0 }))
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, 7);
+                      const leadOpt = ranked[0];
+                      return (
+                        <div className="space-y-1.5">
+                          {picked && (
+                            <div className="mb-3 flex items-center gap-2 rounded-xl border border-[#FFD700]/25 bg-[#FFD700]/8 px-3 py-2">
+                              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#FFD700]" />
+                              <span className="text-[11px] font-black text-[#FFD700]">Your pick: {picked}</span>
+                              <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-[#FFD700]/50">Locked</span>
                             </div>
-                            <div className="flex items-center gap-1 text-[10px] text-white/30 font-bold shrink-0">
-                              <Users className="h-3 w-3" />
-                              <span>{pct > 0 ? `${pct}% of ${total.toLocaleString()} fans agree` : `${total.toLocaleString()} fans picked`}</span>
+                          )}
+                          {!picked && (
+                            <div className="mb-3 flex items-center gap-2 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2">
+                              <span className="text-[11px] italic text-white/25">No pick made</span>
+                              <span className="ml-auto text-[9px] font-bold uppercase tracking-widest text-white/15">Window closed</span>
                             </div>
+                          )}
+                          {ranked.map(({ opt, count }) => {
+                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                            const isMyPick = opt === picked;
+                            const isLead = leadOpt && opt === leadOpt.opt && count > 0;
+                            return (
+                              <div key={opt} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${isMyPick ? "bg-[#FFD700]/8 border border-[#FFD700]/20" : "border border-transparent"}`}>
+                                <span className={`w-24 shrink-0 truncate text-[11px] font-bold ${isMyPick ? "text-[#FFD700]" : "text-white/55"}`}>
+                                  {opt}
+                                  {isLead && !isMyPick && <span className="ml-1 text-[8px] font-black uppercase text-white/25"> ▲</span>}
+                                </span>
+                                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/6">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-700 ${isMyPick ? "bg-[#FFD700]" : isLead ? "bg-white/30" : "bg-white/14"}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <span className={`w-8 shrink-0 text-right text-[10px] tabular-nums font-bold ${isMyPick ? "text-[#FFD700]" : "text-white/30"}`}>{pct}%</span>
+                              </div>
+                            );
+                          })}
+                          <div className="mt-2 flex items-center gap-1 text-[9px] font-bold text-white/20">
+                            <Users className="h-3 w-3" />
+                            {total > 0 ? `${total.toLocaleString()} fans voted` : "No votes yet"}
+                            {leadOpt && leadOpt.count > 0 && (
+                              <span className="ml-auto">Mtaa backing: <span className="text-white/40 font-black">{leadOpt.opt}</span></span>
+                            )}
                           </div>
-                        );
-                      })()}
-                    </div>
+                        </div>
+                      );
+                    })()
                   ) : (
                     // Pick buttons — only shown pre-WC26
                     <div className="flex flex-wrap gap-2">

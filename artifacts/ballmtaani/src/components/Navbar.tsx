@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
-import { Menu, X, Coins, Paintbrush, ChevronDown, Trophy } from "lucide-react";
+import { Menu, X, Coins, Paintbrush, ChevronDown, Trophy, Search, Bell } from "lucide-react";
 
 import { useTheme, ThemeAtmosphere } from "../context/ThemeContext";
 
@@ -34,7 +34,8 @@ export function Navbar() {
     {
       label: "News",
       links: [
-        { href: "/news", label: "All Stories" },
+        { href: "/news", label: "Latest News" },
+        { href: "/articles", label: "All Articles" },
         { href: "/videos", label: "Videos" },
         { href: "/world-cup-2026", label: "WC26 Hub" },
         { href: "/search", label: "Search" },
@@ -51,6 +52,15 @@ export function Navbar() {
       ]
     },
     {
+      label: "Social",
+      links: [
+        { href: "/debates", label: "Debates" },
+        { href: "/rivalries", label: "Rivalries" },
+        { href: "/fan-zones", label: "Fan Zones" },
+        { href: "/leaderboard", label: "Leaderboard" },
+      ]
+    },
+    {
       label: "Games",
       links: [
         { href: "/fun-zone", label: "Fun Zone" },
@@ -62,21 +72,34 @@ export function Navbar() {
       ]
     },
     {
-      label: "Social",
+      label: "BallMtaani",
       links: [
-        { href: "/debates", label: "Debates" },
-        { href: "/rivalries", label: "Rivalries" },
-        { href: "/fan-zones", label: "Fan Zones" },
-        { href: "/leaderboard", label: "Leaderboard" },
+        { href: "/about", label: "About Us" },
+        { href: "/contact", label: "Contact" },
       ]
     }
   ];
 
+  const primaryNav = [
+    { href: "/news", label: "News" },
+    { href: "/matches", label: "Matches" },
+    { href: "/live-center", label: "Live" },
+    { href: "/predictions", label: "Predictions" },
+    { href: "/debates", label: "Debates" },
+    { href: "/fan-zones", label: "Tribes" },
+    { href: "/mchambuzi-halisi", label: "Mchambuzi", badge: "New" },
+    { href: "/store", label: "Store" },
+  ];
+  const primaryHrefs = new Set(primaryNav.map((item) => item.href));
+  const moreLinks = menuCategories
+    .flatMap((category) => category.links)
+    .filter((link, index, allLinks) => !primaryHrefs.has(link.href) && allLinks.findIndex((item) => item.href === link.href) === index);
   return (
     <nav className="sticky top-0 z-50 bg-[#0B0B0B]/95 backdrop-blur-md border-b border-[#1B1B1B]">
-      <div className="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
-        <Link href="/home" className="flex items-center shrink-0">
-          <img src="/logo.png" alt="BallMtaani" className="h-12 w-auto" />
+      <div className="mx-auto flex h-20 max-w-[1800px] items-center justify-between px-4 md:px-7">
+        <Link href="/home" className="flex shrink-0 items-center gap-2">
+          <img src="/logo.png" alt="BallMtaani" className="h-11 w-11 object-contain" />
+          <span className="hidden leading-none sm:block"><span className="block text-2xl font-black italic tracking-wide text-white">BALL <span className="text-[#FFD700]">MTAANI</span></span><span className="block text-[8px] font-black uppercase tracking-[0.18em] text-white/75">Predict. Debate. Earn. Rep your tribe.</span></span>
         </Link>
 
         {/* Hamburger — mobile only */}
@@ -89,7 +112,7 @@ export function Navbar() {
         </button>
 
         {/* Desktop Nav - Hidden on mobile */}
-        <div className="hidden lg:flex items-center gap-6 mx-4">
+        <div className="hidden lg:flex items-center gap-5 mx-4">
           <Link
             href="/home"
             className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
@@ -98,37 +121,44 @@ export function Navbar() {
           >
             Home
           </Link>
-          {menuCategories.map((category) => {
-            const isActive = category.links.some(link => location.startsWith(link.href) && link.href !== "/");
-            const primaryHref = category.links[0]?.href || "/";
+          {primaryNav.map((item) => {
+            const isActive = location === item.href || location.startsWith(`${item.href}/`);
             return (
-              <div key={category.label} className="relative group/nav py-6">
-                <Link
-                  href={primaryHref}
-                  className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all flex items-center gap-1 ${
-                    isActive ? "text-primary border-b-2 border-primary pb-1" : "text-gray-400 hover:text-white border-b-2 border-transparent pb-1"
-                  }`}
-                >
-                  {category.label} <ChevronDown className="w-3.5 h-3.5 opacity-70 group-hover/nav:opacity-100 transition-opacity" />
-                </Link>
-                
-                {/* Dropdown Menu */}
-                <div className="absolute top-16 left-0 w-48 bg-[#111111]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 transform translate-y-2 group-hover/nav:translate-y-0 p-2 z-[100]">
-                  {category.links.map(link => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`block px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors ${
-                        location.startsWith(link.href) ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-1.5 font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
+                  isActive ? "text-primary" : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {item.label}
+                {item.badge && <span className="rounded bg-[#FFD700] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-normal text-black">{item.badge}</span>}
+              </Link>
             );
           })}
+          <div className="relative group/nav py-6">
+            <button
+              type="button"
+              className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all flex items-center gap-1 ${
+                moreLinks.some(link => location.startsWith(link.href)) ? "text-primary border-b-2 border-primary pb-1" : "text-gray-400 hover:text-white border-b-2 border-transparent pb-1"
+              }`}
+            >
+              More <ChevronDown className="w-3.5 h-3.5 opacity-70 group-hover/nav:opacity-100 transition-opacity" />
+            </button>
+            <div className="absolute top-16 left-0 w-56 bg-[#111111]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 transform translate-y-2 group-hover/nav:translate-y-0 p-2 z-[100]">
+              {moreLinks.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`block px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors ${
+                    location.startsWith(link.href) ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* WC26 tournament badge — visible on desktop during tournament window */}
@@ -158,6 +188,12 @@ export function Navbar() {
 
         {/* Global Controls (Atmosphere & Wallet) */}
         <div className="flex items-center gap-3 shrink-0">
+          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 transition hover:border-[#FFD700]/40 hover:text-white lg:grid" title="Search">
+            <Search className="h-4 w-4" />
+          </Link>
+          <Link href="/notifications" className="hidden h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 transition hover:border-[#FFD700]/40 hover:text-white lg:grid" title="Notifications">
+            <Bell className="h-4 w-4" />
+          </Link>
           {/* Atmosphere Switcher */}
           <div className="relative">
             <button 
@@ -232,7 +268,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-24 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
+        <div className="lg:hidden absolute top-20 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
           <Link
             href="/home"
             onClick={() => setMobileMenuOpen(false)}

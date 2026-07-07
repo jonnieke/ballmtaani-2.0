@@ -91,4 +91,29 @@ export const analytics = {
       error_message: errorMessage,
     });
   },
+
+  // Share events
+  shareWhatsapp: (context: "prediction" | "article" | "trivia" | "rapid_fire" | "wc26" | "other") => {
+    window.gtag?.("event", "share", { method: "whatsapp", content_type: context });
+  },
+
+  // Content events
+  articleRead: (source: string, tab?: string) => {
+    window.gtag?.("event", "article_read", { source, tab: tab ?? "front_page" });
+  },
+
+  // Game events
+  gameStarted: (game: string) => {
+    window.gtag?.("event", "game_started", { game });
+  },
+
+  // Sponsor events
+  sponsorImpression: (placement: string) => {
+    window.gtag?.("event", "sponsor_impression", { placement });
+  },
+
+  // Airtime events
+  airtimeRedeemed: (amount: number) => {
+    window.gtag?.("event", "airtime_redeemed", { mtc_spent: amount });
+  },
 };

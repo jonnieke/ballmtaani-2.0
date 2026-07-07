@@ -1,7 +1,8 @@
 /**
  * Football News Feed
  * Uses RSS XML through a lightweight CORS proxy.
- * Falls back to curated mock headlines when API unavailable.
+ * Falls back to an empty list when the API is unavailable so the UI never
+ * invents stories.
  * Partner articles from Supabase are fetched separately and surfaced first.
  */
 import { supabase } from "./supabase";
@@ -51,7 +52,7 @@ const SOURCE_FALLBACK_URLS: Record<string, string> = {
 
 const CACHE_KEY = "mtaani_news_cache";
 const CACHE_TTL = 15 * 60 * 1000;
-const CACHE_VERSION = "v9";
+const CACHE_VERSION = "v10";
 const DEFAULT_NEWS_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
 const TEAM_IMAGE_FALLBACKS: Array<{ key: string; image: string }> = [
   { key: "arsenal", image: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png" },
@@ -110,89 +111,6 @@ interface ImageTelemetry {
   total: number;
   fallbackUsed: number;
 }
-
-const MOCK_HEADLINES: NewsArticle[] = [
-  {
-    id: "m1",
-    title: "Gor Mahia Clinch KPL Title in Dramatic Final Day Finish",
-    link: "#",
-    pubDate: new Date(Date.now() - 3600000).toISOString(),
-    source: "KPL",
-    sourceLogo: "KE",
-    thumbnail: "https://media.api-sports.io/football/teams/1063.png",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m2",
-    title: "Mbappe Injury Scare Ahead of Champions League Semi-Final",
-    link: "#",
-    pubDate: new Date(Date.now() - 7200000).toISOString(),
-    source: "Goal.com",
-    sourceLogo: "GOAL",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m3",
-    title: "Al Ahly Reach CAF Champions League Final for 5th Consecutive Year",
-    link: "#",
-    pubDate: new Date(Date.now() - 10800000).toISOString(),
-    source: "CAF",
-    sourceLogo: "CAF",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m4",
-    title: "Arsenal Secure Top Four with Stunning Comeback Win at Anfield",
-    link: "#",
-    pubDate: new Date(Date.now() - 14400000).toISOString(),
-    source: "BBC Sport",
-    sourceLogo: "BBC",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m5",
-    title: "Kaizer Chiefs Name New Coach as PSL Relegation Battle Heats Up",
-    link: "#",
-    pubDate: new Date(Date.now() - 18000000).toISOString(),
-    source: "SuperSport",
-    sourceLogo: "ZA",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m6",
-    title: "Real Madrid vs Barcelona: El Clasico Preview - Who Holds the Edge?",
-    link: "#",
-    pubDate: new Date(Date.now() - 21600000).toISOString(),
-    source: "Goal.com",
-    sourceLogo: "GOAL",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m7",
-    title: "Simba SC vs Young Africans: Kariakoo Derby Sets Dar es Salaam Ablaze",
-    link: "#",
-    pubDate: new Date(Date.now() - 25200000).toISOString(),
-    source: "Azam TV",
-    sourceLogo: "TZ",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-  {
-    id: "m8",
-    title: "FIFA Announces 2030 World Cup African Host Nations",
-    link: "#",
-    pubDate: new Date(Date.now() - 32400000).toISOString(),
-    source: "FIFA",
-    sourceLogo: "FIFA",
-    thumbnail: "/wc26-hero.jpg",
-    imageQuality: "generic-fallback",
-  },
-];
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -482,9 +400,9 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
     }
   }
 
-  if (articles.length === 0 && !fallback) return [];
+  if (articles.length === 0) return [];
 
-  const normalized = dedupeArticles((articles.length > 0 ? articles : MOCK_HEADLINES).map((article) => ({
+  const normalized = dedupeArticles(articles.map((article) => ({
     ...article,
     slug: createArticleSlug(article),
     link: normalizeArticleLink(article.link, article.source),
