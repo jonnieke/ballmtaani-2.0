@@ -2,9 +2,9 @@
 import { Link } from "wouter";
 import { useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
-import { useUpcomingFixtures } from "../hooks/useData";
+import { useFixtureDetail, useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
-import { CheckCircle2, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2, Users } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2, Users, Bell, Sparkles } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
 import SponsorSlot from "../components/SponsorSlot";
 import AdBanner from "../components/AdBanner";
@@ -12,6 +12,7 @@ import SEO from "../components/SEO";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 import { WC26BracketCard } from "../components/WC26BracketCard";
 import { analytics } from "../lib/analytics";
+import { askMchambuziHalisi } from "../lib/mchambuzi-halisi";
 
 const WC26_SPECIAL_ID = "wc26-2026-winner";
 const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
@@ -99,6 +100,8 @@ export default function PredictionsPage() {
   const [wc26Saving2, setWc26Saving2] = useState<string | null>(null);         // questionId being saved
   const [wc26Consensus, setWc26Consensus] = useState<Record<string, Record<string, number>>>({});
   const [showBracketCard, setShowBracketCard] = useState(false);
+  const [matchPanelTab, setMatchPanelTab] = useState<"details" | "insights" | "odds" | "lineups">("details");
+  const [selectedFixtureId, setSelectedFixtureId] = useState<string | undefined>(undefined);
 
   const { isLoggedIn, user, coins, updateCoins, awardCoins } = useAuth();
   const [, setLocation] = useLocation();
@@ -107,6 +110,7 @@ export default function PredictionsPage() {
   const [leagueFilter, setLeagueFilter] = useState<string>("all");
   const [myReceipts, setMyReceipts] = useState<any[]>([]);
   const [loadingReceipts, setLoadingReceipts] = useState(false);
+  const [mchambuziAnswer, setMchambuziAnswer] = useState("");
 
   const { data: fixtures = [] } = useUpcomingFixtures();
   const availableLeagues = useMemo(
@@ -126,6 +130,36 @@ export default function PredictionsPage() {
     { label: "WC26 calls", value: wc26LockedCalls.toString(), sub: "tournament picks" },
     { label: "Wallet balance", value: coins.toLocaleString(), sub: "fan spend power" },
   ]), [visibleFixtures.length, lockedCalls, wc26LockedCalls, coins]);
+  const fixtureDetailQuery = useFixtureDetail(selectedFixtureId);
+  const selectedFixture = useMemo(() => {
+    if (!selectedFixtureId) return featuredRevenueFixture || null;
+    return fixtures.find((item: any) => String(item.id) === String(selectedFixtureId)) || featuredRevenueFixture || null;
+  }, [fixtures, featuredRevenueFixture, selectedFixtureId]);
+  const fixtureDetailData = fixtureDetailQuery.data;
+  const fixtureStats = fixtureDetailData?.stats || [];
+  const homeLineup = fixtureDetailData?.lineups?.home || null;
+  const awayLineup = fixtureDetailData?.lineups?.away || null;
+  useEffect(() => {
+    if (!selectedFixtureId && featuredRevenueFixture?.id) {
+      setSelectedFixtureId(String(featuredRevenueFixture.id));
+    }
+  }, [selectedFixtureId, featuredRevenueFixture]);
+  useEffect(() => {
+    let cancelled = false;
+    askMchambuziHalisi("Give the current WC26 read in one short paragraph.", { live: visibleFixtures, upcoming: fixtures, recent: [] })
+      .then(({ answer }) => {
+        if (!cancelled) setMchambuziAnswer(answer);
+      })
+      .catch(() => {
+        if (!cancelled) setMchambuziAnswer("");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fixtures, visibleFixtures]);
+
+
   const fixtureLabelMap = useMemo(() => {
     const map: Record<string, string> = {};
     fixtures.forEach((f: any) => {
@@ -401,6 +435,274 @@ export default function PredictionsPage() {
           <AdBanner label="Platform Perks" type="horizontal" />
         </div>
 
+        <div className="mb-6 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d12] shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+            <div className="bg-[linear-gradient(135deg,#3a1118_0%,#21120f_52%,#071116_100%)] p-4 md:p-5">
+              <div className="flex items-center justify-between">
+                <Link href="/matches" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition hover:bg-white/10">
+                  <ChevronLeft className="h-4 w-4" />
+                </Link>
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
+                  <Bell className="h-3.5 w-3.5" />
+                  Live match
+                </div>
+                <button className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80">
+                  <Star className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                <div className="text-center">
+                  <TeamLogo
+                    logo={selectedFixture?.homeLogo}
+                    initial={String(selectedFixture?.home || "H").slice(0, 3).toUpperCase()}
+                    color={selectedFixture?.homeColor || "#8b1118"}
+                    size="lg"
+                    shadow
+                  />
+                  <p className="mt-2 truncate text-sm font-black text-white">{selectedFixture?.home || "Home"}</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-black text-white md:text-4xl">{selectedFixture?.time || selectedFixture?.date || "23:00"}</div>
+                  <div className="mt-1 text-sm font-semibold text-white/70">{selectedFixture?.date ? "Today" : "Upcoming"}</div>
+                </div>
+                <div className="text-center">
+                  <TeamLogo
+                    logo={selectedFixture?.awayLogo}
+                    initial={String(selectedFixture?.away || "A").slice(0, 3).toUpperCase()}
+                    color={selectedFixture?.awayColor || "#123f92"}
+                    size="lg"
+                    shadow
+                  />
+                  <p className="mt-2 truncate text-sm font-black text-white">{selectedFixture?.away || "Away"}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1">
+                {[
+                  { key: "details", label: "Details" },
+                  { key: "insights", label: "AI Insights" },
+                  { key: "odds", label: "Odds" },
+                  { key: "lineups", label: "Lineups" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setMatchPanelTab(tab.key as any)}
+                    className={`whitespace-nowrap border-b-2 px-1 py-2 text-sm font-black transition ${
+                      matchPanelTab === tab.key
+                        ? "border-white text-white"
+                        : "border-transparent text-white/55 hover:text-white"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-white/10 bg-[#e9edf1] p-4 text-[#111] md:p-5">
+              {matchPanelTab === "details" ? (
+                <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                  <div className="rounded-[22px] bg-white p-5 shadow-sm">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#111] text-white">
+                      <Trophy className="h-6 w-6" />
+                    </div>
+                    <div className="mx-auto mt-3 inline-flex rounded bg-emerald-500 px-3 py-1 text-xs font-black uppercase text-white">
+                      World Cup Special
+                    </div>
+                    <h3 className="mt-4 text-2xl font-extrabold leading-tight text-[#171717]">Predict smarter, win bigger</h3>
+                    <p className="mt-2 text-sm leading-6 text-gray-700">
+                      Use live match context and BallMtaani receipts to move faster when a fixture heats up. Built for WC26 and the leagues we track every day.
+                    </p>
+                    <ul className="mt-4 space-y-2 text-sm text-[#222]">
+                      {[
+                        "Matchup analysis and prediction context",
+                        "Player form, injuries, and live event signals",
+                        "World Cup and 200+ leagues",
+                        "3-day free trial",
+                      ].map((item) => (
+                        <li key={item} className="flex items-start gap-2">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <Link href="/mchambuzi-halisi" className="rounded-xl bg-[#3557ff] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-[#2446f0]">
+                        Claim offer
+                      </Link>
+                      <Link href="/store" className="rounded-xl border border-[#3557ff]/25 bg-[#3557ff]/10 px-5 py-3 text-sm font-black uppercase tracking-wider text-[#3557ff] transition hover:bg-[#3557ff]/15">
+                        Learn more
+                      </Link>
+                    </div>
+                    <div className="mt-4 text-[11px] font-semibold text-gray-500">
+                      <Link href="/terms" className="hover:text-gray-700">Terms &amp; Conditions</Link>
+                      <span className="mx-2">|</span>
+                      <Link href="/privacy" className="hover:text-gray-700">Privacy Policy</Link>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3">
+                    <div className="rounded-[22px] border border-white/40 bg-white p-5 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Match details</p>
+                          <p className="mt-2 text-lg font-black text-[#111]">{selectedFixture?.home || "Home"} vs {selectedFixture?.away || "Away"}</p>
+                        </div>
+                        <div className="rounded-full bg-[#111] px-3 py-1 text-[10px] font-black uppercase text-white">
+                          {selectedFixture?.league || "World Cup 2026"}
+                        </div>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                        {[
+                          { label: "Competition", value: selectedFixture?.league || "World Cup 2026" },
+                          { label: "Kickoff", value: selectedFixture?.time || selectedFixture?.date || "TBA" },
+                          { label: "Venue", value: selectedFixture?.venue || "TBA" },
+                          { label: "Status", value: selectedFixture?.status || "Upcoming" },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-xl border border-[#111]/10 bg-[#f5f7fa] p-3">
+                            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-gray-500">{item.label}</p>
+                            <p className="mt-1 font-bold text-[#111]">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Live context</p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        {fixtureStats.length > 0 ? fixtureStats.slice(0, 3).map((stat) => (
+                          <div key={stat.label} className="rounded-xl border border-[#111]/10 bg-[#f5f7fa] p-3 text-center">
+                            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-gray-500">{stat.label}</p>
+                            <p className="mt-2 text-lg font-black text-[#111]">{stat.home}{stat.unit || ""}<span className="mx-2 text-gray-400">-</span>{stat.away}{stat.unit || ""}</p>
+                          </div>
+                        )) : (
+                          <div className="sm:col-span-3 rounded-xl border border-dashed border-[#111]/15 bg-[#f5f7fa] p-4 text-sm text-gray-500">
+                            Live stats will appear once API-Football returns the fixture detail feed.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : matchPanelTab === "insights" ? (
+                <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+                  <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">
+                      <Sparkles className="h-4 w-4 text-[#3557ff]" />
+                      AI Insights
+                    </div>
+                    <h3 className="mt-3 text-xl font-black text-[#111]">Mchambuzi Halisi</h3>
+                    <p className="mt-3 text-sm leading-6 text-gray-700">{mchambuziAnswer || "Mchambuzi is reading the live feed for this fixture."}</p>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      {[
+                        { label: "Match pace", value: selectedFixture?.minute || selectedFixture?.status || "Live feed" },
+                        { label: "Trend", value: fixtureStats.length ? "Stats ready" : "Waiting" },
+                        { label: "Coverage", value: selectedFixture?.league || "WC26" },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-xl border border-[#111]/10 bg-[#f5f7fa] p-3">
+                          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-gray-500">{item.label}</p>
+                          <p className="mt-1 text-sm font-bold text-[#111]">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <Link href="/mchambuzi-halisi" className="mt-5 inline-flex rounded-xl bg-[#3557ff] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-[#2446f0]">
+                      Open full analysis
+                    </Link>
+                  </div>
+                  <div className="space-y-3">
+                    <AdBanner label="AI Insights Sponsor" type="horizontal" />
+                    <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Why this matters</p>
+                      <p className="mt-3 text-sm leading-6 text-gray-700">
+                        Sponsored insights only work when the fixture context is real. Keep the page anchored to live data, then route fans to the prediction flow or store once the case is strong enough to convert.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : matchPanelTab === "odds" ? (
+                <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+                  <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Community lean</p>
+                    <div className="mt-4 space-y-3">
+                      {[
+                        { label: "Home edge", pct: 44 },
+                        { label: "Balanced", pct: 31 },
+                        { label: "Away edge", pct: 25 },
+                      ].map((item) => (
+                        <div key={item.label}>
+                          <div className="mb-1 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">
+                            <span>{item.label}</span>
+                            <span>{item.pct}%</span>
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-[#d8dde4]">
+                            <div className="h-full rounded-full bg-[#3557ff]" style={{ width: `${item.pct}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-4 text-[11px] leading-5 text-gray-500">
+                      These are community cues, not bookmaker odds. They work best when paired with the live fixture feed and Mchambuzi analysis.
+                    </p>
+                  </div>
+                  <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Offer slot</p>
+                    <h3 className="mt-3 text-xl font-black text-[#111]">Turn this match into a paid touchpoint</h3>
+                    <p className="mt-2 text-sm leading-6 text-gray-700">
+                      Sponsor this fixture, sell the prediction lane, or push fans toward the MTC store while the stakes are highest.
+                    </p>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <a href="mailto:sponsors@ballmtaani.com?subject=World%20Cup%20Match%20Package" className="rounded-xl bg-[#111] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-black">
+                        Book sponsor
+                      </a>
+                      <Link href="/store" className="rounded-xl border border-[#111]/10 bg-[#3557ff]/10 px-5 py-3 text-sm font-black uppercase tracking-wider text-[#3557ff] transition hover:bg-[#3557ff]/15">
+                        Open store
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">{selectedFixture?.home || "Home"} lineup</p>
+                    <div className="mt-3 text-sm font-black text-[#111]">{homeLineup?.formation || "4-3-3"}</div>
+                    <div className="mt-3 space-y-2">
+                      {homeLineup?.players?.length ? homeLineup.players.slice(0, 6).map((player) => (
+                        <div key={`${player.number}-${player.name}`} className="flex items-center justify-between rounded-xl border border-[#111]/10 bg-[#f5f7fa] px-3 py-2 text-sm">
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-[#111]">{player.name}</p>
+                            <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500">{player.pos}</p>
+                          </div>
+                          <span className="font-black text-[#3557ff]">{player.number}</span>
+                        </div>
+                      )) : <div className="rounded-xl border border-dashed border-[#111]/15 bg-[#f5f7fa] p-4 text-sm text-gray-500">Home lineup not published yet.</div>}
+                    </div>
+                  </div>
+                  <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">{selectedFixture?.away || "Away"} lineup</p>
+                    <div className="mt-3 text-sm font-black text-[#111]">{awayLineup?.formation || "4-3-3"}</div>
+                    <div className="mt-3 space-y-2">
+                      {awayLineup?.players?.length ? awayLineup.players.slice(0, 6).map((player) => (
+                        <div key={`${player.number}-${player.name}`} className="flex items-center justify-between rounded-xl border border-[#111]/10 bg-[#f5f7fa] px-3 py-2 text-sm">
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-[#111]">{player.name}</p>
+                            <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500">{player.pos}</p>
+                          </div>
+                          <span className="font-black text-[#3557ff]">{player.number}</span>
+                        </div>
+                      )) : <div className="rounded-xl border border-dashed border-[#111]/15 bg-[#f5f7fa] p-4 text-sm text-gray-500">Away lineup not published yet.</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <aside className="space-y-3">
+            <SponsorSlot placement="homepage-hero" />
+            <AdBanner label="Prediction Revenue Sponsor" type="horizontal" />
+          </aside>
+        </div>
         <div className="mb-6 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
           <section className="overflow-hidden rounded-2xl border border-[#FFD700]/22 bg-gradient-to-br from-[#110d00] to-[#09080d] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
             <div className="flex flex-wrap items-center justify-between gap-3">
