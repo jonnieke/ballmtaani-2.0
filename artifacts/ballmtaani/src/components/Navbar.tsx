@@ -109,7 +109,7 @@ export function Navbar() {
           <span className="hidden leading-none sm:block"><span className="block text-2xl font-black italic tracking-wide text-white">BALL <span className="text-[#FFD700]">MTAANI</span></span><span className="block text-[8px] font-black uppercase tracking-[0.18em] text-white/75">Predict. Debate. Earn. Rep your tribe.</span></span>
         </Link>
 
-        {/* Hamburger â€” mobile only */}
+        {/* Hamburger - mobile only */}
         <button
           className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors ml-auto mr-3"
           onClick={() => setMobileMenuOpen(v => !v)}
@@ -168,7 +168,7 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* WC26 tournament badge â€” visible on desktop during tournament window */}
+        {/* WC26 tournament badge - visible on desktop during tournament window */}
         {(() => {
           const now = Date.now();
           const start = new Date("2026-06-11").getTime();
@@ -188,7 +188,7 @@ export function Navbar() {
               ) : (
                 <Trophy className="h-3 w-3" />
               )}
-              {now >= start ? "WC26 Live" : `WC26 Â· ${daysUntil}d`}
+              {now >= start ? "WC26 Live" : `WC26 · ${daysUntil}d`}
             </Link>
           );
         })()}
@@ -374,5 +374,6 @@ export function Navbar() {
     </nav>
   );
 }
+
 
 

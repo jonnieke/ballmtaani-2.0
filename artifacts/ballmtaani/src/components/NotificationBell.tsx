@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Bell, BellOff, X, Loader2 } from "lucide-react";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { useAuth } from "../context/AuthContext";
@@ -22,6 +22,7 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
         onClick={toggle}
         disabled={isLoading}
         title={isSubscribed ? "Disable match alerts" : "Enable match alerts"}
+        aria-label={isSubscribed ? "Disable match alerts" : "Enable match alerts"}
         className={`relative flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-95
           ${isSubscribed ? "bg-[#FFD700]/15 text-[#FFD700]" : "bg-white/6 text-white/40 hover:bg-white/12 hover:text-white"}`}
       >
@@ -67,7 +68,7 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
               <>
                 <p className="mb-3 text-sm text-white/60">
                   {isSubscribed
-                    ? "🔔 You'll get alerts for live matches, WC26 updates and duel challenges."
+                    ? "ðŸ”” You'll get alerts for live matches, WC26 updates and duel challenges."
                     : "Get notified when matches go live, WC26 updates drop, and fans challenge you to a duel."}
                 </p>
                 {pushError && <p className="mb-3 rounded-lg bg-[#B30000]/15 px-3 py-2 text-xs text-[#ff6b6b]">{pushError}</p>}
@@ -79,7 +80,7 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
                 >
                   {isLoading ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> :
                    isSubscribed ? <><BellOff className="mr-2 inline h-3.5 w-3.5" />Turn Off Alerts</> :
-                   <>🔔 Enable Match Alerts</>}
+                   <>ðŸ”” Enable Match Alerts</>}
                 </button>
               </>
             )}
@@ -89,3 +90,6 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
     </div>
   );
 }
+
+
+

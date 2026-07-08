@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { analytics } from "../lib/analytics";
 
 interface SponsorSlotProps {
@@ -30,7 +30,7 @@ export default function SponsorSlot({ placement, className = "" }: SponsorSlotPr
         </div>
         <div className="min-w-0">
           <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/20">Sponsored</p>
-          <p className="truncate text-[11px] font-bold text-white/30">Your brand reaches {placementLabel(placement)} fans here</p>
+          <p className="truncate text-[11px] font-bold text-white/30">Reserved sponsor placement for {placementLabel(placement)}</p>
         </div>
       </div>
       <a
@@ -38,7 +38,7 @@ export default function SponsorSlot({ placement, className = "" }: SponsorSlotPr
         className="shrink-0 rounded-lg border border-[#FFD700]/20 bg-[#FFD700]/6 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/60 transition-all hover:border-[#FFD700]/40 hover:text-[#FFD700]"
         onClick={() => analytics.sponsorImpression(`${placement}:cta_click`)}
       >
-        Sponsor →
+        Sponsor &rarr;
       </a>
     </div>
   );
@@ -52,3 +52,7 @@ function placementLabel(placement: string): string {
   };
   return map[placement] ?? "BallMtaani";
 }
+
+
+
+

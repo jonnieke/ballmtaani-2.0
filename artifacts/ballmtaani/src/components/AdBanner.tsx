@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+﻿import { Link } from "wouter";
 import { Megaphone, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
@@ -168,7 +168,7 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
           )}
           <div className="min-w-0 flex-1">
             <div className="mb-0.5 flex items-center gap-2">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">Sponsored · {directAd.label}</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500">Sponsored - {directAd.label}</span>
             </div>
             <p className="truncate text-sm font-bold text-white">{directAd.name}</p>
             {directAd.advertiser && <p className="text-[10px] text-white/30">{directAd.advertiser}</p>}
@@ -238,7 +238,7 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
               <span className="h-1 w-1 rounded-full bg-gray-700" />
               <span className="truncate text-[9px] font-black uppercase tracking-[0.18em] text-gray-500">{label}</span>
             </div>
-            <p className="text-xs font-bold text-gray-300 sm:text-sm">Ads help keep BallMtaani free for matchday rooms, calls, and fan receipts.</p>
+            <p className="text-xs font-bold text-gray-300 sm:text-sm">Advertisement space reserved for partner campaigns.</p>
           </div>
         </div>
 
@@ -264,3 +264,5 @@ export default function AdBanner({ label = "Wallet", type = "horizontal" }: AdBa
     </aside>
   );
 }
+
+

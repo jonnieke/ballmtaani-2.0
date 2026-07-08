@@ -1,4 +1,4 @@
-import { Route, Switch, Router as WouterRouter, useLocation } from "wouter";
+﻿import { Route, Switch, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -15,7 +15,7 @@ import RouteSEO from "./components/RouteSEO";
 import FloatingNav from "./components/FloatingNav";
 import { lazy, Suspense } from "react";
 
-// ─── Stale-chunk guard ────────────────────────────────────────────────────────
+// â”€â”€â”€ Stale-chunk guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // After a Vercel deploy, old content-hashed chunk filenames (e.g. MatchesPage-Dn2FWjK6.js)
 // no longer exist. If a lazy import 404s, do one hard reload to pick up the new
 // HTML (which references the new filenames). A sessionStorage flag stops loops.
@@ -30,16 +30,16 @@ function lazyPage<T extends React.ComponentType<any>>(
       if (!sessionStorage.getItem(KEY)) {
         sessionStorage.setItem(KEY, "1");
         window.location.reload();
-        return new Promise(() => {}); // block — reload is in flight
+        return new Promise(() => {}); // block â€” reload is in flight
       }
       sessionStorage.removeItem(KEY);
-      throw new Error("Chunk load failed after reload — please hard-refresh (Ctrl+Shift+R).");
+      throw new Error("Chunk load failed after reload â€” please hard-refresh (Ctrl+Shift+R).");
     }
   });
 }
 
-// ─── Route-level code splitting ───────────────────────────────────────────────
-// Each page is loaded only when navigated to — reduces initial bundle by ~50%
+// â”€â”€â”€ Route-level code splitting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Each page is loaded only when navigated to â€” reduces initial bundle by ~50%
 // LandingPage and HomePage are eagerly loaded (most visited, need fast paint)
 import LandingPage from "./pages/LandingPage";
 import HomePage from "./pages/MarketHomePage";
@@ -89,7 +89,7 @@ import WelcomeModal from "./components/WelcomeModal";
 import ProfileSetupModal from "./components/ProfileSetupModal";
 import StickySignUpBanner from "./components/StickySignUpBanner";
 
-// Minimal loading fallback — dark bg matches app shell, no layout shift
+// Minimal loading fallback â€” dark bg matches app shell, no layout shift
 function PageLoader() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -101,7 +101,7 @@ function PageLoader() {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 0,                    // Fallbacks handle failure — no retry hammering
+      retry: 0,                    // Fallbacks handle failure â€” no retry hammering
       staleTime: 30_000,           // Don't refetch data younger than 30s (matches proxy burst cache)
       refetchOnWindowFocus: false, // Don't burst all queries when user switches tabs
     },
@@ -113,7 +113,7 @@ function AppShell() {
   const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
   const isWorldCupPage = normalizedLocation === "/world-cup-2026" || normalizedLocation.startsWith("/world-cup-2026/");
-  const quietPage = ["/", "/hub", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
+  const quietPage = ["/hub", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
   const showInstallBanner = ["/", "/home", "/hub", "/world-cup-2026"].includes(normalizedLocation);
   const showAdBanner = !["/login", "/verify"].includes(normalizedLocation);
 
@@ -264,3 +264,4 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+

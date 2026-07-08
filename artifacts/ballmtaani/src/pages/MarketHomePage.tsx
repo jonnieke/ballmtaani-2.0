@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -106,11 +106,11 @@ function MatchPanel({ match, isLive, fanCount }: { match: any; isLive: boolean; 
           <span className="rounded-full border border-[#F7B500]/24 px-2 py-1 text-[8px] font-black text-[#F7B500]">+50 MTC</span>
         </div>
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <button onClick={() => setHomePick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white">{homePick}</button>
+          <button onClick={() => setHomePick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white" aria-label="Increase home score">{homePick}</button>
           <span className="text-white/28">-</span>
-          <button onClick={() => setAwayPick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white">{awayPick}</button>
+          <button onClick={() => setAwayPick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white" aria-label="Increase away score">{awayPick}</button>
         </div>
-        <Link href="/predictions" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-md bg-[#F7B500] text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-[#ffc928]">
+        <Link href="/predictions" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-md bg-[#F7B500] text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-[#ffc928]" aria-label="Lock in your WC26 prediction">
           <LockKeyhole className="h-4 w-4" /> Lock in prediction
         </Link>
       </div>
@@ -151,7 +151,7 @@ function PulseCard({ debate }: { debate: any }) {
   const rightLabel = debate.right || "Right side";
   return (
     <article className={`${card} relative overflow-hidden rounded-lg p-4`}>
-      <img src="/bm-market-hero.png" alt="" className="absolute right-0 top-0 h-32 w-36 object-cover object-center opacity-55" />
+      <img aria-hidden="true" loading="lazy" decoding="async" src="/bm-market-hero.png" alt="" className="absolute right-0 top-0 h-32 w-36 object-cover object-center opacity-55" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,#0a1014_0%,rgba(10,16,20,.92)_60%,rgba(10,16,20,.28)_100%)]" />
       <div className="relative">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
@@ -209,7 +209,7 @@ function DebateCard({ debate }: { debate: any }) {
 function AnalystCard({ answer }: { answer: string }) {
   return (
     <article className={`${card} relative overflow-hidden rounded-lg p-4`}>
-      <img src="/bm-mchambuzi.png" alt="Mchambuzi Halisi analyst" className="absolute bottom-0 right-0 h-full w-[48%] object-cover object-center opacity-95" />
+      <img loading="lazy" decoding="async" src="/bm-mchambuzi.png" alt="Mchambuzi Halisi analyst" className="absolute bottom-0 right-0 h-full w-[48%] object-cover object-center opacity-95" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,#0a1014_0%,rgba(10,16,20,.92)_56%,rgba(10,16,20,.18)_100%)]" />
       <div className="relative max-w-[56%] pr-2">
         <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white"><Sparkles className="h-4 w-4 text-[#F7B500]" /> Mchambuzi Halisi</span><span className="rounded bg-[#F7B500] px-1.5 py-0.5 text-[8px] font-black text-black">New</span></div>
@@ -244,12 +244,12 @@ function NewsCarousel({ articles, loading }: { articles: NewsArticle[]; loading:
       <div className="mx-auto max-w-[1800px] px-4 md:px-7">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div><p className="text-[9px] font-black uppercase tracking-[0.24em] text-[#F7B500]">Mtaa Daily</p><h2 className="mt-1 text-xl font-black uppercase text-white">Latest WC26 and football news</h2></div>
-          <div className="flex gap-2"><button onClick={() => move(-1)} title="Previous stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronLeft className="h-4 w-4" /></button><button onClick={() => move(1)} title="Next stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronRight className="h-4 w-4" /></button></div>
+          <div className="flex gap-2"><button onClick={() => move(-1)} title="Previous stories" aria-label="Previous news stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronLeft className="h-4 w-4" /></button><button onClick={() => move(1)} title="Next stories" aria-label="Next news stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronRight className="h-4 w-4" /></button></div>
         </div>
         <div ref={rail} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-56 min-w-[290px] animate-pulse rounded-lg bg-white/5" />) : articles.slice(0, 10).map(article => {
             const href = article.isInternal ? `/article/${article.slug}` : article.link;
-            const body = <><div className="relative h-32 overflow-hidden"><img src={article.thumbnail} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-[#080d10] to-transparent" /><span className="absolute bottom-2 left-2 rounded bg-[#F7B500] px-2 py-0.5 text-[8px] font-black uppercase text-black">{article.isWC26 ? "WC26" : article.source}</span></div><div className="p-3"><h3 className="line-clamp-2 text-sm font-black leading-snug text-white">{article.title}</h3><p className="mt-2 text-[9px] uppercase tracking-wider text-white/34">{timeAgo(article.pubDate)}</p></div></>;
+            const body = <><div className="relative h-32 overflow-hidden"><img src={article.thumbnail} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-[#080d10] to-transparent" /><span className="absolute bottom-2 left-2 rounded bg-[#F7B500] px-2 py-0.5 text-[8px] font-black uppercase text-black">{article.isWC26 ? "WC26" : article.source}</span></div><div className="p-3"><h3 className="line-clamp-2 text-sm font-black leading-snug text-white">{article.title}</h3><p className="mt-2 text-[9px] uppercase tracking-wider text-white/34">{timeAgo(article.pubDate)}</p></div></>;
             return article.isInternal ? <Link key={article.id} href={href} className={`${card} group min-w-[290px] max-w-[290px] snap-start overflow-hidden rounded-lg`}>{body}</Link> : <a key={article.id} href={href} target="_blank" rel="noopener noreferrer" className={`${card} group min-w-[290px] max-w-[290px] snap-start overflow-hidden rounded-lg`}>{body}</a>;
           })}
         </div>
@@ -311,7 +311,7 @@ export default function MarketHomePage() {
       <SEO title="BallMtaani | World Cup 2026 Fan Command Center" description="Live World Cup 2026 scores, predictions, debates, news and fan rewards for Kenya's football community." path="/home" />
 
       <section className="relative overflow-hidden border-b border-white/8 bg-[#030607]">
-        <img src="/bm-market-hero.png" alt="BallMtaani World Cup fan and live match phone" className="absolute inset-0 h-full w-full object-cover object-center opacity-90" />
+        <img fetchPriority="high" loading="eager" decoding="async" src="/bm-market-hero.png" alt="BallMtaani World Cup fan and live match phone" className="absolute inset-0 h-full w-full object-cover object-center opacity-90" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#030607_0%,rgba(3,6,7,.78)_25%,rgba(3,6,7,.22)_50%,rgba(3,6,7,.78)_75%,#030607_100%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,6,7,.08)_0%,rgba(3,6,7,.38)_64%,#030607_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_42%,rgba(247,181,0,.16),transparent_34%)]" />
@@ -331,7 +331,7 @@ export default function MarketHomePage() {
               <div className="absolute bottom-5 right-0 w-[60%] rotate-[6deg] rounded-[36px] border-[6px] border-[#1e252b] bg-[#04080b] p-3 shadow-[0_28px_70px_rgba(0,0,0,.8),0_0_42px_rgba(247,181,0,.14)]">
                 <div className="pointer-events-none absolute -inset-3 rounded-[42px] bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,.2),transparent_22%),linear-gradient(120deg,transparent_8%,rgba(247,181,0,.16)_43%,transparent_56%)] opacity-70" />
                 <div className="relative overflow-hidden rounded-[25px] border border-white/10 bg-[#071015] p-4 shadow-inner">
-                  <img src="/bm-market-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-[.12] blur-[1px]" />
+                  <img aria-hidden="true" loading="lazy" decoding="async" src="/bm-market-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-[.12] blur-[1px]" />
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.16)_0%,transparent_28%,rgba(247,181,0,.08)_54%,transparent_68%)]" />
                   <div className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-[#F7B500]/16 blur-2xl" />
                   <div className="relative mx-auto mb-3 h-4 w-20 rounded-full bg-black/80 ring-1 ring-white/8" />
@@ -390,3 +390,5 @@ export default function MarketHomePage() {
     </main>
   );
 }
+
+
