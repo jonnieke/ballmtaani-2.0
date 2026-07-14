@@ -29,6 +29,63 @@ import { askMchambuziHalisi } from "../lib/mchambuzi-halisi";
 
 const card = "border border-white/[0.09] bg-[#0a1014]/95 shadow-[0_18px_50px_rgba(0,0,0,0.28)]";
 
+// ─── Match of the Day helpers ─────────────────────────────────
+const isWCMatch = (m: any) => m?.leagueId === 1 || /world cup/i.test(m?.league || "");
+
+// WC26 knockout calendar — derive the round label from today's date
+function wc26RoundLabel(kickoffAt?: number): string | null {
+  const now = kickoffAt ? new Date(kickoffAt) : new Date();
+  const t = now.getTime();
+  const at = (iso: string) => new Date(iso).getTime();
+  if (t > at("2026-07-20T00:00:00Z") || t < at("2026-06-11T00:00:00Z")) return null;
+  if (t >= at("2026-07-19T00:00:00Z")) return "The Final";
+  if (t >= at("2026-07-18T00:00:00Z")) return "3rd Place Play-off";
+  if (t >= at("2026-07-13T00:00:00Z")) return "Semi-Final";
+  if (t >= at("2026-07-08T00:00:00Z")) return "Quarter-Final";
+  if (t >= at("2026-07-04T00:00:00Z")) return "Round of 16";
+  if (t >= at("2026-06-28T00:00:00Z")) return "Round of 32";
+  return "Group Stage";
+}
+
+// ─── Breaking news ticker — the daily-fresh strip at the very top ──
+function BreakingTicker({ items }: { items: NewsArticle[] }) {
+  if (!items.length) return null;
+  const loop = [...items, ...items]; // duplicated for seamless marquee wrap
+  return (
+    <div className="overflow-hidden border-b border-[#F7B500]/20 bg-[#0b0a04]">
+      <style>{`@keyframes bmTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+      <div className="flex items-stretch">
+        <span className="z-10 flex shrink-0 items-center gap-1.5 bg-[#F7B500] px-3 text-[10px] font-black uppercase tracking-[0.2em] text-black">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-black" />
+          </span>
+          Mtaa Wire
+        </span>
+        <div className="flex min-w-0 flex-1 items-center overflow-hidden">
+          <div className="flex whitespace-nowrap will-change-transform" style={{ animation: "bmTicker 45s linear infinite" }}>
+            {loop.map((a, i) => {
+              const inner = (
+                <>
+                  <span className="text-[8px] text-[#F7B500]">●</span>
+                  {a.title}
+                  <span className="text-[9px] font-semibold uppercase tracking-wide text-white/30">{timeAgo(a.pubDate)}</span>
+                </>
+              );
+              const cls = "mx-5 inline-flex items-center gap-2 py-2 text-xs font-bold text-white/75 transition-colors hover:text-[#F7B500]";
+              return a.isInternal && a.slug ? (
+                <Link key={`${a.id}-${i}`} href={`/article/${a.slug}`} className={cls}>{inner}</Link>
+              ) : (
+                <a key={`${a.id}-${i}`} href={a.link} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MatchTeam({ match, side }: { match: any; side: "home" | "away" }) {
   const name = match?.[side] || (side === "home" ? "Home" : "Away");
   const logo = match?.[`${side}Logo`];
@@ -62,7 +119,7 @@ function MatchTeam({ match, side }: { match: any; side: "home" | "away" }) {
   );
 }
 
-function MatchPanel({ match, isLive, fanCount }: { match: any; isLive: boolean; fanCount: number }) {
+function MatchPanel({ match, isLive, fanCount, roundLabel }: { match: any; isLive: boolean; fanCount: number; roundLabel?: string | null }) {
   const [homePick, setHomePick] = useState(1);
   const [awayPick, setAwayPick] = useState(0);
   const hasScore = match?.homeScore !== undefined && match?.awayScore !== undefined;
@@ -71,7 +128,11 @@ function MatchPanel({ match, isLive, fanCount }: { match: any; isLive: boolean; 
     <aside className={`${card} flex h-full flex-col rounded-lg p-5`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/42">{isLive ? "Live at WC26" : "Next big match"}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F7B500]/80">
+            {roundLabel
+              ? isLive ? `${roundLabel} — Live Now` : `${roundLabel} · Tonight`
+              : isLive ? "Live at WC26" : "Match of the Day"}
+          </p>
           <h2 className="mt-1 text-sm font-black uppercase text-white">{match?.league || "World Cup 2026"}</h2>
         </div>
         <Link href="/matches" className="text-[10px] font-black uppercase tracking-wider text-[#F7B500]">View all</Link>
@@ -87,7 +148,7 @@ function MatchPanel({ match, isLive, fanCount }: { match: any; isLive: boolean; 
               <div className="text-sm font-black text-white/38">VS</div>
             )}
             <div className={`mt-1 text-[9px] font-black uppercase tracking-widest ${isLive ? "text-red-400" : "text-white/36"}`}>
-              {isLive ? match?.minute || "Live" : match?.date || "Upcoming"}
+              {isLive ? match?.minute || "Live" : [match?.date, match?.time].filter(Boolean).join(" · ") || "Upcoming"}
             </div>
           </div>
           <MatchTeam match={match} side="away" />
@@ -295,8 +356,17 @@ export default function MarketHomePage() {
   }, [liveMatches, upcoming, recent]);
 
 
-  const featuredMatch = liveMatches[0] || upcoming[0] || recent[0] || null;
-  const isLive = liveMatches.length > 0;
+  // Match of the Day — WC26 takes priority over everything else
+  const featuredMatch =
+    liveMatches.find(isWCMatch) ||
+    upcoming.find(isWCMatch) ||
+    liveMatches[0] ||
+    upcoming[0] ||
+    recent.find(isWCMatch) ||
+    recent[0] ||
+    null;
+  const isLive = liveMatches.length > 0 && liveMatches.includes(featuredMatch);
+  const roundLabel = featuredMatch && isWCMatch(featuredMatch) ? wc26RoundLabel(featuredMatch.kickoffAt) : wc26RoundLabel();
   
   const statItems = useMemo(() => [
     { icon: Users, value: Number(profile?.points || coins || 0).toLocaleString(), label: "MTC balance" },
@@ -310,6 +380,9 @@ export default function MarketHomePage() {
     <main className="min-h-screen bg-[#05080a] text-white">
       <SEO title="BallMtaani | World Cup 2026 Fan Command Center" description="Live World Cup 2026 scores, predictions, debates, news and fan rewards for Kenya's football community." path="/home" />
 
+      {/* ── Mtaa Wire — breaking headlines, refreshes with every publish ── */}
+      <BreakingTicker items={news.slice(0, 5)} />
+
       <section className="relative overflow-hidden border-b border-white/8 bg-[#030607]">
         <img fetchPriority="high" loading="eager" decoding="async" src="/bm-market-hero.png" alt="BallMtaani World Cup fan and live match phone" className="absolute inset-0 h-full w-full object-cover object-center opacity-90" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#030607_0%,rgba(3,6,7,.78)_25%,rgba(3,6,7,.22)_50%,rgba(3,6,7,.78)_75%,#030607_100%)]" />
@@ -318,7 +391,14 @@ export default function MarketHomePage() {
         <div className="relative mx-auto max-w-[1800px] px-4 py-5 md:px-7 lg:py-6">
           <div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr_1fr] lg:items-stretch">
             <div className="flex flex-col justify-center py-4">
-              <div className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-black/45 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/86"><span>KE</span> Kenya's home of football fans</div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-black/45 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/86"><span>KE</span> Kenya's home of football fans</div>
+                {roundLabel && (
+                  <div className="inline-flex w-fit items-center gap-2 rounded-md border border-[#F7B500]/45 bg-[#F7B500]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#F7B500]">
+                    <Trophy className="h-3.5 w-3.5" /> WC26 · {roundLabel} Day
+                  </div>
+                )}
+              </div>
               <h1 className="mt-5 text-[clamp(2.8rem,4.2vw,5.5rem)] font-black uppercase leading-[0.9] tracking-[0] text-white">We predict.<br />We debate.<br /><span className="text-[#F7B500]">We keep receipts.</span></h1>
               <p className="mt-5 max-w-[34rem] text-[1.05rem] leading-7 text-white/86">Join thousands of fans making bold calls, backing their teams and earning MTC for being on point.</p>
               <div className="mt-5 flex flex-wrap gap-3"><Link href="/predictions" className="inline-flex h-12 min-w-[15.5rem] items-center justify-center gap-2 rounded-md bg-[#F7B500] px-5 text-xs font-black uppercase tracking-wider text-black shadow-[0_0_22px_rgba(247,181,0,.18)]"><Target className="h-4 w-4" /> Make your prediction</Link><Link href="/fan-zones" className="inline-flex h-12 min-w-[12.5rem] items-center justify-center gap-2 rounded-md border border-[#F7B500]/65 bg-black/45 px-5 text-xs font-black uppercase tracking-wider text-white"><Users className="h-4 w-4" /> Join your tribe</Link></div>
@@ -371,7 +451,7 @@ export default function MarketHomePage() {
               </div>
             </div>
 
-            <MatchPanel match={featuredMatch} isLive={isLive} fanCount={leaderboard.length} />
+            <MatchPanel match={featuredMatch} isLive={isLive} fanCount={leaderboard.length} roundLabel={roundLabel} />
 
           </div>
 
