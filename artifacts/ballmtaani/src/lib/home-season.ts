@@ -23,10 +23,42 @@ export type HomepageMatch = {
 export const PREMIER_LEAGUE_OPENING_KICKOFF = new Date("2026-08-21T19:00:00Z");
 
 export const PREMIER_LEAGUE_OPENING_FIXTURES: HomepageMatch[] = [
-  { id: "pl-2627-ars-cov", home: "Arsenal", away: "Coventry City", league: "Premier League", leagueId: 39, kickoffAt: new Date("2026-08-21T19:00:00Z").getTime(), time: "10:00 PM EAT" },
-  { id: "pl-2627-hul-mun", home: "Hull City", away: "Manchester United", league: "Premier League", leagueId: 39, kickoffAt: new Date("2026-08-22T11:30:00Z").getTime(), time: "2:30 PM EAT" },
-  { id: "pl-2627-mci-bou", home: "Manchester City", away: "AFC Bournemouth", league: "Premier League", leagueId: 39, kickoffAt: new Date("2026-08-23T13:00:00Z").getTime(), time: "4:00 PM EAT" },
-  { id: "pl-2627-new-liv", home: "Newcastle United", away: "Liverpool", league: "Premier League", leagueId: 39, kickoffAt: new Date("2026-08-23T15:30:00Z").getTime(), time: "6:30 PM EAT" },
+  {
+    id: "pl-2627-ars-cov", home: "Arsenal", away: "Coventry City",
+    league: "Premier League", leagueId: 39,
+    kickoffAt: new Date("2026-08-21T19:00:00Z").getTime(), time: "10:00 PM EAT",
+    homeLogo: "https://media.api-sports.io/football/teams/42.png",
+    awayLogo: "https://media.api-sports.io/football/teams/57.png",
+    homeColor: "#EF0107", awayColor: "#59BFFF",
+    homeInitial: "ARS", awayInitial: "COV",
+  },
+  {
+    id: "pl-2627-hul-mun", home: "Hull City", away: "Manchester United",
+    league: "Premier League", leagueId: 39,
+    kickoffAt: new Date("2026-08-22T11:30:00Z").getTime(), time: "2:30 PM EAT",
+    homeLogo: "https://media.api-sports.io/football/teams/322.png",
+    awayLogo: "https://media.api-sports.io/football/teams/33.png",
+    homeColor: "#F5A12D", awayColor: "#DA291C",
+    homeInitial: "HUL", awayInitial: "MUN",
+  },
+  {
+    id: "pl-2627-mci-bou", home: "Manchester City", away: "AFC Bournemouth",
+    league: "Premier League", leagueId: 39,
+    kickoffAt: new Date("2026-08-23T13:00:00Z").getTime(), time: "4:00 PM EAT",
+    homeLogo: "https://media.api-sports.io/football/teams/50.png",
+    awayLogo: "https://media.api-sports.io/football/teams/35.png",
+    homeColor: "#6CABDD", awayColor: "#DA291C",
+    homeInitial: "MCI", awayInitial: "BOU",
+  },
+  {
+    id: "pl-2627-new-liv", home: "Newcastle United", away: "Liverpool",
+    league: "Premier League", leagueId: 39,
+    kickoffAt: new Date("2026-08-23T15:30:00Z").getTime(), time: "6:30 PM EAT",
+    homeLogo: "https://media.api-sports.io/football/teams/34.png",
+    awayLogo: "https://media.api-sports.io/football/teams/40.png",
+    homeColor: "#241F20", awayColor: "#C8102E",
+    homeInitial: "NEW", awayInitial: "LIV",
+  },
 ];
 
 export const LEAGUE_SHORTCUTS = [

@@ -367,13 +367,25 @@ const WC26_LIVE_START = new Date("2026-06-11T17:00:00Z").getTime();
 const WC26_LIVE_END   = new Date("2026-07-20T00:00:00Z").getTime();
 
 export async function fetchUpcomingFixtures(): Promise<any[]> {
-  // During WC26: EPL, LaLiga, SerieA, Bundesliga, Ligue1 are in off-season — skip them.
-  // This cuts API calls from 9 → 2, preventing per-minute rate-limit bursts.
-  const wc26IsLive = Date.now() >= WC26_LIVE_START && Date.now() < WC26_LIVE_END;
+  const now = Date.now();
+  const wc26IsLive = now >= WC26_LIVE_START && now < WC26_LIVE_END;
+
+  // July 20 → Aug 21: WC26 done, leagues not started yet — query pre-season friendlies + early UCL qualifiers
+  const WC26_END_MS = WC26_LIVE_END;
+  const PL_START_MS = new Date("2026-08-21T19:00:00Z").getTime();
+  const isPreSeasonGap = now >= WC26_END_MS && now < PL_START_MS;
+
   const leagueSeasons: [number, number][] = wc26IsLive
     ? [
         [1, 2026],   // World Cup 2026
         [12, 2025],  // CAF Champions League (final runs to July)
+      ]
+    : isPreSeasonGap
+    ? [
+        [667, 2026], // Pre-Season Friendlies 2026
+        [2, 2026],   // UCL qualifying rounds
+        [12, 2025],  // CAF Champions League
+        [39, 2025],  // Premier League (any remaining summer fixtures)
       ]
     : [
         [1, 2026],   // World Cup 2026
