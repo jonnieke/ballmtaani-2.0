@@ -7,7 +7,7 @@ import { useTheme, ThemeAtmosphere } from "../context/ThemeContext";
 
 export function Navbar() {
   const [location] = useLocation();
-  const { isLoggedIn, profile, coins, logout } = useAuth();
+  const { isLoggedIn, username, coins, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chooseClubOpen, setChooseClubOpen] = useState(false);
   const { atmosphere, setAtmosphere } = useTheme();
@@ -24,8 +24,6 @@ export function Navbar() {
     }
     return undefined;
   }, [coins]);
-
-  const username = profile?.username || "Fan";
 
   const atmospheres: { id: ThemeAtmosphere; label: string; icon: string }[] = [
     { id: "default", label: "Classic Brand", icon: "BM" },
