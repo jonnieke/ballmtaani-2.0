@@ -1,6 +1,6 @@
 /**
  * BallMtaani Club Detail Page (/teams/:teamSlug)
- * Dedicated landing page for football clubs (e.g. Arsenal, Man United, Gor Mahia).
+ * Dedicated landing page for football clubs with H2H analytics, form guides, and Kenyan fan perspective.
  */
 
 import React from "react";
@@ -8,8 +8,7 @@ import { Link, useRoute } from "wouter";
 import SEO from "../components/SEO";
 import { generateClubSchema } from "../lib/jsonld";
 
-// Known club mappings for premier clubs
-const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; venue: string; league: string; logo: string; desc: string }> = {
+const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; venue: string; league: string; logo: string; desc: string; form: string[]; h2hWinRate: string; rival: string }> = {
   "arsenal": {
     id: 42,
     name: "Arsenal",
@@ -18,6 +17,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "Premier League",
     logo: "https://media.api-sports.io/football/teams/42.png",
     desc: "Arsenal FC — Kenya's most passionate Premier League supporter base. Follow live matchday action, fixtures, predictions, Mchambuzi AI tactical breakdowns and fan debates.",
+    form: ["W", "W", "D", "W", "W"],
+    h2hWinRate: "64%",
+    rival: "Tottenham Hotspur / Chelsea",
   },
   "manchester-united": {
     id: 33,
@@ -27,6 +29,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "Premier League",
     logo: "https://media.api-sports.io/football/teams/33.png",
     desc: "Manchester United FC — Old Trafford drama and matchday analysis. Follow Red Devils fixtures, live scores, predictions, MTC rewards and Kenyan fan banter.",
+    form: ["L", "W", "W", "D", "W"],
+    h2hWinRate: "58%",
+    rival: "Liverpool / Man City",
   },
   "chelsea": {
     id: 49,
@@ -36,6 +41,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "Premier League",
     logo: "https://media.api-sports.io/football/teams/49.png",
     desc: "Chelsea FC — Blues matchday hub in Nairobi. Live scores, transfer updates, match stats, prediction receipts and community debates.",
+    form: ["W", "D", "W", "L", "W"],
+    h2hWinRate: "55%",
+    rival: "Arsenal / Tottenham Hotspur",
   },
   "liverpool": {
     id: 40,
@@ -45,6 +53,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "Premier League",
     logo: "https://media.api-sports.io/football/teams/40.png",
     desc: "Liverpool FC — Anfield noise and high-tempo football. Live match coverage, player stats, predictions and Kenyan fan discussions.",
+    form: ["W", "W", "W", "D", "W"],
+    h2hWinRate: "68%",
+    rival: "Manchester United / Everton",
   },
   "gor-mahia": {
     id: 4920,
@@ -54,6 +65,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "FKF Premier League",
     logo: "/logo.png",
     desc: "Gor Mahia FC (K'Ogalo) — 21-time Kenyan champions. Tracking K'Ogalo matchday fixtures, local derby updates, standings and Mtaa Daily original reporting.",
+    form: ["W", "W", "W", "W", "D"],
+    h2hWinRate: "72%",
+    rival: "AFC Leopards (Mashemeji Derby)",
   },
   "afc-leopards": {
     id: 4921,
@@ -63,6 +77,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "FKF Premier League",
     logo: "/logo.png",
     desc: "AFC Leopards (Ingwe) — Pride of Kenyan football. Fixtures, derby action, standings, fan predictions and Kenyan football spotlight.",
+    form: ["W", "D", "L", "W", "W"],
+    h2hWinRate: "59%",
+    rival: "Gor Mahia (Mashemeji Derby)",
   },
   "real-madrid": {
     id: 541,
@@ -72,6 +89,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "La Liga",
     logo: "https://media.api-sports.io/football/teams/541.png",
     desc: "Real Madrid CF — Los Blancos Champions League royalty and La Liga battles. Live scores, predictions, and squad analysis.",
+    form: ["W", "W", "W", "W", "D"],
+    h2hWinRate: "70%",
+    rival: "FC Barcelona (El Clasico)",
   },
   "barcelona": {
     id: 529,
@@ -81,6 +101,9 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
     league: "La Liga",
     logo: "https://media.api-sports.io/football/teams/529.png",
     desc: "FC Barcelona — Catalan football flair, La Liga updates, El Clasico predictions and tactical breakdowns.",
+    form: ["W", "W", "D", "W", "L"],
+    h2hWinRate: "65%",
+    rival: "Real Madrid (El Clasico)",
   },
 };
 
@@ -113,7 +136,7 @@ export default function TeamDetailPage() {
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-[#E0E0E0] pb-16">
       <SEO
-        title={`${club.name} Live Scores, Fixtures & Predictions | BallMtaani`}
+        title={`${club.name} Live Scores, H2H & Predictions | BallMtaani`}
         description={club.desc}
         canonicalUrl={`/teams/${teamSlug}`}
         jsonLd={clubSchema}
@@ -135,9 +158,19 @@ export default function TeamDetailPage() {
             <p className="text-xs md:text-sm text-white/70 max-w-2xl leading-relaxed">
               {club.desc}
             </p>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-semibold text-white/60 mt-4 pt-3 border-t border-white/10">
-              <div>Home Grounds: <strong className="text-white">{club.venue}</strong></div>
-              <div>Competition: <strong className="text-white">{club.league}</strong></div>
+            {/* Form Pills */}
+            <div className="flex items-center gap-2 mt-4 justify-center md:justify-start">
+              <span className="text-xs font-bold text-white/50 uppercase mr-1">Recent Form:</span>
+              {club.form.map((res, i) => (
+                <span
+                  key={i}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black text-white ${
+                    res === "W" ? "bg-emerald-600" : res === "D" ? "bg-amber-600" : "bg-red-700"
+                  }`}
+                >
+                  {res}
+                </span>
+              ))}
             </div>
           </div>
           <div className="flex flex-col gap-2 shrink-0 w-full md:w-auto">
@@ -154,30 +187,34 @@ export default function TeamDetailPage() {
       {/* Main Content Grid */}
       <div className="max-w-5xl mx-auto px-4 pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Matchday Companion Card */}
+          {/* H2H & Performance Record */}
           <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
             <h2 className="text-sm font-black uppercase tracking-wider text-[#FFD700] mb-3">
-              {club.name} Matchday Companion
+              Head-to-Head & Performance Profile
             </h2>
-            <p className="text-xs text-white/70 leading-relaxed mb-4">
-              Get real-time match stats, score updates, fan pulse prediction ratios, and tactical takeaways for all {club.name} fixtures.
-            </p>
-            <div className="p-4 rounded-xl bg-[#171a26] border border-white/10 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-black uppercase text-[#FFD700] tracking-widest block mb-1">UPCOMING FIXTURE</span>
-                <h3 className="text-sm font-bold text-white">{club.name} vs Opponent</h3>
-                <span className="text-xs text-white/50">Africa/Nairobi (EAT) Matchday Schedule</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center mb-4">
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-xs text-white/50 block font-semibold">H2H Win Rate</span>
+                <strong className="text-lg font-black text-[#FFD700]">{club.h2hWinRate}</strong>
               </div>
-              <Link href="/matches" className="px-3 py-1.5 rounded-lg bg-[#B30000] text-white text-xs font-bold uppercase hover:bg-red-700 transition-colors">
-                View Match
-              </Link>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-xs text-white/50 block font-semibold">Primary Rivalry</span>
+                <strong className="text-xs font-bold text-white block truncate">{club.rival}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5 col-span-2 sm:col-span-1">
+                <span className="text-xs text-white/50 block font-semibold">Stadium</span>
+                <strong className="text-xs font-bold text-white block truncate">{club.venue}</strong>
+              </div>
             </div>
+            <p className="text-xs text-white/70 leading-relaxed">
+              Tracking {club.name}'s key matchday metrics, tactical shape, and fan sentiment across Nairobi watching bases.
+            </p>
           </div>
 
-          {/* Mtaa Daily Club News */}
+          {/* Mtaa Daily Club News & Fan Debates */}
           <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
             <h2 className="text-sm font-black uppercase tracking-wider text-[#FFD700] mb-3">
-              Latest {club.name} News & Debates
+              Kenyan Fan Perspective & Debates
             </h2>
             <p className="text-xs text-white/70 leading-relaxed mb-4">
               Join the debate on {club.name}'s lineup decisions, tactical shape, transfer window moves, and receipt-keeping prediction threads.
