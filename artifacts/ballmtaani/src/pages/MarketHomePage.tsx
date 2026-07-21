@@ -23,7 +23,9 @@ import TeamLogo from "../components/TeamLogo";
 
 const TITLE = "BallMtaani: Live Football Scores, Fixtures & Fan Predictions Kenya";
 const DESCRIPTION = "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.";
-const STADIUM_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
+const HERO_IMAGE = "/images/hero_player_celebration.png";
+const ANALYST_IMAGE = "/images/analyst_chalkboard.png";
+const FANS_IMAGE = "/images/kenyan_fans.png";
 const LIVE_STATUSES = new Set(["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]);
 const FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700] focus-visible:ring-offset-2 focus-visible:ring-offset-black";
 
@@ -83,12 +85,20 @@ function Heading({ eyebrow, title, copy, href, action }: { eyebrow: string; titl
   );
 }
 
+function shortTeamName(name: string): string {
+  // Strip common suffixes to keep it short and clean
+  return name
+    .replace(/\s+(Football Club|FC|SC|AFC|City|United|Rovers|Athletic|Town|Rangers?|Lions?|Stars?)$/i, "")
+    .trim();
+}
+
 function Team({ match, side, size = "md" }: { match: HomepageMatch; side: "home" | "away"; size?: "md" | "xl" }) {
   const name = String(match[side]);
+  const logoSize = size === "md" ? "sm" : size;
   return (
-    <div className="flex min-w-0 flex-col items-center gap-2 text-center">
-      <TeamLogo logo={side === "home" ? match.homeLogo : match.awayLogo} initial={String((side === "home" ? match.homeInitial : match.awayInitial) || name.slice(0, 3)).toUpperCase()} color="#182333" size={size} shadow={size === "xl"} />
-      <span className="line-clamp-2 text-sm font-black text-white">{name}</span>
+    <div className="flex flex-1 min-w-0 flex-col items-center gap-1 text-center">
+      <TeamLogo logo={side === "home" ? match.homeLogo : match.awayLogo} initial={String((side === "home" ? match.homeInitial : match.awayInitial) || name.slice(0, 3)).toUpperCase()} color="#182333" size={logoSize} shadow={size === "xl"} />
+      <span className="text-[8px] font-semibold text-white/85 uppercase tracking-wide leading-tight break-words w-full">{name}</span>
     </div>
   );
 }
@@ -114,7 +124,7 @@ function MatchCard({ match, live }: { match: HomepageMatch; live: boolean }) {
 function StoryCard({ article, eager = false }: { article: NewsArticle; eager?: boolean }) {
   const href = article.isInternal ? "/article/" + article.slug : article.link;
   const body = <>
-    <div className="relative aspect-[16/9] overflow-hidden"><img src={article.thumbnail || STADIUM_IMAGE} alt={article.title} width={640} height={360} loading={eager ? "eager" : "lazy"} decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" onError={(event) => { event.currentTarget.src = STADIUM_IMAGE; }} /><div className="absolute inset-0 bg-gradient-to-t from-[#0b0e14] via-transparent to-transparent" /></div>
+    <div className="relative aspect-[16/9] overflow-hidden"><img src={article.thumbnail || HERO_IMAGE} alt={article.title} width={640} height={360} loading={eager ? "eager" : "lazy"} decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" onError={(event) => { event.currentTarget.src = HERO_IMAGE; }} /><div className="absolute inset-0 bg-gradient-to-t from-[#0b0e14] via-transparent to-transparent" /></div>
     <div className="flex flex-1 flex-col p-4"><div className="mb-2 flex justify-between gap-3 text-[9px] font-black uppercase tracking-widest text-white/30"><span>{article.source}</span><span>{timeAgo(article.pubDate)}</span></div><h3 className="line-clamp-3 text-base font-black leading-snug text-white">{article.title}</h3><span className="mt-4 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70">Read story<ArrowRight className="h-3 w-3" /></span></div>
   </>;
   const styles = "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/8 bg-[#0b0e14] transition hover:-translate-y-0.5 hover:border-white/18 " + FOCUS;
@@ -145,6 +155,7 @@ export default function MarketHomePage() {
   const [now, setNow] = useState(() => new Date());
   const { data: live = [], isLoading: liveLoading } = useMatches();
   const { data: upcoming = [], isLoading: upcomingLoading } = useUpcomingFixtures();
+  const { data: debates = [] } = useDebates();
   const needsRecent = !liveLoading && !upcomingLoading && !live.length && !upcoming.length;
   const { data: recent = [] } = useRecentMatches({ enabled: needsRecent });
 
@@ -182,27 +193,300 @@ export default function MarketHomePage() {
     <SEO title={TITLE} description={DESCRIPTION} keywords={["live football scores Kenya", "Premier League fixtures Kenya", "Champions League Kenya", "FKF Premier League", "football predictions Kenya", "Mchambuzi AI"]} path="/" />
     <HeroTicker articles={seasonNews.slice(0, 8)} matches={matches.slice(0, 8)} />
 
-    <section className="relative isolate overflow-hidden border-b border-white/8"><img src={STADIUM_IMAGE} alt="" width={1920} height={1080} loading="eager" decoding="async" fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40" /><div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(5,6,9,.98),rgba(5,6,9,.75),rgba(5,6,9,.45))]" /><div className="mx-auto grid max-w-6xl gap-9 px-4 py-14 md:py-20 lg:grid-cols-[1.1fr_.9fr] lg:items-center"><div><div className="mb-5 flex flex-wrap gap-2"><span className="rounded-full border border-[#FFD700]/24 bg-[#FFD700]/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#FFD700]">{MODE_COPY[mode].eyebrow}</span><span className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/55">Premier League first. Kenya always visible.</span></div><h1 className="text-5xl font-black leading-[.9] tracking-[-.045em] md:text-7xl">The season <span className="text-[#B30000]">starts here.</span></h1><p className="mt-6 max-w-2xl text-base font-semibold leading-7 text-white/65 md:text-lg">Live scores, fearless predictions, Kenyan fan debates and real football intelligence—from the Premier League to FKF football.</p><p className="mt-3 text-sm font-black uppercase tracking-widest text-[#FFD700]/75">We predict. We debate. We keep receipts.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/matches" className={"inline-flex items-center gap-2 rounded-xl bg-[#B30000] px-6 py-3.5 text-sm font-black " + FOCUS}>See Upcoming Matches<ArrowRight className="h-4 w-4" /></Link><Link href="/fan-zones" className={"inline-flex items-center gap-2 rounded-xl border border-white/18 bg-black/30 px-6 py-3.5 text-sm font-black " + FOCUS}>Choose Your Club<Users className="h-4 w-4" /></Link></div><p className="mt-5 max-w-xl text-sm leading-6 text-white/42">{MODE_COPY[mode].summary}</p></div><div className="rounded-3xl border border-white/12 bg-[#0a0d14]/90 p-6 backdrop-blur"><div className="mb-5 flex items-center justify-between"><div><p className={"text-[10px] font-black uppercase tracking-widest " + (featuredLive ? "text-[#ff5a5a]" : "text-[#FFD700]")}>{selected.reason}</p><p className="mt-1 text-xs text-white/38">{featured.league}</p></div>{featuredLive ? <Radio className="h-5 w-5 animate-pulse text-[#B30000]" /> : <CalendarDays className="h-5 w-5 text-white/35" />}</div><div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4"><Team match={featured} side="home" size="xl" />{typeof featured.homeScore === "number" ? <span className="text-3xl font-black">{featured.homeScore} - {featured.awayScore}</span> : <span className="rounded-xl border border-white/10 px-4 py-2 text-sm font-black text-white/28">VS</span>}<Team match={featured} side="away" size="xl" /></div><p className="mt-5 text-center text-[10px] font-black uppercase tracking-widest text-white/38">{kickoffLabel(featured)}</p><Link href={featuredLive ? "/live-center/" + featured.id : "/predictions"} className={"mt-4 flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-black hover:bg-[#FFD700] " + FOCUS}>{featuredLive ? "Join Live Center" : "Make Your Call"}<ChevronRight className="h-4 w-4" /></Link></div></div></section>
+    {/* HERO SECTION */}
+    <section className="relative isolate bg-[#070707] min-h-[600px] flex items-center border-b border-[#2A2A2A] py-16">
+      
+      {/* Background Image with crafted masks */}
+      <div className="absolute inset-0 -z-20 overflow-hidden">
+        <div className="absolute top-0 bottom-0 right-0 w-full md:w-[90%] lg:w-[85%] h-full">
+          <img src={HERO_IMAGE} alt="Hero" className="w-full h-full object-cover object-center md:object-[35%_center]" />
+          {/* Gradient mask to fade image into the left dark background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#070707] via-[#070707]/70 to-transparent w-[50%]" />
+          {/* Bottom fade to seamlessly blend with next section */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0B0B] via-transparent to-transparent opacity-90" />
+        </div>
+      </div>
+      
+      <div className="mx-auto w-full max-w-7xl px-4 grid gap-8 lg:gap-12 lg:grid-cols-[auto_1fr] items-center relative z-10">
+        
+        {/* Left Side: Typography & CTAs */}
+        <div className="flex flex-col max-w-xl">
+          <h1 className="flex flex-col font-extrabold leading-[0.9] tracking-[-0.04em]">
+            <span className="text-white text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">THE SEASON</span>
+            <span className="text-[#B30000] text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">STARTS HERE.</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-base md:text-lg font-medium leading-relaxed text-white/80">
+            Live scores, fearless predictions, Kenyan fan debates and real football intelligence.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link href="/matches" className={"inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-red-800 transition-colors shadow-[0_0_20px_rgba(179,0,0,0.4)] " + FOCUS}>
+              SEE UPCOMING MATCHES <ChevronRight className="h-4 w-4" />
+            </Link>
+            <Link href="/fan-zones" className={"inline-flex items-center gap-2 rounded-lg border border-[#FFD700]/50 text-[#FFD700] bg-transparent px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-[#FFD700]/10 transition-colors " + FOCUS}>
+              CHOOSE YOUR CLUB <Users className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-8 flex items-center gap-2">
+            <div className="flex h-6 w-6 rounded-full items-center justify-center bg-[#B30000]/20">
+              <Zap className="h-3 w-3 fill-[#B30000] text-[#B30000]" />
+            </div>
+            <p className="text-sm font-black tracking-widest">
+              <span className="text-white/60">We predict. We debate. </span><span className="text-[#FFD700]">We keep receipts.</span>
+            </p>
+          </div>
+        </div>
 
-    <section className="border-b border-white/6 bg-[#070a10] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Live & upcoming" title="Your matchday desk" copy="Live games lead. Premier League follows. Europe, Kenyan football and the next useful fixture stay close behind." href="/matches" action="All matches" /><div className="flex snap-x gap-3 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{(liveLoading || upcomingLoading) && !matches.length ? [1,2,3].map((item) => <div key={item} className="h-48 min-w-[280px] animate-pulse rounded-2xl bg-white/[.03]" />) : matches.map((match: HomepageMatch) => <MatchCard key={String(match.id)} match={match} live={live.some((item: HomepageMatch) => String(item.id) === String(match.id)) || LIVE_STATUSES.has(String(match.status || ""))} />)}</div></div></section>
+        {/* Right Side: LIVE & NEXT Card (Dynamic API-Football Featured Match) */}
+        <div className="flex justify-end w-full">
+          <div className="w-full max-w-[340px] rounded-2xl border border-white/10 bg-black/75 p-4 backdrop-blur-xl shadow-2xl">
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${featuredLive ? "bg-emerald-500" : "bg-[#B30000]"} animate-pulse`} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-white">
+                  {featuredLive ? "LIVE NOW" : "FEATURED MATCH"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 truncate max-w-[140px]">
+                <Trophy className="h-3 w-3 text-white/50 shrink-0" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/70 truncate">{featured.league || "Premier League"}</span>
+              </div>
+            </div>
+            
+            {/* Teams & Score / Kickoff from API-Football */}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <TeamLogo logo={featured.homeLogo} initial={featured.homeInitial || (featured.home || "HOM").slice(0, 3).toUpperCase()} color="#182333" size="lg" shadow />
+                <span className="text-[10px] font-black uppercase tracking-wider text-white leading-tight break-words line-clamp-2 w-full">{featured.home}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5 shrink-0 px-1">
+                {featuredLive || (typeof featured.homeScore === "number" && typeof featured.awayScore === "number") ? (
+                  <>
+                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">{featured.minute ? `${featured.minute}'` : "LIVE"}</span>
+                    <span className="text-[2rem] font-black text-white leading-none">{featured.homeScore ?? 0} - {featured.awayScore ?? 0}</span>
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/40">Full Time / Live</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Kickoff</span>
+                    <span className="text-[1.5rem] xl:text-[1.8rem] font-black text-white leading-none">{featured.time ? String(featured.time).replace(/\s?[A-Z]{2,4}$/, "") : "TBC"}</span>
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/40">EAT</span>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <TeamLogo logo={featured.awayLogo} initial={featured.awayInitial || (featured.away || "AWY").slice(0, 3).toUpperCase()} color="#182333" size="lg" shadow />
+                <span className="text-[10px] font-black uppercase tracking-wider text-white leading-tight break-words line-clamp-2 w-full">{featured.away}</span>
+              </div>
+            </div>
 
-    <section className="border-b border-white/6 bg-[#08080b] py-11"><div className="mx-auto grid max-w-6xl gap-5 px-4 lg:grid-cols-[1.25fr_.75fr]"><div className="rounded-3xl border border-[#B30000]/18 bg-[#0d0d12] p-7"><p className="text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]">Choose your club</p><h2 className="mt-3 text-3xl font-black">{club && club.toLowerCase() !== "none" ? club + " is your home end." : "Pick the badge you will defend all season."}</h2><p className="mt-3 text-sm leading-6 text-white/48">Your saved favourite team already powers fan-zone discovery and can now lead featured-match priority whenever that club is live.</p><Link href="/fan-zones" className={"mt-6 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>{club ? "Open your fan zone" : "Choose your club"}<Users className="h-4 w-4" /></Link></div><div className="rounded-3xl border border-white/8 bg-[#0d1017] p-6"><p className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">Fan identity</p>{["Follow your club first", "Join debates with context", "Earn MTC across matchday actions"].map((item, index) => <div key={item} className="mt-3 flex items-center gap-3 rounded-xl border border-white/7 bg-white/[.025] p-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#B30000]/18 text-xs font-black text-[#ff6b6b]">{index + 1}</span><span className="text-sm font-bold text-white/66">{item}</span></div>)}</div></div></section>
+            {/* Prediction */}
+            <div className="mt-4 border-t border-white/10 pt-3 text-center">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-0.5">WHO WILL WIN?</p>
+              <p className="text-[9px] font-medium text-white/40 mb-3">Cast your prediction</p>
+              <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5 items-center">
+                <Link href={`/predictions?match=${featured.id}`} className="rounded-lg border border-white/20 py-2 text-xs font-black hover:bg-white/5 transition-colors text-center block">1</Link>
+                <Link href={`/predictions?match=${featured.id}`} className="rounded-lg border border-[#FFD700]/70 bg-[#FFD700]/10 text-[#FFD700] py-2 text-xs font-black text-center block">X</Link>
+                <Link href={`/predictions?match=${featured.id}`} className="rounded-lg border border-white/20 py-2 text-xs font-black hover:bg-white/5 transition-colors text-center block">2</Link>
+                <div className="ml-1 flex flex-col items-end">
+                  <span className="text-sm font-black text-white">Live</span>
+                  <span className="text-[7px] font-bold uppercase text-white/40 leading-tight">Fans<br/>Predicting</span>
+                </div>
+              </div>
 
-    <section className="border-b border-[#FFD700]/10 bg-[#0a0904] py-11"><div className="mx-auto grid max-w-6xl gap-7 px-4 lg:grid-cols-[.85fr_1.15fr] lg:items-center"><div><p className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]/70">Premier League opening weekend</p><h2 className="mt-3 text-3xl font-black md:text-4xl">{countdown.complete ? "The 2026/27 season is underway." : "Arsenal and Coventry open the new season."}</h2><p className="mt-3 text-sm leading-6 text-white/48">Friday 21 August, 10:00 PM EAT. Manchester United, Manchester City and Liverpool follow across opening weekend.</p><Link href="/matches?search=Premier%20League" className={"mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#FFD700] " + FOCUS}>Opening fixtures<ArrowRight className="h-4 w-4" /></Link></div>{!countdown.complete && <div className="grid grid-cols-4 gap-2">{[[countdown.days,"Days"],[countdown.hours,"Hours"],[countdown.minutes,"Mins"],[countdown.seconds,"Secs"]].map(([value,label]) => <div key={String(label)} className="rounded-xl border border-[#FFD700]/18 bg-black/35 p-3 text-center"><b className="block text-2xl tabular-nums md:text-3xl">{String(value).padStart(2,"0")}</b><span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/55">{label}</span></div>)}</div>}</div></section>
+              {/* Fan Pulse */}
+              <div className="mt-4 flex flex-col gap-1.5">
+                <span className="text-[9px] font-black tracking-widest uppercase text-white/50 text-left">FAN PULSE</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-[#B30000]">65%</span>
+                  <svg className="flex-1 h-3" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <path d="M0,5 L20,5 L25,1 L30,9 L35,5 L70,5 L75,2 L80,8 L85,5 L100,5" stroke="#B30000" strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" />
+                  </svg>
+                  <span className="text-sm font-black text-[#FFD700]">35%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <section className="border-b border-white/6 bg-[#06090a] py-11"><div className="mx-auto max-w-6xl px-4"><div className="grid gap-6 rounded-3xl border border-green-500/16 bg-[#09100d] p-7 lg:grid-cols-[auto_1fr_auto] lg:items-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10"><Sparkles className="h-6 w-6 text-green-400" /></div><div><p className="text-[10px] font-black uppercase tracking-widest text-green-400">Mchambuzi’s latest take</p><h2 className="mt-2 text-2xl font-black">{MODE_COPY[mode].focus}</h2><p className="mt-3 text-sm leading-6 text-white/55">{take}</p><p className="mt-2 text-[9px] uppercase tracking-widest text-white/24">Reuses current data · cached for 15 minutes · no automatic AI call</p></div><Link href={"/mchambuzi-halisi?q=" + encodeURIComponent("Give me the sharpest football take for today")} className={"inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-5 py-3 text-xs font-black uppercase tracking-widest text-black " + FOCUS}>Ask Mchambuzi<ArrowRight className="h-4 w-4" /></Link></div></div></section>
+    {/* UPCOMING & LEAGUES */}
+    <section className="bg-[#0B0B0B] py-12 border-b border-[#2A2A2A]">
+      <div className="mx-auto max-w-7xl px-4 grid gap-8 lg:grid-cols-[1fr_auto]">
+        
+        {/* UPCOMING FIXTURES */}
+        <div className="flex flex-col min-w-0">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-white">UPCOMING FIXTURES</h2>
+            <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:text-white transition-colors">VIEW ALL &gt;</Link>
+          </div>
+          <div className="flex snap-x gap-4 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {matches.length === 0 ? <div className="h-32 min-w-[200px] animate-pulse rounded-2xl bg-white/5" /> : matches.slice(0, 4).map((match: HomepageMatch, idx: number) => {
+              const rawDate = match.date ? new Date(match.date) : null;
+              const dateLabel = rawDate && !isNaN(rawDate.getTime())
+                ? rawDate.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+                : match.date ? String(match.date).slice(0, 10) : "Upcoming";
+              // Show only time digits, strip timezone suffix
+              const timeLabel = match.time ? String(match.time).replace(/\s?[A-Z]{2,4}$/, "").trim() : "TBC";
+              return (
+                <div key={idx} className="group w-[200px] shrink-0 snap-start rounded-2xl border border-white/10 bg-[#151515] p-3 hover:border-white/20 transition-all cursor-pointer">
+                  <div className="mb-3 flex justify-between items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-white/40">
+                    <span className="flex items-center gap-1 min-w-0">
+                      <Trophy className="w-3 h-3 shrink-0"/>
+                      <span className="truncate">{match.league || "KPL"}</span>
+                    </span>
+                    <span className="shrink-0 text-[8px] whitespace-nowrap">{dateLabel}</span>
+                  </div>
+                  <div className="flex items-start justify-between w-full">
+                    <Team match={match} side="home" />
+                    <span className="text-sm font-black text-white shrink-0 px-1 mt-2.5">{timeLabel}</span>
+                    <Team match={match} side="away" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-    <DeferredSection minHeight={360}><HotDebate /></DeferredSection>
+        {/* LEAGUES */}
+        <div className="flex flex-col">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-white">LEAGUES</h2>
+            <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:text-white transition-colors">VIEW ALL &gt;</Link>
+          </div>
+          <div className="grid grid-cols-4 gap-2.5 w-[340px] shrink-0">
+            {[
+              { id: "kpl", label: "KPL", image: "https://media.api-sports.io/football/leagues/326.png", color: "bg-gradient-to-b from-[#b52626] to-[#7a1010] shadow-lg shadow-red-900/20", imgClass: "brightness-0 invert" },
+              { id: "ucl", label: "UCL", image: "https://media.api-sports.io/football/leagues/2.png", color: "bg-gradient-to-b from-[#1a237e] to-[#0d1254]", imgClass: "brightness-0 invert" },
+              { id: "epl", label: "EPL", image: "https://media.api-sports.io/football/leagues/39.png", color: "bg-gradient-to-b from-[#38003c] to-[#220025]", imgClass: "brightness-0 invert" },
+              { id: "laliga", label: "LA LIGA", image: "https://media.api-sports.io/football/leagues/140.png", color: "bg-gradient-to-b from-[#FF4B44] to-[#b52626]", imgClass: "brightness-0 invert" },
+              { id: "seriea", label: "SERIE A", image: "https://media.api-sports.io/football/leagues/135.png", color: "bg-gradient-to-b from-[#0a0a2e] to-[#050515]", imgClass: "" },
+              { id: "bundesliga", label: "BUNDESLIGA", image: "https://media.api-sports.io/football/leagues/78.png", color: "bg-gradient-to-b from-[#d00027] to-[#8a0019]", imgClass: "brightness-0 invert" },
+              { id: "ligue1", label: "LIGUE 1", image: "https://media.api-sports.io/football/leagues/61.png", color: "bg-gradient-to-b from-[#004899] to-[#002d6b]", imgClass: "brightness-0 invert" },
+              { id: "more", label: "MORE", isMore: true, color: "bg-[#1f1f1f]" },
+            ].map(l => (
+              <Link key={l.id} href={`/matches?search=${l.label}`} className={`group flex flex-col items-center justify-center py-4 px-2 rounded-2xl hover:bg-white/10 transition-colors ${l.color} ${FOCUS}`}>
+                <div className="h-8 w-8 mb-2 flex items-center justify-center">
+                  {l.isMore ? (
+                    <div className="grid grid-cols-3 gap-[3px]">
+                      {[...Array(9)].map((_, i) => <div key={i} className="w-[5px] h-[5px] bg-white rounded-full opacity-80" />)}
+                    </div>
+                  ) : (
+                    <img src={l.image} alt={l.label} className={`max-h-full max-w-full object-contain ${l.imgClass} transition-transform group-hover:scale-110`} />
+                  )}
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wide text-white">{l.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <section className="border-b border-white/6 bg-[#070910] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="League centres" title="Jump straight to your competition" copy="Premier League leads, with Europe, FKF football, Harambee Stars and CAF one step away." href="/matches" action="Match directory" /><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">{LEAGUE_SHORTCUTS.map((league) => <Link key={league.name} href={league.href} className={"rounded-2xl border border-white/8 bg-[#0d1119] p-4 hover:border-white/18 " + FOCUS}><span className="mb-4 block h-1 w-9 rounded-full" style={{ backgroundColor: league.accent }} /><h3 className="text-sm font-black">{league.label}</h3><span className="mt-2 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-white/30">Open centre<ChevronRight className="h-3 w-3" /></span></Link>)}</div></div></section>
+    {/* CONTENT GRID */}
+    <section className="bg-[#0B0B0B] py-16">
+      <div className="mx-auto max-w-7xl px-4 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        
+        {/* Mchambuzi's Take (Dynamic Analysis) */}
+        <Link href="/mchambuzi-halisi" className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
+          <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">MCHAMBUZI'S TAKE</h3>
+            <span className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</span>
+          </div>
+          <div className="relative aspect-square">
+            <img src={ANALYST_IMAGE} alt="Mchambuzi" className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/60 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <h4 className="text-base font-black leading-tight text-white line-clamp-3">
+                {featured ? `${featured.home} vs ${featured.away}: Tactical Breakdown` : (news[0]?.title || "Match Analysis & Tactical Preview")}
+              </h4>
+              <p className="mt-2 text-[10px] font-bold text-white/60">By Mchambuzi AI</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="rounded bg-[#FFD700]/10 border border-[#FFD700]/30 px-2 py-1 text-[8px] font-black tracking-widest text-[#FFD700] uppercase">AI ANALYSIS</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-bold text-white/40 uppercase">3 min read</span>
+                  <div className="h-8 w-8 rounded-full bg-[#B30000] flex items-center justify-center shadow-lg"><Zap className="h-4 w-4 text-white" /></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
 
-    <section className="border-b border-white/6 bg-[#08080b] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Original Mtaa Daily stories" title="Reporting, explainers and receipts from BallMtaani" copy="Stories written on BallMtaani stay visible and lead directly to their article pages." href="/news" action="View all stories" />{newsLoading ? <div className="grid gap-3 md:grid-cols-3">{[1,2,3].map((item) => <div key={item} className="h-72 animate-pulse rounded-2xl bg-white/[.03]" />)}</div> : originals.length ? <div className="grid gap-3 md:grid-cols-3">{originals.slice(0,6).map((article,index) => <StoryCard key={article.slug || article.id || article.link} article={article} eager={index === 0} />)}</div> : <div className="rounded-2xl border border-white/8 bg-white/[.025] p-6 text-sm text-white/48">No published Mtaa Daily story is available in this environment yet.</div>}</div></section>
+        {/* Hot Debate (Dynamic from useDebates API) */}
+        <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
+          <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">HOT DEBATE</h3>
+            <Link href="/debates" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
+          </div>
+          <div className="p-6 flex-1 flex flex-col">
+            <h4 className="text-xl font-black leading-tight text-white">
+              {debates[0]?.title || (featured ? `Who takes 3 points in ${featured.home} vs ${featured.away}?` : "Which squad is ready to contend this season?")}
+            </h4>
+            <p className="mt-4 text-sm font-medium text-white/50">
+              {debates[0]?.left ? `${debates[0].left} OR ${debates[0].right}` : "Drop your take and join the debate."}
+            </p>
+            <div className="mt-auto pt-8 flex items-center justify-between">
+              <div className="flex items-center">
+                <span className="text-[10px] font-bold text-[#FFD700]">🔥 {debates[0]?.totalVotes ? `${debates[0].totalVotes} votes` : "Active debate"}</span>
+              </div>
+              <Link href="/debates" className="rounded-lg bg-[#B30000] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-800 transition-colors">JOIN DEBATE</Link>
+            </div>
+          </div>
+        </div>
 
-    <section className="border-b border-green-500/12 bg-[#050b07] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Kenyan football spotlight" title="Local football is not a sidebar" copy="Harambee Stars, FKF Premier League, CAF nights and the clubs shaping Kenyan football culture." href="/matches?tab=africa" action="Kenyan & CAF fixtures" />{kenya.length ? <div className="grid gap-3 md:grid-cols-3">{kenya.map((article) => <StoryCard key={"kenya-" + (article.slug || article.id || article.link)} article={article} />)}</div> : <div className="grid gap-3 sm:grid-cols-3">{[["FKF Premier League","Fixtures, results and table movement."],["Harambee Stars","National-team windows and squad stories."],["CAF nights","Continental football with Kenyan context."]].map(([title,copy]) => <Link key={title} href="/matches?tab=africa" className={"rounded-2xl border border-green-500/14 bg-green-500/[.035] p-5 " + FOCUS}><h3 className="text-lg font-black">{title}</h3><p className="mt-2 text-sm text-white/42">{copy}</p></Link>)}</div>}</div></section>
+        {/* Kenyan Football (Dynamic RSS / News API) */}
+        <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
+          <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">KENYAN FOOTBALL</h3>
+            <Link href="/news" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
+          </div>
+          <div className="relative aspect-[4/3] overflow-hidden">
+            <img src={kenya[0]?.thumbnail || FANS_IMAGE} alt="Kenyan Football" className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105" onError={(e) => { e.currentTarget.src = FANS_IMAGE; }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/40 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <h4 className="text-base font-black leading-tight text-white line-clamp-2">
+                {kenya[0]?.title || "Kenyan Premier League & Harambee Stars Coverage"}
+              </h4>
+              <p className="mt-1 text-[10px] font-medium text-white/60 line-clamp-2">
+                {kenya[0]?.source || "BallMtaani Special"} • {kenya[0]?.pubDate ? timeAgo(kenya[0].pubDate) : "Latest"}
+              </p>
+              {kenya[0] ? (
+                kenya[0].isInternal ? (
+                  <Link href={`/article/${kenya[0].slug}`} className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</Link>
+                ) : (
+                  <a href={kenya[0].link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</a>
+                )
+              ) : (
+                <Link href="/news" className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</Link>
+              )}
+            </div>
+          </div>
+        </div>
 
-    <DeferredSection minHeight={620}><Rewards /></DeferredSection>
+        {/* Latest News */}
+        <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-white/5">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">LATEST NEWS</h3>
+            <Link href="/news" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
+          </div>
+          <div className="p-4 flex flex-col gap-4">
+            {news.slice(0, 3).map((article, i) => (
+              <Link key={i} href={article.isInternal ? `/article/${article.slug}` : article.link} className="group grid grid-cols-[80px_1fr] gap-3 items-start">
+                <div className="aspect-[4/3] rounded-lg overflow-hidden bg-[#2A2A2A]">
+                  <img src={article.thumbnail || FANS_IMAGE} alt="" className="w-full h-full object-cover transition duration-300 group-hover:scale-105" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold leading-snug text-white line-clamp-3 group-hover:text-[#FFD700] transition-colors">{article.title}</h4>
+                  <p className="mt-1 text-[9px] font-medium text-white/40">{timeAgo(article.pubDate)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
 
-    <section className="bg-[#070609] py-14"><div className="mx-auto max-w-4xl px-4 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B30000]/12">{isLoggedIn ? <BellRing className="h-6 w-6 text-[#ff6b6b]" /> : <Zap className="h-6 w-6 text-[#ff6b6b]" />}</div><p className="mt-5 text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]">Do not miss the next receipt</p><h2 className="mt-3 text-3xl font-black md:text-5xl">{isLoggedIn ? "Turn on match alerts before kickoff." : "Join the room before the season gets loud."}</h2><p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/48">Get matchday prompts, predictions, debates and an MTC record across the 2026/27 season.</p><div className="mt-7 flex flex-wrap items-center justify-center gap-3">{isLoggedIn ? <><NotificationBell /><Link href="/predictions" className={"rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Make a prediction</Link></> : <><GoogleSignInButton size="lg" label="Join BallMtaani" /><Link href="/matches" className={"rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Browse matches</Link></>}</div></div></section>
-    <FloatingMchambuzi variant="home" />
+      </div>
+    </section>
+
   </main>;
 }

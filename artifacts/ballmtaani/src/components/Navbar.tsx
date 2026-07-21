@@ -1,4 +1,4 @@
-﻿import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 import { Menu, X, Coins, Paintbrush, ChevronDown, Trophy, Search, Bell } from "lucide-react";
@@ -32,16 +32,6 @@ export function Navbar() {
 
   const menuCategories = [
     {
-      label: "Mtaa Daily",
-      links: [
-        { href: "/news", label: "Latest News" },
-        { href: "/articles", label: "All Articles" },
-        { href: "/videos", label: "Videos" },
-        { href: "/world-cup-2026", label: "WC26 Hub" },
-        { href: "/search", label: "Search" },
-      ]
-    },
-    {
       label: "Matches",
       links: [
         { href: "/matches", label: "Directory" },
@@ -52,19 +42,8 @@ export function Navbar() {
       ]
     },
     {
-      label: "Social",
-      links: [
-        { href: "/debates", label: "Debates" },
-        { href: "/rivalries", label: "Rivalries" },
-        { href: "/fan-zones", label: "Fan Zones" },
-        { href: "/leaderboard", label: "Leaderboard" },
-      ]
-    },
-    {
       label: "Games",
       links: [
-        { href: "/fun-zone", label: "Fun Zone" },
-        { href: "/ai-fan-zone", label: "AI Fan Zone" },
         { href: "/predictions", label: "Calls" },
         { href: "/war-room", label: "War Room" },
         { href: "/rapid-fire", label: "Rapid Fire" },
@@ -72,170 +51,81 @@ export function Navbar() {
       ]
     },
     {
-      label: "BallMtaani",
+      label: "Social",
       links: [
-        { href: "/about", label: "About Us" },
-        { href: "/contact", label: "Contact" },
-      ]
-    },
-    {
-      label: "BallMtaani",
-      links: [
-        { href: "/about",   label: "About Us" },
-        { href: "/contact", label: "Contact" },
+        { href: "/debates", label: "Debates" },
+        { href: "/rivalries", label: "Rivalries" },
+        { href: "/fan-zones", label: "Fan Zones" },
+        { href: "/leaderboard", label: "Leaderboard" },
       ]
     }
   ];
 
-  const primaryNav = [
-    { href: "/news", label: "News" },
-    { href: "/matches", label: "Matches" },
-    { href: "/live-center", label: "Live" },
-    { href: "/predictions", label: "Predictions" },
-    { href: "/debates", label: "Debates" },
-    { href: "/fan-zones", label: "Tribes" },
-    { href: "/mchambuzi-halisi", label: "Mchambuzi", badge: "New" },
-    { href: "/store", label: "Store" },
-  ];
-  const primaryHrefs = new Set(primaryNav.map((item) => item.href));
-  const moreLinks = menuCategories
-    .flatMap((category) => category.links)
-    .filter((link, index, allLinks) => !primaryHrefs.has(link.href) && allLinks.findIndex((item) => item.href === link.href) === index);
   return (
-    <nav className="sticky top-0 z-50 bg-[#0B0B0B]/95 backdrop-blur-md border-b border-[#1B1B1B]">
-      <div className="mx-auto flex h-20 max-w-[1800px] items-center justify-between px-4 md:px-7">
-        <Link href="/home" className="flex shrink-0 items-center gap-2">
-          <img src="/logo.png" alt="BallMtaani" className="h-11 w-11 object-contain" />
-          <span className="hidden leading-none sm:block"><span className="block text-2xl font-black italic tracking-wide text-white">BALL <span className="text-[#FFD700]">MTAANI</span></span><span className="block text-[8px] font-black uppercase tracking-[0.18em] text-white/75">Predict. Debate. Earn. Rep your tribe.</span></span>
+    <nav className="sticky top-0 z-50 bg-[#070707] border-b border-[#2A2A2A]">
+      <div className="w-full px-4 xl:px-8 h-[72px] flex items-center justify-between">
+        
+        {/* Logo */}
+        <Link href="/home" className="flex items-center shrink-0">
+          <span className="font-black text-2xl tracking-tighter italic">
+            <span className="text-white">BALL</span>
+            <span className="text-[#B30000]">MTAANI</span>
+          </span>
         </Link>
 
-        {/* Hamburger - mobile only */}
+        {/* Hamburger — mobile only */}
         <button
-          className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors ml-auto mr-3"
+          className="xl:hidden p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors ml-auto mr-3"
           onClick={() => setMobileMenuOpen(v => !v)}
           aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
 
-        {/* Desktop Nav - Hidden on mobile */}
-        <div className="hidden lg:flex items-center gap-5 mx-4">
-          <Link
-            href="/home"
-            className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-              location === "/home" ? "text-primary" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Home
-          </Link>
-          {primaryNav.map((item) => {
-            const isActive = location === item.href || location.startsWith(`${item.href}/`);
+        {/* Desktop Nav - exact reference match */}
+        <div className="hidden xl:flex items-center gap-5 2xl:gap-7 mx-auto flex-1 justify-center px-4">
+          {[
+            { href: "/home", label: "HOME" },
+            { href: "/matches?search=KPL", label: "KPL" },
+            { href: "/matches?search=FKF", label: "FKF CUP" },
+            { href: "/matches?search=Champions", label: "CHAMPIONS LEAGUE" },
+            { href: "/matches?search=Premier", label: "PREMIER LEAGUE" },
+            { href: "/matches?search=LaLiga", label: "LA LIGA" },
+            { href: "/matches?search=Serie", label: "SERIE A" },
+            { href: "/matches?search=Bundesliga", label: "BUNDESLIGA" },
+            { href: "/matches?search=Ligue", label: "LIGUE 1" },
+          ].map(({ href, label }) => {
+            const isActive = location === href || location.startsWith(href.split("?")[0] + "?") && href.includes("?");
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-1.5 font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-                  isActive ? "text-primary" : "text-gray-400 hover:text-white"
+                key={href}
+                href={href}
+                className={`relative pb-1 font-black text-[10px] 2xl:text-[11px] uppercase tracking-widest transition-colors ${
+                  isActive ? "text-[#B30000]" : "text-white/60 hover:text-white"
                 }`}
               >
-                {item.label}
-                {item.badge && <span className="rounded bg-[#FFD700] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-normal text-black">{item.badge}</span>}
+                {label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#B30000] rounded-full" />
+                )}
               </Link>
             );
           })}
-          <div className="relative group/nav py-6">
-            <button
-              type="button"
-              className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all flex items-center gap-1 ${
-                moreLinks.some(link => location.startsWith(link.href)) ? "text-primary border-b-2 border-primary pb-1" : "text-gray-400 hover:text-white border-b-2 border-transparent pb-1"
-              }`}
-            >
-              More <ChevronDown className="w-3.5 h-3.5 opacity-70 group-hover/nav:opacity-100 transition-opacity" />
+          <div className="group relative">
+            <button className="flex items-center gap-1 font-black text-[10px] 2xl:text-[11px] uppercase tracking-widest text-white/60 hover:text-white transition-colors pb-1">
+              MORE <ChevronDown className="w-3 h-3" />
             </button>
-            <div className="absolute top-16 left-0 w-56 bg-[#111111]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 transform translate-y-2 group-hover/nav:translate-y-0 p-2 z-[100]">
-              {moreLinks.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`block px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors ${
-                    location.startsWith(link.href) ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* WC26 tournament badge - visible on desktop during tournament window */}
-        {(() => {
-          const now = Date.now();
-          const start = new Date("2026-06-11").getTime();
-          const end = new Date("2026-07-20").getTime();
-          const daysUntil = Math.ceil((start - now) / 86400000);
-          if (now > end) return null;
-          return (
-            <Link
-              href="/world-cup-2026"
-              className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/40 bg-[#FFD700]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFD700] transition-colors hover:bg-[#FFD700]/20 shrink-0"
-            >
-              {now >= start ? (
-                <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#FFD700]" />
-                </span>
-              ) : (
-                <Trophy className="h-3 w-3" />
-              )}
-              {now >= start ? "WC26 Live" : `WC26 · ${daysUntil}d`}
-            </Link>
-          );
-        })()}
-
-        {/* Global Controls (Atmosphere & Wallet) */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 transition hover:border-[#FFD700]/40 hover:text-white lg:grid" title="Search">
-            <Search className="h-4 w-4" />
+        {/* Global Controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/search" className="p-2 text-white/50 hover:text-white transition-colors">
+            <Search className="w-5 h-5" />
           </Link>
-          <Link href="/notifications" className="hidden h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 transition hover:border-[#FFD700]/40 hover:text-white lg:grid" title="Notifications">
-            <Bell className="h-4 w-4" />
+          <Link href="/notifications" className="p-2 text-white/50 hover:text-white transition-colors">
+            <Bell className="w-5 h-5" />
           </Link>
-          {/* Atmosphere Switcher */}
-          <div className="relative">
-            <button 
-              onClick={() => setThemeMenuOpen(!themeMenuOpen)}
-              className="p-2 rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/30 transition-all group relative"
-              title="Change Atmosphere"
-            >
-              <Paintbrush className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#FFD700] rounded-full animate-pulse shadow-[0_0_5px_rgba(255,214,0,0.8)]" />
-            </button>
-
-            {themeMenuOpen && (
-              <div className="absolute top-full mt-3 right-0 w-64 bg-[#111111] border border-white/10 rounded-2xl shadow-2xl p-2 animate-in slide-in-from-top-2 duration-200 z-[100]">
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 px-3 py-2 border-b border-white/5 mb-1">
-                  App Atmosphere
-                </div>
-                {atmospheres.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      setAtmosphere(t.id);
-                      setThemeMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${atmosphere === t.id ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{t.icon}</span>
-                      <span className="text-[11px] font-black uppercase tracking-wider">{t.label}</span>
-                    </div>
-                    {atmosphere === t.id && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_#B30000]" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           {isLoggedIn ? (
             <>
@@ -253,20 +143,20 @@ export function Navbar() {
               </Link>
             </>
           ) : (
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden xl:flex items-center gap-3">
               <Link 
                 href="/login"
                 onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
-                className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded hover:bg-white/5 transition-colors"
+                className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white border border-white/20 rounded-full hover:bg-white/5 transition-colors"
               >
-                Log In
+                LOGIN
               </Link>
               <Link 
                 href="/login"
                 onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
-                className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-white bg-primary rounded hover:bg-red-800 transition-colors shadow-[0_0_15px_rgba(179,0,0,0.3)]"
+                className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white bg-[#B30000] rounded-full hover:bg-red-800 transition-colors"
               >
-                Sign Up
+                SIGN UP
               </Link>
             </div>
           )}
@@ -275,7 +165,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-20 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
+        <div className="lg:hidden absolute top-24 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
           <Link
             href="/home"
             onClick={() => setMobileMenuOpen(false)}
@@ -374,6 +264,3 @@ export function Navbar() {
     </nav>
   );
 }
-
-
-

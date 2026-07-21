@@ -39,8 +39,8 @@ export default function TeamLogo({ logo, initial, color, size = "md", className 
 
   return (
     <div
-      className={`${sizeMap[size]} rounded-full flex items-center justify-center overflow-hidden border border-white/20 shrink-0 ${shadow ? "shadow-[0_0_20px_rgba(255,255,255,0.15)]" : ""} ${className}`}
-      style={{ backgroundColor: showFallback ? color : "white" }}
+      className={`${sizeMap[size]} rounded-full flex items-center justify-center overflow-hidden border border-white/10 shrink-0 ${shadow ? "shadow-[0_0_20px_rgba(255,255,255,0.15)]" : ""} ${className}`}
+      style={{ backgroundColor: showFallback ? color : "transparent" }}
     >
       {!showFallback ? (
         <img

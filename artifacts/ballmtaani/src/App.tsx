@@ -81,7 +81,7 @@ function AppShell() {
   const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
   const normalizedLocation = location.replace(/\/+$/, "") || "/";
   const isWorldCupPage = normalizedLocation === "/world-cup-2026" || normalizedLocation.startsWith("/world-cup-2026/");
-  const quietPage = ["/", "/hub", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
+  const quietPage = ["/hub", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
   const showInstallBanner = ["/", "/home", "/hub", "/world-cup-2026"].includes(normalizedLocation);
   const showAdBanner = !["/login", "/verify"].includes(normalizedLocation);
 
