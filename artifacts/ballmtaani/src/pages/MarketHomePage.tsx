@@ -356,32 +356,121 @@ export default function MarketHomePage() {
           </div>
           <div className="grid grid-cols-4 gap-2.5 w-[340px] shrink-0">
             {[
-              { id: "kpl", label: "KPL", image: "https://media.api-sports.io/football/leagues/326.png", accent: "from-[#B30000] to-red-900", glow: "rgba(179,0,0,0.35)", featured: true },
-              { id: "ucl", label: "UCL", image: "https://media.api-sports.io/football/leagues/2.png", accent: "from-blue-600 to-indigo-900", glow: "rgba(37,99,235,0.35)" },
-              { id: "epl", label: "EPL", image: "https://media.api-sports.io/football/leagues/39.png", accent: "from-purple-600 to-indigo-950", glow: "rgba(147,51,234,0.35)" },
-              { id: "laliga", label: "LA LIGA", image: "https://media.api-sports.io/football/leagues/140.png", accent: "from-rose-500 to-red-800", glow: "rgba(244,63,94,0.35)" },
-              { id: "seriea", label: "SERIE A", image: "https://media.api-sports.io/football/leagues/135.png", accent: "from-cyan-500 to-blue-900", glow: "rgba(6,182,212,0.35)" },
-              { id: "bundesliga", label: "BUNDESLIGA", image: "https://media.api-sports.io/football/leagues/78.png", accent: "from-red-600 to-amber-900", glow: "rgba(220,38,38,0.35)" },
-              { id: "ligue1", label: "LIGUE 1", image: "https://media.api-sports.io/football/leagues/61.png", accent: "from-blue-500 to-cyan-900", glow: "rgba(59,130,246,0.35)" },
-              { id: "more", label: "MORE", isMore: true, accent: "from-amber-500 to-yellow-700", glow: "rgba(234,179,8,0.2)" },
+              {
+                id: "kpl",
+                label: "KPL",
+                accent: "from-[#B30000] to-red-900",
+                glow: "rgba(179,0,0,0.35)",
+                featured: true,
+                svg: (
+                  <svg className="h-9 w-9 text-white filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5L4.5 6.25 12 2.5l7.5 3.75L12 9.5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                    <circle cx="12" cy="12" r="3.5" fill="currentColor"/>
+                  </svg>
+                )
+              },
+              {
+                id: "ucl",
+                label: "UCL",
+                accent: "from-blue-600 to-indigo-900",
+                glow: "rgba(37,99,235,0.4)",
+                svg: (
+                  <svg className="h-10 w-10 text-white filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    {/* Champions League Starball motif */}
+                    <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 016.32 3.1l-2.82.92-1.5-2.52L12 4zm-4.32 1.1L10.5 7.6 7.68 8.52 5.6 6.33A8 8 0 017.68 5.1zM4 12a7.96 7.96 0 01.8-3.46l2.9 1.45v2.96L4.8 14.4A7.96 7.96 0 014 12zm1.6 5.67l2.08-2.19h2.96l.92 2.82A8 8 0 015.6 17.67zM12 20a8 8 0 01-6.32-3.1l2.82-.92 1.5 2.52L12 20zm4.32-1.1L13.5 16.4l2.82-.92 2.08 2.19a8 8 0 01-2.08 1.23zM20 12a7.96 7.96 0 01-.8 3.46l-2.9-1.45v-2.96l2.9-1.45A7.96 7.96 0 0120 12zm-1.6-5.67l-2.08 2.19h-2.96l-.92-2.82A8 8 0 0118.4 6.33z"/>
+                  </svg>
+                )
+              },
+              {
+                id: "epl",
+                label: "EPL",
+                accent: "from-purple-600 to-indigo-950",
+                glow: "rgba(147,51,234,0.4)",
+                svg: (
+                  <svg className="h-10 w-10 text-white filter drop-shadow-[0_2px_8px_rgba(168,85,247,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    {/* Premier League Lion Crown motif */}
+                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+                    <circle cx="12" cy="13" r="2"/>
+                  </svg>
+                )
+              },
+              {
+                id: "laliga",
+                label: "LA LIGA",
+                accent: "from-rose-500 to-red-800",
+                glow: "rgba(244,63,94,0.4)",
+                svg: (
+                  <svg className="h-10 w-10 text-white filter drop-shadow-[0_2px_8px_rgba(244,63,94,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    {/* LaLiga stylized EA Sports slash emblem */}
+                    <path d="M4 20L11 4h3.5L7.5 20H4zm6.5 0L17.5 4H21l-7 16h-3.5z"/>
+                  </svg>
+                )
+              },
+              {
+                id: "seriea",
+                label: "SERIE A",
+                accent: "from-cyan-500 to-blue-900",
+                glow: "rgba(6,182,212,0.4)",
+                svg: (
+                  <svg className="h-10 w-10 text-white filter drop-shadow-[0_2px_8px_rgba(6,182,212,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    {/* Official Serie A Geometric 'A' Ribbon Motif */}
+                    <path d="M12 2L3 20h4.5l2.25-5h4.5l2.25 5H21L12 2zm0 5.5L14.25 12h-4.5L12 7.5z"/>
+                    <path d="M2 20h20v2H2z"/>
+                  </svg>
+                )
+              },
+              {
+                id: "bundesliga",
+                label: "BUNDESLIGA",
+                accent: "from-red-600 to-amber-900",
+                glow: "rgba(220,38,38,0.4)",
+                svg: (
+                  <svg className="h-10 w-10 text-white filter drop-shadow-[0_2px_8px_rgba(239,68,68,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    {/* Official Bundesliga Kicking Player Silhouette Motif */}
+                    <rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M8 17l4-9 3 4 3-2"/>
+                    <circle cx="17" cy="8" r="1.5"/>
+                  </svg>
+                )
+              },
+              {
+                id: "ligue1",
+                label: "LIGUE 1",
+                accent: "from-blue-500 to-cyan-900",
+                glow: "rgba(59,130,246,0.4)",
+                svg: (
+                  <svg className="h-10 w-10 text-white filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    {/* Official Ligue 1 Diamond '1' Motif */}
+                    <path d="M12 2L3 12l9 10 9-10L12 2zm-1 5h2v9h-2V7z"/>
+                  </svg>
+                )
+              },
+              {
+                id: "more",
+                label: "MORE",
+                isMore: true,
+                accent: "from-amber-500 to-yellow-700",
+                glow: "rgba(234,179,8,0.2)",
+                svg: null
+              },
             ].map(l => (
               <Link
                 key={l.id}
                 href={`/matches?search=${l.label}`}
-                className={`group relative flex flex-col items-center justify-center h-[90px] px-2 rounded-2xl border transition-all duration-300 overflow-hidden ${
+                className={`group relative flex flex-col items-center justify-center h-[92px] px-2 rounded-2xl border transition-all duration-300 overflow-hidden ${
                   l.featured
-                    ? "bg-[#180e12] border-[#B30000]/50 shadow-[0_0_20px_rgba(179,0,0,0.3)] hover:border-[#B30000] hover:shadow-[0_0_25px_rgba(179,0,0,0.5)]"
+                    ? "bg-[#180e12] border-[#B30000]/60 shadow-[0_0_20px_rgba(179,0,0,0.35)] hover:border-[#B30000] hover:shadow-[0_0_25px_rgba(179,0,0,0.5)]"
                     : "bg-[#111319]/90 border-white/10 hover:border-[#FFD700]/60 hover:bg-[#161b26] hover:shadow-[0_0_20px_rgba(255,215,0,0.2)]"
                 } ${FOCUS}`}
               >
                 {/* Brand color accent line at top */}
-                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r ${l.accent} opacity-80 group-hover:opacity-100 transition-opacity`} />
+                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r ${l.accent} opacity-85 group-hover:opacity-100 transition-opacity`} />
                 
                 {/* Ambient brand glow behind icon */}
-                <div className="absolute inset-0 bg-radial pointer-events-none opacity-40 group-hover:opacity-70 transition-opacity" style={{ background: `radial-gradient(circle at center, ${l.glow} 0%, transparent 70%)` }} />
+                <div className="absolute inset-0 bg-radial pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity" style={{ background: `radial-gradient(circle at center, ${l.glow} 0%, transparent 70%)` }} />
 
                 {/* Dominating Icon Container */}
-                <div className="h-11 w-11 mb-1.5 flex items-center justify-center relative z-10">
+                <div className="h-11 w-11 mb-1 flex items-center justify-center relative z-10 transition-transform duration-300 group-hover:scale-110">
                   {l.isMore ? (
                     <div className="grid grid-cols-3 gap-1 p-1">
                       {[...Array(9)].map((_, i) => (
@@ -389,14 +478,7 @@ export default function MarketHomePage() {
                       ))}
                     </div>
                   ) : (
-                    <img
-                      src={l.image}
-                      alt={l.label}
-                      className="h-full w-full object-contain brightness-0 invert opacity-90 group-hover:opacity-100 transition-all duration-300 group-hover:scale-115 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
-                      onError={(e) => {
-                        e.currentTarget.src = "/logo.png";
-                      }}
-                    />
+                    l.svg
                   )}
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-white/90 group-hover:text-white transition-colors relative z-10">{l.label}</span>
