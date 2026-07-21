@@ -134,7 +134,7 @@ function StoryCard({ article, eager = false }: { article: NewsArticle; eager?: b
 function HotDebate() {
   const { data: debates = [], isLoading } = useDebates();
   const debate = debates[0];
-  return <section className="border-b border-white/6 bg-[#09070a] py-12"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Hot fan debate" title="The argument Kenya is having now" copy="Vote, explain your take and keep the receipt when the football answers back." href="/debates" action="Join debates" /><div className="rounded-3xl border border-[#B30000]/20 bg-[#0d0b10] p-6">{isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-white/5" /> : debate ? <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]"><Flame className="h-4 w-4" />{debate.totalVotes} votes</p><h3 className="mt-3 text-2xl font-black text-white md:text-4xl">{debate.title}</h3><div className="mt-5 grid gap-2 sm:grid-cols-2"><div className="rounded-xl border border-white/10 bg-white/5 p-3 font-black">{debate.left}</div><div className="rounded-xl border border-white/10 bg-white/5 p-3 font-black">{debate.right}</div></div></div><Link href="/debates" className={"inline-flex items-center justify-center gap-2 rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Vote now<MessageSquare className="h-4 w-4" /></Link></div> : <div className="flex flex-wrap items-center justify-between gap-5"><h3 className="text-2xl font-black">Bring the take your group chat cannot settle.</h3><Link href="/debates" className={"rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Start debating</Link></div>}</div></div></section>;
+  return <section className="border-b border-white/6 bg-[#09070a] py-6"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Hot fan debate" title="The argument Kenya is having now" copy="Vote, explain your take and keep the receipt when the football answers back." href="/debates" action="Join debates" /><div className="rounded-3xl border border-[#B30000]/20 bg-[#0d0b10] p-5">{isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-white/5" /> : debate ? <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]"><Flame className="h-4 w-4" />{debate.totalVotes} votes</p><h3 className="mt-3 text-2xl font-black text-white md:text-4xl">{debate.title}</h3><div className="mt-5 grid gap-2 sm:grid-cols-2"><div className="rounded-xl border border-white/10 bg-white/5 p-3 font-black">{debate.left}</div><div className="rounded-xl border border-white/10 bg-white/5 p-3 font-black">{debate.right}</div></div></div><Link href="/debates" className={"inline-flex items-center justify-center gap-2 rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Vote now<MessageSquare className="h-4 w-4" /></Link></div> : <div className="flex flex-wrap items-center justify-between gap-5"><h3 className="text-2xl font-black">Bring the take your group chat cannot settle.</h3><Link href="/debates" className={"rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Start debating</Link></div>}</div></div></section>;
 }
 
 function Rewards() {
@@ -144,7 +144,7 @@ function Rewards() {
     ["Data Bundle", "Daily, weekly & monthly bundles", "from 2,000 MTC", "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=720&q=78&auto=format&fit=crop", Wifi],
     ["BM Merch", "Limited jerseys, caps and fan gear", "from 10,000 MTC", "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=720&q=78&auto=format&fit=crop", Shirt],
   ] as const;
-  return <section className="border-b border-white/6 bg-[#08090d] py-12"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Predictions leaderboard & MTC rewards" title="Make calls. Climb the table. Redeem the status." copy="Predictions, debates, duels and daily activity earn MTC across the existing rewards system." href="/leaderboard" action="Full leaderboard" /><div className="grid gap-5 lg:grid-cols-[0.9fr_1.6fr]"><div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0d1017]"><div className="flex items-center justify-between border-b border-white/7 p-4 text-[10px] font-black uppercase tracking-widest text-white/55">Top fans this week<Trophy className="h-4 w-4 text-[#FFD700]" /></div>{isLoading ? <div className="m-4 h-36 animate-pulse rounded-xl bg-white/5" /> : leaderboard.length ? leaderboard.slice(0, 5).map((player: any, index: number) => <div key={player.id || player.rank || index} className="flex items-center justify-between border-b border-white/5 px-4 py-3"><span className="truncate text-sm font-black">#{player.rank || index + 1} {String(player.name || "Anonymous Fan").replace(/^Fan_/, "Fan ")}</span><span className="text-sm font-black text-[#FFD700]">{Number(player.pts || 0).toLocaleString()} MTC</span></div>) : <p className="p-6 text-sm text-white/38">The table will populate as fans participate.</p>}</div><div className="grid gap-3 sm:grid-cols-3">{rewardItems.map(([name, detail, price, image, Icon]) => <Link key={name} href="/store" className={"group overflow-hidden rounded-2xl border border-white/8 bg-[#0d1017] " + FOCUS}><div className="relative aspect-[4/3] overflow-hidden"><img src={image} alt={name} width={720} height={540} loading="lazy" decoding="async" className="h-full w-full object-cover brightness-50 transition group-hover:scale-105" /><Icon className="absolute left-3 top-3 h-5 w-5 text-[#FFD700]" /><span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-1 text-[8px] font-black uppercase">{price}</span></div><div className="p-4"><h3 className="font-black">{name}</h3><p className="mt-1 text-[11px] text-white/35">{detail}</p></div></Link>)}</div></div><div className="mt-5 flex flex-wrap gap-2">{[["Predict match", "+50 MTC"], ["Win a duel", "+200 MTC"], ["Daily login", "+50 MTC"], ["Join debate", "+30 MTC"]].map(([label, points]) => <span key={label} className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-2 text-[10px] text-white/48">{label} <b className="text-[#FFD700]">{points}</b></span>)}<Link href="/store" className={"ml-auto inline-flex items-center gap-2 rounded-full bg-[#FFD700] px-5 py-2 text-[10px] font-black uppercase text-black " + FOCUS}>View rewards<Coins className="h-4 w-4" /></Link></div></div></section>;
+  return <section className="border-b border-white/6 bg-[#08090d] py-6"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Predictions leaderboard & MTC rewards" title="Make calls. Climb the table. Redeem the status." copy="Predictions, debates, duels and daily activity earn MTC across the existing rewards system." href="/leaderboard" action="Full leaderboard" /><div className="grid gap-5 lg:grid-cols-[0.9fr_1.6fr]"><div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0d1017]"><div className="flex items-center justify-between border-b border-white/7 p-4 text-[10px] font-black uppercase tracking-widest text-white/55">Top fans this week<Trophy className="h-4 w-4 text-[#FFD700]" /></div>{isLoading ? <div className="m-4 h-36 animate-pulse rounded-xl bg-white/5" /> : leaderboard.length ? leaderboard.slice(0, 5).map((player: any, index: number) => <div key={player.id || player.rank || index} className="flex items-center justify-between border-b border-white/5 px-4 py-3"><span className="truncate text-sm font-black">#{player.rank || index + 1} {String(player.name || "Anonymous Fan").replace(/^Fan_/, "Fan ")}</span><span className="text-sm font-black text-[#FFD700]">{Number(player.pts || 0).toLocaleString()} MTC</span></div>) : <p className="p-6 text-sm text-white/38">The table will populate as fans participate.</p>}</div><div className="grid gap-3 sm:grid-cols-3">{rewardItems.map(([name, detail, price, image, Icon]) => <Link key={name} href="/store" className={"group overflow-hidden rounded-2xl border border-white/8 bg-[#0d1017] " + FOCUS}><div className="relative aspect-[4/3] overflow-hidden"><img src={image} alt={name} width={720} height={540} loading="lazy" decoding="async" className="h-full w-full object-cover brightness-50 transition group-hover:scale-105" /><Icon className="absolute left-3 top-3 h-5 w-5 text-[#FFD700]" /><span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-1 text-[8px] font-black uppercase">{price}</span></div><div className="p-4"><h3 className="font-black">{name}</h3><p className="mt-1 text-[11px] text-white/35">{detail}</p></div></Link>)}</div></div><div className="mt-5 flex flex-wrap gap-2">{[["Predict match", "+50 MTC"], ["Win a duel", "+200 MTC"], ["Daily login", "+50 MTC"], ["Join debate", "+30 MTC"]].map(([label, points]) => <span key={label} className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-2 text-[10px] text-white/48">{label} <b className="text-[#FFD700]">{points}</b></span>)}<Link href="/store" className={"ml-auto inline-flex items-center gap-2 rounded-full bg-[#FFD700] px-5 py-2 text-[10px] font-black uppercase text-black " + FOCUS}>View rewards<Coins className="h-4 w-4" /></Link></div></div></section>;
 }
 
 export default function MarketHomePage() {
@@ -189,12 +189,12 @@ export default function MarketHomePage() {
   const kenya = news.filter(isKenyanStory).slice(0, 3);
   const take = useMemo(() => mchambuziTake(featured, mode, news[0]?.title), [featured, mode, news]);
 
-  return <main className="overflow-x-clip bg-[#050609] pb-24 text-white">
+  return <main className="overflow-x-clip bg-[#050609] pb-8 text-white">
     <SEO title={TITLE} description={DESCRIPTION} keywords={["live football scores Kenya", "Premier League fixtures Kenya", "Champions League Kenya", "FKF Premier League", "football predictions Kenya", "Mchambuzi AI"]} path="/" />
     <HeroTicker articles={seasonNews.slice(0, 8)} matches={matches.slice(0, 8)} />
 
     {/* HERO SECTION */}
-    <section className="relative isolate bg-[#070707] min-h-[600px] flex items-center border-b border-[#2A2A2A] py-16">
+    <section className="relative isolate bg-[#070707] min-h-[440px] flex items-center border-b border-[#2A2A2A] py-8 md:py-10">
       
       {/* Background Image with crafted masks */}
       <div className="absolute inset-0 -z-20 overflow-hidden">
@@ -312,12 +312,12 @@ export default function MarketHomePage() {
     </section>
 
     {/* UPCOMING & LEAGUES */}
-    <section className="bg-[#0B0B0B] py-12 border-b border-[#2A2A2A]">
-      <div className="mx-auto max-w-7xl px-4 grid gap-8 lg:grid-cols-[1fr_auto]">
+    <section className="bg-[#0B0B0B] py-6 border-b border-[#2A2A2A]">
+      <div className="mx-auto max-w-7xl px-4 grid gap-6 lg:grid-cols-[1fr_auto]">
         
         {/* UPCOMING FIXTURES */}
         <div className="flex flex-col min-w-0">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-black uppercase tracking-widest text-white">UPCOMING FIXTURES</h2>
             <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:text-white transition-colors">VIEW ALL &gt;</Link>
           </div>
@@ -351,7 +351,7 @@ export default function MarketHomePage() {
 
         {/* LEAGUES */}
         <div className="flex flex-col">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-black uppercase tracking-widest text-white">LEAGUES</h2>
             <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:text-white transition-colors">VIEW ALL &gt;</Link>
           </div>
@@ -385,8 +385,8 @@ export default function MarketHomePage() {
     </section>
 
     {/* CONTENT GRID */}
-    <section className="bg-[#0B0B0B] py-16">
-      <div className="mx-auto max-w-7xl px-4 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <section className="bg-[#0B0B0B] py-6">
+      <div className="mx-auto max-w-7xl px-4 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         
         {/* Mchambuzi's Take (Dynamic Analysis) */}
         <Link href="/mchambuzi-halisi" className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
