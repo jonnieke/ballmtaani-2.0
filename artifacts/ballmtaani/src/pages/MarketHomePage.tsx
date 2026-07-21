@@ -429,10 +429,10 @@ export default function MarketHomePage() {
                 {/* Ambient brand glow behind icon */}
                 <div className="absolute inset-0 bg-radial pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity" style={{ background: `radial-gradient(circle at center, ${l.glow} 0%, transparent 70%)` }} />
 
-                {/* Dominating Icon Container - Authentic API-Football Badge */}
+                {/* Dominating Icon Container - Authentic API-Football Badge Tile */}
                 <div className="h-12 w-12 mb-1 flex items-center justify-center relative z-10 transition-transform duration-300 group-hover:scale-110">
                   {l.isMore ? (
-                    <div className="h-11 w-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-xl bg-[#1c1e28] border border-white/15 flex items-center justify-center shadow-md">
                       <div className="grid grid-cols-3 gap-1 p-1">
                         {[...Array(9)].map((_, i) => (
                           <div key={i} className="w-[5px] h-[5px] bg-[#FFD700] rounded-full opacity-80 group-hover:opacity-100 group-hover:scale-125 transition-all" />
@@ -440,11 +440,11 @@ export default function MarketHomePage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="h-12 w-12 rounded-xl bg-white/5 border border-white/10 p-1 flex items-center justify-center backdrop-blur-sm shadow-md group-hover:border-white/25 transition-colors overflow-hidden">
+                    <div className="h-12 w-12 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-md border border-white/20 overflow-hidden">
                       <img
                         src={l.image}
                         alt={l.label}
-                        className="max-h-full max-w-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:scale-105"
+                        className="max-h-full max-w-full object-contain transition-all duration-300 group-hover:scale-105"
                         onError={(e) => {
                           e.currentTarget.src = "/logo.png";
                         }}
