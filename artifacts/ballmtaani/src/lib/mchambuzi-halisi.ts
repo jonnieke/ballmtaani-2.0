@@ -139,7 +139,7 @@ function buildFallbackAnswer(question: string, context: MchambuziContext): strin
     return `Prediction mode, lakini with brakes. ${recentLine(context)} ${upcomingLine} Form matters, but football also enjoys embarrassing confident people. Check recent results, injuries and home advantage before calling it.`;
   }
 
-  return `Mchambuzi Halisi says: ${liveLine} ${upcomingLine} ${newsLine} Ask me about a team, fixture, transfer, injury, table race or WC26 and I will break it down without behaving like a sofa pundit after two highlights.`;
+  return `Mchambuzi Halisi says: ${liveLine} ${upcomingLine} ${newsLine} Ask me about a team, fixture, transfer, injury, table race, Kenyan football or a past tournament and I will break it down without behaving like a sofa pundit after two highlights.`;
 }
 
 function recentLine(context: MchambuziContext): string {
@@ -234,7 +234,7 @@ export async function askMchambuziHalisi(
       upcoming: preloaded.upcoming || [],
       recent: preloaded.recent || [],
       news,
-      wc26StartDate: "June 11, 2026",
+      wc26StartDate: "Tournament completed July 19, 2026",
       sources: ["App live feed", "BBC Sport RSS", "Goal.com RSS"],
     };
   } else {

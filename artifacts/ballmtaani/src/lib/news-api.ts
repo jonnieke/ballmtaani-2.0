@@ -134,6 +134,17 @@ function normalizeImageUrl(url?: string): string {
   return trimmed;
 }
 
+export function extractArticleImage(candidate?: string | null): string {
+  const value = normalizeImageUrl(candidate || "");
+  if (!value) return "";
+
+  const cloudinaryMatch = value.match(/https?:\/\/res\.cloudinary\.com\/[^\s"'<>]+/i);
+  if (cloudinaryMatch?.[0]) return cloudinaryMatch[0];
+
+  if (looksLikeImageUrl(value)) return value;
+  return "";
+}
+
 function normalizeArticleLink(link: string | undefined, source: string): string {
   const raw = (link || "").trim();
   if (!raw || raw === "#") return SOURCE_FALLBACK_URLS[source] || "https://www.bbc.com/sport/football";
@@ -430,7 +441,7 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
   try {
     const { data, error } = await supabase
       .from("articles")
-      .select("id, slug, title, excerpt, thumbnail_url, author_name, partner_team_name, is_wc26, published_at")
+      .select("id, slug, title, content, excerpt, thumbnail_url, author_name, partner_team_name, is_wc26, published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(9);
@@ -443,7 +454,7 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
       pubDate: a.published_at,
       source: a.partner_team_name || "BallMtaani",
       sourceLogo: "PARTNER",
-      thumbnail: a.thumbnail_url || DEFAULT_NEWS_IMAGE,
+      thumbnail: extractArticleImage(a.thumbnail_url) || extractArticleImage(a.content) || DEFAULT_NEWS_IMAGE,
       imageQuality: "feed" as const,
       description: a.excerpt || "",
       isInternal: true,

@@ -181,7 +181,7 @@ async function buildContext(env: MchambuziEnv): Promise<MchambuziServerContext> 
     upcoming: upcoming.slice(0, 12).map(matchLine),
     recent: recent.slice(0, 10).map(matchLine),
     news: news.slice(0, 10),
-    wc26StartDate: "June 11, 2026",
+    wc26StartDate: "Tournament completed July 19, 2026",
     sources: ["API-Football fixtures", "BBC Sport RSS", "Goal.com RSS"],
   };
 }
@@ -200,7 +200,7 @@ Rules:
   3) Watchout (1 short line)
 - Do not write source links inside the body text.
 - Today's timeline is ${context.generatedAtLabel}. Current football season context is ${context.seasonLabel}.
-- WC26 known kickoff date is ${context.wc26StartDate}. Never invent a different kickoff date.
+- World Cup 2026 is an archive: ${context.wc26StartDate}. Never describe it as upcoming or live.
 - Use the supplied live data, fixture dates, recent results and BBC/Goal headlines first.
 - Do not use old model memory, old league tables, 2023/24, 2024/25 or historical results unless the fan explicitly asks for history.
 - If a league is between seasons or no current feed is available, say the current feed is thin instead of inventing form.
@@ -230,7 +230,7 @@ ${context.recent.length ? context.recent.join("\n") : "No recent results in feed
 HEADLINES:
 ${context.news.length ? context.news.join("\n") : "No BBC/Goal headlines fetched."}
 
-WC26 OFFICIAL KICKOFF:
+WORLD CUP 2026 ARCHIVE STATUS:
 ${context.wc26StartDate}
 
 DATA SOURCES:
@@ -382,7 +382,7 @@ function buildFallbackAnswer(question: string, context: MchambuziServerContext) 
   }
 
   if (lower.includes("world cup") || lower.includes("wc26") || lower.includes("2026")) {
-    return cleanText(`WC26 bado inaiva, but facts first: kickoff is ${context.wc26StartDate}. Current context here is from ${context.sources.join(", ")} as of ${context.generatedAtLabel}. ${upcoming}.`);
+    return cleanText(`WC26 is now an archive: ${context.wc26StartDate}. I can revisit the tournament, but current matchday context comes from ${context.sources.join(", ")} as of ${context.generatedAtLabel}. ${upcoming}.`);
   }
 
   if (lower.includes("predict") || lower.includes("win") || lower.includes("watch")) {

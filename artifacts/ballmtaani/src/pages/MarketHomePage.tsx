@@ -1,474 +1,208 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
-  ArrowRight,
-  BellRing,
-  ChevronLeft,
-  ChevronRight,
-  Coins,
-  Flame,
-  Gift,
-  LockKeyhole,
-  MessageCircle,
-  Radio,
-  ReceiptText,
-  ShieldCheck,
-  Sparkles,
-  Target,
-  Trophy,
-  Users,
+  ArrowRight, BellRing, CalendarDays, ChevronRight, Coins, Flame,
+  MessageSquare, Radio, Shirt, Sparkles, Smartphone, Trophy, Users, Wifi, Zap,
 } from "lucide-react";
-import SEO from "../components/SEO";
-import SponsorSlot from "../components/SponsorSlot";
-import TeamLogo from "../components/TeamLogo";
 import { useAuth } from "../context/AuthContext";
-import { useDebates, useLeaderboard, useMatches, useProfile, useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
+import { useDebates, useLeaderboard, useMatches, useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
+import { fetchTodaysFixtures } from "../lib/football-api";
 import { fetchFootballNews, fetchPartnerArticles, timeAgo, type NewsArticle } from "../lib/news-api";
-import { askMchambuziHalisi } from "../lib/mchambuzi-halisi";
+import {
+  getCountdownParts, getHomepageMode, LEAGUE_SHORTCUTS, MODE_COPY,
+  PREMIER_LEAGUE_OPENING_FIXTURES, PREMIER_LEAGUE_OPENING_KICKOFF,
+  selectFeaturedMatch, type HomepageMatch, type HomepageMode,
+} from "../lib/home-season";
+import DeferredSection from "../components/DeferredSection";
+import FloatingMchambuzi from "../components/FloatingMchambuzi";
+import GoogleSignInButton from "../components/GoogleSignInButton";
+import HeroTicker from "../components/HeroTicker";
+import NotificationBell from "../components/NotificationBell";
+import SEO from "../components/SEO";
+import TeamLogo from "../components/TeamLogo";
 
+const TITLE = "BallMtaani: Live Football Scores, Fixtures & Fan Predictions Kenya";
+const DESCRIPTION = "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.";
+const STADIUM_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
+const LIVE_STATUSES = new Set(["1H", "2H", "HT", "ET", "P", "BT", "LIVE"]);
+const FOCUS = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700] focus-visible:ring-offset-2 focus-visible:ring-offset-black";
 
-const card = "border border-white/[0.09] bg-[#0a1014]/95 shadow-[0_18px_50px_rgba(0,0,0,0.28)]";
-
-// ─── Match of the Day helpers ─────────────────────────────────
-const isWCMatch = (m: any) => m?.leagueId === 1 || /world cup/i.test(m?.league || "");
-
-// WC26 knockout calendar — derive the round label from today's date
-function wc26RoundLabel(kickoffAt?: number): string | null {
-  const now = kickoffAt ? new Date(kickoffAt) : new Date();
-  const t = now.getTime();
-  const at = (iso: string) => new Date(iso).getTime();
-  if (t > at("2026-07-20T00:00:00Z") || t < at("2026-06-11T00:00:00Z")) return null;
-  if (t >= at("2026-07-19T00:00:00Z")) return "The Final";
-  if (t >= at("2026-07-18T00:00:00Z")) return "3rd Place Play-off";
-  if (t >= at("2026-07-13T00:00:00Z")) return "Semi-Final";
-  if (t >= at("2026-07-08T00:00:00Z")) return "Quarter-Final";
-  if (t >= at("2026-07-04T00:00:00Z")) return "Round of 16";
-  if (t >= at("2026-06-28T00:00:00Z")) return "Round of 32";
-  return "Group Stage";
+function kickoffLabel(match: HomepageMatch) {
+  const kickoff = Number(match.kickoffAt || match.timestamp || 0);
+  if (!kickoff) return String(match.time || match.date || "Kickoff TBC");
+  return new Date(kickoff).toLocaleString("en-KE", {
+    weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+    hour12: true, timeZone: "Africa/Nairobi",
+  }) + " EAT";
 }
 
-// ─── Breaking news ticker — the daily-fresh strip at the very top ──
-function BreakingTicker({ items }: { items: NewsArticle[] }) {
-  if (!items.length) return null;
-  const loop = [...items, ...items]; // duplicated for seamless marquee wrap
-  return (
-    <div className="overflow-hidden border-b border-[#F7B500]/20 bg-[#0b0a04]">
-      <style>{`@keyframes bmTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
-      <div className="flex items-stretch">
-        <span className="z-10 flex shrink-0 items-center gap-1.5 bg-[#F7B500] px-3 text-[10px] font-black uppercase tracking-[0.2em] text-black">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-black" />
-          </span>
-          Mtaa Wire
-        </span>
-        <div className="flex min-w-0 flex-1 items-center overflow-hidden">
-          <div className="flex whitespace-nowrap will-change-transform" style={{ animation: "bmTicker 45s linear infinite" }}>
-            {loop.map((a, i) => {
-              const inner = (
-                <>
-                  <span className="text-[8px] text-[#F7B500]">●</span>
-                  {a.title}
-                  <span className="text-[9px] font-semibold uppercase tracking-wide text-white/30">{timeAgo(a.pubDate)}</span>
-                </>
-              );
-              const cls = "mx-5 inline-flex items-center gap-2 py-2 text-xs font-bold text-white/75 transition-colors hover:text-[#F7B500]";
-              return a.isInternal && a.slug ? (
-                <Link key={`${a.id}-${i}`} href={`/article/${a.slug}`} className={cls}>{inner}</Link>
-              ) : (
-                <a key={`${a.id}-${i}`} href={a.link} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function dedupeNews(articles: NewsArticle[]) {
+  const unique = new Map<string, NewsArticle>();
+  articles.forEach((article) => {
+    const key = [article.slug, article.link, article.title].filter(Boolean).join("|").toLowerCase();
+    if (!unique.has(key)) unique.set(key, article);
+  });
+  return [...unique.values()].sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 }
 
-function MatchTeam({ match, side }: { match: any; side: "home" | "away" }) {
-  const name = match?.[side] || (side === "home" ? "Home" : "Away");
-  const logo = match?.[`${side}Logo`];
-  return (
-    <div className="min-w-0 text-center">
-      <TeamLogo logo={logo} initial={String(name).slice(0, 1)} color="#182333" size="lg" />
-      <p className="mt-2 truncate text-xs font-black text-white">{name}</p>
-    </div>
-  );
-}function PhoneClubMark({ logo, name, fallback, color, accent }: { logo?: string; name: string; fallback: string; color: string; accent: string }) {
-  if (logo) {
-    return (
-      <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-white/20 bg-white p-1.5 shadow-[0_0_24px_rgba(255,255,255,.14)]">
-        <img src={logo} alt={name} className="h-full w-full object-contain" />
-      </div>
-    );
+function isKenyanStory(article: NewsArticle) {
+  const text = (article.title + " " + (article.description || "")).toLowerCase();
+  return ["kenya", "kenyan", "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "shabana", "caf"].some((word) => text.includes(word));
+}
+
+function mchambuziTake(match: HomepageMatch | undefined, mode: HomepageMode, headline?: string) {
+  const signature = JSON.stringify({ match: match ? [match.id, match.homeScore, match.awayScore, match.status] : null, mode, headline });
+  try {
+    const cached = JSON.parse(sessionStorage.getItem("ballmtaani:homepage-take") || "null");
+    if (cached?.signature === signature && Date.now() - cached.savedAt < 900_000) return cached.text as string;
+  } catch { /* optional cache */ }
+
+  let text = "Pre-season noise is cheap. The useful question is which squads are ready to turn August promises into points.";
+  if (mode === "matchday" && match) {
+    const score = typeof match.homeScore === "number" && typeof match.awayScore === "number" ? " at " + match.homeScore + "-" + match.awayScore : "";
+    text = match.home + " against " + match.away + score + " is the room to watch. Follow the tempo before trusting the loudest timeline take.";
+  } else if (match) {
+    text = match.home + " versus " + match.away + " is the next receipt. Check the squad news, make the call, then come back after full time.";
+  } else if (headline) {
+    text = "The football week is being shaped by this story: " + headline + ". Read the details before the group chat turns rumour into fact.";
   }
+  try { sessionStorage.setItem("ballmtaani:homepage-take", JSON.stringify({ signature, savedAt: Date.now(), text })); } catch { /* optional cache */ }
+  return text;
+}
 
+function Heading({ eyebrow, title, copy, href, action }: { eyebrow: string; title: string; copy?: string; href?: string; action?: string }) {
   return (
-    <div
-      className="relative mx-auto grid h-12 w-12 place-items-center overflow-hidden border border-white/25 shadow-[0_0_24px_rgba(255,255,255,.12)]"
-      style={{ background: `linear-gradient(145deg, ${color}, #070b10 78%)`, clipPath: "polygon(50% 0%, 92% 16%, 86% 76%, 50% 100%, 14% 76%, 8% 16%)" }}
-      aria-label={name}
-    >
-      <div className="absolute inset-1 border border-white/18" style={{ clipPath: "polygon(50% 0%, 92% 16%, 86% 76%, 50% 100%, 14% 76%, 8% 16%)" }} />
-      <div className="absolute -right-4 top-1 h-12 w-12 rounded-full opacity-70 blur-md" style={{ backgroundColor: accent }} />
-      <div className="absolute inset-x-2 top-2 h-1 rounded-full bg-white/50" />
-      <span className="relative text-[13px] font-black tracking-tight text-white drop-shadow-[0_2px_5px_rgba(0,0,0,.8)]">{fallback}</span>
-      <div className="absolute bottom-2 h-1.5 w-5 rounded-full" style={{ backgroundColor: accent }} />
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#FFD700]/70">{eyebrow}</p>
+        <h2 className="text-2xl font-black leading-tight text-white md:text-3xl">{title}</h2>
+        {copy && <p className="mt-2 max-w-2xl text-sm leading-6 text-white/48">{copy}</p>}
+      </div>
+      {href && action && <Link href={href} className={"inline-flex self-start items-center gap-1 rounded-full border border-white/12 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white " + FOCUS}>{action}<ChevronRight className="h-3.5 w-3.5" /></Link>}
     </div>
   );
 }
 
-function MatchPanel({ match, isLive, fanCount, roundLabel }: { match: any; isLive: boolean; fanCount: number; roundLabel?: string | null }) {
-  const [homePick, setHomePick] = useState(1);
-  const [awayPick, setAwayPick] = useState(0);
-  const hasScore = match?.homeScore !== undefined && match?.awayScore !== undefined;
-  const hasMatch = Boolean(match);
+function Team({ match, side, size = "md" }: { match: HomepageMatch; side: "home" | "away"; size?: "md" | "xl" }) {
+  const name = String(match[side]);
   return (
-    <aside className={`${card} flex h-full flex-col rounded-lg p-5`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F7B500]/80">
-            {roundLabel
-              ? isLive ? `${roundLabel} — Live Now` : `${roundLabel} · Tonight`
-              : isLive ? "Live at WC26" : "Match of the Day"}
-          </p>
-          <h2 className="mt-1 text-sm font-black uppercase text-white">{match?.league || "World Cup 2026"}</h2>
-        </div>
-        <Link href="/matches" className="text-[10px] font-black uppercase tracking-wider text-[#F7B500]">View all</Link>
-      </div>
-
-      {hasMatch ? (
-        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <MatchTeam match={match} side="home" />
-          <div className="text-center">
-            {isLive || hasScore ? (
-              <div className="text-2xl font-black text-white">{match?.homeScore ?? 0}<span className="mx-2 text-white/24">-</span>{match?.awayScore ?? 0}</div>
-            ) : (
-              <div className="text-sm font-black text-white/38">VS</div>
-            )}
-            <div className={`mt-1 text-[9px] font-black uppercase tracking-widest ${isLive ? "text-red-400" : "text-white/36"}`}>
-              {isLive ? match?.minute || "Live" : [match?.date, match?.time].filter(Boolean).join(" · ") || "Upcoming"}
-            </div>
-          </div>
-          <MatchTeam match={match} side="away" />
-        </div>
-      ) : (
-        <div className="mt-5 rounded-md border border-dashed border-[#F7B500]/24 bg-black/24 p-5 text-center">
-          <p className="text-sm font-black uppercase text-white">WC26 match feed syncing</p>
-          <p className="mt-2 text-xs leading-5 text-white/45">Open the tournament hub for fixtures, live cards, tables and verified updates as the feed refreshes.</p>
-          <Link href="/world-cup-2026" className="mt-4 inline-flex h-10 items-center justify-center rounded-md bg-[#F7B500] px-4 text-[10px] font-black uppercase tracking-wider text-black">Open WC26 hub</Link>
-        </div>
-      )}
-
-      <div className="mt-5 border-t border-white/8 pt-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Lock your prediction</p>
-          <span className="rounded-full border border-[#F7B500]/24 px-2 py-1 text-[8px] font-black text-[#F7B500]">+50 MTC</span>
-        </div>
-        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <button onClick={() => setHomePick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white" aria-label="Increase home score">{homePick}</button>
-          <span className="text-white/28">-</span>
-          <button onClick={() => setAwayPick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white" aria-label="Increase away score">{awayPick}</button>
-        </div>
-        <Link href="/predictions" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-md bg-[#F7B500] text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-[#ffc928]" aria-label="Lock in your WC26 prediction">
-          <LockKeyhole className="h-4 w-4" /> Lock in prediction
-        </Link>
-      </div>
-
-      <div className="mt-auto pt-4 text-center">
-        <p className="text-sm font-bold text-white/78">{fanCount ? `${fanCount.toLocaleString()} fans on the board` : "Live fan count not available"}</p>
-        <div className="mt-3 flex items-center justify-center -space-x-2">
-          {["P", "J", "M", "A", "K", "S"].map((avatar) => <span key={avatar} className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0a1014] bg-[#F7B500] text-[10px] font-black text-black">{avatar}</span>)}
-          <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0a1014] bg-white/10 text-[10px] font-black text-white">+99</span>
-        </div>
-      </div>
-    </aside>
+    <div className="flex min-w-0 flex-col items-center gap-2 text-center">
+      <TeamLogo logo={side === "home" ? match.homeLogo : match.awayLogo} initial={String((side === "home" ? match.homeInitial : match.awayInitial) || name.slice(0, 3)).toUpperCase()} color="#182333" size={size} shadow={size === "xl"} />
+      <span className="line-clamp-2 text-sm font-black text-white">{name}</span>
+    </div>
   );
 }
 
-
-function PulseCard({ debate }: { debate: any }) {
-  const [vote, setVote] = useState<"left" | "right" | null>(null);
-  if (!debate) {
-    return (
-      <article className={`${card} rounded-lg p-4`}>
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-          <span className="rounded bg-red-500 px-1.5 py-0.5 text-white">Live</span>
-          <span className="text-white">Fan pulse</span>
-        </div>
-        <p className="mt-4 text-sm font-bold text-white">No live debate is active in the feed yet.</p>
-        <p className="mt-2 text-xs leading-5 text-white/45">As soon as the debate feed has a real WC26 topic, it will appear here.</p>
-      </article>
-    );
-  }
-
-  const leftVotes = Number(debate.leftVotes || 0);
-  const rightVotes = Number(debate.rightVotes || 0);
-  const totalVotes = Number(debate.totalVotes || leftVotes + rightVotes || 0);
-  const leftPct = totalVotes > 0 ? Math.round((leftVotes / totalVotes) * 100) : 0;
-  const rightPct = totalVotes > 0 ? Math.max(0, 100 - leftPct) : 0;
-  const leftLabel = debate.left || "Left side";
-  const rightLabel = debate.right || "Right side";
+function MatchCard({ match, live }: { match: HomepageMatch; live: boolean }) {
+  const scored = typeof match.homeScore === "number" && typeof match.awayScore === "number";
   return (
-    <article className={`${card} relative overflow-hidden rounded-lg p-4`}>
-      <img aria-hidden="true" loading="lazy" decoding="async" src="/bm-market-hero.png" alt="" className="absolute right-0 top-0 h-32 w-36 object-cover object-center opacity-55" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,#0a1014_0%,rgba(10,16,20,.92)_60%,rgba(10,16,20,.28)_100%)]" />
-      <div className="relative">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-          <span className="rounded bg-red-500 px-1.5 py-0.5 text-white">Live</span>
-          <span className="text-white">Fan pulse</span>
-          <span className="text-[#F7B500]">{totalVotes.toLocaleString()} votes</span>
-        </div>
-        <p className="mt-3 text-sm font-bold text-white">{debate.title || "WC26 live debate"}</p>
-        <div className="mt-3 space-y-2 rounded-md border border-[#F7B500]/12 bg-[#181304]/70 p-3">
-          {[
-            { label: leftLabel, pct: leftPct, key: "left" as const },
-            { label: rightLabel, pct: rightPct, key: "right" as const },
-          ].map((item) => (
-            <button key={item.key} onClick={() => setVote(item.key)} className="block w-full text-left">
-              <div className="grid grid-cols-[1fr_1fr_36px] items-center gap-2 text-[10px]">
-                <span className="font-bold text-white/76">{item.label}</span>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className={`h-full rounded-full ${vote === item.key ? "bg-white" : "bg-[#F7B500]"}`} style={{ width: `${item.pct}%` }} />
-                </div>
-                <span className="text-right text-white/62">{item.pct}%</span>
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-[10px] text-white/45">{totalVotes.toLocaleString()} live votes</span>
-          <button onClick={() => setVote(vote || "left")} className="h-9 rounded-md bg-[#F7B500] px-5 text-[10px] font-black uppercase text-black">Vote now</button>
-        </div>
+    <Link href={live ? "/live-center/" + match.id : "/predictions"} className={"group min-w-[280px] snap-start rounded-2xl border p-4 transition hover:-translate-y-0.5 " + (live ? "border-[#B30000]/35 bg-[#13070a]" : "border-white/9 bg-[#0d1119]") + " " + FOCUS}>
+      <div className="mb-4 flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest">
+        <span className={live ? "text-[#ff5a5a]" : "text-white/35"}>{live ? "Live now" : match.league || "Upcoming"}</span>
+        <span className="text-white/30">{live ? String(match.minute || match.status || "Live") : kickoffLabel(match)}</span>
       </div>
-    </article>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <Team match={match} side="home" />
+        {scored ? <span className="text-2xl font-black text-white">{match.homeScore} <span className="text-white/25">-</span> {match.awayScore}</span> : <span className="rounded-lg border border-white/10 px-3 py-2 text-xs font-black text-white/28">VS</span>}
+        <Team match={match} side="away" />
+      </div>
+      <span className="mt-4 flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70">{live ? "Open live center" : "Make your call"}<ArrowRight className="h-3 w-3" /></span>
+    </Link>
   );
 }
 
-
-function DebateCard({ debate }: { debate: any }) {
-  const [side, setSide] = useState<"left" | "right" | null>(null);
-  const title = debate?.title || "Which nation has looked strongest in the WC26 knockout rounds?";
-  return (
-    <article className={`${card} rounded-lg p-4`}>
-      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-        <span className="flex items-center gap-1.5 text-white"><Flame className="h-4 w-4 text-red-400" /> Hot debate</span>
-        <span className="text-white/35">{debate?.totalVotes || "Live"}</span>
-      </div>
-      <h3 className="mt-5 min-h-[58px] text-lg font-black leading-tight text-white">{title}</h3>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <button onClick={() => setSide("left")} className={`h-10 rounded-md text-xs font-black uppercase ${side === "left" ? "bg-[#F7B500] text-black" : "border border-[#F7B500]/55 text-[#F7B500]"}`}>{debate?.left || "Back it"}</button>
-        <button onClick={() => setSide("right")} className={`h-10 rounded-md text-xs font-black uppercase ${side === "right" ? "bg-[#F7B500] text-black" : "border border-white/14 text-white/70"}`}>{debate?.right || "Not yet"}</button>
-      </div>
-      <Link href="/debates" className="mt-4 flex items-center justify-between text-[10px] font-bold text-white/38">Bring backup to your side <ArrowRight className="h-3.5 w-3.5 text-[#F7B500]" /></Link>
-    </article>
-  );
+function StoryCard({ article, eager = false }: { article: NewsArticle; eager?: boolean }) {
+  const href = article.isInternal ? "/article/" + article.slug : article.link;
+  const body = <>
+    <div className="relative aspect-[16/9] overflow-hidden"><img src={article.thumbnail || STADIUM_IMAGE} alt={article.title} width={640} height={360} loading={eager ? "eager" : "lazy"} decoding="async" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" onError={(event) => { event.currentTarget.src = STADIUM_IMAGE; }} /><div className="absolute inset-0 bg-gradient-to-t from-[#0b0e14] via-transparent to-transparent" /></div>
+    <div className="flex flex-1 flex-col p-4"><div className="mb-2 flex justify-between gap-3 text-[9px] font-black uppercase tracking-widest text-white/30"><span>{article.source}</span><span>{timeAgo(article.pubDate)}</span></div><h3 className="line-clamp-3 text-base font-black leading-snug text-white">{article.title}</h3><span className="mt-4 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#FFD700]/70">Read story<ArrowRight className="h-3 w-3" /></span></div>
+  </>;
+  const styles = "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/8 bg-[#0b0e14] transition hover:-translate-y-0.5 hover:border-white/18 " + FOCUS;
+  return article.isInternal ? <Link href={href} className={styles}>{body}</Link> : <a href={href} target="_blank" rel="noopener noreferrer" className={styles}>{body}</a>;
 }
 
-
-function AnalystCard({ answer }: { answer: string }) {
-  return (
-    <article className={`${card} relative overflow-hidden rounded-lg p-4`}>
-      <img loading="lazy" decoding="async" src="/bm-mchambuzi.png" alt="Mchambuzi Halisi analyst" className="absolute bottom-0 right-0 h-full w-[48%] object-cover object-center opacity-95" />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,#0a1014_0%,rgba(10,16,20,.92)_56%,rgba(10,16,20,.18)_100%)]" />
-      <div className="relative max-w-[56%] pr-2">
-        <div className="flex items-center justify-between"><span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white"><Sparkles className="h-4 w-4 text-[#F7B500]" /> Mchambuzi Halisi</span><span className="rounded bg-[#F7B500] px-1.5 py-0.5 text-[8px] font-black text-black">New</span></div>
-        <blockquote className="mt-5 line-clamp-4 text-[0.88rem] font-semibold leading-5 text-white/84">{answer || "Mchambuzi is reading the live feeds right now."}</blockquote>
-        <Link href="/mchambuzi-halisi" className="relative mt-5 inline-flex h-10 items-center gap-2 rounded-md bg-[#F7B500] px-4 text-[10px] font-black uppercase tracking-wider text-black">Ask Mchambuzi <ArrowRight className="h-3.5 w-3.5" /></Link>
-      </div>
-    </article>
-  );
+function HotDebate() {
+  const { data: debates = [], isLoading } = useDebates();
+  const debate = debates[0];
+  return <section className="border-b border-white/6 bg-[#09070a] py-12"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Hot fan debate" title="The argument Kenya is having now" copy="Vote, explain your take and keep the receipt when the football answers back." href="/debates" action="Join debates" /><div className="rounded-3xl border border-[#B30000]/20 bg-[#0d0b10] p-6">{isLoading ? <div className="h-32 animate-pulse rounded-2xl bg-white/5" /> : debate ? <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center"><div><p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]"><Flame className="h-4 w-4" />{debate.totalVotes} votes</p><h3 className="mt-3 text-2xl font-black text-white md:text-4xl">{debate.title}</h3><div className="mt-5 grid gap-2 sm:grid-cols-2"><div className="rounded-xl border border-white/10 bg-white/5 p-3 font-black">{debate.left}</div><div className="rounded-xl border border-white/10 bg-white/5 p-3 font-black">{debate.right}</div></div></div><Link href="/debates" className={"inline-flex items-center justify-center gap-2 rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Vote now<MessageSquare className="h-4 w-4" /></Link></div> : <div className="flex flex-wrap items-center justify-between gap-5"><h3 className="text-2xl font-black">Bring the take your group chat cannot settle.</h3><Link href="/debates" className={"rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Start debating</Link></div>}</div></div></section>;
 }
 
-
-function LeaderboardCard({ rows }: { rows: any[] }) {
-  return (
-    <article className={`${card} rounded-lg p-4`}>
-      <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-white"><Trophy className="h-4 w-4 text-[#F7B500]" /> WC26 top callers</h3><Link href="/leaderboard" className="text-[9px] font-black uppercase text-[#F7B500]">Full table</Link></div>
-      <div className="mt-3 space-y-1">
-        {rows.length ? rows.slice(0, 5).map((row, i) => (
-          <div key={`${row.name}-${i}`} className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 rounded-md px-2 py-2 text-xs ${i === 0 ? "border border-[#F7B500]/55 bg-[#F7B500]/6" : "border border-transparent border-b-white/6"}`}>
-            <span className="font-black text-[#F7B500]">{row.rank || i + 1}</span><span className="truncate font-bold text-white/76">{row.name || "Mtaani fan"}</span><span className="font-black tabular-nums text-white/58">{Number(row.pts || 0).toLocaleString()}</span>
-          </div>
-        )) : <div className="flex min-h-[150px] items-center justify-center text-center text-xs text-white/38">The live WC26 leaderboard is warming up.</div>}
-      </div>
-    </article>
-  );
-}
-
-function NewsCarousel({ articles, loading }: { articles: NewsArticle[]; loading: boolean }) {
-  const rail = useRef<HTMLDivElement>(null);
-  const move = (direction: number) => rail.current?.scrollBy({ left: direction * 360, behavior: "smooth" });
-  return (
-    <section className="border-t border-white/8 bg-[#060a0d] py-8">
-      <div className="mx-auto max-w-[1800px] px-4 md:px-7">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div><p className="text-[9px] font-black uppercase tracking-[0.24em] text-[#F7B500]">Mtaa Daily</p><h2 className="mt-1 text-xl font-black uppercase text-white">Latest WC26 and football news</h2></div>
-          <div className="flex gap-2"><button onClick={() => move(-1)} title="Previous stories" aria-label="Previous news stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronLeft className="h-4 w-4" /></button><button onClick={() => move(1)} title="Next stories" aria-label="Next news stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronRight className="h-4 w-4" /></button></div>
-        </div>
-        <div ref={rail} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-56 min-w-[290px] animate-pulse rounded-lg bg-white/5" />) : articles.slice(0, 10).map(article => {
-            const href = article.isInternal ? `/article/${article.slug}` : article.link;
-            const body = <><div className="relative h-32 overflow-hidden"><img src={article.thumbnail} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-[#080d10] to-transparent" /><span className="absolute bottom-2 left-2 rounded bg-[#F7B500] px-2 py-0.5 text-[8px] font-black uppercase text-black">{article.isWC26 ? "WC26" : article.source}</span></div><div className="p-3"><h3 className="line-clamp-2 text-sm font-black leading-snug text-white">{article.title}</h3><p className="mt-2 text-[9px] uppercase tracking-wider text-white/34">{timeAgo(article.pubDate)}</p></div></>;
-            return article.isInternal ? <Link key={article.id} href={href} className={`${card} group min-w-[290px] max-w-[290px] snap-start overflow-hidden rounded-lg`}>{body}</Link> : <a key={article.id} href={href} target="_blank" rel="noopener noreferrer" className={`${card} group min-w-[290px] max-w-[290px] snap-start overflow-hidden rounded-lg`}>{body}</a>;
-          })}
-        </div>
-        <Link href="/news" className="mt-4 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#F7B500]">All news <ArrowRight className="h-3.5 w-3.5" /></Link>
-      </div>
-    </section>
-  );
+function Rewards() {
+  const { data: leaderboard = [], isLoading } = useLeaderboard();
+  const rewardItems = [
+    ["Airtime Top-Up", "Safaricom, Airtel & Telkom Kenya", "from 2,500 MTC", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=720&q=78&auto=format&fit=crop", Smartphone],
+    ["Data Bundle", "Daily, weekly & monthly bundles", "from 2,000 MTC", "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=720&q=78&auto=format&fit=crop", Wifi],
+    ["BM Merch", "Limited jerseys, caps and fan gear", "from 10,000 MTC", "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=720&q=78&auto=format&fit=crop", Shirt],
+  ] as const;
+  return <section className="border-b border-white/6 bg-[#08090d] py-12"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Predictions leaderboard & MTC rewards" title="Make calls. Climb the table. Redeem the status." copy="Predictions, debates, duels and daily activity earn MTC across the existing rewards system." href="/leaderboard" action="Full leaderboard" /><div className="grid gap-5 lg:grid-cols-[0.9fr_1.6fr]"><div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0d1017]"><div className="flex items-center justify-between border-b border-white/7 p-4 text-[10px] font-black uppercase tracking-widest text-white/55">Top fans this week<Trophy className="h-4 w-4 text-[#FFD700]" /></div>{isLoading ? <div className="m-4 h-36 animate-pulse rounded-xl bg-white/5" /> : leaderboard.length ? leaderboard.slice(0, 5).map((player: any, index: number) => <div key={player.id || player.rank || index} className="flex items-center justify-between border-b border-white/5 px-4 py-3"><span className="truncate text-sm font-black">#{player.rank || index + 1} {String(player.name || "Anonymous Fan").replace(/^Fan_/, "Fan ")}</span><span className="text-sm font-black text-[#FFD700]">{Number(player.pts || 0).toLocaleString()} MTC</span></div>) : <p className="p-6 text-sm text-white/38">The table will populate as fans participate.</p>}</div><div className="grid gap-3 sm:grid-cols-3">{rewardItems.map(([name, detail, price, image, Icon]) => <Link key={name} href="/store" className={"group overflow-hidden rounded-2xl border border-white/8 bg-[#0d1017] " + FOCUS}><div className="relative aspect-[4/3] overflow-hidden"><img src={image} alt={name} width={720} height={540} loading="lazy" decoding="async" className="h-full w-full object-cover brightness-50 transition group-hover:scale-105" /><Icon className="absolute left-3 top-3 h-5 w-5 text-[#FFD700]" /><span className="absolute right-3 top-3 rounded-full bg-black/60 px-2 py-1 text-[8px] font-black uppercase">{price}</span></div><div className="p-4"><h3 className="font-black">{name}</h3><p className="mt-1 text-[11px] text-white/35">{detail}</p></div></Link>)}</div></div><div className="mt-5 flex flex-wrap gap-2">{[["Predict match", "+50 MTC"], ["Win a duel", "+200 MTC"], ["Daily login", "+50 MTC"], ["Join debate", "+30 MTC"]].map(([label, points]) => <span key={label} className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-2 text-[10px] text-white/48">{label} <b className="text-[#FFD700]">{points}</b></span>)}<Link href="/store" className={"ml-auto inline-flex items-center gap-2 rounded-full bg-[#FFD700] px-5 py-2 text-[10px] font-black uppercase text-black " + FOCUS}>View rewards<Coins className="h-4 w-4" /></Link></div></div></section>;
 }
 
 export default function MarketHomePage() {
-  const { user, coins } = useAuth();
-  const { data: profile } = useProfile(user?.id);
-  const { data: liveMatches = [] } = useMatches();
-  const { data: upcoming = [] } = useUpcomingFixtures();
-  const { data: recent = [] } = useRecentMatches();
-  const { data: debates = [] } = useDebates();
-  const { data: leaderboard = [] } = useLeaderboard();
+  const { isLoggedIn, dbProfile } = useAuth();
+  const [today, setToday] = useState<HomepageMatch[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
-  const [mchambuziAnswer, setMchambuziAnswer] = useState("");
-
-  useEffect(() => {
-    Promise.all([fetchPartnerArticles(), fetchFootballNews({ network: true, fallback: false })]).then(([partner, feed]) => {
-      const seen = new Set<string>();
-      const combined = [...partner, ...feed].filter(item => !seen.has(item.id) && seen.add(item.id));
-      setNews(combined.sort((a, b) => Number(Boolean(b.isWC26)) - Number(Boolean(a.isWC26))));
-    }).finally(() => setNewsLoading(false));
-  }, []);
+  const [now, setNow] = useState(() => new Date());
+  const { data: live = [], isLoading: liveLoading } = useMatches();
+  const { data: upcoming = [], isLoading: upcomingLoading } = useUpcomingFixtures();
+  const needsRecent = !liveLoading && !upcomingLoading && !live.length && !upcoming.length;
+  const { data: recent = [] } = useRecentMatches({ enabled: needsRecent });
 
   useEffect(() => {
     let cancelled = false;
-    askMchambuziHalisi("Give the current WC26 read in one short paragraph.", { live: liveMatches, upcoming, recent })
-      .then(({ answer }) => {
-        if (!cancelled) setMchambuziAnswer(answer);
-      })
-      .catch(() => {
-        if (!cancelled) setMchambuziAnswer("");
-      });
+    fetchTodaysFixtures().then((items) => { if (!cancelled) setToday(items); }).catch(() => undefined);
+    Promise.allSettled([fetchPartnerArticles(), fetchFootballNews()]).then(([partnerResult, newsResult]) => {
+      if (cancelled) return;
+      const partner = partnerResult.status === "fulfilled" ? partnerResult.value : [];
+      const headlines = newsResult.status === "fulfilled" ? newsResult.value : [];
+      setNews(dedupeNews([...partner, ...headlines]).slice(0, 18));
+    }).finally(() => { if (!cancelled) setNewsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [liveMatches, upcoming, recent]);
+  const beforeKickoff = now < PREMIER_LEAGUE_OPENING_KICKOFF;
+  useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), beforeKickoff ? 1000 : 60_000); return () => window.clearInterval(timer); }, [beforeKickoff]);
 
+  const club = String(dbProfile?.favorite_team || "").trim();
+  const mode = getHomepageMode({ now, liveMatches: live, todaysFixtures: today });
+  const selected = useMemo(() => selectFeaturedMatch({ liveMatches: live, upcomingFixtures: upcoming, recentMatches: recent, followedClub: club }), [club, live, recent, upcoming]);
+  const featured = selected.match || PREMIER_LEAGUE_OPENING_FIXTURES[0];
+  const featuredLive = live.some((item: HomepageMatch) => String(item.id) === String(featured.id));
+  const matches = live.length ? [...live, ...upcoming].slice(0, 6) : upcoming.length ? upcoming.slice(0, 6) : PREMIER_LEAGUE_OPENING_FIXTURES;
+  const countdown = getCountdownParts(PREMIER_LEAGUE_OPENING_KICKOFF, now);
+  const seasonNews = news.filter((article) => {
+    const topic = (article.title + " " + (article.description || "")).toLowerCase();
+    return !topic.includes("world cup") && !topic.includes("wc26");
+  });
+  const originals = news.filter((article) => article.isInternal);
+  const kenya = news.filter(isKenyanStory).slice(0, 3);
+  const take = useMemo(() => mchambuziTake(featured, mode, news[0]?.title), [featured, mode, news]);
 
-  // Match of the Day — WC26 takes priority over everything else
-  const featuredMatch =
-    liveMatches.find(isWCMatch) ||
-    upcoming.find(isWCMatch) ||
-    liveMatches[0] ||
-    upcoming[0] ||
-    recent.find(isWCMatch) ||
-    recent[0] ||
-    null;
-  const isLive = liveMatches.length > 0 && liveMatches.includes(featuredMatch);
-  const roundLabel = featuredMatch && isWCMatch(featuredMatch) ? wc26RoundLabel(featuredMatch.kickoffAt) : wc26RoundLabel();
-  
-  const statItems = useMemo(() => [
-    { icon: Users, value: Number(profile?.points || coins || 0).toLocaleString(), label: "MTC balance" },
-    { icon: ReceiptText, value: upcoming.length.toString(), label: "Upcoming fixtures" },
-    { icon: MessageCircle, value: debates.length.toString(), label: "Live debates" },
-    { icon: Radio, value: String(liveMatches.length + recent.length), label: "Live + recent" },
-  ], [profile?.points, coins, upcoming.length, debates.length, liveMatches.length, recent.length]);
+  return <main className="overflow-x-clip bg-[#050609] pb-24 text-white">
+    <SEO title={TITLE} description={DESCRIPTION} keywords={["live football scores Kenya", "Premier League fixtures Kenya", "Champions League Kenya", "FKF Premier League", "football predictions Kenya", "Mchambuzi AI"]} path="/" />
+    <HeroTicker articles={seasonNews.slice(0, 8)} matches={matches.slice(0, 8)} />
 
+    <section className="relative isolate overflow-hidden border-b border-white/8"><img src={STADIUM_IMAGE} alt="" width={1920} height={1080} loading="eager" decoding="async" fetchPriority="high" className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40" /><div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(5,6,9,.98),rgba(5,6,9,.75),rgba(5,6,9,.45))]" /><div className="mx-auto grid max-w-6xl gap-9 px-4 py-14 md:py-20 lg:grid-cols-[1.1fr_.9fr] lg:items-center"><div><div className="mb-5 flex flex-wrap gap-2"><span className="rounded-full border border-[#FFD700]/24 bg-[#FFD700]/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#FFD700]">{MODE_COPY[mode].eyebrow}</span><span className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/55">Premier League first. Kenya always visible.</span></div><h1 className="text-5xl font-black leading-[.9] tracking-[-.045em] md:text-7xl">The season <span className="text-[#B30000]">starts here.</span></h1><p className="mt-6 max-w-2xl text-base font-semibold leading-7 text-white/65 md:text-lg">Live scores, fearless predictions, Kenyan fan debates and real football intelligence—from the Premier League to FKF football.</p><p className="mt-3 text-sm font-black uppercase tracking-widest text-[#FFD700]/75">We predict. We debate. We keep receipts.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/matches" className={"inline-flex items-center gap-2 rounded-xl bg-[#B30000] px-6 py-3.5 text-sm font-black " + FOCUS}>See Upcoming Matches<ArrowRight className="h-4 w-4" /></Link><Link href="/fan-zones" className={"inline-flex items-center gap-2 rounded-xl border border-white/18 bg-black/30 px-6 py-3.5 text-sm font-black " + FOCUS}>Choose Your Club<Users className="h-4 w-4" /></Link></div><p className="mt-5 max-w-xl text-sm leading-6 text-white/42">{MODE_COPY[mode].summary}</p></div><div className="rounded-3xl border border-white/12 bg-[#0a0d14]/90 p-6 backdrop-blur"><div className="mb-5 flex items-center justify-between"><div><p className={"text-[10px] font-black uppercase tracking-widest " + (featuredLive ? "text-[#ff5a5a]" : "text-[#FFD700]")}>{selected.reason}</p><p className="mt-1 text-xs text-white/38">{featured.league}</p></div>{featuredLive ? <Radio className="h-5 w-5 animate-pulse text-[#B30000]" /> : <CalendarDays className="h-5 w-5 text-white/35" />}</div><div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4"><Team match={featured} side="home" size="xl" />{typeof featured.homeScore === "number" ? <span className="text-3xl font-black">{featured.homeScore} - {featured.awayScore}</span> : <span className="rounded-xl border border-white/10 px-4 py-2 text-sm font-black text-white/28">VS</span>}<Team match={featured} side="away" size="xl" /></div><p className="mt-5 text-center text-[10px] font-black uppercase tracking-widest text-white/38">{kickoffLabel(featured)}</p><Link href={featuredLive ? "/live-center/" + featured.id : "/predictions"} className={"mt-4 flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-black hover:bg-[#FFD700] " + FOCUS}>{featuredLive ? "Join Live Center" : "Make Your Call"}<ChevronRight className="h-4 w-4" /></Link></div></div></section>
 
-  return (
-    <main className="min-h-screen bg-[#05080a] text-white">
-      <SEO title="BallMtaani | World Cup 2026 Fan Command Center" description="Live World Cup 2026 scores, predictions, debates, news and fan rewards for Kenya's football community." path="/home" />
+    <section className="border-b border-white/6 bg-[#070a10] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Live & upcoming" title="Your matchday desk" copy="Live games lead. Premier League follows. Europe, Kenyan football and the next useful fixture stay close behind." href="/matches" action="All matches" /><div className="flex snap-x gap-3 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{(liveLoading || upcomingLoading) && !matches.length ? [1,2,3].map((item) => <div key={item} className="h-48 min-w-[280px] animate-pulse rounded-2xl bg-white/[.03]" />) : matches.map((match: HomepageMatch) => <MatchCard key={String(match.id)} match={match} live={live.some((item: HomepageMatch) => String(item.id) === String(match.id)) || LIVE_STATUSES.has(String(match.status || ""))} />)}</div></div></section>
 
-      {/* ── Mtaa Wire — breaking headlines, refreshes with every publish ── */}
-      <BreakingTicker items={news.slice(0, 5)} />
+    <section className="border-b border-white/6 bg-[#08080b] py-11"><div className="mx-auto grid max-w-6xl gap-5 px-4 lg:grid-cols-[1.25fr_.75fr]"><div className="rounded-3xl border border-[#B30000]/18 bg-[#0d0d12] p-7"><p className="text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]">Choose your club</p><h2 className="mt-3 text-3xl font-black">{club && club.toLowerCase() !== "none" ? club + " is your home end." : "Pick the badge you will defend all season."}</h2><p className="mt-3 text-sm leading-6 text-white/48">Your saved favourite team already powers fan-zone discovery and can now lead featured-match priority whenever that club is live.</p><Link href="/fan-zones" className={"mt-6 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>{club ? "Open your fan zone" : "Choose your club"}<Users className="h-4 w-4" /></Link></div><div className="rounded-3xl border border-white/8 bg-[#0d1017] p-6"><p className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]">Fan identity</p>{["Follow your club first", "Join debates with context", "Earn MTC across matchday actions"].map((item, index) => <div key={item} className="mt-3 flex items-center gap-3 rounded-xl border border-white/7 bg-white/[.025] p-3"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#B30000]/18 text-xs font-black text-[#ff6b6b]">{index + 1}</span><span className="text-sm font-bold text-white/66">{item}</span></div>)}</div></div></section>
 
-      <section className="relative overflow-hidden border-b border-white/8 bg-[#030607]">
-        <img fetchPriority="high" loading="eager" decoding="async" src="/bm-market-hero.png" alt="BallMtaani World Cup fan and live match phone" className="absolute inset-0 h-full w-full object-cover object-center opacity-90" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#030607_0%,rgba(3,6,7,.78)_25%,rgba(3,6,7,.22)_50%,rgba(3,6,7,.78)_75%,#030607_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,6,7,.08)_0%,rgba(3,6,7,.38)_64%,#030607_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_42%,rgba(247,181,0,.16),transparent_34%)]" />
-        <div className="relative mx-auto max-w-[1800px] px-4 py-5 md:px-7 lg:py-6">
-          <div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr_1fr] lg:items-stretch">
-            <div className="flex flex-col justify-center py-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-black/45 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/86"><span>KE</span> Kenya's home of football fans</div>
-                {roundLabel && (
-                  <div className="inline-flex w-fit items-center gap-2 rounded-md border border-[#F7B500]/45 bg-[#F7B500]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#F7B500]">
-                    <Trophy className="h-3.5 w-3.5" /> WC26 · {roundLabel} Day
-                  </div>
-                )}
-              </div>
-              <h1 className="mt-5 text-[clamp(2.8rem,4.2vw,5.5rem)] font-black uppercase leading-[0.9] tracking-[0] text-white">We predict.<br />We debate.<br /><span className="text-[#F7B500]">We keep receipts.</span></h1>
-              <p className="mt-5 max-w-[34rem] text-[1.05rem] leading-7 text-white/86">Join thousands of fans making bold calls, backing their teams and earning MTC for being on point.</p>
-              <div className="mt-5 flex flex-wrap gap-3"><Link href="/predictions" className="inline-flex h-12 min-w-[15.5rem] items-center justify-center gap-2 rounded-md bg-[#F7B500] px-5 text-xs font-black uppercase tracking-wider text-black shadow-[0_0_22px_rgba(247,181,0,.18)]"><Target className="h-4 w-4" /> Make your prediction</Link><Link href="/fan-zones" className="inline-flex h-12 min-w-[12.5rem] items-center justify-center gap-2 rounded-md border border-[#F7B500]/65 bg-black/45 px-5 text-xs font-black uppercase tracking-wider text-white"><Users className="h-4 w-4" /> Join your tribe</Link></div>
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">{statItems.map(({ icon: Icon, value, label }) => <div key={label} className="flex items-center gap-2"><Icon className="h-5 w-5 shrink-0 text-[#F7B500]" /><div><div className="text-xs font-black text-white">{value}</div><div className="text-[9px] text-white/40">{label}</div></div></div>)}</div>
-            </div>
+    <section className="border-b border-[#FFD700]/10 bg-[#0a0904] py-11"><div className="mx-auto grid max-w-6xl gap-7 px-4 lg:grid-cols-[.85fr_1.15fr] lg:items-center"><div><p className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]/70">Premier League opening weekend</p><h2 className="mt-3 text-3xl font-black md:text-4xl">{countdown.complete ? "The 2026/27 season is underway." : "Arsenal and Coventry open the new season."}</h2><p className="mt-3 text-sm leading-6 text-white/48">Friday 21 August, 10:00 PM EAT. Manchester United, Manchester City and Liverpool follow across opening weekend.</p><Link href="/matches?search=Premier%20League" className={"mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#FFD700] " + FOCUS}>Opening fixtures<ArrowRight className="h-4 w-4" /></Link></div>{!countdown.complete && <div className="grid grid-cols-4 gap-2">{[[countdown.days,"Days"],[countdown.hours,"Hours"],[countdown.minutes,"Mins"],[countdown.seconds,"Secs"]].map(([value,label]) => <div key={String(label)} className="rounded-xl border border-[#FFD700]/18 bg-black/35 p-3 text-center"><b className="block text-2xl tabular-nums md:text-3xl">{String(value).padStart(2,"0")}</b><span className="text-[8px] font-black uppercase tracking-widest text-[#FFD700]/55">{label}</span></div>)}</div>}</div></section>
 
-            
-<div className="relative hidden min-h-[510px] lg:block">
-              <div className="absolute bottom-4 left-1/2 h-[92%] w-[78%] -translate-x-1/2 rounded-full bg-[#F7B500]/10 blur-3xl" />
-              <div className="absolute bottom-5 right-0 w-[60%] rotate-[6deg] rounded-[36px] border-[6px] border-[#1e252b] bg-[#04080b] p-3 shadow-[0_28px_70px_rgba(0,0,0,.8),0_0_42px_rgba(247,181,0,.14)]">
-                <div className="pointer-events-none absolute -inset-3 rounded-[42px] bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,.2),transparent_22%),linear-gradient(120deg,transparent_8%,rgba(247,181,0,.16)_43%,transparent_56%)] opacity-70" />
-                <div className="relative overflow-hidden rounded-[25px] border border-white/10 bg-[#071015] p-4 shadow-inner">
-                  <img aria-hidden="true" loading="lazy" decoding="async" src="/bm-market-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-[.12] blur-[1px]" />
-                  <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.16)_0%,transparent_28%,rgba(247,181,0,.08)_54%,transparent_68%)]" />
-                  <div className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-[#F7B500]/16 blur-2xl" />
-                  <div className="relative mx-auto mb-3 h-4 w-20 rounded-full bg-black/80 ring-1 ring-white/8" />
-                  {featuredMatch ? (
-                    <>
-                      <div className="relative flex items-center justify-between text-[9px] font-black uppercase text-white/62">
-                        <span>{isLive ? "Live Match" : "Upcoming Match"}</span>
-                        <span className="rounded bg-red-500 px-1.5 py-0.5 text-white shadow-[0_0_14px_rgba(239,68,68,.45)]">{isLive ? "Live" : "WC26"}</span>
-                        <span className="text-[#F7B500]">{featuredMatch.minute || featuredMatch.date || featuredMatch.time || "WC26"}</span>
-                      </div>
-                      <div className="relative mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                        <div className="text-center">
-                          <PhoneClubMark logo={featuredMatch.homeLogo} name={featuredMatch.home} fallback={String(featuredMatch.home || "").slice(0, 3).toUpperCase() || "H"} color="#8b1118" accent="#f6d04d" />
-                          <p className="mt-1 truncate text-[9px] font-bold text-white/76">{featuredMatch.home}</p>
-                        </div>
-                        <div className="text-2xl font-black text-white drop-shadow-[0_2px_14px_rgba(255,255,255,.22)]">{featuredMatch.homeScore !== undefined && featuredMatch.awayScore !== undefined ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}` : "VS"}</div>
-                        <div className="text-center">
-                          <PhoneClubMark logo={featuredMatch.awayLogo} name={featuredMatch.away} fallback={String(featuredMatch.away || "").slice(0, 3).toUpperCase() || "A"} color="#123f92" accent="#ffffff" />
-                          <p className="mt-1 truncate text-[9px] font-bold text-white/76">{featuredMatch.away}</p>
-                        </div>
-                      </div>
-                      <div className="relative mt-4 flex gap-4 border-b border-white/8 pb-2 text-[8px] font-bold text-white/42"><span className="text-[#F7B500]">{featuredMatch.status || "Feed"}</span><span>{featuredMatch.league || "WC26"}</span><span>Venue</span><span>Updates</span></div>
-                      <div className="relative mt-3 space-y-2 text-[8px] text-white/62">
-                        <p className="rounded-md border border-white/5 bg-white/[.055] p-2"><span className="font-black text-[#F7B500]">Status</span> {featuredMatch.status || featuredMatch.date || "Live feed syncing"}</p>
-                        {featuredMatch.scorers ? <p className="rounded-md border border-white/5 bg-white/[.055] p-2"><span className="font-black text-[#F7B500]">Scorers</span> {featuredMatch.scorers}</p> : null}
-                        {featuredMatch.venue ? <p className="rounded-md border border-white/5 bg-white/[.055] p-2"><span className="font-black text-[#F7B500]">Venue</span> {featuredMatch.venue}</p> : null}
-                      </div>
-                      <div className="relative mt-4 rounded-md border border-white/8 bg-white/[.06] p-3"><div className="flex justify-between text-[8px] text-white/65"><span>{featuredMatch.home || "Home"}</span><span>{featuredMatch.away || "Away"}</span></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-blue-600"><div className="h-full w-[64%] bg-red-600" /></div></div>
-                    </>
-                  ) : (
-                    <div className="relative mt-6 rounded-[25px] border border-dashed border-white/12 bg-black/35 p-6 text-center">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white">WC26 feed syncing</p>
-                      <p className="mt-3 text-[10px] leading-5 text-white/48">Real match data will appear here once the live or upcoming feed resolves.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+    <section className="border-b border-white/6 bg-[#06090a] py-11"><div className="mx-auto max-w-6xl px-4"><div className="grid gap-6 rounded-3xl border border-green-500/16 bg-[#09100d] p-7 lg:grid-cols-[auto_1fr_auto] lg:items-center"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10"><Sparkles className="h-6 w-6 text-green-400" /></div><div><p className="text-[10px] font-black uppercase tracking-widest text-green-400">Mchambuzi’s latest take</p><h2 className="mt-2 text-2xl font-black">{MODE_COPY[mode].focus}</h2><p className="mt-3 text-sm leading-6 text-white/55">{take}</p><p className="mt-2 text-[9px] uppercase tracking-widest text-white/24">Reuses current data · cached for 15 minutes · no automatic AI call</p></div><Link href={"/mchambuzi-halisi?q=" + encodeURIComponent("Give me the sharpest football take for today")} className={"inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 px-5 py-3 text-xs font-black uppercase tracking-widest text-black " + FOCUS}>Ask Mchambuzi<ArrowRight className="h-4 w-4" /></Link></div></div></section>
 
-            <MatchPanel match={featuredMatch} isLive={isLive} fanCount={leaderboard.length} roundLabel={roundLabel} />
+    <DeferredSection minHeight={360}><HotDebate /></DeferredSection>
 
-          </div>
+    <section className="border-b border-white/6 bg-[#070910] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="League centres" title="Jump straight to your competition" copy="Premier League leads, with Europe, FKF football, Harambee Stars and CAF one step away." href="/matches" action="Match directory" /><div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">{LEAGUE_SHORTCUTS.map((league) => <Link key={league.name} href={league.href} className={"rounded-2xl border border-white/8 bg-[#0d1119] p-4 hover:border-white/18 " + FOCUS}><span className="mb-4 block h-1 w-9 rounded-full" style={{ backgroundColor: league.accent }} /><h3 className="text-sm font-black">{league.label}</h3><span className="mt-2 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-white/30">Open centre<ChevronRight className="h-3 w-3" /></span></Link>)}</div></div></section>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><PulseCard debate={debates[0]} /><DebateCard debate={debates[0]} /><AnalystCard answer={mchambuziAnswer} /><LeaderboardCard rows={leaderboard} /></div>
+    <section className="border-b border-white/6 bg-[#08080b] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Original Mtaa Daily stories" title="Reporting, explainers and receipts from BallMtaani" copy="Stories written on BallMtaani stay visible and lead directly to their article pages." href="/news" action="View all stories" />{newsLoading ? <div className="grid gap-3 md:grid-cols-3">{[1,2,3].map((item) => <div key={item} className="h-72 animate-pulse rounded-2xl bg-white/[.03]" />)}</div> : originals.length ? <div className="grid gap-3 md:grid-cols-3">{originals.slice(0,6).map((article,index) => <StoryCard key={article.slug || article.id || article.link} article={article} eager={index === 0} />)}</div> : <div className="rounded-2xl border border-white/8 bg-white/[.025] p-6 text-sm text-white/48">No published Mtaa Daily story is available in this environment yet.</div>}</div></section>
 
-          <div className="mt-4 grid gap-4 rounded-lg border border-[#F7B500]/30 bg-[#0b0e0c]/95 p-4 md:grid-cols-[1.25fr_3fr_auto] md:items-center">
-            <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-md bg-[#F7B500]/12"><Gift className="h-6 w-6 text-[#F7B500]" /></div><div><h2 className="text-sm font-black uppercase text-white">Earn MTC daily</h2><p className="text-[10px] text-white/40">Predict. Debate. Share. Win.</p></div></div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[{ icon: BellRing, label: "Daily login", value: "+10" },{ icon: Target, label: "Correct call", value: "+50" },{ icon: Users, label: "Join debate", value: "+20" },{ icon: ShieldCheck, label: "Share receipt", value: "+30" }].map(({ icon: Icon, label, value }) => <div key={label} className="flex items-center gap-2 border-l border-white/8 px-3"><Icon className="h-4 w-4 text-[#F7B500]" /><div><p className="text-[9px] text-white/46">{label}</p><p className="text-xs font-black text-[#F7B500]">{value} MTC</p></div></div>)}</div>
-            <Link href="/store" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#F7B500] px-5 text-[10px] font-black uppercase tracking-wider text-[#F7B500] shadow-[0_0_22px_rgba(247,181,0,.14)]"><Coins className="h-4 w-4" /> {Number(profile?.points || coins || 0).toLocaleString()} MTC</Link>
-          </div>
-        </div>
-      </section>
+    <section className="border-b border-green-500/12 bg-[#050b07] py-11"><div className="mx-auto max-w-6xl px-4"><Heading eyebrow="Kenyan football spotlight" title="Local football is not a sidebar" copy="Harambee Stars, FKF Premier League, CAF nights and the clubs shaping Kenyan football culture." href="/matches?tab=africa" action="Kenyan & CAF fixtures" />{kenya.length ? <div className="grid gap-3 md:grid-cols-3">{kenya.map((article) => <StoryCard key={"kenya-" + (article.slug || article.id || article.link)} article={article} />)}</div> : <div className="grid gap-3 sm:grid-cols-3">{[["FKF Premier League","Fixtures, results and table movement."],["Harambee Stars","National-team windows and squad stories."],["CAF nights","Continental football with Kenyan context."]].map(([title,copy]) => <Link key={title} href="/matches?tab=africa" className={"rounded-2xl border border-green-500/14 bg-green-500/[.035] p-5 " + FOCUS}><h3 className="text-lg font-black">{title}</h3><p className="mt-2 text-sm text-white/42">{copy}</p></Link>)}</div>}</div></section>
 
-      <div className="mx-auto max-w-[1800px] px-4 py-4 md:px-7"><SponsorSlot placement="homepage-hero" /></div>
-      <NewsCarousel articles={news} loading={newsLoading} />
-    </main>
-  );
+    <DeferredSection minHeight={620}><Rewards /></DeferredSection>
+
+    <section className="bg-[#070609] py-14"><div className="mx-auto max-w-4xl px-4 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#B30000]/12">{isLoggedIn ? <BellRing className="h-6 w-6 text-[#ff6b6b]" /> : <Zap className="h-6 w-6 text-[#ff6b6b]" />}</div><p className="mt-5 text-[10px] font-black uppercase tracking-widest text-[#ff6b6b]">Do not miss the next receipt</p><h2 className="mt-3 text-3xl font-black md:text-5xl">{isLoggedIn ? "Turn on match alerts before kickoff." : "Join the room before the season gets loud."}</h2><p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/48">Get matchday prompts, predictions, debates and an MTC record across the 2026/27 season.</p><div className="mt-7 flex flex-wrap items-center justify-center gap-3">{isLoggedIn ? <><NotificationBell /><Link href="/predictions" className={"rounded-xl bg-[#B30000] px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Make a prediction</Link></> : <><GoogleSignInButton size="lg" label="Join BallMtaani" /><Link href="/matches" className={"rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-xs font-black uppercase tracking-widest " + FOCUS}>Browse matches</Link></>}</div></div></section>
+    <FloatingMchambuzi variant="home" />
+  </main>;
 }
-
-

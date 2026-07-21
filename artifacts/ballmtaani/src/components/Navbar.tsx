@@ -47,7 +47,7 @@ export function Navbar() {
         { href: "/matches", label: "Directory" },
         { href: "/live-center", label: "Live Pulse" },
         { href: "/mchambuzi-halisi", label: "Mchambuzi AI" },
-        { href: "/world-cup-2026", label: "WC26 Guide" },
+        { href: "/world-cup-2026", label: "World Cup Archive" },
         { href: "/market-watch", label: "Market Watch" },
       ]
     },

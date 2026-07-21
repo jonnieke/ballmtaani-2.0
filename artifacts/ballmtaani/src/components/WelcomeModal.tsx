@@ -7,7 +7,7 @@
  *   - localStorage key "mtaani_welcomed" is not set
  *
  * Guides them to:
- *   1. Make their 6 WC26 bold calls
+ *   1. Make their first season prediction
  *   2. Join the WhatsApp community
  */
 import { useState, useEffect } from "react";
@@ -82,7 +82,7 @@ export default function WelcomeModal() {
               <Trophy className="w-5 h-5 text-black" />
             </div>
             <div>
-              <p className="text-xs font-black uppercase tracking-widest text-black">Make Your WC26 Calls</p>
+              <p className="text-xs font-black uppercase tracking-widest text-black">Make Your First Call</p>
               <p className="text-[10px] text-black/60 mt-0.5">6 bold predictions · 1,700 MTC on the line</p>
             </div>
           </button>
@@ -96,7 +96,7 @@ export default function WelcomeModal() {
               <MessageCircle className="w-5 h-5 text-[#25D366]" />
             </div>
             <div>
-              <p className="text-xs font-black uppercase tracking-widest text-[#25D366]">Join WC26 WhatsApp Group</p>
+              <p className="text-xs font-black uppercase tracking-widest text-[#25D366]">Join the WhatsApp Group</p>
               <p className="text-[10px] text-white/30 mt-0.5">Live match reactions · Score alerts · Fan debates</p>
             </div>
           </button>

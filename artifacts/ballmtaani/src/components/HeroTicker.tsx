@@ -13,7 +13,7 @@
  * Because the track has NO padding, -50% = exactly one content set.
  * At -50% the visual is identical to 0 → seamless jump.
  */
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import type { NewsArticle } from "../lib/news-api";
 
@@ -65,14 +65,7 @@ function buildItems(articles: NewsArticle[], matches: TickerMatch[]): TickerItem
       isLive: false,
     });
   });
-  // Same article can arrive from multiple sources with the same id/link —
-  // keep the first occurrence so the belt never repeats within one set.
-  const seen = new Set<string>();
-  return out.filter(item => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
+  return Array.from(new Map(out.map((item) => [`${item.type}:${item.href}:${item.label}`, item])).values());
 }
 
 const PIN_WIDTH = 110; // px — brand pin width
@@ -80,11 +73,7 @@ const PIN_WIDTH = 110; // px — brand pin width
 export default function HeroTicker({ articles, matches }: HeroTickerProps) {
   const [paused, setPaused] = useState(false);
 
-  const items = useMemo(
-    () => buildItems(articles, matches),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [articles.length, matches.length],
-  );
+  const items = buildItems(articles, matches);
 
   if (items.length === 0) return null;
 
@@ -131,6 +120,17 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
+        .hero-ticker-track {
+          animation-name: hero-belt;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-ticker-track {
+            animation: none !important;
+            transform: translateX(0) !important;
+          }
+        }
       `}</style>
 
       <div
@@ -162,9 +162,9 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
         >
           {/* ── Animating track — zero padding, pure content width ── */}
           <div
-            className="flex h-full items-center whitespace-nowrap will-change-transform"
+            className="hero-ticker-track flex h-full items-center whitespace-nowrap will-change-transform motion-reduce:will-change-auto"
             style={{
-              animation: `hero-belt ${duration}s linear infinite`,
+              animationDuration: `${duration}s`,
               animationPlayState: paused ? "paused" : "running",
             }}
           >
