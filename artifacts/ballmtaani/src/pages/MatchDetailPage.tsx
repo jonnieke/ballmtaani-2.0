@@ -10,6 +10,8 @@ import { parseMatchSlug } from "../config/football-catalog";
 import { formatKenyanDateTime, formatKenyanTime } from "../lib/date-utils";
 import { generateMatchSchema } from "../lib/jsonld";
 
+import { MchambuziHypeMeter } from "../components/MchambuziHypeMeter";
+
 export default function MatchDetailPage() {
   const [, params] = useRoute("/matches/:matchSlug");
   const matchSlug = params?.matchSlug || "";
@@ -102,21 +104,16 @@ export default function MatchDetailPage() {
           </Link>
         </div>
 
-        {/* Mchambuzi Tactical Breakdown */}
-        <div className="bg-[#111319] rounded-2xl border border-white/10 p-6 shadow-xl">
-          <div className="flex items-center gap-3 mb-3 border-b border-white/10 pb-3">
-            <div className="w-8 h-8 rounded-full bg-[#B30000] text-white flex items-center justify-center font-bold text-xs">
-              🤖
-            </div>
-            <div>
-              <h2 className="text-sm font-black uppercase text-white">MCHAMBUZI AI TACTICAL BREAKDOWN</h2>
-              <span className="text-[10px] text-[#FFD700] font-semibold">Calibrated for Kenyan Football Context</span>
-            </div>
-          </div>
-          <p className="text-xs md:text-sm text-white/80 leading-relaxed">
-            High-stakes encounter between {homeName} and {awayName}. Tactical key will be central mid transitions and high line pressing. Mchambuzi AI predicts tight margin, high intensity.
-          </p>
-        </div>
+        {/* Mchambuzi Hype & Drama Meter */}
+        <MchambuziHypeMeter
+          homeTeam={homeName}
+          awayTeam={awayName}
+          homeRatio={52}
+          drawRatio={20}
+          awayRatio={28}
+          dramaLevel="HIGH DRAMA"
+          verdict={`Tactical clash between ${homeName} and ${awayName}. High line pressing, midfield energy and fast transitions expected.`}
+        />
 
         {/* Footnote / Data Attribution */}
         <div className="p-4 rounded-xl bg-[#161720] border border-white/10 text-xs text-white/40 text-center">
