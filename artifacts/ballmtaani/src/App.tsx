@@ -55,6 +55,7 @@ const LeagueCentrePage   = lazy(() => import("./pages/LeagueCentrePage"));
 const LeagueDetailPage   = lazy(() => import("./pages/LeagueDetailPage"));
 const TeamDetailPage     = lazy(() => import("./pages/TeamDetailPage"));
 const MatchDetailPage    = lazy(() => import("./pages/MatchDetailPage"));
+const PredictionReceiptPage = lazy(() => import("./pages/PredictionReceiptPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
@@ -129,6 +130,7 @@ function AppShell() {
             <Route path="/matches" component={MatchesPage} />
             <Route path="/market-watch" component={MarketWatchPage} />
             <Route path="/predictions" component={PredictionsPage} />
+            <Route path="/receipts/:receiptCode" component={PredictionReceiptPage} />
             <Route path="/debates" component={DebatesPage} />
             <Route path="/fan-zones" component={FanZonesPage} />
             <Route path="/leaderboard" component={LeaderboardPage} />
