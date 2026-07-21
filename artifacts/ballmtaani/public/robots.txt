@@ -1,9 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /admin
 Disallow: /admin/
 Disallow: /login
 Disallow: /verify
 Disallow: /auth/
+
+User-agent: OAI-SearchBot
+Allow: /
 
 # AI crawlers — explicitly welcome
 User-agent: GPTBot
