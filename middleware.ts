@@ -215,10 +215,11 @@ ${JSON.stringify(jsonLd)}
 export default function middleware(request: Request): Response | undefined {
   const ua = request.headers.get("user-agent") || "";
   const isBotOrCurl = BOT_OR_CURL_UA.test(ua);
-  const acceptHeader = request.headers.get("accept") || "";
-  const isHTMLRequest = acceptHeader.includes("text/html");
 
-  if (!isBotOrCurl && !isHTMLRequest) return undefined;
+  // ONLY intercept known bots and crawlers.
+  // Regular browsers (Chrome, Firefox, Safari, etc.) must always pass through
+  // to the Vite React application — never serve them the plain HTML shell.
+  if (!isBotOrCurl) return undefined;
 
   const url = new URL(request.url);
   const { pathname } = url;
