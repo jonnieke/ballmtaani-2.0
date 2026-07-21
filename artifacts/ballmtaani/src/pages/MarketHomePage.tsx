@@ -356,47 +356,50 @@ export default function MarketHomePage() {
           </div>
           <div className="grid grid-cols-4 gap-2.5 w-[340px] shrink-0">
             {[
-              { id: "kpl", label: "KPL", image: "https://media.api-sports.io/football/leagues/326.png", accent: "from-[#B30000] to-red-900", imgClass: "brightness-0 invert", featured: true },
-              { id: "ucl", label: "UCL", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/2.png", accent: "from-blue-600 to-indigo-900", imgClass: "brightness-0 invert" },
-              { id: "epl", label: "EPL", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png", accent: "from-purple-600 to-indigo-950", imgClass: "brightness-0 invert" },
-              { id: "laliga", label: "LA LIGA", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/15.png", accent: "from-rose-500 to-red-800", imgClass: "brightness-0 invert" },
-              { id: "seriea", label: "SERIE A", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/12.png", accent: "from-cyan-500 to-blue-900", imgClass: "brightness-0 invert" },
-              { id: "bundesliga", label: "BUNDESLIGA", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/10.png", accent: "from-red-600 to-dark-900", imgClass: "brightness-0 invert" },
-              { id: "ligue1", label: "LIGUE 1", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/9.png", accent: "from-blue-500 to-blue-900", imgClass: "brightness-0 invert" },
-              { id: "more", label: "MORE", isMore: true, accent: "from-amber-500 to-yellow-700" },
+              { id: "kpl", label: "KPL", image: "https://media.api-sports.io/football/leagues/326.png", accent: "from-[#B30000] to-red-900", glow: "rgba(179,0,0,0.35)", featured: true },
+              { id: "ucl", label: "UCL", image: "https://media.api-sports.io/football/leagues/2.png", accent: "from-blue-600 to-indigo-900", glow: "rgba(37,99,235,0.35)" },
+              { id: "epl", label: "EPL", image: "https://media.api-sports.io/football/leagues/39.png", accent: "from-purple-600 to-indigo-950", glow: "rgba(147,51,234,0.35)" },
+              { id: "laliga", label: "LA LIGA", image: "https://media.api-sports.io/football/leagues/140.png", accent: "from-rose-500 to-red-800", glow: "rgba(244,63,94,0.35)" },
+              { id: "seriea", label: "SERIE A", image: "https://media.api-sports.io/football/leagues/135.png", accent: "from-cyan-500 to-blue-900", glow: "rgba(6,182,212,0.35)" },
+              { id: "bundesliga", label: "BUNDESLIGA", image: "https://media.api-sports.io/football/leagues/78.png", accent: "from-red-600 to-amber-900", glow: "rgba(220,38,38,0.35)" },
+              { id: "ligue1", label: "LIGUE 1", image: "https://media.api-sports.io/football/leagues/61.png", accent: "from-blue-500 to-cyan-900", glow: "rgba(59,130,246,0.35)" },
+              { id: "more", label: "MORE", isMore: true, accent: "from-amber-500 to-yellow-700", glow: "rgba(234,179,8,0.2)" },
             ].map(l => (
               <Link
                 key={l.id}
                 href={`/matches?search=${l.label}`}
-                className={`group relative flex flex-col items-center justify-center h-20 px-2 rounded-2xl border transition-all duration-300 overflow-hidden ${
+                className={`group relative flex flex-col items-center justify-center h-[90px] px-2 rounded-2xl border transition-all duration-300 overflow-hidden ${
                   l.featured
-                    ? "bg-[#161014] border-[#B30000]/40 shadow-[0_0_15px_rgba(179,0,0,0.25)] hover:border-[#B30000] hover:shadow-[0_0_20px_rgba(179,0,0,0.4)]"
-                    : "bg-[#111319]/90 border-white/8 hover:border-[#FFD700]/50 hover:bg-[#161a24] hover:shadow-[0_0_15px_rgba(255,215,0,0.15)]"
+                    ? "bg-[#180e12] border-[#B30000]/50 shadow-[0_0_20px_rgba(179,0,0,0.3)] hover:border-[#B30000] hover:shadow-[0_0_25px_rgba(179,0,0,0.5)]"
+                    : "bg-[#111319]/90 border-white/10 hover:border-[#FFD700]/60 hover:bg-[#161b26] hover:shadow-[0_0_20px_rgba(255,215,0,0.2)]"
                 } ${FOCUS}`}
               >
-                {/* Brand color accent line at top of card */}
-                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r ${l.accent} opacity-75 group-hover:opacity-100 transition-opacity`} />
+                {/* Brand color accent line at top */}
+                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r ${l.accent} opacity-80 group-hover:opacity-100 transition-opacity`} />
                 
-                <div className="h-7 w-7 mb-1.5 flex items-center justify-center">
+                {/* Ambient brand glow behind icon */}
+                <div className="absolute inset-0 bg-radial pointer-events-none opacity-40 group-hover:opacity-70 transition-opacity" style={{ background: `radial-gradient(circle at center, ${l.glow} 0%, transparent 70%)` }} />
+
+                {/* Dominating Icon Container */}
+                <div className="h-11 w-11 mb-1.5 flex items-center justify-center relative z-10">
                   {l.isMore ? (
-                    <div className="grid grid-cols-3 gap-[3px]">
+                    <div className="grid grid-cols-3 gap-1 p-1">
                       {[...Array(9)].map((_, i) => (
-                        <div key={i} className="w-[4px] h-[4px] bg-[#FFD700] rounded-full opacity-70 group-hover:opacity-100 transition-opacity" />
+                        <div key={i} className="w-[5px] h-[5px] bg-[#FFD700] rounded-full opacity-80 group-hover:opacity-100 group-hover:scale-125 transition-all" />
                       ))}
                     </div>
                   ) : (
                     <img
                       src={l.image}
                       alt={l.label}
-                      className={`max-h-full max-w-full object-contain ${l.imgClass} opacity-85 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]`}
+                      className="h-full w-full object-contain brightness-0 invert opacity-90 group-hover:opacity-100 transition-all duration-300 group-hover:scale-115 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
                       onError={(e) => {
-                        // Fallback to API-Sports if ESPN CDN fails
-                        e.currentTarget.src = `https://media.api-sports.io/football/leagues/${l.id === 'ucl' ? 2 : l.id === 'epl' ? 39 : l.id === 'laliga' ? 140 : l.id === 'seriea' ? 135 : l.id === 'bundesliga' ? 78 : 61}.png`;
+                        e.currentTarget.src = "/logo.png";
                       }}
                     />
                   )}
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-white/80 group-hover:text-white transition-colors">{l.label}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/90 group-hover:text-white transition-colors relative z-10">{l.label}</span>
               </Link>
             ))}
           </div>
