@@ -356,26 +356,47 @@ export default function MarketHomePage() {
           </div>
           <div className="grid grid-cols-4 gap-2.5 w-[340px] shrink-0">
             {[
-              { id: "kpl", label: "KPL", image: "https://media.api-sports.io/football/leagues/326.png", color: "bg-gradient-to-b from-[#b52626] to-[#7a1010] shadow-lg shadow-red-900/20", imgClass: "brightness-0 invert" },
-              { id: "ucl", label: "UCL", image: "https://media.api-sports.io/football/leagues/2.png", color: "bg-gradient-to-b from-[#1a237e] to-[#0d1254]", imgClass: "brightness-0 invert" },
-              { id: "epl", label: "EPL", image: "https://media.api-sports.io/football/leagues/39.png", color: "bg-gradient-to-b from-[#38003c] to-[#220025]", imgClass: "brightness-0 invert" },
-              { id: "laliga", label: "LA LIGA", image: "https://media.api-sports.io/football/leagues/140.png", color: "bg-gradient-to-b from-[#FF4B44] to-[#b52626]", imgClass: "brightness-0 invert" },
-              { id: "seriea", label: "SERIE A", image: "https://media.api-sports.io/football/leagues/135.png", color: "bg-gradient-to-b from-[#0a0a2e] to-[#050515]", imgClass: "" },
-              { id: "bundesliga", label: "BUNDESLIGA", image: "https://media.api-sports.io/football/leagues/78.png", color: "bg-gradient-to-b from-[#d00027] to-[#8a0019]", imgClass: "brightness-0 invert" },
-              { id: "ligue1", label: "LIGUE 1", image: "https://media.api-sports.io/football/leagues/61.png", color: "bg-gradient-to-b from-[#004899] to-[#002d6b]", imgClass: "brightness-0 invert" },
-              { id: "more", label: "MORE", isMore: true, color: "bg-[#1f1f1f]" },
+              { id: "kpl", label: "KPL", image: "https://media.api-sports.io/football/leagues/326.png", accent: "from-[#B30000] to-red-900", imgClass: "brightness-0 invert", featured: true },
+              { id: "ucl", label: "UCL", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/2.png", accent: "from-blue-600 to-indigo-900", imgClass: "brightness-0 invert" },
+              { id: "epl", label: "EPL", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png", accent: "from-purple-600 to-indigo-950", imgClass: "brightness-0 invert" },
+              { id: "laliga", label: "LA LIGA", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/15.png", accent: "from-rose-500 to-red-800", imgClass: "brightness-0 invert" },
+              { id: "seriea", label: "SERIE A", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/12.png", accent: "from-cyan-500 to-blue-900", imgClass: "brightness-0 invert" },
+              { id: "bundesliga", label: "BUNDESLIGA", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/10.png", accent: "from-red-600 to-dark-900", imgClass: "brightness-0 invert" },
+              { id: "ligue1", label: "LIGUE 1", image: "https://a.espncdn.com/i/leaguelogos/soccer/500/9.png", accent: "from-blue-500 to-blue-900", imgClass: "brightness-0 invert" },
+              { id: "more", label: "MORE", isMore: true, accent: "from-amber-500 to-yellow-700" },
             ].map(l => (
-              <Link key={l.id} href={`/matches?search=${l.label}`} className={`group flex flex-col items-center justify-center py-4 px-2 rounded-2xl hover:bg-white/10 transition-colors ${l.color} ${FOCUS}`}>
-                <div className="h-8 w-8 mb-2 flex items-center justify-center">
+              <Link
+                key={l.id}
+                href={`/matches?search=${l.label}`}
+                className={`group relative flex flex-col items-center justify-center h-20 px-2 rounded-2xl border transition-all duration-300 overflow-hidden ${
+                  l.featured
+                    ? "bg-[#161014] border-[#B30000]/40 shadow-[0_0_15px_rgba(179,0,0,0.25)] hover:border-[#B30000] hover:shadow-[0_0_20px_rgba(179,0,0,0.4)]"
+                    : "bg-[#111319]/90 border-white/8 hover:border-[#FFD700]/50 hover:bg-[#161a24] hover:shadow-[0_0_15px_rgba(255,215,0,0.15)]"
+                } ${FOCUS}`}
+              >
+                {/* Brand color accent line at top of card */}
+                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r ${l.accent} opacity-75 group-hover:opacity-100 transition-opacity`} />
+                
+                <div className="h-7 w-7 mb-1.5 flex items-center justify-center">
                   {l.isMore ? (
                     <div className="grid grid-cols-3 gap-[3px]">
-                      {[...Array(9)].map((_, i) => <div key={i} className="w-[5px] h-[5px] bg-white rounded-full opacity-80" />)}
+                      {[...Array(9)].map((_, i) => (
+                        <div key={i} className="w-[4px] h-[4px] bg-[#FFD700] rounded-full opacity-70 group-hover:opacity-100 transition-opacity" />
+                      ))}
                     </div>
                   ) : (
-                    <img src={l.image} alt={l.label} className={`max-h-full max-w-full object-contain ${l.imgClass} transition-transform group-hover:scale-110`} />
+                    <img
+                      src={l.image}
+                      alt={l.label}
+                      className={`max-h-full max-w-full object-contain ${l.imgClass} opacity-85 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]`}
+                      onError={(e) => {
+                        // Fallback to API-Sports if ESPN CDN fails
+                        e.currentTarget.src = `https://media.api-sports.io/football/leagues/${l.id === 'ucl' ? 2 : l.id === 'epl' ? 39 : l.id === 'laliga' ? 140 : l.id === 'seriea' ? 135 : l.id === 'bundesliga' ? 78 : 61}.png`;
+                      }}
+                    />
                   )}
                 </div>
-                <span className="text-[9px] font-bold uppercase tracking-wide text-white">{l.label}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-white/80 group-hover:text-white transition-colors">{l.label}</span>
               </Link>
             ))}
           </div>
