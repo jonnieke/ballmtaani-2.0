@@ -51,6 +51,10 @@ const AdminRewardsPage   = lazy(() => import("./pages/AdminRewardsPage"));
 const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
 const SearchPage         = lazy(() => import("./pages/SearchPage"));
 const NewsPage           = lazy(() => import("./pages/NewsPage"));
+const LeagueCentrePage   = lazy(() => import("./pages/LeagueCentrePage"));
+const LeagueDetailPage   = lazy(() => import("./pages/LeagueDetailPage"));
+const TeamDetailPage     = lazy(() => import("./pages/TeamDetailPage"));
+const MatchDetailPage    = lazy(() => import("./pages/MatchDetailPage"));
 const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
 const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
 const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
@@ -154,6 +158,12 @@ function AppShell() {
             <Route path="/admin/analytics" component={AdminAnalyticsPage} />
             <Route path="/search" component={SearchPage} />
             <Route path="/news" component={NewsPage} />
+            <Route path="/leagues" component={LeagueCentrePage} />
+            <Route path="/leagues/:leagueSlug">{() => <LeagueDetailPage subView="main" />}</Route>
+            <Route path="/leagues/:leagueSlug/fixtures">{() => <LeagueDetailPage subView="fixtures" />}</Route>
+            <Route path="/leagues/:leagueSlug/table">{() => <LeagueDetailPage subView="table" />}</Route>
+            <Route path="/teams/:teamSlug" component={TeamDetailPage} />
+            <Route path="/matches/:matchSlug" component={MatchDetailPage} />
             <Route>
               <div className="flex flex-col items-center justify-center min-h-[70vh]">
                 <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>

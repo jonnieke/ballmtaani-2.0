@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://ballmtaani.com").replace(/\/$/, "");
 const DEFAULT_IMAGE = `${SITE_URL}/opengraph.jpg`;
@@ -10,10 +10,12 @@ interface SEOProps {
   image?: string;
   url?: string;
   path?: string;
+  canonicalUrl?: string;
   type?: "website" | "article";
   noindex?: boolean;
   breadcrumbs?: { name: string; url: string }[];
   structuredData?: Record<string, any> | Record<string, any>[];
+  jsonLd?: Record<string, any> | Record<string, any>[];
 }
 
 export default function SEO({ 
