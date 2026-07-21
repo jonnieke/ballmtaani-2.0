@@ -13,6 +13,8 @@ export type HomepageMatch = {
   awayScore?: number;
   homeLogo?: string;
   awayLogo?: string;
+  homeColor?: string;
+  awayColor?: string;
   homeInitial?: string;
   awayInitial?: string;
   time?: string;
