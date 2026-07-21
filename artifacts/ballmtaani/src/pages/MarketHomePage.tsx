@@ -191,7 +191,6 @@ export default function MarketHomePage() {
 
   return <main className="overflow-x-clip bg-[#050609] pb-8 text-white">
     <SEO title={TITLE} description={DESCRIPTION} keywords={["live football scores Kenya", "Premier League fixtures Kenya", "Champions League Kenya", "FKF Premier League", "football predictions Kenya", "Mchambuzi AI"]} path="/" />
-    <HeroTicker articles={seasonNews.slice(0, 8)} matches={matches.slice(0, 8)} />
 
     {/* HERO SECTION */}
     <section className="relative isolate bg-[#070707] min-h-[440px] flex items-center border-b border-[#2A2A2A] py-8 md:py-10">
