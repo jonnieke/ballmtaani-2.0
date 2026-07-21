@@ -189,18 +189,24 @@ ${question}
 Answer as short football chat with practical insight, not generic hype.`;
 }
 
+export type MchambuziLanguage = "en" | "sw" | "sheng";
+
+export type MchambuziPageContext = {
+  pageType?: "match" | "team" | "league" | "article" | "general";
+  entityName?: string;
+  matchDetails?: any;
+};
+
 /**
  * Public entry point — always tries the secure serverless endpoint first.
  * If the endpoint is unavailable (e.g. missing API keys on Vercel, network error),
  * falls back to a data-only text answer built from the live football context.
- * No AI keys ever touch the browser bundle.
- *
- * @param question  Fan's football question
- * @param preloaded Optional pre-loaded context from React Query hooks (avoids duplicate API calls)
  */
 export async function askMchambuziHalisi(
   question: string,
-  preloaded?: { live?: any[]; upcoming?: any[]; recent?: any[] }
+  preloaded?: { live?: any[]; upcoming?: any[]; recent?: any[] },
+  language: MchambuziLanguage = "en",
+  pageContext?: MchambuziPageContext
 ): Promise<{
   answer: string;
   context: MchambuziContext;
