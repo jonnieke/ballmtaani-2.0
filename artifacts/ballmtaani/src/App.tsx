@@ -19,7 +19,7 @@ import { lazy, Suspense } from "react";
 // Each page is loaded only when navigated to — reduces initial bundle by ~50%
 // LandingPage and HomePage are eagerly loaded (most visited, need fast paint)
 import LandingPage from "./pages/LandingPage";
-import HomePage from "./pages/HomePage";
+import HomePage from "./pages/MarketHomePage";
 
 const MatchesPage        = lazy(() => import("./pages/MatchesPage"));
 const PredictionsPage    = lazy(() => import("./pages/PredictionsPage"));
