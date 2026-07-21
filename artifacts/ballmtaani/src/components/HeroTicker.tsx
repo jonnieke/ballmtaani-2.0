@@ -147,7 +147,7 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
         >
           <Zap className="h-3 w-3 text-white fill-white" />
           <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-widest text-white">
-            BREAKING NEWS
+            MTAA WIRE
           </span>
         </div>
 
