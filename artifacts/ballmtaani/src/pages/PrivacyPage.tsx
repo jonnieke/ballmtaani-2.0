@@ -3,28 +3,32 @@ import SEO from "../components/SEO";
 
 const sections = [
   {
-    title: "Information We Use",
-    body: "We may use your phone number for login, your selected club for personalization, and your activity such as calls, votes, debates, room posts, invites, and wallet activity to run the app.",
+    title: "Information We Collect & Use",
+    body: "We may collect and use your phone number for secure authentication, your chosen favorite club for personalization, and your platform activity (such as predictions, votes, debates, room posts, invites, and MTC status wallet activity) to deliver the BallMtaani experience.",
   },
   {
-    title: "Why We Use It",
-    body: "We use this information to protect accounts, show relevant fan rooms, keep receipts, power leaderboards, reduce spam, and improve the BallMtaani experience.",
+    title: "Why We Use Your Data",
+    body: "We use this information to maintain account security, display relevant fan rooms, keep match prediction receipts, power global and local leaderboards, prevent spam or abuse, and continuously improve platform performance.",
   },
   {
-    title: "Public Activity",
-    body: "Some activity is visible to other fans, including usernames, posts, votes in aggregate, fan duel status, leaderboard placement, and room participation.",
+    title: "Public Fan Activity",
+    body: "Certain community activities are visible to other fans, including your chosen username, club avatar badge, public posts, aggregate votes, fan duel challenges, leaderboard rank, and room interactions.",
   },
   {
-    title: "Third-Party Services",
-    body: "BallMtaani may use third-party services for authentication, analytics, hosting, football data, news feeds, and advertising. Those services may process data according to their own policies.",
+    title: "Google AdSense & Third-Party Advertising (Mandatory Disclosure)",
+    body: "BallMtaani uses Google AdSense and third-party advertising vendors to display advertisements when you visit our website. These third-party vendors, including Google, use cookies (such as the DART cookie) to serve ads based on your prior visits to BallMtaani or other websites on the Internet. Google's use of advertising cookies enables it and its partners to serve personalized ads based on your visits to our site and/or other sites. You may opt out of personalized advertising by visiting Google Ad Settings (https://www.google.com/settings/ads) or Network Advertising Initiative / AboutAds (https://www.aboutads.info).",
   },
   {
-    title: "Advertising",
-    body: "BallMtaani uses advertising to keep the service free. We avoid misleading, betting-adjacent, or unsafe ad experiences. Advertising density is kept moderate and never placed around interactive fan features.",
+    title: "Cookies & Web Storage",
+    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party partners (such as Google Analytics and Google AdSense) may also set cookies to measure traffic and ad performance.",
   },
   {
-    title: "Your Choices",
-    body: "You can avoid posting personal information in public rooms, choose what club identity you show, and request account or data help through the support channel once available.",
+    title: "Google Analytics 4",
+    body: "BallMtaani utilizes Google Analytics 4 to understand website traffic, user interaction patterns, and device breakdown. Google Analytics processes anonymized data according to Google's Privacy Policy. You can learn more about how Google uses data when you use our site at https://policies.google.com/technologies/partner-sites.",
+  },
+  {
+    title: "Your Choices & Data Rights",
+    body: "You can control cookie preferences in your web browser settings, choose what public club profile details to display, and contact our team at info@ballmtaani.com for account, privacy, or data removal enquiries.",
   },
 ];
 

@@ -18,7 +18,7 @@ declare class URL {
  */
 
 const BOT_OR_CURL_UA =
-  /curl|wget|googlebot|bingbot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|perplexitybot|chatgpt-user|gptbot|oai-searchbot|claude-web|anthropic-ai|cohere-ai|youbot|slurp|duckduckbot|baiduspider|yandexbot|applebot|msnbot/i;
+  /curl|wget|googlebot|mediapartners-google|mediapartners|adsbot-google|google-adwords|feedfetcher-google|adsbot|bingbot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|perplexitybot|chatgpt-user|gptbot|oai-searchbot|claude-web|anthropic-ai|cohere-ai|youbot|slurp|duckduckbot|baiduspider|yandexbot|applebot|msnbot/i;
 
 interface PageMeta {
   title: string;
@@ -38,8 +38,8 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
       "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.",
     keywords:
       "BallMtaani, Kenya football, Premier League Kenya, KPL live scores, Champions League Kenya, football predictions Kenya",
-    h1: "The season starts here.",
-    body: "Live scores, fearless predictions, Kenyan fan debates and real football intelligence—from the Premier League to FKF football. We predict. We debate. We keep receipts.",
+    h1: "Kenyan Football Intelligence & Matchday Companion",
+    body: "Live scores, match fixtures, fearless predictions, Kenyan fan debates and real football intelligence—from the Premier League to FKF Premier League football. We predict. We debate. We keep receipts.",
     jsonLdType: "WebSite",
   },
   "/home": {
@@ -48,7 +48,7 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
       "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.",
     keywords:
       "BallMtaani, Kenya football, Premier League Kenya, KPL live scores, Champions League Kenya",
-    h1: "The season starts here.",
+    h1: "The Season Starts Here — BallMtaani Football Hub",
     body: "Live scores, fearless predictions, Kenyan fan debates and real football intelligence—from the Premier League to FKF football.",
     jsonLdType: "WebSite",
   },
@@ -69,16 +69,125 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
     keywords:
       "football news Kenya, Premier League news Kenya, KPL news, Harambee Stars, Africa football news",
     h1: "Mtaa Daily Football News — Curated for Kenya",
-    body: "Latest football news curated for Kenyan fans. Premier League transfers, KPL results, Harambee Stars updates, and African football coverage from BallMtaani.",
+    body: "Latest original football news curated for Kenyan fans. Premier League transfers, KPL results, Harambee Stars updates, and African football coverage from BallMtaani.",
     jsonLdType: "NewsArticle",
   },
-  "/about": {
-    title: "About BallMtaani | Kenya's Football Companion Platform",
+  "/matches": {
+    title: "Live Football Scores & Fixtures | BallMtaani Kenya",
     description:
-      "BallMtaani is Kenya's home for football — live scores, Mtaa Daily original reporting, fan predictions, Mchambuzi AI analysis and airtime rewards.",
+      "Live scores, match schedules, results and standings for Premier League, Champions League, FKF Premier League, La Liga, Serie A and World Cup on BallMtaani.",
+    keywords: "live football scores Kenya, football fixtures, Premier League live scores, KPL scores",
+    h1: "Live Football Scores & Matchday Fixtures",
+    body: "Track live scores, kick-off times in Africa/Nairobi (EAT), match stats, team form, and community prediction ratios across top global and local football leagues.",
+    jsonLdType: "CollectionPage",
+  },
+  "/predictions": {
+    title: "Football Match Predictions Kenya | BallMtaani Community Calls",
+    description:
+      "Make match predictions, vote on kick-off calls, and keep matchday receipts with Kenya's most passionate football fan community.",
+    keywords: "football predictions Kenya, match prediction calls, Premier League predictions",
+    h1: "BallMtaani Football Match Predictions",
+    body: "Put your football knowledge to the test. Make predictions on upcoming Premier League, KPL, Champions League and World Cup fixtures. Earn MTC status rewards for correct receipts.",
+    jsonLdType: "WebPage",
+  },
+  "/debates": {
+    title: "Kenyan Football Debates & Fan Discussions | BallMtaani",
+    description:
+      "Join raw, unfiltered football debates on Premier League rivalries, tactical battles, referee decisions, and African football with Kenyan fans.",
+    keywords: "football debates Kenya, Premier League debates, KPL discussions",
+    h1: "Matchday Debates & Fan War Rooms",
+    body: "Where Kenyan fans settle football arguments. Discuss tactical line-ups, controversial VAR calls, GOAT debates, and club rivalries with zero corporate filter.",
+    jsonLdType: "WebPage",
+  },
+  "/fan-zones": {
+    title: "Football Fan Zones & Supporter Hubs | BallMtaani Kenya",
+    description:
+      "Connect with Arsenal, Man United, Chelsea, Gor Mahia, and AFC Leopards fan bases across Kenya. Join club polls, chats, and matchday rooms.",
+    keywords: "football fan zones Kenya, Arsenal Kenya, Man United Kenya, Gor Mahia fans",
+    h1: "BallMtaani Club Fan Zones",
+    body: "Find your tribe. Dedicated supporter rooms for Arsenal FC, Manchester United, Chelsea FC, Liverpool FC, Gor Mahia, AFC Leopards, Real Madrid, and Harambee Stars.",
+    jsonLdType: "CollectionPage",
+  },
+  "/leaderboard": {
+    title: "BallMtaani Fan Leaderboard | Top Football Analysts Kenya",
+    description:
+      "View top Kenyan football analysts ranked by prediction accuracy, debate votes, and community receipts on BallMtaani.",
+    keywords: "football leaderboard Kenya, top predictions Kenya, BallMtaani rewards",
+    h1: "Kenyan Football Fan Leaderboard",
+    body: "Tracking the sharpest football minds in Kenya. See who holds the highest prediction accuracy and most verified receipts.",
+    jsonLdType: "WebPage",
+  },
+  "/market-watch": {
+    title: "Football Transfer Market Watch | BallMtaani",
+    description:
+      "Track latest football transfers, rumours, player valuations, and contract updates across Premier League, La Liga, and African football.",
+    keywords: "football transfers Kenya, transfer market watch, EPL transfers",
+    h1: "Football Transfer Market Watch",
+    body: "Daily transfer news, confirmed deals, player valuations, and war room discussions covering Premier League, European, and local African transfers.",
+    jsonLdType: "CollectionPage",
+  },
+  "/mchambuzi-halisi": {
+    title: "Mchambuzi AI Football Analyst | BallMtaani",
+    description:
+      "Ask Mchambuzi AI for instant tactical analysis, match stat breakdowns, squad comparisons, and football history tailored for African fans.",
+    keywords: "AI football analyst, Mchambuzi AI, football stats Kenya",
+    h1: "Mchambuzi AI — African Football Intelligence",
+    body: "Our custom AI football analyst built specifically for African supporters. Get instant tactical insights, form analysis, and match context in plain English and Swahili.",
+    jsonLdType: "WebPage",
+  },
+  "/about": {
+    title: "About BallMtaani | Built in Nairobi for African Football Fans",
+    description:
+      "BallMtaani is Kenya's premier football companion platform — live scores, Mtaa Daily original reporting, fan predictions, Mchambuzi AI analysis and community rewards.",
     keywords: "about BallMtaani, Kenya football platform, Nairobi football, African football coverage",
     h1: "About BallMtaani — Built in Nairobi for African Fans",
     body: "BallMtaani was built from a simple frustration: football coverage in Kenya has always been designed for fans somewhere else. We cover the Premier League, La Liga, Champions League and FKF football the way a Nairobi street corner does.",
+    jsonLdType: "AboutPage",
+  },
+  "/contact": {
+    title: "Contact BallMtaani | Enquiries, Advertising & Support",
+    description:
+      "Get in touch with the BallMtaani team for editorial questions, press releases, advertising partnerships, or platform support. Email info@ballmtaani.com.",
+    keywords: "contact BallMtaani, BallMtaani email, advertising BallMtaani, sponsor Kenya football",
+    h1: "Contact BallMtaani",
+    body: "Have a question, editorial feedback, press inquiry, or sponsorship proposal? Reach out to our Nairobi team via info@ballmtaani.com or sponsors@ballmtaani.com.",
+    jsonLdType: "ContactPage",
+  },
+  "/privacy": {
+    title: "Privacy Policy | BallMtaani",
+    description:
+      "BallMtaani Privacy Policy detailing data collection, account security, third-party services, Google AdSense cookies, analytics, and user choices.",
+    keywords: "privacy policy BallMtaani, AdSense privacy disclosure, cookie policy",
+    h1: "BallMtaani Privacy Policy",
+    body: "This Privacy Policy explains how BallMtaani collects, uses, and safeguards information when you visit our website, participate in fan predictions, or interact with advertisements served by Google AdSense and third-party vendors.",
+    jsonLdType: "WebPage",
+  },
+  "/privacy-policy": {
+    title: "Privacy Policy | BallMtaani",
+    description:
+      "BallMtaani Privacy Policy detailing data collection, account security, third-party services, Google AdSense cookies, analytics, and user choices.",
+    keywords: "privacy policy BallMtaani, AdSense privacy disclosure, cookie policy",
+    h1: "BallMtaani Privacy Policy",
+    body: "This Privacy Policy explains how BallMtaani collects, uses, and safeguards information when you visit our website, participate in fan predictions, or interact with advertisements served by Google AdSense and third-party vendors.",
+    jsonLdType: "WebPage",
+  },
+  "/terms": {
+    title: "Terms of Service | BallMtaani",
+    description:
+      "BallMtaani Terms of Service outlining community guidelines, MTC engagement status points, content usage, and platform terms.",
+    keywords: "terms of service BallMtaani, user agreement, MTC rules",
+    h1: "BallMtaani Terms of Service",
+    body: "These Terms of Service govern your access to and use of BallMtaani's web platform, fan prediction games, debate rooms, and football intelligence features.",
+    jsonLdType: "WebPage",
+  },
+  "/terms-of-service": {
+    title: "Terms of Service | BallMtaani",
+    description:
+      "BallMtaani Terms of Service outlining community guidelines, MTC engagement status points, content usage, and platform terms.",
+    keywords: "terms of service BallMtaani, user agreement, MTC rules",
+    h1: "BallMtaani Terms of Service",
+    body: "These Terms of Service govern your access to and use of BallMtaani's web platform, fan prediction games, debate rooms, and football intelligence features.",
+    jsonLdType: "WebPage",
   },
   "/world-cup-2026": {
     title: "World Cup 2026 Archive Hub | BallMtaani — Tournament Overview",
@@ -87,6 +196,7 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
     keywords: "World Cup 2026 archive, WC26 results, Africa World Cup 2026",
     h1: "FIFA World Cup 2026 — Completed Tournament Archive",
     body: "The 2026 FIFA World Cup archive on BallMtaani. Track results, knockout bracket summaries, and African nations tournament history.",
+    jsonLdType: "CollectionPage",
   },
   "/world-cup-2026/bracket": {
     title: "WC26 Knockout Bracket Archive | BallMtaani Results",
@@ -95,6 +205,7 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
     keywords: "WC26 knockout bracket archive, World Cup 2026 results",
     h1: "World Cup 2026 Knockout Bracket Archive",
     body: "Completed results from the Round of 32 through the Final of the 2026 FIFA World Cup.",
+    jsonLdType: "WebPage",
   },
 };
 
@@ -140,11 +251,34 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
         "isPartOf": { "@type": "WebSite", "name": "BallMtaani", "url": "https://ballmtaani.com/" }
       },
       {
-        "@type": "Organization",
+        "@type": ["Organization", "SportsOrganization", "NewsMediaOrganization"],
         "@id": "https://ballmtaani.com/#organization",
         "name": "BallMtaani",
         "url": "https://ballmtaani.com/",
-        "logo": "https://ballmtaani.com/logo.png"
+        "logo": "https://ballmtaani.com/logo.png",
+        "foundingDate": "2024",
+        "description": "Kenya's #1 football intelligence platform — live scores, original reporting, predictions, debates, and AI match analysis.",
+        "sameAs": [
+          "https://twitter.com/ballmtaani"
+        ]
+      },
+      {
+        "@type": "SiteNavigationElement",
+        "@id": "https://ballmtaani.com/#navigation",
+        "name": "Main Navigation",
+        "url": canonical,
+        "hasPart": [
+          { "@type": "WebPage", "name": "Home", "url": "https://ballmtaani.com/" },
+          { "@type": "WebPage", "name": "Live Matches", "url": "https://ballmtaani.com/matches" },
+          { "@type": "WebPage", "name": "League Centres", "url": "https://ballmtaani.com/leagues" },
+          { "@type": "WebPage", "name": "Mtaa Daily News", "url": "https://ballmtaani.com/news" },
+          { "@type": "WebPage", "name": "Match Predictions", "url": "https://ballmtaani.com/predictions" },
+          { "@type": "WebPage", "name": "Fan Debates", "url": "https://ballmtaani.com/debates" },
+          { "@type": "WebPage", "name": "About Us", "url": "https://ballmtaani.com/about" },
+          { "@type": "WebPage", "name": "Contact Us", "url": "https://ballmtaani.com/contact" },
+          { "@type": "WebPage", "name": "Privacy Policy", "url": "https://ballmtaani.com/privacy" },
+          { "@type": "WebPage", "name": "Terms of Service", "url": "https://ballmtaani.com/terms" }
+        ]
       }
     ]
   };
@@ -160,6 +294,7 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
 <meta name="robots" content="${meta.status === 404 ? "noindex,nofollow" : "index,follow,max-image-preview:large,max-snippet:-1"}"/>
 <meta name="author" content="BallMtaani"/>
 <meta name="geo.region" content="KE"/>
+<meta name="geo.placename" content="Nairobi, Kenya"/>
 <meta property="og:title" content="${esc(meta.title)}"/>
 <meta property="og:description" content="${esc(meta.description)}"/>
 <meta property="og:image" content="https://ballmtaani.com/opengraph.jpg"/>
@@ -177,36 +312,114 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
 <script type="application/ld+json">
 ${JSON.stringify(jsonLd)}
 </script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0b0b0b; color: #e5e5e5; max-width: 960px; margin: 0 auto; padding: 0 1.25rem; line-height: 1.6; }
+  header { border-bottom: 2px solid #B30000; padding: 1.25rem 0; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+  .logo { color: #fff; font-size: 1.75rem; font-weight: 900; text-decoration: none; letter-spacing: -0.03em; }
+  .logo span { color: #B30000; }
+  nav a { color: #aaa; text-decoration: none; margin-left: 1rem; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  nav a:hover { color: #fff; }
+  main { margin-bottom: 3rem; }
+  h1 { font-size: 2.25rem; color: #ffffff; margin-top: 0; margin-bottom: 1rem; font-weight: 900; line-height: 1.2; }
+  h2 { font-size: 1.4rem; color: #B30000; margin-top: 2rem; margin-bottom: 0.75rem; font-weight: 800; border-left: 4px solid #B30000; padding-left: 0.75rem; }
+  p { font-size: 1.05rem; color: #cccccc; margin-bottom: 1.25rem; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .card { background: #141414; border: 1px solid #262626; border-radius: 8px; padding: 1.25rem; }
+  .card h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 0.5rem; color: #fff; }
+  .card p { font-size: 0.9rem; color: #999; margin-bottom: 0; }
+  .card a { color: #ff3333; text-decoration: none; font-weight: 700; font-size: 0.875rem; }
+  ul { padding-left: 1.25rem; color: #bbb; }
+  li { margin-bottom: 0.5rem; }
+  footer { border-top: 1px solid #262626; padding: 2rem 0; margin-top: 3rem; font-size: 0.875rem; color: #777; }
+  .footer-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+  .footer-col h4 { color: #fff; margin-top: 0; margin-bottom: 0.75rem; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .footer-col a { color: #aaa; text-decoration: none; display: block; margin-bottom: 0.4rem; font-size: 0.85rem; }
+  .footer-col a:hover { color: #B30000; }
+</style>
 </head>
-<body style="font-family:sans-serif;max-width:850px;margin:2rem auto;padding:0 1.5rem;color:#111;line-height:1.6">
-<header style="margin-bottom:1.5rem;border-bottom:2px solid #B30000;padding-bottom:1rem">
-  <a href="https://ballmtaani.com/" style="color:#B30000;font-weight:900;text-decoration:none;font-size:1.5rem">BallMtaani</a>
-  <span style="font-size:0.875rem;color:#666;margin-left:0.75rem">Kenya's Matchday Companion</span>
+<body>
+<header>
+  <a href="https://ballmtaani.com/" class="logo">BALL<span>MTAANI</span></a>
+  <nav>
+    <a href="https://ballmtaani.com/">Home</a>
+    <a href="https://ballmtaani.com/matches">Matches</a>
+    <a href="https://ballmtaani.com/leagues">Leagues</a>
+    <a href="https://ballmtaani.com/news">News</a>
+    <a href="https://ballmtaani.com/predictions">Predictions</a>
+    <a href="https://ballmtaani.com/about">About</a>
+    <a href="https://ballmtaani.com/contact">Contact</a>
+  </nav>
 </header>
 <main>
-  <h1 style="font-size:2rem;color:#000;margin-bottom:1rem">${esc(meta.h1)}</h1>
-  <p style="font-size:1.1rem;color:#333;margin-bottom:1.5rem">${esc(meta.body)}</p>
-  
-  <section style="background:#f9f9f9;border:1px solid #e5e5e5;padding:1.25rem;border-radius:8px;margin:1.5rem 0">
-    <h2 style="font-size:1.1rem;margin-top:0;color:#B30000">Explore BallMtaani Matchday Hubs</h2>
-    <ul style="margin:0.5rem 0 0 1.25rem;padding:0">
-      <li><a href="https://ballmtaani.com/leagues/premier-league" style="color:#0055cc">Premier League Hub</a> — Live scores, fixtures & table</li>
-      <li><a href="https://ballmtaani.com/leagues/champions-league" style="color:#0055cc">UEFA Champions League Hub</a> — European nights</li>
-      <li><a href="https://ballmtaani.com/leagues/fkf-premier-league" style="color:#0055cc">FKF Premier League Hub</a> — Gor Mahia, AFC Leopards & local action</li>
-      <li><a href="https://ballmtaani.com/teams/arsenal" style="color:#0055cc">Arsenal FC Hub</a> — Matchday reactions & predictions</li>
-      <li><a href="https://ballmtaani.com/teams/manchester-united" style="color:#0055cc">Manchester United FC Hub</a> — Red Devils center</li>
-      <li><a href="https://ballmtaani.com/news" style="color:#0055cc">Mtaa Daily News</a> — Original football analysis</li>
+  <article>
+    <h1>${esc(meta.h1)}</h1>
+    <p>${esc(meta.body)}</p>
+
+    <h2>Featured Football Hubs &amp; Coverage</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Live Scores &amp; Fixtures</h3>
+        <p>Real-time kick-off schedules, live score updates, match stats, and line-ups in Africa/Nairobi time (EAT).</p>
+        <p><a href="https://ballmtaani.com/matches">View Live Matches &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3>League Centres</h3>
+        <p>Comprehensive hubs for Premier League, FKF Premier League (KPL), UEFA Champions League, La Liga, and CAF competitions.</p>
+        <p><a href="https://ballmtaani.com/leagues">Explore League Hubs &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3>Mtaa Daily Original News</h3>
+        <p>In-depth original reporting, match analysis, tactical breakdowns, and transfer news tailored for Kenyan fans.</p>
+        <p><a href="https://ballmtaani.com/news">Read Latest News &rarr;</a></p>
+      </div>
+      <div class="card">
+        <h3>Mchambuzi AI Football Analyst</h3>
+        <p>Interactive AI tactical breakdown engine providing football stats, player comparisons, and form guides with African context.</p>
+        <p><a href="https://ballmtaani.com/mchambuzi-halisi">Try Mchambuzi AI &rarr;</a></p>
+      </div>
+    </div>
+
+    <h2>Active Competitions &amp; Leagues</h2>
+    <ul>
+      <li><a href="https://ballmtaani.com/leagues/premier-league" style="color:#ff4d4d;font-weight:700">English Premier League</a> — Arsenal, Man United, Chelsea, Liverpool live scores &amp; standings.</li>
+      <li><a href="https://ballmtaani.com/leagues/fkf-premier-league" style="color:#ff4d4d;font-weight:700">FKF Premier League (KPL)</a> — Gor Mahia, AFC Leopards, Tusker FC local derby coverage.</li>
+      <li><a href="https://ballmtaani.com/leagues/champions-league" style="color:#ff4d4d;font-weight:700">UEFA Champions League</a> — Tuesday &amp; Wednesday European night match intelligence.</li>
+      <li><a href="https://ballmtaani.com/leagues/la-liga" style="color:#ff4d4d;font-weight:700">La Liga EA Sports</a> — Real Madrid, FC Barcelona El Clasico updates.</li>
+      <li><a href="https://ballmtaani.com/world-cup-2026" style="color:#ff4d4d;font-weight:700">FIFA World Cup 2026</a> — Completed tournament archive &amp; African nations history.</li>
     </ul>
-  </section>
+
+    <h2>Editorial Independence &amp; Standards</h2>
+    <p>BallMtaani publishes original editorial pieces through Mtaa Daily. Match data and fixtures are powered by API-Football. We adhere to high standards of editorial integrity, transparent sourcing, and independent reporting.</p>
+  </article>
 </main>
-<footer style="margin-top:2.5rem;border-top:1px solid #ddd;padding-top:1rem;font-size:0.875rem;color:#666">
-  <p>&copy; ${new Date().getFullYear()} BallMtaani. Data provided by API-Football & Mtaa Daily. All kickoffs displayed in Africa/Nairobi (EAT).</p>
-  <nav style="display:flex;gap:1rem;margin-top:0.5rem">
-    <a href="https://ballmtaani.com/leagues" style="color:#333">Leagues</a>
-    <a href="https://ballmtaani.com/matches" style="color:#333">Live Matches</a>
-    <a href="https://ballmtaani.com/news" style="color:#333">News</a>
-    <a href="https://ballmtaani.com/about" style="color:#333">About</a>
-  </nav>
+<footer>
+  <div class="footer-cols">
+    <div class="footer-col">
+      <h4>Football Hubs</h4>
+      <a href="https://ballmtaani.com/">Home</a>
+      <a href="https://ballmtaani.com/matches">Live Scores</a>
+      <a href="https://ballmtaani.com/leagues">Leagues Hub</a>
+      <a href="https://ballmtaani.com/news">Mtaa Daily News</a>
+      <a href="https://ballmtaani.com/world-cup-2026">World Cup 2026</a>
+    </div>
+    <div class="footer-col">
+      <h4>Fan Community</h4>
+      <a href="https://ballmtaani.com/predictions">Predictions</a>
+      <a href="https://ballmtaani.com/debates">Fan Debates</a>
+      <a href="https://ballmtaani.com/fan-zones">Fan Zones</a>
+      <a href="https://ballmtaani.com/leaderboard">Leaderboard</a>
+      <a href="https://ballmtaani.com/mchambuzi-halisi">Mchambuzi AI</a>
+    </div>
+    <div class="footer-col">
+      <h4>Transparency &amp; Legal</h4>
+      <a href="https://ballmtaani.com/about">About BallMtaani</a>
+      <a href="https://ballmtaani.com/contact">Contact Us</a>
+      <a href="https://ballmtaani.com/privacy">Privacy Policy</a>
+      <a href="https://ballmtaani.com/terms">Terms of Service</a>
+      <a href="mailto:sponsors@ballmtaani.com">Advertising &amp; Sponsors</a>
+    </div>
+  </div>
+  <p>&copy; ${new Date().getFullYear()} BallMtaani. Built in Nairobi, Kenya. All rights reserved. Kick-off times in Africa/Nairobi (EAT).</p>
 </footer>
 </body>
 </html>`;

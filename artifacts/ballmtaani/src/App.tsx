@@ -37,6 +37,8 @@ const WarRoomPage        = lazy(() => import("./pages/WarRoomPage"));
 const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
 const TermsPage          = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
+const AboutPage          = lazy(() => import("./pages/AboutPage"));
+const ContactPage        = lazy(() => import("./pages/ContactPage"));
 const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
 const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
 const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
@@ -152,6 +154,10 @@ function AppShell() {
             <Route path="/privacy" component={PrivacyPage} />
             <Route path="/privacy/" component={PrivacyPage} />
             <Route path="/privacy-policy" component={PrivacyPage} />
+            <Route path="/about" component={AboutPage} />
+            <Route path="/about/" component={AboutPage} />
+            <Route path="/contact" component={ContactPage} />
+            <Route path="/contact/" component={ContactPage} />
             <Route path="/article/:slug" component={ArticlePage} />
             <Route path="/admin" component={AdminDashboardPage} />
             <Route path="/admin/articles" component={AdminArticlesPage} />
@@ -188,16 +194,58 @@ function AppShell() {
 
         {!quietPage && (
           <footer className="border-t border-[#1B1B1B] bg-[#0B0B0B] mt-20 py-12">
-            <div className="max-w-6xl mx-auto px-4 text-center">
-              <h3 className="text-xl font-black tracking-widest text-white uppercase mb-4">
-                Ball<span className="text-[#B30000]">Mtaani</span>
-              </h3>
-              <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
-                Kenyan football fans predicting, debating, and keeping receipts around the biggest matches.
-              </p>
-              <p className="text-gray-600 text-xs">
-                (c) {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.
-              </p>
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10 text-left">
+                {/* Col 1: Brand */}
+                <div className="space-y-3">
+                  <h3 className="text-xl font-black tracking-widest text-white uppercase">
+                    Ball<span className="text-[#B30000]">Mtaani</span>
+                  </h3>
+                  <p className="text-gray-400 text-xs leading-relaxed">
+                    Kenya's home for football intelligence — live scores, Mtaa Daily reporting, predictions, debates &amp; fan rewards. Built in Nairobi for African football fans.
+                  </p>
+                </div>
+
+                {/* Col 2: Navigation */}
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#B30000] mb-3">Football Hubs</h4>
+                  <ul className="space-y-2 text-xs text-gray-400">
+                    <li><a href="/matches" className="hover:text-white transition-colors">Live Scores &amp; Fixtures</a></li>
+                    <li><a href="/leagues" className="hover:text-white transition-colors">League Centres</a></li>
+                    <li><a href="/news" className="hover:text-white transition-colors">Mtaa Daily News</a></li>
+                    <li><a href="/world-cup-2026" className="hover:text-white transition-colors">World Cup 2026</a></li>
+                    <li><a href="/mchambuzi-halisi" className="hover:text-white transition-colors">Mchambuzi AI</a></li>
+                  </ul>
+                </div>
+
+                {/* Col 3: Fan Games */}
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#B30000] mb-3">Fan Community</h4>
+                  <ul className="space-y-2 text-xs text-gray-400">
+                    <li><a href="/predictions" className="hover:text-white transition-colors">Match Predictions</a></li>
+                    <li><a href="/debates" className="hover:text-white transition-colors">Fan Debates</a></li>
+                    <li><a href="/fan-zones" className="hover:text-white transition-colors">Fan Zones</a></li>
+                    <li><a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a></li>
+                    <li><a href="/store" className="hover:text-white transition-colors">MTC Store</a></li>
+                  </ul>
+                </div>
+
+                {/* Col 4: Transparency & Policy */}
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-[#B30000] mb-3">Company &amp; Legal</h4>
+                  <ul className="space-y-2 text-xs text-gray-400">
+                    <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
+                    <li><a href="/contact" className="hover:text-white transition-colors">Contact &amp; Support</a></li>
+                    <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="/terms" className="hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="mailto:sponsors@ballmtaani.com" className="hover:text-white transition-colors">Advertising &amp; Sponsors</a></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 pt-6 text-center text-xs text-gray-500">
+                <p>&copy; {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.</p>
+              </div>
             </div>
           </footer>
         )}
