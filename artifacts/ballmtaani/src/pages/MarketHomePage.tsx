@@ -20,6 +20,12 @@ import HeroTicker from "../components/HeroTicker";
 import NotificationBell from "../components/NotificationBell";
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
+import AirtimePayoutTicker from "../components/AirtimePayoutTicker";
+import KenyaModeToggle from "../components/KenyaModeToggle";
+import MatchHypeBarometer from "../components/MatchHypeBarometer";
+import MchambuziInsightChip from "../components/MchambuziInsightChip";
+import MatchReceiptModal from "../components/MatchReceiptModal";
+import { generateReceiptCode } from "../lib/prediction-receipts";
 
 const TITLE = "BallMtaani: Live Football Scores, Fixtures & Fan Predictions Kenya";
 const DESCRIPTION = "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.";
@@ -171,6 +177,22 @@ export default function MarketHomePage() {
     return () => { cancelled = true; };
   }, []);
 
+  const [isKenyaFirst, setIsKenyaFirst] = useState(false);
+  const [activeReceiptModal, setActiveReceiptModal] = useState<{
+    receiptCode: string;
+    fanDisplayName: string;
+    homeTeam: string;
+    homeLogo?: string;
+    awayTeam: string;
+    awayLogo?: string;
+    competition: string;
+    predictedScore: string;
+    submittedAtISO: string;
+    kickoffTimeISO: string;
+    status: "locked";
+    visibility: "public";
+  } | null>(null);
+
   const beforeKickoff = now < PREMIER_LEAGUE_OPENING_KICKOFF;
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), beforeKickoff ? 1000 : 60_000); return () => window.clearInterval(timer); }, [beforeKickoff]);
 
@@ -179,7 +201,12 @@ export default function MarketHomePage() {
   const selected = useMemo(() => selectFeaturedMatch({ liveMatches: live, upcomingFixtures: upcoming, recentMatches: recent, followedClub: club }), [club, live, recent, upcoming]);
   const featured = selected.match || PREMIER_LEAGUE_OPENING_FIXTURES[0];
   const featuredLive = live.some((item: HomepageMatch) => String(item.id) === String(featured.id));
-  const matches = live.length ? [...live, ...upcoming].slice(0, 6) : upcoming.length ? upcoming.slice(0, 6) : PREMIER_LEAGUE_OPENING_FIXTURES;
+  
+  const rawMatches = live.length ? [...live, ...upcoming].slice(0, 6) : upcoming.length ? upcoming.slice(0, 6) : PREMIER_LEAGUE_OPENING_FIXTURES;
+  const matches = isKenyaFirst
+    ? rawMatches.filter(m => (m.league || "").toLowerCase().includes("fkf") || (m.league || "").toLowerCase().includes("kpl") || (m.home || "").toLowerCase().includes("gor") || (m.home || "").toLowerCase().includes("leopards"))
+    : rawMatches;
+
   const countdown = getCountdownParts(PREMIER_LEAGUE_OPENING_KICKOFF, now);
   const seasonNews = news.filter((article) => {
     const topic = (article.title + " " + (article.description || "")).toLowerCase();
@@ -189,8 +216,39 @@ export default function MarketHomePage() {
   const kenya = news.filter(isKenyanStory).slice(0, 3);
   const take = useMemo(() => mchambuziTake(featured, mode, news[0]?.title), [featured, mode, news]);
 
+  const handlePredictPick = (pickChoice: "1" | "X" | "2") => {
+    const predicted = pickChoice === "1" ? "2-1" : pickChoice === "X" ? "1-1" : "0-2";
+    const code = generateReceiptCode(dbProfile?.username || "fan", featured.id || "123");
+    setActiveReceiptModal({
+      receiptCode: code,
+      fanDisplayName: dbProfile?.username || "Kenyan Fan",
+      homeTeam: String(featured.home || "Home Team"),
+      homeLogo: featured.homeLogo,
+      awayTeam: String(featured.away || "Away Team"),
+      awayLogo: featured.awayLogo,
+      competition: featured.league || "Premier League",
+      predictedScore: predicted,
+      submittedAtISO: new Date().toISOString(),
+      kickoffTimeISO: new Date().toISOString(),
+      status: "locked",
+      visibility: "public",
+    });
+  };
+
   return <main className="overflow-x-clip bg-[#050609] pb-8 text-white">
     <SEO title={TITLE} description={DESCRIPTION} keywords={["live football scores Kenya", "Premier League fixtures Kenya", "Champions League Kenya", "FKF Premier League", "football predictions Kenya", "Mchambuzi AI"]} path="/" />
+
+    {/* TASK 2: REAL-TIME AIRTIME PAYOUT TICKER */}
+    <AirtimePayoutTicker />
+
+    {/* RECEIPT MODAL */}
+    {activeReceiptModal && (
+      <MatchReceiptModal
+        receipt={activeReceiptModal}
+        isOpen={Boolean(activeReceiptModal)}
+        onClose={() => setActiveReceiptModal(null)}
+      />
+    )}
 
     {/* HERO SECTION */}
     <section className="relative isolate bg-[#070707] min-h-[440px] flex items-center border-b border-[#2A2A2A] py-8 md:py-10">
@@ -210,6 +268,11 @@ export default function MarketHomePage() {
         
         {/* Left Side: Typography & CTAs */}
         <div className="flex flex-col max-w-xl">
+          {/* TASK 5: KENYA FIRST MODE TOGGLE */}
+          <div className="mb-4">
+            <KenyaModeToggle isKenyaFirst={isKenyaFirst} onToggle={setIsKenyaFirst} />
+          </div>
+
           <h1 className="flex flex-col font-extrabold leading-[0.9] tracking-[-0.04em]">
             <span className="text-white text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">THE SEASON</span>
             <span className="text-[#B30000] text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">STARTS HERE.</span>
@@ -237,9 +300,9 @@ export default function MarketHomePage() {
 
         {/* Right Side: LIVE & NEXT Card (Dynamic API-Football Featured Match) */}
         <div className="flex justify-end w-full">
-          <div className="w-full max-w-[340px] rounded-2xl border border-white/10 bg-black/75 p-4 backdrop-blur-xl shadow-2xl">
+          <div className="w-full max-w-[340px] rounded-2xl border border-white/10 bg-black/75 p-4 backdrop-blur-xl shadow-2xl space-y-3">
             {/* Header */}
-            <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <span className={`h-2 w-2 rounded-full ${featuredLive ? "bg-emerald-500" : "bg-[#B30000]"} animate-pulse`} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-white">
@@ -251,9 +314,16 @@ export default function MarketHomePage() {
                 <span className="text-[10px] font-black uppercase tracking-widest text-white/70 truncate">{featured.league || "Premier League"}</span>
               </div>
             </div>
+
+            {/* TASK 3: EMBEDDED MCHAMBUZI AI CHIP */}
+            <MchambuziInsightChip
+              matchOrTopic={`${featured.home} vs ${featured.away}`}
+              homeTeam={String(featured.home || "")}
+              awayTeam={String(featured.away || "")}
+            />
             
             {/* Teams & Score / Kickoff from API-Football */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center pt-1">
               <div className="flex flex-col items-center gap-2 min-w-0">
                 <TeamLogo logo={featured.homeLogo} initial={featured.homeInitial || (featured.home || "HOM").slice(0, 3).toUpperCase()} color="#182333" size="lg" shadow />
                 <span className="text-[10px] font-black uppercase tracking-wider text-white leading-tight break-words line-clamp-2 w-full">{featured.home}</span>
@@ -279,31 +349,23 @@ export default function MarketHomePage() {
               </div>
             </div>
 
-            {/* Prediction */}
-            <div className="mt-4 border-t border-white/10 pt-3 text-center">
-              <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-0.5">WHO WILL WIN?</p>
-              <p className="text-[9px] font-medium text-white/40 mb-3">Cast your prediction</p>
-              <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-1.5 items-center">
-                <Link href={`/predictions?match=${featured.id}`} className="rounded-lg border border-white/20 py-2 text-xs font-black hover:bg-white/5 transition-colors text-center block">1</Link>
-                <Link href={`/predictions?match=${featured.id}`} className="rounded-lg border border-[#FFD700]/70 bg-[#FFD700]/10 text-[#FFD700] py-2 text-xs font-black text-center block">X</Link>
-                <Link href={`/predictions?match=${featured.id}`} className="rounded-lg border border-white/20 py-2 text-xs font-black hover:bg-white/5 transition-colors text-center block">2</Link>
-                <div className="ml-1 flex flex-col items-end">
-                  <span className="text-sm font-black text-white">Live</span>
-                  <span className="text-[7px] font-bold uppercase text-white/40 leading-tight">Fans<br/>Predicting</span>
-                </div>
+            {/* TASK 1: INSTANT RECEIPT GENERATION ON PREDICTION */}
+            <div className="border-t border-white/10 pt-3 text-center">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-0.5">CAST YOUR CALL &amp; KEEP RECEIPT</p>
+              <div className="grid grid-cols-3 gap-2 my-2">
+                <button onClick={() => handlePredictPick("1")} className="rounded-xl border border-white/20 py-2.5 text-xs font-black hover:bg-white/10 transition-colors text-center text-white bg-white/5">1</button>
+                <button onClick={() => handlePredictPick("X")} className="rounded-xl border border-[#FFD700]/70 bg-[#FFD700]/10 text-[#FFD700] py-2.5 text-xs font-black text-center hover:bg-[#FFD700]/20 transition-colors">X</button>
+                <button onClick={() => handlePredictPick("2")} className="rounded-xl border border-white/20 py-2.5 text-xs font-black hover:bg-white/10 transition-colors text-center text-white bg-white/5">2</button>
               </div>
 
-              {/* Fan Pulse */}
-              <div className="mt-4 flex flex-col gap-1.5">
-                <span className="text-[9px] font-black tracking-widest uppercase text-white/50 text-left">FAN PULSE</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-[#B30000]">65%</span>
-                  <svg className="flex-1 h-3" viewBox="0 0 100 10" preserveAspectRatio="none">
-                    <path d="M0,5 L20,5 L25,1 L30,9 L35,5 L70,5 L75,2 L80,8 L85,5 L100,5" stroke="#B30000" strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" />
-                  </svg>
-                  <span className="text-sm font-black text-[#FFD700]">35%</span>
-                </div>
-              </div>
+              {/* TASK 4: LIVE MATCHDAY HYPE BAROMETER */}
+              <MatchHypeBarometer
+                homeTeam={String(featured.home || "Home")}
+                awayTeam={String(featured.away || "Away")}
+                homeRatio={64}
+                drawRatio={18}
+                awayRatio={18}
+              />
             </div>
           </div>
         </div>
