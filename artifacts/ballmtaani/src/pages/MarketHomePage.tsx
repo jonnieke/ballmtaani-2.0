@@ -522,107 +522,159 @@ export default function MarketHomePage() {
       </div>
     </section>
 
-    {/* CONTENT GRID */}
-    <section className="bg-[#0B0B0B] py-6">
-      <div className="mx-auto max-w-7xl px-4 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+    {/* MTAA DAILY NEWS SPOTLIGHT & LIVE WIRE TICKER */}
+    <section className="bg-[#0B0B0B] py-8 border-t border-[#1B1B1B]">
+      <div className="mx-auto max-w-7xl px-4">
         
-        {/* Mchambuzi's Take (Dynamic Analysis) */}
-        <Link href="/mchambuzi-halisi" className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
-          <div className="flex items-center justify-between p-4 border-b border-white/5">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">MCHAMBUZI'S TAKE</h3>
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</span>
+        {/* News Section Header with Category Chips & Link */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#B30000] animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#FFD700]">MTAA DAILY EDITORIAL</span>
+            </div>
+            <h2 className="mt-1 text-2xl font-black text-white md:text-3xl">Today's Top Football Stories</h2>
           </div>
-          <div className="relative aspect-square">
-            <img src={ANALYST_IMAGE} alt="Mchambuzi" className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/60 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <h4 className="text-base font-black leading-tight text-white line-clamp-3">
-                {featured ? `${featured.home} vs ${featured.away}: Tactical Breakdown` : (news[0]?.title || "Match Analysis & Tactical Preview")}
-              </h4>
-              <p className="mt-2 text-[10px] font-bold text-white/60">By Mchambuzi AI</p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="rounded bg-[#FFD700]/10 border border-[#FFD700]/30 px-2 py-1 text-[8px] font-black tracking-widest text-[#FFD700] uppercase">AI ANALYSIS</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-[9px] font-bold text-white/40 uppercase">3 min read</span>
-                  <div className="h-8 w-8 rounded-full bg-[#B30000] flex items-center justify-center shadow-lg"><Zap className="h-4 w-4 text-white" /></div>
+
+          <Link
+            href="/news"
+            className="inline-flex items-center gap-1.5 self-start rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:border-[#FFD700]/60 hover:text-white transition-all"
+          >
+            <span>FULL NEWS DESK</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        {/* Live News Wire Bar */}
+        {news.length > 0 && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-white/10 bg-[#12141c] px-4 py-2.5 text-xs text-white/80">
+            <span className="shrink-0 rounded bg-[#B30000] px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
+              WIRE
+            </span>
+            <div className="min-w-0 flex-1 truncate font-medium">
+              <span className="text-white font-bold">{news[0]?.title}</span>
+              <span className="mx-2 text-white/30">•</span>
+              <span className="text-white/50">{news[1]?.title}</span>
+            </div>
+            <span className="shrink-0 text-[10px] font-mono text-white/40">{timeAgo(news[0]?.pubDate || "")}</span>
+          </div>
+        )}
+
+        {/* 3-Card Uncluttered Spotlight Grid */}
+        <div className="grid gap-6 md:grid-cols-3">
+          
+          {/* Card 1: Lead Main Story */}
+          {news[0] ? (
+            <Link
+              href={news[0].isInternal ? `/article/${news[0].slug}` : news[0].link}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141620] transition-all hover:border-[#B30000]/50 hover:-translate-y-1 shadow-lg"
+            >
+              <div className="relative aspect-[16/9] overflow-hidden bg-black/40">
+                <img
+                  src={news[0].thumbnail || HERO_IMAGE}
+                  alt={news[0].title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={(e) => { e.currentTarget.src = HERO_IMAGE; }}
+                />
+                <span className="absolute top-3 left-3 rounded-full bg-[#B30000] px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow">
+                  TOP STORY
+                </span>
+              </div>
+              <div className="flex flex-1 flex-col p-5">
+                <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40">
+                  <span>{news[0].source || "Mtaa Daily"}</span>
+                  <span>{timeAgo(news[0].pubDate)}</span>
+                </div>
+                <h3 className="text-lg font-black leading-snug text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
+                  {news[0].title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-white/50 line-clamp-2">
+                  {news[0].description || "Read full story on Mtaa Daily."}
+                </p>
+                <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
+                  <span>READ ARTICLE &rarr;</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </Link>
+            </Link>
+          ) : (
+            <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
+          )}
 
-        {/* Hot Debate (Dynamic from useDebates API) */}
-        <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
-          <div className="flex items-center justify-between p-4 border-b border-white/5">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">HOT DEBATE</h3>
-            <Link href="/debates" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
-          </div>
-          <div className="p-6 flex-1 flex flex-col">
-            <h4 className="text-xl font-black leading-tight text-white">
-              {debates[0]?.title || (featured ? `Who takes 3 points in ${featured.home} vs ${featured.away}?` : "Which squad is ready to contend this season?")}
-            </h4>
-            <p className="mt-4 text-sm font-medium text-white/50">
-              {debates[0]?.left ? `${debates[0].left} OR ${debates[0].right}` : "Drop your take and join the debate."}
-            </p>
-            <div className="mt-auto pt-8 flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-[10px] font-bold text-[#FFD700]">🔥 {debates[0]?.totalVotes ? `${debates[0].totalVotes} votes` : "Active debate"}</span>
+          {/* Card 2: Kenyan Football Spotlight */}
+          {kenya[0] || news[1] ? (
+            <Link
+              href={(kenya[0] || news[1]).isInternal ? `/article/${(kenya[0] || news[1]).slug}` : (kenya[0] || news[1]).link}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141620] transition-all hover:border-[#FFD700]/50 hover:-translate-y-1 shadow-lg"
+            >
+              <div className="relative aspect-[16/9] overflow-hidden bg-black/40">
+                <img
+                  src={(kenya[0] || news[1]).thumbnail || FANS_IMAGE}
+                  alt={(kenya[0] || news[1]).title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={(e) => { e.currentTarget.src = FANS_IMAGE; }}
+                />
+                <span className="absolute top-3 left-3 rounded-full bg-emerald-700 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow">
+                  🇰🇪 KENYA SPOTLIGHT
+                </span>
               </div>
-              <Link href="/debates" className="rounded-lg bg-[#B30000] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-800 transition-colors">JOIN DEBATE</Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Kenyan Football (Dynamic RSS / News API) */}
-        <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all">
-          <div className="flex items-center justify-between p-4 border-b border-white/5">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">KENYAN FOOTBALL</h3>
-            <Link href="/news" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
-          </div>
-          <div className="relative aspect-[4/3] overflow-hidden">
-            <img src={kenya[0]?.thumbnail || FANS_IMAGE} alt="Kenyan Football" className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105" onError={(e) => { e.currentTarget.src = FANS_IMAGE; }} />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/40 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <h4 className="text-base font-black leading-tight text-white line-clamp-2">
-                {kenya[0]?.title || "Kenyan Premier League & Harambee Stars Coverage"}
-              </h4>
-              <p className="mt-1 text-[10px] font-medium text-white/60 line-clamp-2">
-                {kenya[0]?.source || "BallMtaani Special"} • {kenya[0]?.pubDate ? timeAgo(kenya[0].pubDate) : "Latest"}
-              </p>
-              {kenya[0] ? (
-                kenya[0].isInternal ? (
-                  <Link href={`/article/${kenya[0].slug}`} className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</Link>
-                ) : (
-                  <a href={kenya[0].link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</a>
-                )
-              ) : (
-                <Link href="/news" className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Latest News */}
-        <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-white/5">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white">LATEST NEWS</h3>
-            <Link href="/news" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
-          </div>
-          <div className="p-4 flex flex-col gap-4">
-            {news.slice(0, 3).map((article, i) => (
-              <Link key={i} href={article.isInternal ? `/article/${article.slug}` : article.link} className="group grid grid-cols-[80px_1fr] gap-3 items-start">
-                <div className="aspect-[4/3] rounded-lg overflow-hidden bg-[#2A2A2A]">
-                  <img src={article.thumbnail || FANS_IMAGE} alt="" className="w-full h-full object-cover transition duration-300 group-hover:scale-105" />
+              <div className="flex flex-1 flex-col p-5">
+                <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40">
+                  <span>{(kenya[0] || news[1]).source || "Mtaa Daily Kenya"}</span>
+                  <span>{timeAgo((kenya[0] || news[1]).pubDate)}</span>
                 </div>
-                <div>
-                  <h4 className="text-xs font-bold leading-snug text-white line-clamp-3 group-hover:text-[#FFD700] transition-colors">{article.title}</h4>
-                  <p className="mt-1 text-[9px] font-medium text-white/40">{timeAgo(article.pubDate)}</p>
+                <h3 className="text-lg font-black leading-snug text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
+                  {(kenya[0] || news[1]).title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-white/50 line-clamp-2">
+                  {(kenya[0] || news[1]).description || "FKF Premier League & Harambee Stars updates."}
+                </p>
+                <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
+                  <span>READ STORY &rarr;</span>
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
+          )}
 
+          {/* Card 3: Global / Transfer Feature */}
+          {news[2] ? (
+            <Link
+              href={news[2].isInternal ? `/article/${news[2].slug}` : news[2].link}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141620] transition-all hover:border-blue-500/50 hover:-translate-y-1 shadow-lg"
+            >
+              <div className="relative aspect-[16/9] overflow-hidden bg-black/40">
+                <img
+                  src={news[2].thumbnail || HERO_IMAGE}
+                  alt={news[2].title}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={(e) => { e.currentTarget.src = HERO_IMAGE; }}
+                />
+                <span className="absolute top-3 left-3 rounded-full bg-blue-700 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow">
+                  WORLD FOOTBALL
+                </span>
+              </div>
+              <div className="flex flex-1 flex-col p-5">
+                <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40">
+                  <span>{news[2].source || "World Football Desk"}</span>
+                  <span>{timeAgo(news[2].pubDate)}</span>
+                </div>
+                <h3 className="text-lg font-black leading-snug text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
+                  {news[2].title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-white/50 line-clamp-2">
+                  {news[2].description || "Latest global football coverage."}
+                </p>
+                <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
+                  <span>READ STORY &rarr;</span>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
+          )}
+
+        </div>
       </div>
     </section>
 
