@@ -678,5 +678,125 @@ export default function MarketHomePage() {
       </div>
     </section>
 
+    {/* FAN COMMUNITY, DEBATES & MCHAMBUZI HUB */}
+    <section className="bg-[#07080c] py-8 border-t border-white/10">
+      <div className="mx-auto max-w-7xl px-4">
+        
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-ping" />
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#FFD700]">COMMUNITY &amp; ANALYSIS</span>
+            </div>
+            <h2 className="mt-1 text-2xl font-black text-white md:text-3xl">Mchambuzi AI &amp; Fan Debates</h2>
+          </div>
+          <Link href="/debates" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:text-white transition-colors">
+            SEE ALL DEBATES &gt;
+          </Link>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          
+          {/* Mchambuzi's Take (Dynamic Analysis) */}
+          <Link href="/mchambuzi-halisi" className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white">MCHAMBUZI'S TAKE</h3>
+              <span className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</span>
+            </div>
+            <div className="relative aspect-square">
+              <img src={ANALYST_IMAGE} alt="Mchambuzi" className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/60 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <h4 className="text-base font-black leading-tight text-white line-clamp-3">
+                  {featured ? `${featured.home} vs ${featured.away}: Tactical Breakdown` : (news[0]?.title || "Match Analysis & Tactical Preview")}
+                </h4>
+                <p className="mt-2 text-[10px] font-bold text-white/60">By Mchambuzi AI</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="rounded bg-[#FFD700]/10 border border-[#FFD700]/30 px-2 py-1 text-[8px] font-black tracking-widest text-[#FFD700] uppercase">AI ANALYSIS</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[9px] font-bold text-white/40 uppercase">3 min read</span>
+                    <div className="h-8 w-8 rounded-full bg-[#B30000] flex items-center justify-center shadow-lg"><Zap className="h-4 w-4 text-white" /></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          {/* Hot Debate (Dynamic from useDebates API) */}
+          <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white">HOT DEBATE</h3>
+              <Link href="/debates" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
+            </div>
+            <div className="p-6 flex-1 flex flex-col">
+              <h4 className="text-xl font-black leading-tight text-white">
+                {debates[0]?.title || (featured ? `Who takes 3 points in ${featured.home} vs ${featured.away}?` : "Which squad is ready to contend this season?")}
+              </h4>
+              <p className="mt-4 text-sm font-medium text-white/50">
+                {debates[0]?.left ? `${debates[0].left} OR ${debates[0].right}` : "Drop your take and join the debate."}
+              </p>
+              <div className="mt-auto pt-8 flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-[10px] font-bold text-[#FFD700]">🔥 {debates[0]?.totalVotes ? `${debates[0].totalVotes} votes` : "Active debate"}</span>
+                </div>
+                <Link href="/debates" className="rounded-lg bg-[#B30000] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-800 transition-colors">JOIN DEBATE</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Kenyan Football (Dynamic RSS / News API) */}
+          <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col group cursor-pointer hover:border-white/20 transition-all shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white">KENYAN FOOTBALL</h3>
+              <Link href="/news" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
+            </div>
+            <div className="relative aspect-[4/3] overflow-hidden">
+              <img src={kenya[0]?.thumbnail || FANS_IMAGE} alt="Kenyan Football" className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-105" onError={(e) => { e.currentTarget.src = FANS_IMAGE; }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#151515] via-[#151515]/40 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <h4 className="text-base font-black leading-tight text-white line-clamp-2">
+                  {kenya[0]?.title || "Kenyan Premier League & Harambee Stars Coverage"}
+                </h4>
+                <p className="mt-1 text-[10px] font-medium text-white/60 line-clamp-2">
+                  {kenya[0]?.source || "BallMtaani Special"} • {kenya[0]?.pubDate ? timeAgo(kenya[0].pubDate) : "Latest"}
+                </p>
+                {kenya[0] ? (
+                  kenya[0].isInternal ? (
+                    <Link href={`/article/${kenya[0].slug}`} className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</Link>
+                  ) : (
+                    <a href={kenya[0].link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</a>
+                  )
+                ) : (
+                  <Link href="/news" className="mt-3 inline-block rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black hover:bg-yellow-400 transition-colors">READ STORY</Link>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Latest News Wire */}
+          <div className="rounded-2xl border border-white/10 bg-[#151515] overflow-hidden flex flex-col shadow-lg">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white">LATEST NEWS WIRE</h3>
+              <Link href="/news" className="text-[9px] font-black uppercase tracking-widest text-[#FFD700]">VIEW ALL &gt;</Link>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              {news.slice(0, 3).map((article, i) => (
+                <Link key={i} href={article.isInternal ? `/article/${article.slug}` : article.link} className="group grid grid-cols-[80px_1fr] gap-3 items-start">
+                  <div className="aspect-[4/3] rounded-lg overflow-hidden bg-[#2A2A2A]">
+                    <img src={article.thumbnail || FANS_IMAGE} alt="" className="w-full h-full object-cover transition duration-300 group-hover:scale-105" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold leading-snug text-white line-clamp-3 group-hover:text-[#FFD700] transition-colors">{article.title}</h4>
+                    <p className="mt-1 text-[9px] font-medium text-white/40">{timeAgo(article.pubDate)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
   </main>;
 }
