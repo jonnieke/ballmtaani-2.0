@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight, BellRing, BarChart2, BookOpen, CalendarDays, ChevronRight, Coins,
-  Flame, Globe, MessageSquare, Radio, Shirt, ShoppingBag, Sparkles, Smartphone,
+  Flame, Globe, MessageSquare, Radio, Shield, Shirt, ShoppingBag, Sparkles, Smartphone,
   Star, Trophy, Users, Wifi, Zap,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
