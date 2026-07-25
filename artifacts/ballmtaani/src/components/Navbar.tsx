@@ -34,6 +34,14 @@ export function Navbar() {
 
   const menuCategories = [
     {
+      label: "Intelligence",
+      links: [
+        { href: "/edge", label: "BallMtaani Edge" },
+        { href: "/edge/performance", label: "Model Ledger" },
+        { href: "/edge/pricing", label: "Edge Pro Tiers" },
+      ]
+    },
+    {
       label: "Matches",
       links: [
         { href: "/matches", label: "Directory" },

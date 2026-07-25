@@ -1,278 +1,171 @@
-import { Route, Switch, Router as WouterRouter, useLocation } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { ThemeProvider } from "./context/ThemeContext";
+import React, { useState } from "react";
+import { Route, Switch } from "wouter";
 import { Navbar } from "./components/Navbar";
-import BottomNav from "./components/BottomNav";
-import { AmbientBackground } from "./components/AmbientBackground";
-import { CoinOverlay } from "./components/CoinOverlay";
-import { DailyLoginModal } from "./components/DailyLoginModal";
-import { OnboardingModal } from "./components/OnboardingModal";
-import { InstallBanner } from "./components/InstallBanner";
-import { ScoreTicker } from "./components/ScoreTicker";
-import AdBanner from "./components/AdBanner";
-import RouteSEO from "./components/RouteSEO";
-import FloatingNav from "./components/FloatingNav";
-import { lazy, Suspense } from "react";
+import HomePage from "./pages/HomePage";
+import MatchDetailPage from "./pages/MatchDetailPage";
+import NewsPage from "./pages/NewsPage";
+import LiveCenterPage from "./pages/LiveCenterPage";
+import AIFanZonePage from "./pages/AIFanZonePage";
+import TeamDetailPage from "./pages/TeamDetailPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import MarketHomePage from "./pages/MarketHomePage";
+import PredictionReceiptPage from "./pages/PredictionReceiptPage";
+import { ChooseClubModal } from "./components/ChooseClubModal";
 
-// ─── Route-level code splitting ───────────────────────────────────────────────
-// Each page is loaded only when navigated to — reduces initial bundle by ~50%
-// LandingPage and HomePage are eagerly loaded (most visited, need fast paint)
-import LandingPage from "./pages/LandingPage";
-import HomePage from "./pages/MarketHomePage";
+// BallMtaani Edge Phase 2 - 6 Pages
+import AdminEdgePage from "./pages/edge/AdminEdgePage";
+import EdgeLandingPage from "./pages/edge/EdgeLandingPage";
+import EdgeMatchListingPage from "./pages/edge/EdgeMatchListingPage";
+import EdgeMatchDetailPage from "./pages/edge/EdgeMatchDetailPage";
+import EdgePerformancePage from "./pages/edge/EdgePerformancePage";
+import EdgeHowItWorksPage from "./pages/edge/EdgeHowItWorksPage";
+import EdgeModelsPage from "./pages/edge/EdgeModelsPage";
+import EdgePricingPreviewPage from "./pages/edge/EdgePricingPreviewPage";
+import AccountEdgePage from "./pages/edge/AccountEdgePage";
+import EdgeForYouPage from "./pages/edge/EdgeForYouPage";
+import PartnerDeveloperPortalPage from "./pages/edge/PartnerDeveloperPortalPage";
+import MobileAppPreviewView from "./components/edge/MobileAppPreviewView";
+import TenantNewsroomPage from "./pages/edge/TenantNewsroomPage";
+import EnterpriseDashboardPage from "./pages/edge/EnterpriseDashboardPage";
+import EdgeLitePage from "./pages/edge/EdgeLitePage";
+import TelecomPartnerPortalPage from "./pages/edge/TelecomPartnerPortalPage";
+import ExecutiveDashboardPage from "./pages/edge/ExecutiveDashboardPage";
+import PublicTrustCentrePage from "./pages/edge/PublicTrustCentrePage";
+import LaunchCommandCenterPage from "./pages/edge/LaunchCommandCenterPage";
+import InvestorDashboardPage from "./pages/edge/InvestorDashboardPage";
+import LaunchHelpCentrePage from "./pages/edge/LaunchHelpCentrePage";
+import PartnershipPipelinePage from "./pages/edge/PartnershipPipelinePage";
+import ExpansionScorecardsPage from "./pages/edge/ExpansionScorecardsPage";
 
-const MatchesPage        = lazy(() => import("./pages/MatchesPage"));
-const PredictionsPage    = lazy(() => import("./pages/PredictionsPage"));
-const DebatesPage        = lazy(() => import("./pages/DebatesPage"));
-const FanZonesPage       = lazy(() => import("./pages/FanZonesPage"));
-const LeaderboardPage    = lazy(() => import("./pages/LeaderboardPage"));
-const ProfilePage        = lazy(() => import("./pages/ProfilePage"));
-const StorePage          = lazy(() => import("./pages/StorePage"));
-const LiveCenterPage     = lazy(() => import("./pages/LiveCenterPage"));
-const LiveCenterIndexPage= lazy(() => import("./pages/LiveCenterIndexPage"));
-const RivalriesPage      = lazy(() => import("./pages/RivalriesPage"));
-const RapidFirePage      = lazy(() => import("./pages/RapidFirePage"));
-const TriviaPage         = lazy(() => import("./pages/TriviaPage"));
-const WarRoomPage        = lazy(() => import("./pages/WarRoomPage"));
-const DiagnosticsPage    = lazy(() => import("./pages/DiagnosticsPage"));
-const TermsPage          = lazy(() => import("./pages/TermsPage"));
-const PrivacyPage        = lazy(() => import("./pages/PrivacyPage"));
-const AboutPage          = lazy(() => import("./pages/AboutPage"));
-const ContactPage        = lazy(() => import("./pages/ContactPage"));
-const WorldCup2026Page   = lazy(() => import("./pages/WorldCup2026Page"));
-const WorldCupGuidePage   = lazy(() => import("./pages/WorldCupGuidePage"));
-const MarketWatchPage    = lazy(() => import("./pages/MarketWatchPage"));
-const MchambuziHalisiPage= lazy(() => import("./pages/MchambuziHalisiPage"));
-const ArticlePage        = lazy(() => import("./pages/ArticlePage"));
-const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
-const AdminArticlesPage  = lazy(() => import("./pages/AdminArticlesPage"));
-const AdminAdsPage       = lazy(() => import("./pages/AdminAdsPage"));
-const AdminPartnersPage  = lazy(() => import("./pages/AdminPartnersPage"));
-const AdminRolesPage     = lazy(() => import("./pages/AdminRolesPage"));
-const AdminRewardsPage   = lazy(() => import("./pages/AdminRewardsPage"));
-const AdminAnalyticsPage = lazy(() => import("./pages/AdminAnalyticsPage"));
-const SearchPage         = lazy(() => import("./pages/SearchPage"));
-const NewsPage           = lazy(() => import("./pages/NewsPage"));
-const LeagueCentrePage   = lazy(() => import("./pages/LeagueCentrePage"));
-const LeagueDetailPage   = lazy(() => import("./pages/LeagueDetailPage"));
-const TeamDetailPage     = lazy(() => import("./pages/TeamDetailPage"));
-const MatchDetailPage    = lazy(() => import("./pages/MatchDetailPage"));
-const PredictionReceiptPage = lazy(() => import("./pages/PredictionReceiptPage"));
-const ClubPartnerPortalPage = lazy(() => import("./pages/ClubPartnerPortalPage"));
-const LoginPage          = lazy(() => import("./pages/auth/LoginPage"));
-const VerifyOTPPage      = lazy(() => import("./pages/auth/OTPPage"));
-const AuthCallbackPage   = lazy(() => import("./pages/auth/AuthCallbackPage"));
-import WelcomeModal from "./components/WelcomeModal";
-import ProfileSetupModal from "./components/ProfileSetupModal";
-import StickySignUpBanner from "./components/StickySignUpBanner";
+// BallMtaani Edge Phase 13 — Scaled Growth, Self-Service Partners & Regional Expansion
+import ScaledOperationsDashboardPage from "./pages/edge/ScaledOperationsDashboardPage";
+import ScaleProgrammesPage from "./pages/edge/ScaleProgrammesPage";
+import PartnerApplicationsPage from "./pages/edge/PartnerApplicationsPage";
+import SelfServicePartnersPage from "./pages/edge/SelfServicePartnersPage";
+import B2bBillingPage from "./pages/edge/B2bBillingPage";
+import UsageLedgerPage from "./pages/edge/UsageLedgerPage";
+import CustomerSuccessPage from "./pages/edge/CustomerSuccessPage";
+import SalesOperationsPage from "./pages/edge/SalesOperationsPage";
+import RegionalMarketsPage from "./pages/edge/RegionalMarketsPage";
+import PaymentProvidersPage from "./pages/edge/PaymentProvidersPage";
+import PortfolioOptimizationPage from "./pages/edge/PortfolioOptimizationPage";
+import RevenueRetentionPage from "./pages/edge/RevenueRetentionPage";
+import CapitalAllocationPage from "./pages/edge/CapitalAllocationPage";
+import PartnerOnboardingPage from "./pages/edge/PartnerOnboardingPage";
+import PartnerHelpCentrePage from "./pages/edge/PartnerHelpCentrePage";
 
-// Minimal loading fallback — dark bg matches app shell, no layout shift
-function PageLoader() {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#B30000]" />
-    </div>
-  );
-}
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 0, // Disable retries — we have fallbacks (mock data, cached data, empty state)
-      // When API fails, show empty state instead of retrying 3x and hammering the API
-    },
-  },
-});
-
-function AppShell() {
-  const [location] = useLocation();
-  const { pendingLoginStreak, clearPendingLoginStreak } = useAuth();
-  const normalizedLocation = location.replace(/\/+$/, "") || "/";
-  const isWorldCupPage = normalizedLocation === "/world-cup-2026" || normalizedLocation.startsWith("/world-cup-2026/");
-  const quietPage = ["/hub", "/mchambuzi-halisi", "/login", "/verify", "/terms", "/privacy"].includes(normalizedLocation) || isWorldCupPage;
-  const showInstallBanner = ["/", "/home", "/hub", "/world-cup-2026"].includes(normalizedLocation);
-  const showAdBanner = !["/login", "/verify"].includes(normalizedLocation);
-
-  return (
-    <>
-      <AmbientBackground />
-      <CoinOverlay />
-
-      {/* Daily Login Streak Modal */}
-      {pendingLoginStreak?.isNewDay && (
-        <DailyLoginModal
-          streak={pendingLoginStreak.streak}
-          coinsEarned={pendingLoginStreak.coinsEarned}
-          bonusEarned={pendingLoginStreak.bonusEarned}
-          onClose={clearPendingLoginStreak}
-        />
-      )}
-
-      <div className="min-h-screen bg-[#0B0B0B] text-white font-sans selection:bg-[#B30000] selection:text-white">
-        {!quietPage && <Navbar />}
-        {!quietPage && <ScoreTicker />}
-        {!quietPage && <BottomNav />}
-        {quietPage && !normalizedLocation.startsWith("/login") && !normalizedLocation.startsWith("/verify") && (
-          <FloatingNav />
-        )}
-        {!quietPage && <OnboardingModal />}
-        {showInstallBanner && <InstallBanner />}
-        <RouteSEO path={normalizedLocation} />
-        <Suspense fallback={<PageLoader />}>
-        <Switch>
-            <Route path="/" component={HomePage} />
-            <Route path="/home" component={HomePage} />
-            <Route path="/hub" component={LandingPage} />
-            <Route path="/world-cup-2026" component={WorldCup2026Page} />
-            <Route path="/world-cup-2026/bracket" component={WorldCup2026Page} />
-            <Route path="/world-cup-2026/:guide" component={WorldCupGuidePage} />
-            <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
-            <Route path="/login" component={LoginPage} />
-            <Route path="/verify" component={VerifyOTPPage} />
-            <Route path="/auth/callback" component={AuthCallbackPage} />
-            <Route path="/matches" component={MatchesPage} />
-            <Route path="/market-watch" component={MarketWatchPage} />
-            <Route path="/predictions" component={PredictionsPage} />
-            <Route path="/receipts/:receiptCode" component={PredictionReceiptPage} />
-            <Route path="/club-partner" component={ClubPartnerPortalPage} />
-            <Route path="/debates" component={DebatesPage} />
-            <Route path="/fan-zones" component={FanZonesPage} />
-            <Route path="/leaderboard" component={LeaderboardPage} />
-            <Route path="/profile" component={ProfilePage} />
-            <Route path="/profile/:id" component={ProfilePage} />
-            <Route path="/store" component={StorePage} />
-            <Route path="/live-center" component={LiveCenterIndexPage} />
-            <Route path="/live-center/:id" component={LiveCenterPage} />
-            <Route path="/rivalries" component={RivalriesPage} />
-            <Route path="/rapid-fire" component={RapidFirePage} />
-            <Route path="/war-room" component={WarRoomPage} />
-            <Route path="/trivia" component={TriviaPage} />
-            <Route path="/diagnostics" component={DiagnosticsPage} />
-            <Route path="/terms" component={TermsPage} />
-            <Route path="/terms/" component={TermsPage} />
-            <Route path="/terms-of-service" component={TermsPage} />
-            <Route path="/privacy" component={PrivacyPage} />
-            <Route path="/privacy/" component={PrivacyPage} />
-            <Route path="/privacy-policy" component={PrivacyPage} />
-            <Route path="/about" component={AboutPage} />
-            <Route path="/about/" component={AboutPage} />
-            <Route path="/contact" component={ContactPage} />
-            <Route path="/contact/" component={ContactPage} />
-            <Route path="/article/:slug" component={ArticlePage} />
-            <Route path="/admin" component={AdminDashboardPage} />
-            <Route path="/admin/articles" component={AdminArticlesPage} />
-            <Route path="/admin/ads" component={AdminAdsPage} />
-            <Route path="/admin/partners" component={AdminPartnersPage} />
-            <Route path="/admin/roles" component={AdminRolesPage} />
-            <Route path="/admin/rewards" component={AdminRewardsPage} />
-            <Route path="/admin/analytics" component={AdminAnalyticsPage} />
-            <Route path="/search" component={SearchPage} />
-            <Route path="/news" component={NewsPage} />
-            <Route path="/leagues" component={LeagueCentrePage} />
-            <Route path="/leagues/:leagueSlug">{() => <LeagueDetailPage subView="main" />}</Route>
-            <Route path="/leagues/:leagueSlug/fixtures">{() => <LeagueDetailPage subView="fixtures" />}</Route>
-            <Route path="/leagues/:leagueSlug/table">{() => <LeagueDetailPage subView="table" />}</Route>
-            <Route path="/teams/:teamSlug" component={TeamDetailPage} />
-            <Route path="/matches/:matchSlug" component={MatchDetailPage} />
-            <Route>
-              <div className="flex flex-col items-center justify-center min-h-[70vh]">
-                <h1 className="text-4xl font-black text-[#B30000] mb-4">404 - OFFSIDE!</h1>
-                <p className="text-gray-400">The page you're looking for is out of bounds.</p>
-              </div>
-            </Route>
-        </Switch>
-        </Suspense>
-
-        {showAdBanner && (
-          <div className={quietPage ? "mx-auto mt-6 w-full max-w-5xl px-3 md:px-5" : "mx-auto mt-8 w-full max-w-6xl px-4"}>
-            <AdBanner
-              label={quietPage ? "BallMtaani Matchday Support" : "BallMtaani Matchday Intelligence"}
-              type="horizontal"
-            />
-          </div>
-        )}
-
-        {!quietPage && (
-          <footer className="border-t border-[#1B1B1B] bg-[#0B0B0B] mt-20 py-12">
-            <div className="max-w-6xl mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10 text-left">
-                {/* Col 1: Brand */}
-                <div className="space-y-3">
-                  <h3 className="text-xl font-black tracking-widest text-white uppercase">
-                    Ball<span className="text-[#B30000]">Mtaani</span>
-                  </h3>
-                  <p className="text-gray-400 text-xs leading-relaxed">
-                    Kenya's home for football intelligence — live scores, Mtaa Daily reporting, predictions, debates &amp; fan rewards. Built in Nairobi for African football fans.
-                  </p>
-                </div>
-
-                {/* Col 2: Navigation */}
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#B30000] mb-3">Football Hubs</h4>
-                  <ul className="space-y-2 text-xs text-gray-400">
-                    <li><a href="/matches" className="hover:text-white transition-colors">Live Scores &amp; Fixtures</a></li>
-                    <li><a href="/leagues" className="hover:text-white transition-colors">League Centres</a></li>
-                    <li><a href="/news" className="hover:text-white transition-colors">Mtaa Daily News</a></li>
-                    <li><a href="/world-cup-2026" className="hover:text-white transition-colors">World Cup 2026</a></li>
-                    <li><a href="/mchambuzi-halisi" className="hover:text-white transition-colors">Mchambuzi AI</a></li>
-                  </ul>
-                </div>
-
-                {/* Col 3: Fan Games */}
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#B30000] mb-3">Fan Community</h4>
-                  <ul className="space-y-2 text-xs text-gray-400">
-                    <li><a href="/predictions" className="hover:text-white transition-colors">Match Predictions</a></li>
-                    <li><a href="/debates" className="hover:text-white transition-colors">Fan Debates</a></li>
-                    <li><a href="/fan-zones" className="hover:text-white transition-colors">Fan Zones</a></li>
-                    <li><a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a></li>
-                    <li><a href="/store" className="hover:text-white transition-colors">MTC Store</a></li>
-                  </ul>
-                </div>
-
-                {/* Col 4: Transparency & Policy */}
-                <div>
-                  <h4 className="text-xs font-black uppercase tracking-widest text-[#B30000] mb-3">Company &amp; Legal</h4>
-                  <ul className="space-y-2 text-xs text-gray-400">
-                    <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
-                    <li><a href="/contact" className="hover:text-white transition-colors">Contact &amp; Support</a></li>
-                    <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                    <li><a href="/terms" className="hover:text-white transition-colors">Terms of Service</a></li>
-                    <li><a href="mailto:sponsors@ballmtaani.com" className="hover:text-white transition-colors">Advertising &amp; Sponsors</a></li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="border-t border-white/10 pt-6 text-center text-xs text-gray-500">
-                <p>&copy; {new Date().getFullYear()} BallMtaani. All rights reserved. MTC status points are platform engagement rewards with no monetary value.</p>
-              </div>
-            </div>
-          </footer>
-        )}
-      </div>
-    </>
-  );
-}
-
-function AppInner() {
-  return (
-    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-      <AppShell />
-    </WouterRouter>
-  );
-}
+// BallMtaani Edge Phase 14 — Cross-Sport, Marketplace, Corporate & Investment
+import SportsHubPage from "./pages/edge/SportsHubPage";
+import SportOpportunitiesPage from "./pages/edge/SportOpportunitiesPage";
+import MarketplacePage from "./pages/edge/MarketplacePage";
+import MarketplaceAdminPage from "./pages/edge/MarketplaceAdminPage";
+import SellerApplicationsPage from "./pages/edge/SellerApplicationsPage";
+import CorporateRecordsPage from "./pages/edge/CorporateRecordsPage";
+import CapTablePage from "./pages/edge/CapTablePage";
+import IpRegisterPage from "./pages/edge/IpRegisterPage";
+import InvestorPipelinePage from "./pages/edge/InvestorPipelinePage";
+import DiligenceRoomPage from "./pages/edge/DiligenceRoomPage";
+import ExitReadinessPage from "./pages/edge/ExitReadinessPage";
+import StrategicTransactionsPage from "./pages/edge/StrategicTransactionsPage";
 
 export default function App() {
+  const [isChooseClubOpen, setIsChooseClubOpen] = useState(false);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <AppInner />
-          <WelcomeModal />
-          <ProfileSetupModal />
-          <StickySignUpBanner />
-        </ThemeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-[#B30000] selection:text-white">
+      <Navbar />
+
+      <main className="flex-grow">
+        <Switch>
+          <Route path="/" component={HomePage} />
+          <Route path="/match/:id" component={MatchDetailPage} />
+          <Route path="/news" component={NewsPage} />
+          <Route path="/live" component={LiveCenterPage} />
+          <Route path="/ai-fanzone" component={AIFanZonePage} />
+          <Route path="/team/:id" component={TeamDetailPage} />
+          
+          {/* Edge Intelligence Engine Public & Account Routes */}
+          <Route path="/edge" component={EdgeLandingPage} />
+          <Route path="/edge/for-you" component={EdgeForYouPage} />
+          <Route path="/edge/today" component={EdgeMatchListingPage} />
+          <Route path="/edge/tomorrow" component={EdgeMatchListingPage} />
+          <Route path="/edge/upcoming" component={EdgeMatchListingPage} />
+          <Route path="/edge/match/:fixtureId" component={EdgeMatchDetailPage} />
+          <Route path="/edge/performance" component={EdgePerformancePage} />
+          <Route path="/edge/how-it-works" component={EdgeHowItWorksPage} />
+          <Route path="/edge/models" component={EdgeModelsPage} />
+          <Route path="/edge/pricing-preview" component={EdgePricingPreviewPage} />
+          <Route path="/account/edge" component={AccountEdgePage} />
+          <Route path="/partners/edge/developers" component={PartnerDeveloperPortalPage} />
+          <Route path="/mobile/preview" component={MobileAppPreviewView} />
+          <Route path="/tenant/newsroom" component={TenantNewsroomPage} />
+          <Route path="/tenant/dashboard" component={EnterpriseDashboardPage} />
+          <Route path="/edge/lite" component={EdgeLitePage} />
+          <Route path="/partners/telecom" component={TelecomPartnerPortalPage} />
+          <Route path="/edge/trust" component={PublicTrustCentrePage} />
+          <Route path="/edge/help" component={LaunchHelpCentrePage} />
+
+          {/* Platform Admin */}
+          <Route path="/admin" component={AdminDashboardPage} />
+          <Route path="/admin/edge" component={AdminEdgePage} />
+          <Route path="/admin/edge/executive" component={ExecutiveDashboardPage} />
+          <Route path="/admin/edge/launch" component={LaunchCommandCenterPage} />
+          <Route path="/admin/edge/investor" component={InvestorDashboardPage} />
+          <Route path="/admin/edge/partnerships" component={PartnershipPipelinePage} />
+          <Route path="/admin/edge/expansion" component={ExpansionScorecardsPage} />
+
+          {/* Phase 13 — Scaled Operations Admin */}
+          <Route path="/admin/edge/scaled" component={ScaledOperationsDashboardPage} />
+          <Route path="/admin/edge/scale-programmes" component={ScaleProgrammesPage} />
+          <Route path="/admin/edge/partner-applications" component={PartnerApplicationsPage} />
+          <Route path="/admin/edge/self-service-partners" component={SelfServicePartnersPage} />
+          <Route path="/admin/edge/b2b-billing" component={B2bBillingPage} />
+          <Route path="/admin/edge/usage-ledger" component={UsageLedgerPage} />
+          <Route path="/admin/edge/customer-success" component={CustomerSuccessPage} />
+          <Route path="/admin/edge/sales" component={SalesOperationsPage} />
+          <Route path="/admin/edge/regional-markets" component={RegionalMarketsPage} />
+          <Route path="/admin/edge/payment-providers" component={PaymentProvidersPage} />
+          <Route path="/admin/edge/portfolio" component={PortfolioOptimizationPage} />
+          <Route path="/admin/edge/revenue-retention" component={RevenueRetentionPage} />
+          <Route path="/admin/edge/capital-allocation" component={CapitalAllocationPage} />
+
+          {/* Phase 13 — Partner Public Routes */}
+          <Route path="/partners/onboarding" component={PartnerOnboardingPage} />
+          <Route path="/partners/help" component={PartnerHelpCentrePage} />
+
+          {/* Phase 14 — Cross-Sport Public Routes */}
+          <Route path="/sports" component={SportsHubPage} />
+          <Route path="/marketplace" component={MarketplacePage} />
+
+          {/* Phase 14 — Admin: Sports & Marketplace */}
+          <Route path="/admin/edge/sport-opportunities" component={SportOpportunitiesPage} />
+          <Route path="/admin/edge/marketplace" component={MarketplaceAdminPage} />
+          <Route path="/admin/edge/seller-applications" component={SellerApplicationsPage} />
+
+          {/* Phase 14 — Admin: Corporate (Restricted) */}
+          <Route path="/admin/edge/corporate" component={CorporateRecordsPage} />
+          <Route path="/admin/edge/cap-table" component={CapTablePage} />
+          <Route path="/admin/edge/ip-register" component={IpRegisterPage} />
+
+          {/* Phase 14 — Admin: Investment & Exit (Restricted) */}
+          <Route path="/admin/edge/investor-pipeline" component={InvestorPipelinePage} />
+          <Route path="/admin/edge/diligence" component={DiligenceRoomPage} />
+          <Route path="/admin/edge/exit-readiness" component={ExitReadinessPage} />
+          <Route path="/admin/edge/strategic-transactions" component={StrategicTransactionsPage} />
+          
+          <Route path="/markets" component={MarketHomePage} />
+          <Route path="/receipt/:id" component={PredictionReceiptPage} />
+          <Route>
+            <div className="container mx-auto px-4 py-20 text-center">
+              <h1 className="text-4xl font-extrabold mb-4">404 - Page Not Found</h1>
+              <p className="text-gray-400 mb-8">The page you are looking for does not exist.</p>
+              <a href="/" className="bg-[#B30000] text-white px-6 py-3 rounded-lg font-bold">Return Home</a>
+            </div>
+          </Route>
+        </Switch>
+      </main>
+
+      <ChooseClubModal isOpen={isChooseClubOpen} onClose={() => setIsChooseClubOpen(false)} />
+    </div>
   );
 }

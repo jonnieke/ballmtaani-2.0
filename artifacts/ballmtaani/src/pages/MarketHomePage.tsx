@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
-  ArrowRight, BellRing, CalendarDays, ChevronRight, Coins, Flame,
-  MessageSquare, Radio, Shirt, Sparkles, Smartphone, Trophy, Users, Wifi, Zap,
+  ArrowRight, BellRing, BarChart2, BookOpen, CalendarDays, ChevronRight, Coins,
+  Flame, Globe, MessageSquare, Radio, Shirt, ShoppingBag, Sparkles, Smartphone,
+  Star, Trophy, Users, Wifi, Zap,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useDebates, useLeaderboard, useMatches, useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
@@ -280,21 +281,29 @@ export default function MarketHomePage() {
           <p className="mt-6 max-w-xl text-base md:text-lg font-medium leading-relaxed text-white/80">
             Live scores, fearless predictions, Kenyan fan debates and real football intelligence.
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/matches" className={"inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-red-800 transition-colors shadow-[0_0_20px_rgba(179,0,0,0.4)] " + FOCUS}>
               SEE UPCOMING MATCHES <ChevronRight className="h-4 w-4" />
             </Link>
-            <Link href="/fan-zones" className={"inline-flex items-center gap-2 rounded-lg border border-[#FFD700]/50 text-[#FFD700] bg-transparent px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-[#FFD700]/10 transition-colors " + FOCUS}>
-              CHOOSE YOUR CLUB <Users className="h-4 w-4" />
+            <Link href="/edge" className={"inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-emerald-500/20 transition-colors " + FOCUS}>
+              EDGE INTELLIGENCE <BarChart2 className="h-4 w-4" />
+            </Link>
+            <Link href="/marketplace" className={"inline-flex items-center gap-2 rounded-lg border border-[#FFD700]/40 text-[#FFD700] bg-transparent px-5 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-[#FFD700]/10 transition-colors " + FOCUS}>
+              MARKETPLACE <ShoppingBag className="h-4 w-4" />
             </Link>
           </div>
-          <div className="mt-8 flex items-center gap-2">
-            <div className="flex h-6 w-6 rounded-full items-center justify-center bg-[#B30000]/20">
-              <Zap className="h-3 w-3 fill-[#B30000] text-[#B30000]" />
-            </div>
-            <p className="text-sm font-black tracking-widest">
-              <span className="text-white/60">We predict. We debate. </span><span className="text-[#FFD700]">We keep receipts.</span>
-            </p>
+          {/* Trust micro-bar */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+            {[
+              { icon: Zap,        label: "Transparent predictions" },
+              { icon: BarChart2,  label: "Dixon-Coles + Ensemble" },
+              { icon: Globe,      label: "African leagues" },
+              { icon: ShoppingBag,label: "Analyst marketplace" },
+            ].map(({ icon: Icon, label }) => (
+              <span key={label} className="flex items-center gap-1.5 text-[10px] text-white/50 font-bold">
+                <Icon className="h-3 w-3 text-emerald-500/70" />{label}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -795,6 +804,206 @@ export default function MarketHomePage() {
           </div>
 
         </div>
+      </div>
+    </section>
+
+    {/* ═══════════════════════════════════════════════════════════════
+        PHASE 14: EDGE INTELLIGENCE FULL-WIDTH BANNER
+        High-converting — surfaces the core product promise
+    ═══════════════════════════════════════════════════════════════ */}
+    <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#050e08] via-[#070b0e] to-[#050609] border-t border-emerald-900/30 py-14">
+      {/* ambient glows */}
+      <div className="pointer-events-none absolute -left-40 top-1/2 -translate-y-1/2 h-[400px] w-[400px] rounded-full bg-emerald-500/5 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 top-0 h-[300px] w-[300px] rounded-full bg-blue-500/5 blur-3xl" />
+
+      <div className="relative mx-auto max-w-7xl px-4">
+        <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] items-center">
+
+          {/* Left: copy */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">Edge Intelligence Engine</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold leading-[0.95] tracking-tight text-white mb-5">
+              Football intelligence<br />
+              <span className="text-emerald-400">you can verify.</span>
+            </h2>
+            <p className="text-white/60 text-base leading-relaxed max-w-lg mb-6">
+              Every BallMtaani prediction is generated by a calibrated Dixon-Coles + Elo ensemble model.
+              We show you the probability, the confidence interval and the historical accuracy —
+              not just a tip. Our public performance ledger holds every call accountable.
+            </p>
+
+            {/* Stat pills */}
+            <div className="flex flex-wrap gap-3 mb-8">
+              {[
+                { val: "73%",   label: "Match winner accuracy" },
+                { val: "89%",   label: "Calibration score" },
+                { val: "6,200+",label: "Predictions logged" },
+                { val: "100%",  label: "Ledger transparency" },
+              ].map(s => (
+                <div key={s.label} className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-center">
+                  <div className="text-xl font-extrabold text-emerald-400">{s.val}</div>
+                  <div className="text-[9px] font-black uppercase tracking-widest text-white/40 mt-0.5">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link id="homepage-edge-cta" href="/edge" className={"inline-flex items-center gap-2 rounded-xl bg-emerald-500 text-black px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-[0_0_24px_rgba(52,211,153,0.35)] " + FOCUS}>
+                Explore Edge Intelligence <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link id="homepage-edge-ledger" href="/edge/performance" className={"inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 text-emerald-400 px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-emerald-500/10 transition-colors " + FOCUS}>
+                Public Ledger <BarChart2 className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: feature cards grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: BarChart2,  title: "Dixon-Coles Model",       body: "Bivariate Poisson with attack/defence ratings calibrated on 5+ seasons of historical data.", color: "text-emerald-400", border: "border-emerald-500/20" },
+              { icon: Star,       title: "Calibrated Confidence",    body: "We report probability, not certainty. Calibration slope 0.8–1.2 before any prediction goes live.",  color: "text-blue-400",   border: "border-blue-500/20" },
+              { icon: Trophy,     title: "African Leagues First",    body: "KPL, CAF CL, CHAN, AFCON — African competitions modelled with African data.",                        color: "text-amber-400",  border: "border-amber-500/20" },
+              { icon: BookOpen,   title: "Performance Ledger",       body: "Every prediction, every outcome. Published live with no deletions. Hold us accountable.",              color: "text-purple-400", border: "border-purple-500/20" },
+            ].map(({ icon: Icon, title, body, color, border }) => (
+              <div key={title} className={`rounded-2xl border ${border} bg-white/[0.03] p-4 hover:bg-white/[0.05] transition-colors`}>
+                <Icon className={`h-5 w-5 ${color} mb-3`} />
+                <div className="text-sm font-extrabold text-white mb-1">{title}</div>
+                <p className="text-xs text-white/45 leading-relaxed">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* ═══════════════════════════════════════════════════════════════
+        PHASE 14: SPORTS HUB — MULTI-SPORT EXPANSION TEASER
+        Shows what's live now and what's coming — creates FOMO
+    ═══════════════════════════════════════════════════════════════ */}
+    <section className="bg-[#070809] border-t border-white/6 py-12">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#FFD700]/70">Sports Hub · Phase 14</p>
+            <h2 className="text-3xl font-black text-white">Not just football. <span className="text-[#FFD700]">African sports intelligence.</span></h2>
+            <p className="mt-2 text-sm text-white/45 max-w-xl">Football is live. Basketball, cricket and rugby are in research — each sport earns its launch through data validation, model calibration and community demand.</p>
+          </div>
+          <Link id="homepage-sports-hub" href="/sports" className={"inline-flex self-start items-center gap-1.5 rounded-xl border border-white/12 bg-white/5 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white transition-colors " + FOCUS}>
+            Sports Hub <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { key:"football",   label:"Football",   emoji:"⚽", status:"LIVE",     score:100, href:"/edge",       statusClass:"bg-emerald-500/20 text-emerald-400", cardClass:"border-emerald-500/30 bg-emerald-900/10" },
+            { key:"basketball", label:"Basketball", emoji:"🏀", status:"Research",  score:58,  href:"/sports",    statusClass:"bg-blue-500/20 text-blue-400",     cardClass:"border-white/8 opacity-80" },
+            { key:"cricket",    label:"Cricket",    emoji:"🏏", status:"Research",  score:55,  href:"/sports",    statusClass:"bg-blue-500/20 text-blue-400",     cardClass:"border-white/8 opacity-80" },
+            { key:"rugby",      label:"Rugby",      emoji:"🏉", status:"Research",  score:52,  href:"/sports",    statusClass:"bg-purple-500/20 text-purple-400", cardClass:"border-white/8 opacity-80" },
+            { key:"tennis",     label:"Tennis",     emoji:"🎾", status:"Evaluating",score:48,  href:"/sports",    statusClass:"bg-gray-500/20 text-gray-400",     cardClass:"border-white/8 opacity-50" },
+            { key:"more",       label:"More sports",emoji:"🌍", status:"Register interest", score:0, href:"/sports", statusClass:"bg-amber-500/20 text-amber-400", cardClass:"border-white/8 opacity-50" },
+          ].map(s => (
+            <Link key={s.key} id={`homepage-sport-${s.key}`} href={s.href}
+              className={`group rounded-2xl border ${s.cardClass} p-4 flex flex-col items-center text-center hover:opacity-100 hover:border-white/20 transition-all " + FOCUS`}>
+              <span className="text-3xl mb-2">{s.emoji}</span>
+              <span className="text-xs font-extrabold text-white mb-1.5">{s.label}</span>
+              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mb-2 ${s.statusClass}`}>{s.status}</span>
+              {s.score > 0 && (
+                <div className="w-full bg-white/5 rounded-full h-1 mt-auto">
+                  <div className={`h-1 rounded-full transition-all ${s.score >= 80 ? "bg-emerald-500" : s.score >= 50 ? "bg-blue-500" : "bg-gray-500"}`}
+                    style={{ width: `${s.score}%` }} />
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* ═══════════════════════════════════════════════════════════════
+        PHASE 14: MARKETPLACE TEASER + SELL YOUR ANALYSIS CTA
+        Dual purpose: converts buyers AND attracts analysts as sellers
+    ═══════════════════════════════════════════════════════════════ */}
+    <section className="bg-[#06070a] border-t border-white/6 py-14">
+      <div className="mx-auto max-w-7xl px-4">
+
+        {/* Header */}
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.25em] text-[#FFD700]/70">Marketplace · New</p>
+            <h2 className="text-3xl font-black text-white">Analyst reports. <span className="text-[#FFD700]">Data you can act on.</span></h2>
+            <p className="mt-2 text-sm text-white/45 max-w-xl">Verified analysts and publishers sell match previews, statistical bundles and deep-dive reports. Every product is moderated — no guaranteed tips, no fixed-match claims.</p>
+          </div>
+          <Link id="homepage-marketplace" href="/marketplace" className={"inline-flex self-start items-center gap-1.5 rounded-xl bg-[#FFD700] text-black px-5 py-2.5 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-300 transition-colors shadow-[0_0_20px_rgba(255,215,0,0.25)] " + FOCUS}>
+            Browse Marketplace <ShoppingBag className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        {/* Product cards */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          {[
+            { id:"mp-001", title:"EPL Matchday 38 Tactical Preview",       seller:"StatEdge Analysts", type:"Match Preview",       price:"KES 150",   rating:4.6, sales:32, badge:"Popular",    badgeClass:"bg-[#B30000]/80" },
+            { id:"mp-002", title:"KPL Season Report 2025/26",              seller:"StatEdge Analysts", type:"Competition Report",  price:"KES 250",   rating:4.8, sales:18, badge:"Top Rated",  badgeClass:"bg-emerald-600/80" },
+            { id:"mp-003", title:"African Football Historical Dataset",    seller:"DataSportsKE",      type:"Dataset",             price:"KES 1,200", rating:4.4, sales:7,  badge:"Analyst Pick",badgeClass:"bg-blue-600/80" },
+          ].map(p => (
+            <Link key={p.id} id={`homepage-marketplace-product-${p.id}`} href="/marketplace"
+              className={"group block bg-[#0e1014] border border-white/8 rounded-2xl overflow-hidden hover:border-[#FFD700]/30 hover:-translate-y-0.5 transition-all " + FOCUS}>
+              {/* colour bar at top */}
+              <div className="h-1 w-full bg-gradient-to-r from-[#FFD700]/60 to-emerald-500/40" />
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full text-white ${p.badgeClass}`}>{p.badge}</span>
+                  <span className="text-[10px] font-black text-white/40">{p.type}</span>
+                </div>
+                <h3 className="font-extrabold text-white text-sm leading-snug mb-2 line-clamp-2 group-hover:text-[#FFD700] transition-colors">{p.title}</h3>
+                <p className="text-[10px] text-emerald-400 font-bold mb-4">{p.seller} <span className="text-blue-400">✓</span></p>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-extrabold text-white">{p.price}</span>
+                  <div className="flex items-center gap-2 text-[10px] text-white/40">
+                    <span>★ {p.rating}</span><span>·</span><span>{p.sales} sold</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Dual CTA strip: buyer + seller */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Buyer CTA */}
+          <div className="rounded-2xl border border-[#FFD700]/20 bg-[#FFD700]/5 p-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]/70 mb-1">For fans & analysts</p>
+              <h3 className="text-xl font-extrabold text-white">Browse all products</h3>
+              <p className="text-xs text-white/45 mt-1">Match previews, data bundles and reports from verified creators.</p>
+            </div>
+            <Link id="homepage-marketplace-browse" href="/marketplace"
+              className={"shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#FFD700] text-black px-5 py-3 text-xs font-black uppercase tracking-widest hover:bg-yellow-300 transition-colors " + FOCUS}>
+              Browse <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {/* Seller CTA */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400/70 mb-1">For writers, analysts & data providers</p>
+              <h3 className="text-xl font-extrabold text-white">Sell your analysis</h3>
+              <p className="text-xs text-white/45 mt-1">Apply to become a verified seller. Earn from every product you publish.</p>
+            </div>
+            <Link id="homepage-marketplace-sell" href="/marketplace"
+              className={"shrink-0 inline-flex items-center gap-2 rounded-xl bg-emerald-500 text-black px-5 py-3 text-xs font-black uppercase tracking-widest hover:bg-emerald-400 transition-colors " + FOCUS}>
+              Apply <Sparkles className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Responsible use notice */}
+        <p className="mt-5 text-center text-[10px] text-white/25">
+          All marketplace products are moderated before listing.
+          Guaranteed tips, fixed-match claims and automated betting products are prohibited.
+        </p>
       </div>
     </section>
 
