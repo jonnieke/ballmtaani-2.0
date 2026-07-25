@@ -71,7 +71,7 @@ export interface IpAuditResult {
 }
 
 // Licence risk levels
-const HIGH_RISK_LICENCES = ["GPL-2.0", "GPL-3.0", "AGPL-3.0", "LGPL-2.0", "LGPL-2.1", "LGPL-3.0", "EUPL-1.1", "EUPL-1.2"];
+const HIGH_RISK_LICENCES = ["GPL-2.0", "GPL-3.0", "AGPL-3.0", "EUPL-1.1", "EUPL-1.2"];
 const PERMISSIVE_LICENCES = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "CC0-1.0", "Unlicense"];
 const UNKNOWN_LICENCE_TOKENS = ["UNLICENSED", "SEE LICENSE", "SEE LICENCE", "PROPRIETARY", "COMMERCIAL"];
 
