@@ -117,7 +117,9 @@ export default function App() {
                 <Route path="/match/:id" component={MatchDetailPage} />
                 <Route path="/matches" component={MatchesPage} />
                 <Route path="/leagues" component={LeagueCentrePage} />
-                <Route path="/leagues/:leagueSlug*?" component={LeagueDetailPage} />
+                <Route path="/leagues/:leagueSlug" component={LeagueDetailPage} />
+                <Route path="/leagues/:leagueSlug/fixtures" component={LeagueDetailPage} />
+                <Route path="/leagues/:leagueSlug/table" component={LeagueDetailPage} />
                 <Route path="/news" component={NewsPage} />
                 <Route path="/articles" component={ArticlesPage} />
                 <Route path="/article/:slug" component={ArticlePage} />

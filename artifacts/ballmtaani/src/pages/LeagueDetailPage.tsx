@@ -16,8 +16,15 @@ interface Props {
 }
 
 export default function LeagueDetailPage({ subView = "main" }: Props) {
-  const [, params] = useRoute("/leagues/:leagueSlug/*?");
-  const leagueSlug = params?.leagueSlug || "";
+  const [, params1] = useRoute("/leagues/:leagueSlug");
+  const [, params2] = useRoute("/leagues/:leagueSlug/fixtures");
+  const [, params3] = useRoute("/leagues/:leagueSlug/table");
+  const [, params4] = useRoute("/leagues/:leagueSlug/*?");
+
+  const leagueSlug = params1?.leagueSlug || params2?.leagueSlug || params3?.leagueSlug || params4?.leagueSlug || "";
+  const isFixturesPath = Boolean(params2);
+  const isTablePath = Boolean(params3);
+
   const league = getLeagueBySlug(leagueSlug);
 
   if (!league) {
@@ -41,7 +48,7 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
   const standings = rawStandingsMap ? rawStandingsMap[String(league.id)] || [] : [];
 
   const [activeTab, setActiveTab] = useState<"overview" | "fixtures" | "table">(
-    subView === "table" ? "table" : subView === "fixtures" ? "fixtures" : "overview"
+    subView === "table" || isTablePath ? "table" : subView === "fixtures" || isFixturesPath ? "fixtures" : "overview"
   );
 
   const leagueSchema = generateLeagueSchema({
