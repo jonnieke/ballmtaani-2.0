@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
@@ -32,7 +32,7 @@ interface WC26Question {
 const WC26_QUESTIONS: WC26Question[] = [
   {
     id: "wc26-champion",
-    emoji: "ðŸ†",
+    emoji: "🏆",
     title: "Who lifts the trophy?",
     subtitle: "Pick the WC26 World Champion",
     options: ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Morocco","Senegal","USA","Netherlands","Colombia"],
@@ -40,7 +40,7 @@ const WC26_QUESTIONS: WC26Question[] = [
   },
   {
     id: "wc26-africa",
-    emoji: "ðŸŒ",
+    emoji: "🌍",
     title: "Africa's deepest run",
     subtitle: "Which CAF team goes furthest?",
     options: ["Morocco","Senegal","Nigeria","Egypt","Cameroon","South Africa","Ghana","Algeria","Tunisia"],
@@ -48,7 +48,7 @@ const WC26_QUESTIONS: WC26Question[] = [
   },
   {
     id: "wc26-boot",
-    emoji: "ðŸ‘Ÿ",
+    emoji: "👟",
     title: "Golden Boot winner",
     subtitle: "Top scorer at WC26",
     options: ["Mbappe","Vinicius Jr","Haaland","Osimhen","Mane","Lewandowski","Kane","Benzema","Lukaku","Salah"],
@@ -56,7 +56,7 @@ const WC26_QUESTIONS: WC26Question[] = [
   },
   {
     id: "wc26-shock",
-    emoji: "ðŸ˜±",
+    emoji: "😱",
     title: "Biggest group stage exit",
     subtitle: "Who gets knocked out in the groups?",
     options: ["Argentina","Brazil","France","Germany","England","Spain","Belgium","Portugal"],
@@ -64,7 +64,7 @@ const WC26_QUESTIONS: WC26Question[] = [
   },
   {
     id: "wc26-horse",
-    emoji: "âš¡",
+    emoji: "⚡",
     title: "Dark horse finalist",
     subtitle: "Who reaches the final and shocks the world?",
     options: ["Portugal","Colombia","Japan","Ecuador","Senegal","South Korea","Iran","Mexico","USA","Canada"],
@@ -72,7 +72,7 @@ const WC26_QUESTIONS: WC26Question[] = [
   },
   {
     id: "wc26-kenya",
-    emoji: "ðŸ‡°ðŸ‡ª",
+    emoji: "🇰🇪",
     title: "Kenya's heart team",
     subtitle: "Who are Kenyan fans riding with?",
     options: ["Morocco","Senegal","Nigeria","South Africa","Brazil","France","England","Argentina","USA","Germany"],
@@ -290,15 +290,15 @@ export default function PredictionsPage() {
     if (!filled.length) return;
     const lines = filled.map(q => `${q.emoji} ${q.title}: ${wc26Picks[q.id]}`).join("\n");
     const total = filled.reduce((s, q) => s + q.mtc, 0);
-    const text = encodeURIComponent(`ðŸ† My WC26 Bold Calls on BallMtaani\n\n${lines}\n\nMTC on the line: ${total.toLocaleString()}\n\nMake yours â†’ https://ballmtaani.com/predictions`);
+    const text = encodeURIComponent(`🏆 My WC26 Bold Calls on BallMtaani\n\n${lines}\n\nMTC on the line: ${total.toLocaleString()}\n\nMake yours → https://ballmtaani.com/predictions`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   const shareReceipt = (item: any) => {
     const matchLabel = fixtureLabelMap[String(item.match_id)] || item.match_id;
     const status = String(item.result || "pending").toLowerCase();
-    const emoji = status === "correct" ? "âœ…" : status === "partial" ? "ðŸŸ¡" : "âŒ";
-    const text = encodeURIComponent(`${emoji} My BallMtaani Receipt\n\n${matchLabel}\nMy call: ${item.predicted_score || "-"} | Actual: ${item.actual_score || "TBD"}\n${status === "correct" ? `+${item.coins_awarded || 0} MTC earned ðŸ”¥` : ""}\n\nMake your call: https://ballmtaani.com/predictions`);
+    const emoji = status === "correct" ? "✅" : status === "partial" ? "🟡" : "❌";
+    const text = encodeURIComponent(`${emoji} My BallMtaani Receipt\n\n${matchLabel}\nMy call: ${item.predicted_score || "-"} | Actual: ${item.actual_score || "TBD"}\n${status === "correct" ? `+${item.coins_awarded || 0} MTC earned 🔥` : ""}\n\nMake your call: https://ballmtaani.com/predictions`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
@@ -409,7 +409,7 @@ export default function PredictionsPage() {
             Call It. <span className="text-[#FFD700]">Keep the Receipt.</span>
           </h1>
           <p className="mb-5 max-w-xl text-sm text-white/45">
-            Pick the scoreline before kickoff. Earn MTC when you're right. Come back after full time â€” the receipt doesn't lie.
+            Pick the scoreline before kickoff. Earn MTC when you're right. Come back after full time — the receipt doesn't lie.
           </p>
           {/* MTC reward strip */}
           <div className="flex flex-wrap gap-3">
@@ -845,7 +845,7 @@ export default function PredictionsPage() {
                   : "text-[#FFD700]/70 hover:text-[#FFD700] hover:bg-[#FFD700]/5"
               }`}
             >
-              ðŸ† WC26 Calls
+              🏆 WC26 Calls
               {activeTab === "wc26" && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-[#FFD700] rounded-t-full shadow-[0_0_8px_#FFD700]" />}
             </button>
           </div>
@@ -861,7 +861,7 @@ export default function PredictionsPage() {
                 <div>
                   <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">WC26 Champion Pick</div>
                   <div className="text-[9px] text-white/30 font-semibold">
-                    {wc26IsLive ? "WC26 is underway â€” picks closed. Receipts settle when the dust clears." : "Lock in your champion before June 11. Earn bonus MTC if they lift the trophy."}
+                    {wc26IsLive ? "WC26 is underway — picks closed. Receipts settle when the dust clears." : "Lock in your champion before June 11. Earn bonus MTC if they lift the trophy."}
                   </div>
                 </div>
                 {wc26Saved
@@ -1142,7 +1142,7 @@ export default function PredictionsPage() {
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 animate-ping rounded-full bg-[#B30000]" />
                 <span className="text-[11px] font-black uppercase tracking-widest text-[#B30000]">WC26 is Live</span>
-                <span className="text-[10px] text-white/35">Â· Scoreline calls still open</span>
+                <span className="text-[10px] text-white/35">· Scoreline calls still open</span>
               </div>
               <button onClick={() => setActiveTab("make")}
                 className="flex items-center gap-1 rounded-lg bg-[#B30000]/20 border border-[#B30000]/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#B30000] hover:bg-[#B30000]/30 transition-all">
@@ -1157,7 +1157,7 @@ export default function PredictionsPage() {
               <div>
                 <h2 className="text-lg font-black uppercase tracking-widest text-[#FFD700]">WC26 Bold Calls</h2>
                 <p className="text-[11px] text-white/40 mt-0.5">
-                  {Object.keys(wc26Saved2).filter(k => wc26Saved2[k]).length}/{WC26_QUESTIONS.length} calls locked Â·{" "}
+                  {Object.keys(wc26Saved2).filter(k => wc26Saved2[k]).length}/{WC26_QUESTIONS.length} calls locked ·{" "}
                   {WC26_QUESTIONS.filter(q => wc26Saved2[q.id]).reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line
                 </p>
               </div>
@@ -1290,11 +1290,11 @@ export default function PredictionsPage() {
           {/* All done state */}
           {WC26_QUESTIONS.every(q => wc26Saved2[q.id]) && (
             <div className="overflow-hidden rounded-2xl border border-[#FFD700]/35 bg-gradient-to-br from-[#110d00] to-[#09080d] p-6 text-center">
-              <div className="text-4xl mb-3">ðŸ†</div>
+              <div className="text-4xl mb-3">🏆</div>
               <h3 className="font-black text-[#FFD700] uppercase tracking-widest mb-2">All 6 calls locked.</h3>
               <p className="text-sm text-white/45 mb-5">
                 {wc26IsLive
-                  ? `WC26 is live â€” your receipts settle as results come in. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
+                  ? `WC26 is live — your receipts settle as results come in. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
                   : `Come back after June 11 for your receipts. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
                 }
               </p>
@@ -1306,7 +1306,7 @@ export default function PredictionsPage() {
           )}
 
           <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/20 pb-2">
-            {wc26IsLive ? "WC26 underway Â· Tournament picks closed Â· Receipts settle after each match" : "Closes at WC26 kickoff Â· Jun 11, 2026 Â· 10pm EAT"}
+            {wc26IsLive ? "WC26 underway · Tournament picks closed · Receipts settle after each match" : "Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT"}
           </p>
 
         </div>
