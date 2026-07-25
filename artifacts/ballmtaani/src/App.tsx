@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { Route, Switch } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 import { Navbar } from "./components/Navbar";
 import HomePage from "./pages/HomePage";
 import MatchDetailPage from "./pages/MatchDetailPage";
@@ -74,105 +84,107 @@ export default function App() {
   const [isChooseClubOpen, setIsChooseClubOpen] = useState(false);
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-[#B30000] selection:text-white">
-          <Navbar />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-[#B30000] selection:text-white">
+            <Navbar />
 
-          <main className="flex-grow">
-            <Switch>
-              <Route path="/" component={HomePage} />
-              <Route path="/home" component={HomePage} />
-              <Route path="/match/:id" component={MatchDetailPage} />
-              <Route path="/news" component={NewsPage} />
-              <Route path="/live" component={LiveCenterPage} />
-              <Route path="/ai-fanzone" component={AIFanZonePage} />
-              <Route path="/team/:id" component={TeamDetailPage} />
-              
-              {/* Edge Intelligence Engine Public & Account Routes */}
-              <Route path="/edge" component={EdgeLandingPage} />
-              <Route path="/edge/for-you" component={EdgeForYouPage} />
-              <Route path="/edge/today" component={EdgeMatchListingPage} />
-              <Route path="/edge/tomorrow" component={EdgeMatchListingPage} />
-              <Route path="/edge/upcoming" component={EdgeMatchListingPage} />
-              <Route path="/edge/match/:fixtureId" component={EdgeMatchDetailPage} />
-              <Route path="/edge/performance" component={EdgePerformancePage} />
-              <Route path="/edge/how-it-works" component={EdgeHowItWorksPage} />
-              <Route path="/edge/models" component={EdgeModelsPage} />
-              <Route path="/edge/pricing-preview" component={EdgePricingPreviewPage} />
-              <Route path="/account/edge" component={AccountEdgePage} />
-              <Route path="/partners/edge/developers" component={PartnerDeveloperPortalPage} />
-              <Route path="/mobile/preview" component={MobileAppPreviewView} />
-              <Route path="/tenant/newsroom" component={TenantNewsroomPage} />
-              <Route path="/tenant/dashboard" component={EnterpriseDashboardPage} />
-              <Route path="/edge/lite" component={EdgeLitePage} />
-              <Route path="/partners/telecom" component={TelecomPartnerPortalPage} />
-              <Route path="/edge/trust" component={PublicTrustCentrePage} />
-              <Route path="/edge/help" component={LaunchHelpCentrePage} />
+            <main className="flex-grow">
+              <Switch>
+                <Route path="/" component={HomePage} />
+                <Route path="/home" component={HomePage} />
+                <Route path="/match/:id" component={MatchDetailPage} />
+                <Route path="/news" component={NewsPage} />
+                <Route path="/live" component={LiveCenterPage} />
+                <Route path="/ai-fanzone" component={AIFanZonePage} />
+                <Route path="/team/:id" component={TeamDetailPage} />
+                
+                {/* Edge Intelligence Engine Public & Account Routes */}
+                <Route path="/edge" component={EdgeLandingPage} />
+                <Route path="/edge/for-you" component={EdgeForYouPage} />
+                <Route path="/edge/today" component={EdgeMatchListingPage} />
+                <Route path="/edge/tomorrow" component={EdgeMatchListingPage} />
+                <Route path="/edge/upcoming" component={EdgeMatchListingPage} />
+                <Route path="/edge/match/:fixtureId" component={EdgeMatchDetailPage} />
+                <Route path="/edge/performance" component={EdgePerformancePage} />
+                <Route path="/edge/how-it-works" component={EdgeHowItWorksPage} />
+                <Route path="/edge/models" component={EdgeModelsPage} />
+                <Route path="/edge/pricing-preview" component={EdgePricingPreviewPage} />
+                <Route path="/account/edge" component={AccountEdgePage} />
+                <Route path="/partners/edge/developers" component={PartnerDeveloperPortalPage} />
+                <Route path="/mobile/preview" component={MobileAppPreviewView} />
+                <Route path="/tenant/newsroom" component={TenantNewsroomPage} />
+                <Route path="/tenant/dashboard" component={EnterpriseDashboardPage} />
+                <Route path="/edge/lite" component={EdgeLitePage} />
+                <Route path="/partners/telecom" component={TelecomPartnerPortalPage} />
+                <Route path="/edge/trust" component={PublicTrustCentrePage} />
+                <Route path="/edge/help" component={LaunchHelpCentrePage} />
 
-              {/* Platform Admin */}
-              <Route path="/admin" component={AdminDashboardPage} />
-              <Route path="/admin/edge" component={AdminEdgePage} />
-              <Route path="/admin/edge/executive" component={ExecutiveDashboardPage} />
-              <Route path="/admin/edge/launch" component={LaunchCommandCenterPage} />
-              <Route path="/admin/edge/investor" component={InvestorDashboardPage} />
-              <Route path="/admin/edge/partnerships" component={PartnershipPipelinePage} />
-              <Route path="/admin/edge/expansion" component={ExpansionScorecardsPage} />
+                {/* Platform Admin */}
+                <Route path="/admin" component={AdminDashboardPage} />
+                <Route path="/admin/edge" component={AdminEdgePage} />
+                <Route path="/admin/edge/executive" component={ExecutiveDashboardPage} />
+                <Route path="/admin/edge/launch" component={LaunchCommandCenterPage} />
+                <Route path="/admin/edge/investor" component={InvestorDashboardPage} />
+                <Route path="/admin/edge/partnerships" component={PartnershipPipelinePage} />
+                <Route path="/admin/edge/expansion" component={ExpansionScorecardsPage} />
 
-              {/* Phase 13 — Scaled Operations Admin */}
-              <Route path="/admin/edge/scaled" component={ScaledOperationsDashboardPage} />
-              <Route path="/admin/edge/scale-programmes" component={ScaleProgrammesPage} />
-              <Route path="/admin/edge/partner-applications" component={PartnerApplicationsPage} />
-              <Route path="/admin/edge/self-service-partners" component={SelfServicePartnersPage} />
-              <Route path="/admin/edge/b2b-billing" component={B2bBillingPage} />
-              <Route path="/admin/edge/usage-ledger" component={UsageLedgerPage} />
-              <Route path="/admin/edge/customer-success" component={CustomerSuccessPage} />
-              <Route path="/admin/edge/sales" component={SalesOperationsPage} />
-              <Route path="/admin/edge/regional-markets" component={RegionalMarketsPage} />
-              <Route path="/admin/edge/payment-providers" component={PaymentProvidersPage} />
-              <Route path="/admin/edge/portfolio" component={PortfolioOptimizationPage} />
-              <Route path="/admin/edge/revenue-retention" component={RevenueRetentionPage} />
-              <Route path="/admin/edge/capital-allocation" component={CapitalAllocationPage} />
+                {/* Phase 13 — Scaled Operations Admin */}
+                <Route path="/admin/edge/scaled" component={ScaledOperationsDashboardPage} />
+                <Route path="/admin/edge/scale-programmes" component={ScaleProgrammesPage} />
+                <Route path="/admin/edge/partner-applications" component={PartnerApplicationsPage} />
+                <Route path="/admin/edge/self-service-partners" component={SelfServicePartnersPage} />
+                <Route path="/admin/edge/b2b-billing" component={B2bBillingPage} />
+                <Route path="/admin/edge/usage-ledger" component={UsageLedgerPage} />
+                <Route path="/admin/edge/customer-success" component={CustomerSuccessPage} />
+                <Route path="/admin/edge/sales" component={SalesOperationsPage} />
+                <Route path="/admin/edge/regional-markets" component={RegionalMarketsPage} />
+                <Route path="/admin/edge/payment-providers" component={PaymentProvidersPage} />
+                <Route path="/admin/edge/portfolio" component={PortfolioOptimizationPage} />
+                <Route path="/admin/edge/revenue-retention" component={RevenueRetentionPage} />
+                <Route path="/admin/edge/capital-allocation" component={CapitalAllocationPage} />
 
-              {/* Phase 13 — Partner Public Routes */}
-              <Route path="/partners/onboarding" component={PartnerOnboardingPage} />
-              <Route path="/partners/help" component={PartnerHelpCentrePage} />
+                {/* Phase 13 — Partner Public Routes */}
+                <Route path="/partners/onboarding" component={PartnerOnboardingPage} />
+                <Route path="/partners/help" component={PartnerHelpCentrePage} />
 
-              {/* Phase 14 — Cross-Sport Public Routes */}
-              <Route path="/sports" component={SportsHubPage} />
-              <Route path="/marketplace" component={MarketplacePage} />
+                {/* Phase 14 — Cross-Sport Public Routes */}
+                <Route path="/sports" component={SportsHubPage} />
+                <Route path="/marketplace" component={MarketplacePage} />
 
-              {/* Phase 14 — Admin: Sports & Marketplace */}
-              <Route path="/admin/edge/sport-opportunities" component={SportOpportunitiesPage} />
-              <Route path="/admin/edge/marketplace" component={MarketplaceAdminPage} />
-              <Route path="/admin/edge/seller-applications" component={SellerApplicationsPage} />
+                {/* Phase 14 — Admin: Sports & Marketplace */}
+                <Route path="/admin/edge/sport-opportunities" component={SportOpportunitiesPage} />
+                <Route path="/admin/edge/marketplace" component={MarketplaceAdminPage} />
+                <Route path="/admin/edge/seller-applications" component={SellerApplicationsPage} />
 
-              {/* Phase 14 — Admin: Corporate (Restricted) */}
-              <Route path="/admin/edge/corporate" component={CorporateRecordsPage} />
-              <Route path="/admin/edge/cap-table" component={CapTablePage} />
-              <Route path="/admin/edge/ip-register" component={IpRegisterPage} />
+                {/* Phase 14 — Admin: Corporate (Restricted) */}
+                <Route path="/admin/edge/corporate" component={CorporateRecordsPage} />
+                <Route path="/admin/edge/cap-table" component={CapTablePage} />
+                <Route path="/admin/edge/ip-register" component={IpRegisterPage} />
 
-              {/* Phase 14 — Admin: Investment & Exit (Restricted) */}
-              <Route path="/admin/edge/investor-pipeline" component={InvestorPipelinePage} />
-              <Route path="/admin/edge/diligence" component={DiligenceRoomPage} />
-              <Route path="/admin/edge/exit-readiness" component={ExitReadinessPage} />
-              <Route path="/admin/edge/strategic-transactions" component={StrategicTransactionsPage} />
-              
-              <Route path="/markets" component={MarketHomePage} />
-              <Route path="/receipt/:id" component={PredictionReceiptPage} />
-              <Route>
-                <div className="container mx-auto px-4 py-20 text-center">
-                  <h1 className="text-4xl font-extrabold mb-4">404 - Page Not Found</h1>
-                  <p className="text-gray-400 mb-8">The page you are looking for does not exist.</p>
-                  <a href="/" className="bg-[#B30000] text-white px-6 py-3 rounded-lg font-bold">Return Home</a>
-                </div>
-              </Route>
-            </Switch>
-          </main>
+                {/* Phase 14 — Admin: Investment & Exit (Restricted) */}
+                <Route path="/admin/edge/investor-pipeline" component={InvestorPipelinePage} />
+                <Route path="/admin/edge/diligence" component={DiligenceRoomPage} />
+                <Route path="/admin/edge/exit-readiness" component={ExitReadinessPage} />
+                <Route path="/admin/edge/strategic-transactions" component={StrategicTransactionsPage} />
+                
+                <Route path="/markets" component={MarketHomePage} />
+                <Route path="/receipt/:id" component={PredictionReceiptPage} />
+                <Route>
+                  <div className="container mx-auto px-4 py-20 text-center">
+                    <h1 className="text-4xl font-extrabold mb-4">404 - Page Not Found</h1>
+                    <p className="text-gray-400 mb-8">The page you are looking for does not exist.</p>
+                    <a href="/" className="bg-[#B30000] text-white px-6 py-3 rounded-lg font-bold">Return Home</a>
+                  </div>
+                </Route>
+              </Switch>
+            </main>
 
-          <ChooseClubModal isOpen={isChooseClubOpen} onClose={() => setIsChooseClubOpen(false)} />
-        </div>
-      </AuthProvider>
-    </ThemeProvider>
+            <ChooseClubModal isOpen={isChooseClubOpen} onClose={() => setIsChooseClubOpen(false)} />
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
