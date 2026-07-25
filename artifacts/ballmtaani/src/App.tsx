@@ -78,6 +78,7 @@ export default function App() {
       <main className="flex-grow">
         <Switch>
           <Route path="/" component={HomePage} />
+          <Route path="/home" component={HomePage} />
           <Route path="/match/:id" component={MatchDetailPage} />
           <Route path="/news" component={NewsPage} />
           <Route path="/live" component={LiveCenterPage} />
