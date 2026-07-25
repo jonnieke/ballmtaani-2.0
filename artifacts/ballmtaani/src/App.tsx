@@ -15,6 +15,9 @@ const queryClient = new QueryClient({
 import { Navbar } from "./components/Navbar";
 import HomePage from "./pages/HomePage";
 import MatchDetailPage from "./pages/MatchDetailPage";
+import MatchesPage from "./pages/MatchesPage";
+import LeagueCentrePage from "./pages/LeagueCentrePage";
+import LeagueDetailPage from "./pages/LeagueDetailPage";
 import NewsPage from "./pages/NewsPage";
 import LiveCenterPage from "./pages/LiveCenterPage";
 import AIFanZonePage from "./pages/AIFanZonePage";
@@ -22,6 +25,21 @@ import TeamDetailPage from "./pages/TeamDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import MarketHomePage from "./pages/MarketHomePage";
 import PredictionReceiptPage from "./pages/PredictionReceiptPage";
+import PredictionsPage from "./pages/PredictionsPage";
+import DebatesPage from "./pages/DebatesPage";
+import FanZonesPage from "./pages/FanZonesPage";
+import StorePage from "./pages/StorePage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import MchambuziHalisiPage from "./pages/MchambuziHalisiPage";
+import WorldCup2026Page from "./pages/WorldCup2026Page";
+import ArticlePage from "./pages/ArticlePage";
+import ArticlesPage from "./pages/ArticlesPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
+import ProfilePage from "./pages/ProfilePage";
+import DataCentrePage from "./pages/DataCentrePage";
 import { ChooseClubModal } from "./components/ChooseClubModal";
 
 // BallMtaani Edge Phase 2 - 6 Pages
@@ -70,6 +88,8 @@ import PartnerHelpCentrePage from "./pages/edge/PartnerHelpCentrePage";
 import SportsHubPage from "./pages/edge/SportsHubPage";
 import SportOpportunitiesPage from "./pages/edge/SportOpportunitiesPage";
 import MarketplacePage from "./pages/edge/MarketplacePage";
+import MarketplaceProductDetailPage from "./pages/edge/MarketplaceProductDetailPage";
+import MarketplaceSellerApplyPage from "./pages/edge/MarketplaceSellerApplyPage";
 import MarketplaceAdminPage from "./pages/edge/MarketplaceAdminPage";
 import SellerApplicationsPage from "./pages/edge/SellerApplicationsPage";
 import CorporateRecordsPage from "./pages/edge/CorporateRecordsPage";
@@ -95,10 +115,29 @@ export default function App() {
                 <Route path="/" component={HomePage} />
                 <Route path="/home" component={HomePage} />
                 <Route path="/match/:id" component={MatchDetailPage} />
+                <Route path="/matches" component={MatchesPage} />
+                <Route path="/leagues" component={LeagueCentrePage} />
+                <Route path="/leagues/:leagueSlug*?" component={LeagueDetailPage} />
                 <Route path="/news" component={NewsPage} />
+                <Route path="/articles" component={ArticlesPage} />
+                <Route path="/article/:slug" component={ArticlePage} />
                 <Route path="/live" component={LiveCenterPage} />
                 <Route path="/ai-fanzone" component={AIFanZonePage} />
+                <Route path="/fan-zones" component={FanZonesPage} />
+                <Route path="/fan-zone" component={FanZonesPage} />
                 <Route path="/team/:id" component={TeamDetailPage} />
+                <Route path="/predictions" component={PredictionsPage} />
+                <Route path="/debates" component={DebatesPage} />
+                <Route path="/store" component={StorePage} />
+                <Route path="/leaderboard" component={LeaderboardPage} />
+                <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
+                <Route path="/world-cup-2026" component={WorldCup2026Page} />
+                <Route path="/about" component={AboutPage} />
+                <Route path="/contact" component={ContactPage} />
+                <Route path="/privacy" component={PrivacyPage} />
+                <Route path="/terms" component={TermsPage} />
+                <Route path="/profile" component={ProfilePage} />
+                <Route path="/data-center" component={DataCentrePage} />
                 
                 {/* Edge Intelligence Engine Public & Account Routes */}
                 <Route path="/edge" component={EdgeLandingPage} />
@@ -149,9 +188,11 @@ export default function App() {
                 <Route path="/partners/onboarding" component={PartnerOnboardingPage} />
                 <Route path="/partners/help" component={PartnerHelpCentrePage} />
 
-                {/* Phase 14 — Cross-Sport Public Routes */}
+                {/* Phase 14 — Cross-Sport & Marketplace Public Routes */}
                 <Route path="/sports" component={SportsHubPage} />
                 <Route path="/marketplace" component={MarketplacePage} />
+                <Route path="/marketplace/products/:id" component={MarketplaceProductDetailPage} />
+                <Route path="/marketplace/sellers/apply" component={MarketplaceSellerApplyPage} />
 
                 {/* Phase 14 — Admin: Sports & Marketplace */}
                 <Route path="/admin/edge/sport-opportunities" component={SportOpportunitiesPage} />

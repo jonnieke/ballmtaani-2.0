@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "wouter";
 
 const mockProducts = [
   { id:"mp-001", title:"EPL Matchday 38 Tactical Preview", seller:"StatEdge Analysts", sellerVerified:true, sport:"Football", type:"Match Preview", price:"KES 150", billing:"one_time", rating:4.6, sales:32, delivery:"article" },
@@ -19,7 +20,7 @@ export default function MarketplacePage() {
 
         <div className="grid md:grid-cols-2 gap-4">
           {mockProducts.map((p) => (
-            <a key={p.id} href={`/marketplace/products/${p.id}`} id={`marketplace-product-${p.id}`}
+            <Link key={p.id} href={`/marketplace/products/${p.id}`} id={`marketplace-product-${p.id}`}
                className="block bg-[#141414] border border-white/8 rounded-xl p-5 hover:border-emerald-500/20 transition-colors">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 pr-3">
@@ -40,15 +41,15 @@ export default function MarketplacePage() {
                 <span>{p.sales} sales</span>
                 <span className="bg-white/5 px-1.5 py-0.5 rounded">{p.delivery.replace("_"," ")}</span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
 
         <div className="mt-6 text-center">
-          <a href="/marketplace/sellers/apply" id="marketplace-become-seller"
+          <Link href="/marketplace/sellers/apply" id="marketplace-become-seller"
             className="inline-block bg-emerald-500/20 text-emerald-400 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-emerald-500/30 transition-colors">
             Become a Seller →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -948,7 +948,7 @@ export default function MarketHomePage() {
             { id:"mp-002", title:"KPL Season Report 2025/26",              seller:"StatEdge Analysts", type:"Competition Report",  price:"KES 250",   rating:4.8, sales:18, badge:"Top Rated",  badgeClass:"bg-emerald-600/80" },
             { id:"mp-003", title:"African Football Historical Dataset",    seller:"DataSportsKE",      type:"Dataset",             price:"KES 1,200", rating:4.4, sales:7,  badge:"Analyst Pick",badgeClass:"bg-blue-600/80" },
           ].map(p => (
-            <Link key={p.id} id={`homepage-marketplace-product-${p.id}`} href="/marketplace"
+            <Link key={p.id} id={`homepage-marketplace-product-${p.id}`} href={`/marketplace/products/${p.id}`}
               className={"group block bg-[#0e1014] border border-white/8 rounded-2xl overflow-hidden hover:border-[#FFD700]/30 hover:-translate-y-0.5 transition-all " + FOCUS}>
               {/* colour bar at top */}
               <div className="h-1 w-full bg-gradient-to-r from-[#FFD700]/60 to-emerald-500/40" />
