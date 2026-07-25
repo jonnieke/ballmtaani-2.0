@@ -204,7 +204,7 @@ export class SelfServiceApiService {
     }
 
     const widget: Widget = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       tenantId: params.tenantId,
       name: params.name,
       widgetType: params.widgetType,

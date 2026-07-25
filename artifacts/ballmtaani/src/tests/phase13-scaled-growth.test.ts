@@ -5,7 +5,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import crypto from "crypto";
+import { randomUUID } from "../lib/edge/utils/crypto-utils";
 
 import { ScaleProgrammeService } from "../lib/edge/growth/scale-programme-service";
 import { PartnerApplicationService } from "../lib/edge/partnerships/partner-application-service";
