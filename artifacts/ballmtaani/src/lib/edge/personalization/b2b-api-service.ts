@@ -2,7 +2,7 @@
  * BallMtaani Edge Phase 8 — B2B Partner API Service
  */
 
-import { createHash } from "crypto";
+import { hashSha256 } from "../utils/crypto-utils";
 
 export interface ApiKeyRecord {
   id: string;
@@ -19,7 +19,7 @@ const IN_MEMORY_API_KEYS = new Map<string, ApiKeyRecord>(); // keyHash -> record
 
 export class B2BApiService {
   static hashKey(rawKey: string): string {
-    return createHash("sha256").update(rawKey).digest("hex");
+    return hashSha256(rawKey);
   }
 
   static generateApiKey(clientId: string, allowedOrigins: string[] = ["*"]): { rawKey: string; keyPrefix: string } {

@@ -8,7 +8,7 @@
  * Only a SHA-256 hash and a human-readable prefix are persisted.
  */
 
-import crypto from "crypto";
+import { hashSha256, randomHex, randomUUID, timingSafeEqual } from "../utils/crypto-utils";
 
 export type ApiScope =
   | "public_predictions" | "widget_embed" | "public_api"
@@ -107,17 +107,17 @@ export class SelfServiceApiService {
     // Block manual-approval scopes from self-service
     const manualRequired = params.requestedScopes.filter(s => MANUAL_APPROVAL_SCOPES.includes(s));
     if (manualRequired.length > 0) {
-      return { error: `Scopes require manual approval: ${manualRequired.join(", ")}. Please contact support.` };
+      return { error: `Scopes require manual approval: ${manualRequired.length > 0 ? manualRequired.join(", ") : ""}. Please contact support.` };
     }
 
     // Generate a cryptographically random key
     const environment = params.planKey === "developer" ? "test" : "live";
-    const rawKey = `${KEY_PREFIX}_${environment}_${crypto.randomBytes(24).toString("hex")}`;
-    const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
+    const rawKey = `${KEY_PREFIX}_${environment}_${randomHex(24)}`;
+    const keyHash = hashSha256(rawKey);
     const keyPrefix = rawKey.slice(0, `${KEY_PREFIX}_${environment}_`.length + 8);
 
     const client: ApiClient = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       tenantId: params.tenantId,
       name: params.name,
       allowedScopes: params.requestedScopes,
@@ -144,8 +144,8 @@ export class SelfServiceApiService {
   /** Rotate an existing key — returns new key, marks old key hash as revoked. */
   static rotateApiKey(client: ApiClient): GeneratedKeyResult {
     const environment = client.keyPrefix.includes("_test_") ? "test" : "live";
-    const rawKey = `${KEY_PREFIX}_${environment}_${crypto.randomBytes(24).toString("hex")}`;
-    const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex");
+    const rawKey = `${KEY_PREFIX}_${environment}_${randomHex(24)}`;
+    const keyHash = hashSha256(rawKey);
     const keyPrefix = rawKey.slice(0, `${KEY_PREFIX}_${environment}_`.length + 8);
 
     const newClient: ApiClient = {
@@ -160,10 +160,9 @@ export class SelfServiceApiService {
 
   /** Verify a presented key against the stored hash. */
   static verifyApiKey(presentedKey: string, storedHash: string): boolean {
-    const hash = crypto.createHash("sha256").update(presentedKey).digest("hex");
+    const hash = hashSha256(presentedKey);
     // Constant-time comparison to prevent timing attacks
-    if (hash.length !== storedHash.length) return false;
-    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(storedHash));
+    return timingSafeEqual(hash, storedHash);
   }
 
   /** Enforce that a request scope is within a client's allowed scopes. */
