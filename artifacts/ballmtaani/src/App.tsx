@@ -40,6 +40,28 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import ProfilePage from "./pages/ProfilePage";
 import DataCentrePage from "./pages/DataCentrePage";
+import WorldCupBracketPage from "./pages/WorldCupBracketPage";
+import WorldCupGuidePage from "./pages/WorldCupGuidePage";
+import FunZonePage from "./pages/FunZonePage";
+import RivalriesPage from "./pages/RivalriesPage";
+import DiagnosticsPage from "./pages/DiagnosticsPage";
+import SearchPage from "./pages/SearchPage";
+import WarRoomPage from "./pages/WarRoomPage";
+import RapidFirePage from "./pages/RapidFirePage";
+import TriviaPage from "./pages/TriviaPage";
+import VideosPage from "./pages/VideosPage";
+import LandingPage from "./pages/LandingPage";
+import MarketWatchPage from "./pages/MarketWatchPage";
+import AdminAdsPage from "./pages/AdminAdsPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import AdminArticlesPage from "./pages/AdminArticlesPage";
+import AdminPartnersPage from "./pages/AdminPartnersPage";
+import AdminRewardsPage from "./pages/AdminRewardsPage";
+import AdminRolesPage from "./pages/AdminRolesPage";
+import ClubPartnerPortalPage from "./pages/ClubPartnerPortalPage";
+import LoginPage from "./pages/auth/LoginPage";
+import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
+import OTPPage from "./pages/auth/OTPPage";
 import { ChooseClubModal } from "./components/ChooseClubModal";
 
 // BallMtaani Edge Phase 2 - 6 Pages
@@ -112,34 +134,85 @@ export default function App() {
 
             <main className="flex-grow">
               <Switch>
+                {/* Core Public & Sports Data Center Routes */}
                 <Route path="/" component={HomePage} />
                 <Route path="/home" component={HomePage} />
-                <Route path="/match/:id" component={MatchDetailPage} />
+                <Route path="/landing" component={LandingPage} />
+
+                {/* Sports Data Center & Match Hub */}
                 <Route path="/matches" component={MatchesPage} />
+                <Route path="/matches/:id" component={MatchDetailPage} />
+                <Route path="/match-center" component={MatchesPage} />
+                <Route path="/match/:id" component={MatchDetailPage} />
+                <Route path="/sports-data-center" component={MatchesPage} />
+                <Route path="/data-center" component={MatchesPage} />
+                <Route path="/data-centre" component={MatchesPage} />
+
+                {/* Live Center Routes */}
+                <Route path="/live" component={LiveCenterPage} />
+                <Route path="/live-center" component={LiveCenterPage} />
+                <Route path="/live-centre" component={LiveCenterPage} />
+                <Route path="/live-center-index" component={LiveCenterIndexPage} />
+                <Route path="/live/:id" component={LiveCenterPage} />
+                <Route path="/live-center/:id" component={LiveCenterPage} />
+                <Route path="/live-centre/:id" component={LiveCenterPage} />
+
+                {/* Leagues Hub Routes */}
                 <Route path="/leagues" component={LeagueCentrePage} />
                 <Route path="/leagues/:leagueSlug" component={LeagueDetailPage} />
                 <Route path="/leagues/:leagueSlug/fixtures" component={LeagueDetailPage} />
                 <Route path="/leagues/:leagueSlug/table" component={LeagueDetailPage} />
+
+                {/* News & Content */}
                 <Route path="/news" component={NewsPage} />
                 <Route path="/articles" component={ArticlesPage} />
                 <Route path="/article/:slug" component={ArticlePage} />
-                <Route path="/live" component={LiveCenterPage} />
+                <Route path="/videos" component={VideosPage} />
+
+                {/* World Cup 2026 */}
+                <Route path="/world-cup-2026" component={WorldCup2026Page} />
+                <Route path="/world-cup-2026/bracket" component={WorldCupBracketPage} />
+                <Route path="/world-cup-bracket" component={WorldCupBracketPage} />
+                <Route path="/world-cup-2026/guide" component={WorldCupGuidePage} />
+                <Route path="/world-cup-2026/format" component={WorldCupGuidePage} />
+                <Route path="/world-cup-2026/:slug" component={WorldCupGuidePage} />
+
+                {/* Community & Gaming */}
                 <Route path="/ai-fanzone" component={AIFanZonePage} />
+                <Route path="/ai-fan-zone" component={AIFanZonePage} />
                 <Route path="/fan-zones" component={FanZonesPage} />
                 <Route path="/fan-zone" component={FanZonesPage} />
-                <Route path="/team/:id" component={TeamDetailPage} />
+                <Route path="/fun-zone" component={FunZonePage} />
+                <Route path="/fun-zones" component={FunZonePage} />
                 <Route path="/predictions" component={PredictionsPage} />
                 <Route path="/debates" component={DebatesPage} />
-                <Route path="/store" component={StorePage} />
                 <Route path="/leaderboard" component={LeaderboardPage} />
                 <Route path="/mchambuzi-halisi" component={MchambuziHalisiPage} />
-                <Route path="/world-cup-2026" component={WorldCup2026Page} />
+                <Route path="/rapid-fire" component={RapidFirePage} />
+                <Route path="/trivia" component={TriviaPage} />
+                <Route path="/war-room" component={WarRoomPage} />
+                <Route path="/rivalries" component={RivalriesPage} />
+
+                {/* Auth & Profile */}
+                <Route path="/login" component={LoginPage} />
+                <Route path="/register" component={LoginPage} />
+                <Route path="/auth/callback" component={AuthCallbackPage} />
+                <Route path="/otp" component={OTPPage} />
+                <Route path="/verify-otp" component={OTPPage} />
+                <Route path="/profile" component={ProfilePage} />
+                <Route path="/profile/:id" component={ProfilePage} />
+                <Route path="/team/:id" component={TeamDetailPage} />
+                <Route path="/store" component={StorePage} />
+                <Route path="/search" component={SearchPage} />
+                <Route path="/diagnostics" component={DiagnosticsPage} />
+
+                {/* Company & Info */}
                 <Route path="/about" component={AboutPage} />
                 <Route path="/contact" component={ContactPage} />
                 <Route path="/privacy" component={PrivacyPage} />
                 <Route path="/terms" component={TermsPage} />
-                <Route path="/profile" component={ProfilePage} />
-                <Route path="/data-center" component={DataCentrePage} />
+                <Route path="/partners/club" component={ClubPartnerPortalPage} />
+                <Route path="/market-watch" component={MarketWatchPage} />
                 
                 {/* Edge Intelligence Engine Public & Account Routes */}
                 <Route path="/edge" component={EdgeLandingPage} />

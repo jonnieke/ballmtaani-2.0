@@ -777,7 +777,7 @@ export default function MatchesPage() {
       <div className="shrink-0 border-b border-white/8 bg-[#080d16]">
         <div className="flex items-center gap-4 px-4 py-2.5">
           <div>
-            <h1 className="text-[13px] font-black uppercase tracking-widest text-white">Football Hub</h1>
+            <h1 className="text-[13px] font-black uppercase tracking-widest text-white">Sports Data Center</h1>
             <DataFreshnessChip label={freshnessLabelSafe} className="mt-0.5" />
           </div>
           <div className="ml-auto flex items-center gap-2">
