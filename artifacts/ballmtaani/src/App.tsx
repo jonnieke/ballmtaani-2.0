@@ -20,6 +20,7 @@ import LeagueCentrePage from "./pages/LeagueCentrePage";
 import LeagueDetailPage from "./pages/LeagueDetailPage";
 import NewsPage from "./pages/NewsPage";
 import LiveCenterPage from "./pages/LiveCenterPage";
+import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
 import AIFanZonePage from "./pages/AIFanZonePage";
 import TeamDetailPage from "./pages/TeamDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
