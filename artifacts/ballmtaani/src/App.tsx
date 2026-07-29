@@ -244,6 +244,13 @@ export default function App() {
 
                 {/* Platform Admin */}
                 <Route path="/admin" component={AdminDashboardPage} />
+                <Route path="/admin/articles" component={AdminArticlesPage} />
+                <Route path="/admin/articles/" component={AdminArticlesPage} />
+                <Route path="/admin/ads" component={AdminAdsPage} />
+                <Route path="/admin/analytics" component={AdminAnalyticsPage} />
+                <Route path="/admin/partners" component={AdminPartnersPage} />
+                <Route path="/admin/rewards" component={AdminRewardsPage} />
+                <Route path="/admin/roles" component={AdminRolesPage} />
                 <Route path="/admin/edge" component={AdminEdgePage} />
                 <Route path="/admin/edge/executive" component={ExecutiveDashboardPage} />
                 <Route path="/admin/edge/launch" component={LaunchCommandCenterPage} />
