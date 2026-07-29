@@ -72,6 +72,36 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
     body: "Latest original football news curated for Kenyan fans. Premier League transfers, KPL results, Harambee Stars updates, and African football coverage from BallMtaani.",
     jsonLdType: "NewsArticle",
   },
+  "/articles": {
+    title: "Mtaa Daily Football Articles | BallMtaani Reporting",
+    description:
+      "Original football articles, tactical breakdowns, match analysis, and African football reporting from BallMtaani's editorial team.",
+    keywords:
+      "BallMtaani articles, Kenya football news, Mtaa Daily, African football reporting, WC26 analysis",
+    h1: "Mtaa Daily Original Articles & Football Reporting",
+    body: "Explore all original articles, match analysis, tactical deep-dives, and African football coverage from BallMtaani's editorial team.",
+    jsonLdType: "CollectionPage",
+  },
+  "/articles/": {
+    title: "Mtaa Daily Football Articles | BallMtaani Reporting",
+    description:
+      "Original football articles, tactical breakdowns, match analysis, and African football reporting from BallMtaani's editorial team.",
+    keywords:
+      "BallMtaani articles, Kenya football news, Mtaa Daily, African football reporting, WC26 analysis",
+    h1: "Mtaa Daily Original Articles & Football Reporting",
+    body: "Explore all original articles, match analysis, tactical deep-dives, and African football coverage from BallMtaani's editorial team.",
+    jsonLdType: "CollectionPage",
+  },
+  "/article": {
+    title: "Mtaa Daily Football Articles | BallMtaani Reporting",
+    description:
+      "Original football articles, tactical breakdowns, match analysis, and African football reporting from BallMtaani's editorial team.",
+    keywords:
+      "BallMtaani articles, Kenya football news, Mtaa Daily, African football reporting, WC26 analysis",
+    h1: "Mtaa Daily Original Articles & Football Reporting",
+    body: "Explore all original articles, match analysis, tactical deep-dives, and African football coverage from BallMtaani's editorial team.",
+    jsonLdType: "CollectionPage",
+  },
   "/matches": {
     title: "Live Football Scores & Fixtures | BallMtaani Kenya",
     description:
@@ -545,6 +575,24 @@ export default function middleware(request: Request): Response | undefined {
       h1: `${home} vs ${away}`,
       body: `Matchday intelligence and permanent fixture record for ${home} vs ${away}. Includes Africa/Nairobi (EAT) kickoff schedule, prediction pulse ratios, tactical analysis and fan debates.`,
       jsonLdType: "SportsEvent",
+    };
+    return new Response(generateCrawlableHTML(meta, canonical), {
+      status: 200,
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600", "X-BallMtaani-Rendered": "edge-ssr" },
+    });
+  }
+
+  // 5. Article Detail Route (/article/:slug and /articles/:slug)
+  if ((pathname.startsWith("/article/") && pathname !== "/article/") || (pathname.startsWith("/articles/") && pathname !== "/articles/")) {
+    const slug = pathname.replace(/^\/(?:article|articles)\//, "").split("/")[0];
+    const formattedTitle = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const meta: PageMeta = {
+      title: `${formattedTitle} | BallMtaani Mtaa Daily`,
+      description: `Read ${formattedTitle} on BallMtaani — Kenya's premier football intelligence platform for live scores, match analysis, and original reporting.`,
+      keywords: `${formattedTitle}, BallMtaani article, Kenya football news, Mtaa Daily`,
+      h1: formattedTitle,
+      body: `Original reporting, tactical deep-dives, and match analysis from BallMtaani's editorial team.`,
+      jsonLdType: "NewsArticle",
     };
     return new Response(generateCrawlableHTML(meta, canonical), {
       status: 200,

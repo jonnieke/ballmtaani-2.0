@@ -17,6 +17,8 @@ function urlEntry(loc: string, opts: { lastmod?: string; changefreq?: string; pr
 
 const STATIC_PAGES = [
   { loc: "/", priority: "1.00", changefreq: "hourly" },
+  { loc: "/articles", priority: "0.95", changefreq: "daily" },
+  { loc: "/news", priority: "0.95", changefreq: "hourly" },
   { loc: "/about", priority: "0.80", changefreq: "monthly" },
   { loc: "/contact", priority: "0.75", changefreq: "monthly" },
   { loc: "/privacy", priority: "0.40", changefreq: "monthly" },

@@ -160,14 +160,20 @@ export default function App() {
 
                 {/* Leagues Hub Routes */}
                 <Route path="/leagues" component={LeagueCentrePage} />
-                <Route path="/leagues/:leagueSlug" component={LeagueDetailPage} />
-                <Route path="/leagues/:leagueSlug/fixtures" component={LeagueDetailPage} />
-                <Route path="/leagues/:leagueSlug/table" component={LeagueDetailPage} />
+                <Route path="/leagues/:leagueSlug">{() => <LeagueDetailPage subView="main" />}</Route>
+                <Route path="/leagues/:leagueSlug/fixtures">{() => <LeagueDetailPage subView="fixtures" />}</Route>
+                <Route path="/leagues/:leagueSlug/table">{() => <LeagueDetailPage subView="table" />}</Route>
 
                 {/* News & Content */}
                 <Route path="/news" component={NewsPage} />
                 <Route path="/articles" component={ArticlesPage} />
+                <Route path="/articles/" component={ArticlesPage} />
+                <Route path="/article" component={ArticlesPage} />
+                <Route path="/article/" component={ArticlesPage} />
                 <Route path="/article/:slug" component={ArticlePage} />
+                <Route path="/articles/:slug" component={ArticlePage} />
+                <Route path="/news/article/:slug" component={ArticlePage} />
+                <Route path="/news/articles" component={ArticlesPage} />
                 <Route path="/videos" component={VideosPage} />
 
                 {/* World Cup 2026 */}
