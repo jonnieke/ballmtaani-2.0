@@ -9,6 +9,7 @@ import TeamLogo from "../components/TeamLogo";
 import SponsorSlot from "../components/SponsorSlot";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
+import EditorialIntro from "../components/EditorialIntro";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 import { WC26BracketCard } from "../components/WC26BracketCard";
 import { analytics } from "../lib/analytics";
@@ -396,6 +397,21 @@ export default function PredictionsPage() {
         title="Predictions | BallMtaani Fan Calls & Receipts"
         description="Call the scoreline on the biggest football fixtures. Earn MTC status. Keep receipts. Kenya's fan prediction platform."
         path="/predictions"
+      />
+
+      <EditorialIntro
+        eyebrow="BallMtaani prediction studio"
+        title="A call-making page with receipts, context and tournament stakes."
+        copy="Predictions are part of the publication, not a standalone gimmick. We pair score calls with fixture context, WC26 tournament picks and a clear paper trail so readers can follow the reasoning before kickoff and the result after full time."
+        bullets={[
+          "Match predictions with receipts and leaderboard history.",
+          "WC26 tournament calls, African team picks and community consensus.",
+          "Mchambuzi analysis that explains the shape of the game before you submit a call.",
+        ]}
+        links={[
+          { href: "/matches", label: "Check fixtures" },
+          { href: "/news", label: "Read match context" },
+        ]}
       />
 
       {/* â”€â”€ HERO â”€â”€ */}
@@ -1317,4 +1333,8 @@ export default function PredictionsPage() {
     </div>
   );
 }
+
+
+
+
 

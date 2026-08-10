@@ -15,6 +15,7 @@ import {
 import { useMatches, useRecentMatches, useUpcomingFixtures, useStandings, useFixtureDetail } from "../hooks/useData";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
+import EditorialIntro from "../components/EditorialIntro";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import type { TournamentStandingEntry } from "../lib/football-api";
@@ -773,6 +774,21 @@ export default function MatchesPage() {
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "Matches", url: "/matches" }]}
       />
 
+      <EditorialIntro
+        eyebrow="BallMtaani match desk"
+        title="The fixtures page with context, not just a list."
+        copy="This hub is built to help fans understand what is live, what is next and what the tables mean. It pairs real-time scores with league context, freshness labels and Africa-focused coverage so the page reads like a sports desk instead of a raw feed."
+        bullets={[
+          "Live scores, results and upcoming fixtures in one place.",
+          "Standings and competition context for the major leagues we cover.",
+          "African football widgets and freshness indicators for trustworthy updates.",
+        ]}
+        links={[
+          { href: "/news", label: "Read the edition" },
+          { href: "/articles", label: "Long-form stories" },
+        ]}
+      />
+
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-white/8 bg-[#080d16]">
         <div className="flex items-center gap-4 px-4 py-2.5">
@@ -982,3 +998,7 @@ export default function MatchesPage() {
     </div>
   );
 }
+
+
+
+
