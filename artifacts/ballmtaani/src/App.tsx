@@ -174,6 +174,7 @@ export default function App() {
                 <Route path="/articles/:slug" component={ArticlePage} />
                 <Route path="/news/article/:slug" component={ArticlePage} />
                 <Route path="/news/articles" component={ArticlesPage} />
+                <Route path="/news/:slug" component={ArticlePage} />
                 <Route path="/videos" component={VideosPage} />
 
                 {/* World Cup 2026 */}
