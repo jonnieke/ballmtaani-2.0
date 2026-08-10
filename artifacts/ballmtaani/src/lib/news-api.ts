@@ -6,6 +6,7 @@
  * Partner articles from Supabase are fetched separately and surfaced first.
  */
 import { supabase } from "./supabase";
+import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
 
 export interface NewsArticle {
   id: string;
@@ -437,7 +438,22 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
 }
 
 export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
-  if (!supabase) return [];
+  const fallbackArticles = getEditorialFallbackArticles().map((article) => ({
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    link: `/article/${article.slug}`,
+    pubDate: article.published_at,
+    source: article.partner_team_name || "BallMtaani",
+    sourceLogo: "PARTNER",
+    thumbnail: extractArticleImage(article.thumbnail_url) || DEFAULT_NEWS_IMAGE,
+    imageQuality: "feed" as const,
+    description: article.excerpt || "",
+    isInternal: true,
+    isWC26: !!article.is_wc26,
+  }));
+
+  if (!supabase) return fallbackArticles;
   try {
     const { data, error } = await supabase
       .from("articles")
@@ -445,8 +461,8 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(9);
-    if (error || !data) return [];
-    return data.map((a: any) => ({
+    if (error || !data) return fallbackArticles;
+    const published = data.map((a: any) => ({
       id: a.id,
       slug: a.slug,
       title: a.title,
@@ -460,7 +476,14 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
       isInternal: true,
       isWC26: !!a.is_wc26,
     }));
+    const seen = new Set(published.map((article) => article.slug));
+    for (const article of fallbackArticles) {
+      if (!seen.has(article.slug)) published.push(article);
+    }
+    return published;
   } catch {
-    return [];
+    return fallbackArticles;
   }
 }
+
+

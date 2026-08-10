@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { timeAgo } from "../lib/news-api";
+import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
 import SEO from "../components/SEO";
 import { ChevronRight, Newspaper } from "lucide-react";
 
@@ -31,7 +32,19 @@ export default function ArticlesPage() {
   const [filter, setFilter] = useState<"all" | "wc26">("all");
 
   useEffect(() => {
-    if (!supabase) { setLoading(false); return; }
+    const fallbackArticles = getEditorialFallbackArticles().map((article) => ({
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      excerpt: article.excerpt,
+      thumbnail_url: article.thumbnail_url,
+      author_name: article.author_name,
+      published_at: article.published_at,
+      is_wc26: article.is_wc26,
+      tags: article.tags,
+    }));
+
+    if (!supabase) { setArticles(fallbackArticles as ArticleItem[]); setLoading(false); return; }
     supabase
       .from("articles")
       .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26, tags")
@@ -39,7 +52,12 @@ export default function ArticlesPage() {
       .order("published_at", { ascending: false })
       .limit(50)
       .then(({ data }) => {
-        setArticles((data || []) as ArticleItem[]);
+        const published = (data || []) as ArticleItem[];
+        const seen = new Set(published.map((article) => article.slug));
+        for (const article of fallbackArticles) {
+          if (!seen.has(article.slug)) published.push(article as ArticleItem);
+        }
+        setArticles(published);
         setLoading(false);
       });
   }, []);
@@ -154,3 +172,5 @@ export default function ArticlesPage() {
     </div>
   );
 }
+
+

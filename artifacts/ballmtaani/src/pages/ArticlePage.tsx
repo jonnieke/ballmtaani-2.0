@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { timeAgo } from "../lib/news-api";
+import { getEditorialFallbackArticle } from "../data/editorial-fallback-articles";
 import { ArrowLeft, Share2, ChevronRight } from "lucide-react";
 import SEO from "../components/SEO";
 import ArticleEngagement from "../components/ArticleEngagement";
@@ -66,7 +67,15 @@ export default function ArticlePage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!slug || !supabase) { setLoading(false); setNotFound(true); return; }
+    const fallbackArticle = getEditorialFallbackArticle(slug);
+
+    if (!slug || !supabase) {
+      if (!fallbackArticle) { setLoading(false); setNotFound(true); return; }
+      setArticle(fallbackArticle as Article);
+      setLoading(false);
+      return;
+    }
+
     supabase
       .from("articles")
       .select("*")
@@ -74,15 +83,16 @@ export default function ArticlePage() {
       .eq("status", "published")
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error || !data) { setNotFound(true); setLoading(false); return; }
-        setArticle(data as Article);
+        const resolvedArticle = (data || fallbackArticle) as Article | null;
+        if (error || !resolvedArticle) { setNotFound(true); setLoading(false); return; }
+        setArticle(resolvedArticle);
         setLoading(false);
-        // Fetch related articles â€” same is_wc26 flag, exclude current
+        // Fetch related articles — same is_wc26 flag, exclude current
         supabase
           .from("articles")
           .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26")
           .eq("status", "published")
-          .eq("is_wc26", (data as Article).is_wc26)
+          .eq("is_wc26", resolvedArticle.is_wc26)
           .neq("slug", slug)
           .order("published_at", { ascending: false })
           .limit(3)
@@ -384,3 +394,5 @@ export default function ArticlePage() {
     </>
   );
 }
+
+
