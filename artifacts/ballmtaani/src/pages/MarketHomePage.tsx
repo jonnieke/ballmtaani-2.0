@@ -214,10 +214,13 @@ export default function MarketHomePage() {
     return !topic.includes("world cup") && !topic.includes("wc26");
   });
   const originals = news.filter((article) => article.isInternal);
+  const externalWire = news.filter((article) => !article.isInternal);
   const kenya = news.filter(isKenyanStory).slice(0, 3);
-  const take = useMemo(() => mchambuziTake(featured, mode, news[0]?.title), [featured, mode, news]);
-  const leadStory = news[0] || seasonNews[0] || originals[0] || kenya[0];
-  const briefingStories = [news[1], news[2], news[3]].filter(Boolean) as NewsArticle[];
+  const take = useMemo(() => mchambuziTake(featured, mode, originals[0]?.title || news[0]?.title), [featured, mode, news, originals]);
+  const leadStory = originals[0] || news[0] || seasonNews[0] || kenya[0];
+  const briefingStories = (originals.length > 1 ? originals.slice(1, 4) : [news[1], news[2], news[3]].filter(Boolean)) as NewsArticle[];
+  const secondaryStory = originals[1] || kenya[0] || news[1];
+  const wireStory = externalWire[0] || news[2];
 
   const handlePredictPick = (pickChoice: "1" | "X" | "2") => {
     const predicted = pickChoice === "1" ? "2-1" : pickChoice === "X" ? "1-1" : "0-2";
@@ -259,7 +262,7 @@ export default function MarketHomePage() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-4">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-[#FFD700]/80">Mtaa Daily · Front Page</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-[#FFD700]/80">Mtaa Daily ï¿½ Front Page</p>
             <h2 className="mt-2 text-2xl font-black leading-tight text-white md:text-4xl">Morning briefing, live desk and fan tools in one place.</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">A magazine-style front page for readers who want the story first, the data second, and the tools just a click away.</p>
           </div>
@@ -298,17 +301,17 @@ export default function MarketHomePage() {
                   </div>
                 </Link>
               ) : (
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5 text-sm text-white/50">We’re lining up today’s front page. Check back for the lead story, briefing and live desk.</div>
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5 text-sm text-white/50">Weï¿½re lining up todayï¿½s front page. Check back for the lead story, briefing and live desk.</div>
               )}
 
               <div className="space-y-3">
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Today’s briefing</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Todayï¿½s briefing</p>
                   <p className="mt-2 text-sm leading-relaxed text-white/48">Three things to know before kickoff: the lead story, the most important fixture, and the fan angle everyone is arguing about.</p>
                 </div>
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Get the daily briefing</p>
-                  <p className="mt-2 text-sm leading-relaxed text-white/48">Turn on match alerts for live scores, WC26 updates and new stories — a lightweight newsletter feel powered by push notifications.</p>
+                  <p className="mt-2 text-sm leading-relaxed text-white/48">Turn on match alerts for live scores, WC26 updates and new stories ï¿½ a lightweight newsletter feel powered by push notifications.</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <NotificationBell compact />
                     <Link href="/articles" className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white transition-colors">
@@ -641,15 +644,13 @@ export default function MarketHomePage() {
     {/* MTAA DAILY NEWS SPOTLIGHT & LIVE WIRE TICKER */}
     <section className="bg-[#0B0B0B] py-8 border-t border-[#1B1B1B]">
       <div className="mx-auto max-w-7xl px-4">
-        
-        {/* News Section Header with Category Chips & Link */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#B30000] animate-pulse" />
               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#FFD700]">MTAA DAILY EDITORIAL</span>
             </div>
-            <h2 className="mt-1 text-2xl font-black text-white md:text-3xl">Today's Top Football Stories</h2>
+            <h2 className="mt-1 text-2xl font-black text-white md:text-3xl">Your stories first, the wire second.</h2>
           </div>
 
           <Link
@@ -661,51 +662,47 @@ export default function MarketHomePage() {
           </Link>
         </div>
 
-        {/* Live News Wire Bar */}
-        {news.length > 0 && (
+        {leadStory && (
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-white/10 bg-[#12141c] px-4 py-2.5 text-xs text-white/80">
             <span className="shrink-0 rounded bg-[#B30000] px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-white">
-              WIRE
+              LEAD
             </span>
             <div className="min-w-0 flex-1 truncate font-medium">
-              <span className="text-white font-bold">{news[0]?.title}</span>
-              <span className="mx-2 text-white/30">â€¢</span>
-              <span className="text-white/50">{news[1]?.title}</span>
+              <span className="text-white font-bold">{leadStory.title}</span>
+              <span className="mx-2 text-white/30">&bull;</span>
+              <span className="text-white/50">{wireStory?.title || externalWire[0]?.title || 'External wire moving'}</span>
             </div>
-            <span className="shrink-0 text-[10px] font-mono text-white/40">{timeAgo(news[0]?.pubDate || "")}</span>
+            <span className="shrink-0 text-[10px] font-mono text-white/40">{timeAgo(leadStory.pubDate)}</span>
           </div>
         )}
 
-        {/* 3-Card Uncluttered Spotlight Grid */}
         <div className="grid gap-6 md:grid-cols-3">
-          
-          {/* Card 1: Lead Main Story */}
-          {news[0] ? (
+          {leadStory ? (
             <Link
-              href={news[0].isInternal ? `/article/${news[0].slug}` : news[0].link}
+              href={leadStory.isInternal ? "/article/" + leadStory.slug : leadStory.link}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141620] transition-all hover:border-[#B30000]/50 hover:-translate-y-1 shadow-lg"
             >
               <div className="relative aspect-[16/9] overflow-hidden bg-black/40">
                 <img
-                  src={news[0].thumbnail || HERO_IMAGE}
-                  alt={news[0].title}
+                  src={leadStory.thumbnail || HERO_IMAGE}
+                  alt={leadStory.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => { e.currentTarget.src = HERO_IMAGE; }}
                 />
                 <span className="absolute top-3 left-3 rounded-full bg-[#B30000] px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow">
-                  TOP STORY
+                  {leadStory.isInternal ? 'PLATFORM STORY' : 'TOP STORY'}
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40">
-                  <span>{news[0].source || "Mtaa Daily"}</span>
-                  <span>{timeAgo(news[0].pubDate)}</span>
+                  <span>{leadStory.source || 'Mtaa Daily'}</span>
+                  <span>{timeAgo(leadStory.pubDate)}</span>
                 </div>
                 <h3 className="text-lg font-black leading-snug text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                  {news[0].title}
+                  {leadStory.title}
                 </h3>
                 <p className="mt-2 text-xs leading-relaxed text-white/50 line-clamp-2">
-                  {news[0].description || "Read full story on Mtaa Daily."}
+                  {leadStory.description || 'Read full story on Mtaa Daily.'}
                 </p>
                 <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
                   <span>READ ARTICLE &rarr;</span>
@@ -716,33 +713,32 @@ export default function MarketHomePage() {
             <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
           )}
 
-          {/* Card 2: Kenyan Football Spotlight */}
-          {kenya[0] || news[1] ? (
+          {secondaryStory ? (
             <Link
-              href={(kenya[0] || news[1]).isInternal ? `/article/${(kenya[0] || news[1]).slug}` : (kenya[0] || news[1]).link}
+              href={secondaryStory.isInternal ? "/article/" + secondaryStory.slug : secondaryStory.link}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141620] transition-all hover:border-[#FFD700]/50 hover:-translate-y-1 shadow-lg"
             >
               <div className="relative aspect-[16/9] overflow-hidden bg-black/40">
                 <img
-                  src={(kenya[0] || news[1]).thumbnail || FANS_IMAGE}
-                  alt={(kenya[0] || news[1]).title}
+                  src={secondaryStory.thumbnail || FANS_IMAGE}
+                  alt={secondaryStory.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => { e.currentTarget.src = FANS_IMAGE; }}
                 />
                 <span className="absolute top-3 left-3 rounded-full bg-emerald-700 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow">
-                  ðŸ‡°ðŸ‡ª KENYA SPOTLIGHT
+                  PLATFORM STORY
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40">
-                  <span>{(kenya[0] || news[1]).source || "Mtaa Daily Kenya"}</span>
-                  <span>{timeAgo((kenya[0] || news[1]).pubDate)}</span>
+                  <span>{secondaryStory.source || 'Mtaa Daily'}</span>
+                  <span>{timeAgo(secondaryStory.pubDate)}</span>
                 </div>
                 <h3 className="text-lg font-black leading-snug text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                  {(kenya[0] || news[1]).title}
+                  {secondaryStory.title}
                 </h3>
                 <p className="mt-2 text-xs leading-relaxed text-white/50 line-clamp-2">
-                  {(kenya[0] || news[1]).description || "FKF Premier League & Harambee Stars updates."}
+                  {secondaryStory.description || 'FKF Premier League & Harambee Stars updates.'}
                 </p>
                 <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
                   <span>READ STORY &rarr;</span>
@@ -753,33 +749,32 @@ export default function MarketHomePage() {
             <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
           )}
 
-          {/* Card 3: Global / Transfer Feature */}
-          {news[2] ? (
+          {wireStory ? (
             <Link
-              href={news[2].isInternal ? `/article/${news[2].slug}` : news[2].link}
+              href={wireStory.isInternal ? "/article/" + wireStory.slug : wireStory.link}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141620] transition-all hover:border-blue-500/50 hover:-translate-y-1 shadow-lg"
             >
               <div className="relative aspect-[16/9] overflow-hidden bg-black/40">
                 <img
-                  src={news[2].thumbnail || HERO_IMAGE}
-                  alt={news[2].title}
+                  src={wireStory.thumbnail || HERO_IMAGE}
+                  alt={wireStory.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => { e.currentTarget.src = HERO_IMAGE; }}
                 />
                 <span className="absolute top-3 left-3 rounded-full bg-blue-700 px-2.5 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow">
-                  WORLD FOOTBALL
+                  EXTERNAL WIRE
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/40">
-                  <span>{news[2].source || "World Football Desk"}</span>
-                  <span>{timeAgo(news[2].pubDate)}</span>
+                  <span>{wireStory.source || 'World Football Desk'}</span>
+                  <span>{timeAgo(wireStory.pubDate)}</span>
                 </div>
                 <h3 className="text-lg font-black leading-snug text-white group-hover:text-[#FFD700] transition-colors line-clamp-2">
-                  {news[2].title}
+                  {wireStory.title}
                 </h3>
                 <p className="mt-2 text-xs leading-relaxed text-white/50 line-clamp-2">
-                  {news[2].description || "Latest global football coverage."}
+                  {wireStory.description || 'Latest global football coverage.'}
                 </p>
                 <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#FFD700]">
                   <span>READ STORY &rarr;</span>
@@ -789,7 +784,6 @@ export default function MarketHomePage() {
           ) : (
             <div className="h-64 rounded-2xl bg-white/5 animate-pulse" />
           )}
-
         </div>
       </div>
     </section>
@@ -1190,6 +1184,7 @@ export default function MarketHomePage() {
 
   </main>;
 }
+
 
 
 
