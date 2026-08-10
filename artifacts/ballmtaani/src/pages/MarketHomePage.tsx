@@ -216,6 +216,8 @@ export default function MarketHomePage() {
   const originals = news.filter((article) => article.isInternal);
   const kenya = news.filter(isKenyanStory).slice(0, 3);
   const take = useMemo(() => mchambuziTake(featured, mode, news[0]?.title), [featured, mode, news]);
+  const leadStory = news[0] || seasonNews[0] || originals[0] || kenya[0];
+  const briefingStories = [news[1], news[2], news[3]].filter(Boolean) as NewsArticle[];
 
   const handlePredictPick = (pickChoice: "1" | "X" | "2") => {
     const predicted = pickChoice === "1" ? "2-1" : pickChoice === "X" ? "1-1" : "0-2";
@@ -251,6 +253,111 @@ export default function MarketHomePage() {
       />
     )}
 
+
+    {/* FRONT PAGE / DAILY BRIEFING */}
+    <section className="border-b border-white/8 bg-gradient-to-b from-[#0a0b10] to-[#06070b] py-6 md:py-8">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-4">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-[#FFD700]/80">Mtaa Daily · Front Page</p>
+            <h2 className="mt-2 text-2xl font-black leading-tight text-white md:text-4xl">Morning briefing, live desk and fan tools in one place.</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">A magazine-style front page for readers who want the story first, the data second, and the tools just a click away.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white/60">
+              {new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" })}
+            </div>
+            <NotificationBell compact />
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1.3fr_0.95fr]">
+          <div className="rounded-[1.75rem] border border-white/10 bg-[#0d1018] p-4 shadow-2xl shadow-black/30 md:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B30000]">Lead story</p>
+                <h3 className="mt-1 text-xl font-black text-white md:text-2xl">{leadStory?.title || "Today's football front page"}</h3>
+              </div>
+              <Link href="/news" className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white transition-colors">
+                Open desk <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
+              {leadStory ? (
+                <Link href={leadStory.isInternal ? `/article/${leadStory.slug}` : leadStory.link} className="group overflow-hidden rounded-2xl border border-white/8 bg-[#111520]">
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img src={leadStory.thumbnail || HERO_IMAGE} alt={leadStory.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" onError={(e) => { e.currentTarget.src = HERO_IMAGE; }} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                  </div>
+                  <div className="p-4">
+                    <div className="mb-2 flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-white/30">
+                      <span>{leadStory.source}</span>
+                      <span>{timeAgo(leadStory.pubDate)}</span>
+                    </div>
+                    <p className="text-sm leading-relaxed text-white/50 line-clamp-3">{leadStory.excerpt || "Read the top story, then move into fixtures, analysis and the live desk below."}</p>
+                  </div>
+                </Link>
+              ) : (
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5 text-sm text-white/50">We’re lining up today’s front page. Check back for the lead story, briefing and live desk.</div>
+              )}
+
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Today’s briefing</p>
+                  <p className="mt-2 text-sm leading-relaxed text-white/48">Three things to know before kickoff: the lead story, the most important fixture, and the fan angle everyone is arguing about.</p>
+                </div>
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Get the daily briefing</p>
+                  <p className="mt-2 text-sm leading-relaxed text-white/48">Turn on match alerts for live scores, WC26 updates and new stories — a lightweight newsletter feel powered by push notifications.</p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <NotificationBell compact />
+                    <Link href="/articles" className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white transition-colors">
+                      Read stories <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {briefingStories.length > 0 ? briefingStories.map((article) => (
+                    <Link key={article.slug || article.link} href={article.isInternal ? `/article/${article.slug}` : article.link} className="rounded-2xl border border-white/8 bg-[#0b0d13] p-3 transition hover:border-white/16">
+                      <p className="text-[8px] font-black uppercase tracking-widest text-white/30">{article.source}</p>
+                      <p className="mt-2 line-clamp-3 text-xs font-bold leading-snug text-white">{article.title}</p>
+                    </Link>
+                  )) : [0,1,2].map((index) => (
+                    <div key={index} className="rounded-2xl border border-white/8 bg-[#0b0d13] p-3 text-xs text-white/35">Briefing slot {index + 1}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.75rem] border border-[#B30000]/20 bg-[#0d0b10] p-5 shadow-2xl shadow-black/30">
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B30000]">Newsletter-style front page</p>
+            <h3 className="mt-2 text-2xl font-black text-white">A better landing page for returning fans.</h3>
+            <p className="mt-3 text-sm leading-6 text-white/48">This is the edition view: one lead story, one briefing rail, and the most useful tools underneath. It should feel like opening a sports magazine, not walking into a control panel.</p>
+            <div className="mt-5 space-y-3">
+              {[
+                "Morning briefing with real editorial context",
+                "Live fixtures and match tools below the fold",
+                "Stories, debates and fan utilities grouped by purpose",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-[#FFD700]" />
+                  <p className="text-sm leading-6 text-white/70">{item}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/news" className="inline-flex items-center gap-1 rounded-full bg-[#B30000] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-700 transition-colors">
+                Open the edition <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link href="/articles" className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white transition-colors">
+                Read long-form <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
     {/* HERO SECTION */}
     <section className="relative isolate bg-[#070707] min-h-[440px] flex items-center border-b border-[#2A2A2A] py-8 md:py-10">
       
@@ -275,21 +382,21 @@ export default function MarketHomePage() {
           </div>
 
           <h1 className="flex flex-col font-extrabold leading-[0.9] tracking-[-0.04em]">
-            <span className="text-white text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">THE SEASON</span>
-            <span className="text-[#B30000] text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">STARTS HERE.</span>
+            <span className="text-white text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">THE EDITION</span>
+            <span className="text-[#B30000] text-5xl md:text-6xl lg:text-[68px] italic drop-shadow-md">STARTS NOW.</span>
           </h1>
           <p className="mt-6 max-w-xl text-base md:text-lg font-medium leading-relaxed text-white/80">
-            Live scores, fearless predictions, Kenyan fan debates and real football intelligence.
+            The daily football front page: live scores, featured stories, match analysis and fan tools in one flowing edition.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/matches" className={"inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-red-800 transition-colors shadow-[0_0_20px_rgba(179,0,0,0.4)] " + FOCUS}>
-              SEE UPCOMING MATCHES <ChevronRight className="h-4 w-4" />
+              READ THE EDITION <ChevronRight className="h-4 w-4" />
             </Link>
             <Link href="/edge" className={"inline-flex items-center gap-2 rounded-lg border border-emerald-500/50 text-emerald-400 bg-emerald-500/10 px-6 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-emerald-500/20 transition-colors " + FOCUS}>
-              EDGE INTELLIGENCE <BarChart2 className="h-4 w-4" />
+              MATCH DESK <BarChart2 className="h-4 w-4" />
             </Link>
             <Link href="/marketplace" className={"inline-flex items-center gap-2 rounded-lg border border-[#FFD700]/40 text-[#FFD700] bg-transparent px-5 py-3.5 text-[10px] md:text-xs font-black tracking-widest uppercase hover:bg-[#FFD700]/10 transition-colors " + FOCUS}>
-              MARKETPLACE <ShoppingBag className="h-4 w-4" />
+              DAILY BRIEFING <ShoppingBag className="h-4 w-4" />
             </Link>
           </div>
           {/* Trust micro-bar */}
@@ -1083,3 +1190,6 @@ export default function MarketHomePage() {
 
   </main>;
 }
+
+
+

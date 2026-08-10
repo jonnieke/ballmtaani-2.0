@@ -15,12 +15,12 @@ const sections = [
     body: "Certain community activities are visible to other fans, including your chosen username, club avatar badge, public posts, aggregate votes, fan duel challenges, leaderboard rank, and room interactions.",
   },
   {
-    title: "Google AdSense & Third-Party Advertising (Mandatory Disclosure)",
-    body: "BallMtaani uses Google AdSense and third-party advertising vendors to display advertisements when you visit our website. These third-party vendors, including Google, use cookies (such as the DART cookie) to serve ads based on your prior visits to BallMtaani or other websites on the Internet. Google's use of advertising cookies enables it and its partners to serve personalized ads based on your visits to our site and/or other sites. You may opt out of personalized advertising by visiting Google Ad Settings (https://www.google.com/settings/ads) or Network Advertising Initiative / AboutAds (https://www.aboutads.info).",
+    title: "Advertising & Sponsorship",
+    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. During our review period, we are limiting monetized placements and not using Google AdSense on utility or interactive screens. We do not use hidden or unlabeled ad units.",
   },
   {
     title: "Cookies & Web Storage",
-    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party partners (such as Google Analytics and Google AdSense) may also set cookies to measure traffic and ad performance.",
+    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party services such as Google Analytics may also set cookies to measure traffic and site performance.",
   },
   {
     title: "Google Analytics 4",
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
     <main className="min-h-screen bg-[#0B0B0B] text-white">
       <SEO
         title="Privacy Policy | BallMtaani"
-        description="BallMtaani privacy basics for phone login, fan activity, personalization, ads, and public community content."
+        description="BallMtaani privacy basics for phone login, fan activity, personalization, sponsorships, and public community content."
       />
 
       <div className="mx-auto max-w-4xl px-4 py-8 md:py-12">
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
           <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">Legal</p>
           <h1 className="mt-4 text-4xl md:text-5xl font-black uppercase tracking-tight text-white">Privacy Policy</h1>
           <p className="mt-4 text-gray-400 leading-relaxed">
-            This policy explains the information BallMtaani uses to run phone login, fan rooms, calls, receipts, and community features.
+            This policy explains the information BallMtaani uses to run phone login, fan rooms, calls, receipts, sponsorships, and community features.
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
         </div>
 
         <p className="mt-8 text-xs text-gray-600">
-          Last updated: May 29, 2026.
+          Last updated: August 10, 2026.
         </p>
       </div>
     </main>

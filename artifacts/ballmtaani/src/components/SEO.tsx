@@ -1,7 +1,35 @@
 import { useEffect } from "react";
 
 const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://ballmtaani.com").replace(/\/$/, "");
-const DEFAULT_IMAGE = `${SITE_URL}/opengraph.jpg`;
+const DEFAULT_IMAGE = SITE_URL + "/opengraph.jpg";
+const UTILITY_NOINDEX_PREFIXES = [
+  "/login",
+  "/register",
+  "/auth",
+  "/otp",
+  "/verify-otp",
+  "/search",
+  "/diagnostics",
+  "/profile",
+  "/account",
+  "/admin",
+  "/predictions",
+  "/debates",
+  "/rivalries",
+  "/war-room",
+  "/live-center",
+  "/fun-zone",
+  "/fun-zones",
+  "/rapid-fire",
+  "/store",
+  "/partners",
+  "/tenant",
+  "/mobile/preview",
+] as const;
+
+function shouldForceNoindex(pathname: string) {
+  return UTILITY_NOINDEX_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"));
+}
 
 interface SEOProps {
   title?: string;
@@ -38,16 +66,15 @@ export default function SEO({
   breadcrumbs,
   structuredData
 }: SEOProps) {
-  
   useEffect(() => {
     const currentPath = path || window.location.pathname || "/";
     const canonicalPath = currentPath === "/home" ? "/" : currentPath;
-    const absoluteUrl = url || `${SITE_URL}${canonicalPath === "/" ? "/" : canonicalPath}`;
-    const absoluteImage = image.startsWith("http") ? image : `${SITE_URL}${image.startsWith("/") ? image : `/${image}`}`;
+    const absoluteUrl = url || SITE_URL + (canonicalPath === "/" ? "/" : canonicalPath);
+    const absoluteImage = image.startsWith("http") ? image : SITE_URL + (image.startsWith("/") ? image : "/" + image);
+    const effectiveNoindex = noindex || shouldForceNoindex(canonicalPath);
 
-    // Basic Meta
     document.title = title;
-    
+
     const updateMeta = (name: string, content: string, attr: "name" | "property" = "name") => {
       let element = document.querySelector(`${attr === "name" ? "meta[name='" + name + "']" : "meta[property='" + name + "']"}`);
       if (!element) {
@@ -59,14 +86,11 @@ export default function SEO({
       element.setAttribute("content", content);
     };
 
-    // SEO
     updateMeta("description", description);
     updateMeta("keywords", keywords.join(", "));
     updateMeta("application-name", "BallMtaani");
     updateMeta("author", "BallMtaani");
     updateMeta("theme-color", "#B30000");
-    
-    // OpenGraph (Facebook/WhatsApp)
     updateMeta("og:title", title, "property");
     updateMeta("og:description", description, "property");
     updateMeta("og:image", absoluteImage, "property");
@@ -75,16 +99,13 @@ export default function SEO({
     updateMeta("og:type", type, "property");
     updateMeta("og:site_name", "BallMtaani", "property");
     updateMeta("og:locale", "en_KE", "property");
-
-    // Twitter
     updateMeta("twitter:card", "summary_large_image");
     updateMeta("twitter:title", title);
     updateMeta("twitter:description", description);
     updateMeta("twitter:image", absoluteImage);
     updateMeta("twitter:image:alt", "BallMtaani football live scores and fan intelligence");
-    updateMeta("robots", noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large");
+    updateMeta("robots", effectiveNoindex ? "noindex, nofollow" : "index, follow, max-image-preview:large");
 
-    // Canonical
     let canonical = document.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
     if (!canonical) {
       canonical = document.createElement("link");
@@ -93,7 +114,6 @@ export default function SEO({
     }
     canonical.setAttribute("href", absoluteUrl);
 
-    // JSON-LD
     const existingNodes = document.querySelectorAll("script[data-seo-jsonld='1']");
     existingNodes.forEach((n) => n.remove());
 
@@ -105,7 +125,7 @@ export default function SEO({
             "@type": "ListItem",
             "position": index + 1,
             "name": item.name,
-            "item": item.url.startsWith("http") ? item.url : `${SITE_URL}${item.url}`,
+            "item": item.url.startsWith("http") ? item.url : SITE_URL + item.url,
           })),
         }]
       : [];
@@ -117,10 +137,7 @@ export default function SEO({
       script.text = JSON.stringify(entry);
       document.head.appendChild(script);
     });
-
   }, [title, description, keywords, image, url, path, type, noindex, breadcrumbs, structuredData]);
 
-  return null; // Side-effect only component
+  return null;
 }
-
-

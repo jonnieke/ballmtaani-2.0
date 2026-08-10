@@ -2,14 +2,26 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /login
-Disallow: /verify
 Disallow: /auth/
+Disallow: /diagnostics
+Disallow: /fun-zone
+Disallow: /fun-zones
+Disallow: /login
+Disallow: /otp
+Disallow: /predictions
+Disallow: /rapid-fire
+Disallow: /register
+Disallow: /rivalries
+Disallow: /search
+Disallow: /store
+Disallow: /trivia
+Disallow: /verify
+Disallow: /war-room
 
 User-agent: OAI-SearchBot
 Allow: /
 
-# AI crawlers â€” explicitly welcome
+# AI crawlers — explicitly welcome
 User-agent: GPTBot
 Allow: /
 

@@ -209,6 +209,7 @@ export default function App() {
                 <Route path="/verify-otp" component={OTPPage} />
                 <Route path="/profile" component={ProfilePage} />
                 <Route path="/profile/:id" component={ProfilePage} />
+                <Route path="/teams/:teamSlug" component={TeamDetailPage} />
                 <Route path="/team/:id" component={TeamDetailPage} />
                 <Route path="/store" component={StorePage} />
                 <Route path="/search" component={SearchPage} />
@@ -319,3 +320,4 @@ export default function App() {
     </QueryClientProvider>
   );
 }
+

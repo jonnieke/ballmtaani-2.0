@@ -108,16 +108,18 @@ const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; v
 };
 
 export default function TeamDetailPage() {
-  const [, params] = useRoute("/teams/:teamSlug");
-  const teamSlug = (params?.teamSlug || "").toLowerCase();
-  const club = KNOWN_CLUBS[teamSlug];
+  const [, slugParams] = useRoute("/teams/:teamSlug");
+  const [, legacyParams] = useRoute("/team/:id");
+  const routeRef = (slugParams?.teamSlug || legacyParams?.id || "").toLowerCase();
+  const club = KNOWN_CLUBS[routeRef] || Object.values(KNOWN_CLUBS).find((team) => String(team.id) === routeRef);
+  const canonicalSlug = club ? Object.entries(KNOWN_CLUBS).find(([, team]) => team.id === club.id)?.[0] || routeRef : routeRef;
 
   if (!club) {
     return (
       <div className="min-h-screen bg-[#0B0B0B] text-white flex flex-col items-center justify-center p-6 text-center">
         <SEO title="Club Not Found | BallMtaani" description="The requested football club page was not found." noindex />
         <h1 className="text-4xl font-black uppercase text-[#B30000] mb-2">404 — CLUB NOT FOUND</h1>
-        <p className="text-white/60 mb-6 max-w-md">We couldn't find a dedicated club hub for "{teamSlug}". Browse active league centres to find your team.</p>
+        <p className="text-white/60 mb-6 max-w-md">We couldn't find a dedicated club hub for "{routeRef}". Browse active league centres to find your team.</p>
         <Link href="/leagues" className="px-6 py-3 rounded-xl bg-[#B30000] text-white font-bold hover:bg-red-700 transition-colors">
           EXPLORE LEAGUES & CLUBS
         </Link>
@@ -127,7 +129,7 @@ export default function TeamDetailPage() {
 
   const clubSchema = generateClubSchema({
     name: club.name,
-    slug: teamSlug,
+    slug: canonicalSlug,
     country: club.country,
     logo: club.logo,
     leagueName: club.league,
@@ -138,7 +140,7 @@ export default function TeamDetailPage() {
       <SEO
         title={`${club.name} Live Scores, H2H & Predictions | BallMtaani`}
         description={club.desc}
-        canonicalUrl={`/teams/${teamSlug}`}
+        canonicalUrl={`/teams/${canonicalSlug}`}
         jsonLd={clubSchema}
       />
 
@@ -251,3 +253,5 @@ export default function TeamDetailPage() {
     </div>
   );
 }
+
+

@@ -189,6 +189,25 @@ export default function NewsPage() {
           </div>
         </div>
 
+
+        <div className="border-b border-white/6 bg-[#060810]">
+          <div className="mx-auto max-w-6xl px-4 py-6">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">What we cover</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/48">Original match reports, WC26 explainers, African football context and Kenyan fan stories that add meaning to the day�s football.</p>
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">Why it matters</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/48">This desk is meant to be useful: we summarise the news, explain the angle and point readers to the match, player or tournament context behind it.</p>
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">Editorial standard</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/48">Every story should answer what happened, why it happened and what fans should watch next � whether it is an original BallMtaani piece or a curated wire update.</p>
+              </div>
+            </div>
+          </div>
+        </div>
         {/* ── TODAY'S MATCHES STRIP (front page only) ── */}
         {activeTab === "Front Page" && fixtures.length > 0 && (
           <div className="border-b border-white/6 bg-[#04060a] py-3">
@@ -481,3 +500,6 @@ function SectionRule({ label, accent, dim }: { label: string; accent?: boolean; 
     </div>
   );
 }
+
+
+

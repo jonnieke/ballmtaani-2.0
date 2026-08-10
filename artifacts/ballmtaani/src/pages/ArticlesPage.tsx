@@ -78,6 +78,31 @@ export default function ArticlesPage() {
         ]}
       />
 
+
+      <div className="border-b border-white/8 bg-[#090b12]">
+        <div className="mx-auto max-w-4xl px-4 py-7">
+          <div className="rounded-2xl border border-white/8 bg-[#0d1119] p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD700]/80">Mtaa Daily editorial desk</p>
+            <div className="mt-3 grid gap-4 md:grid-cols-3">
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">Match reports</h2>
+                <p className="mt-2 text-xs leading-relaxed text-white/48">Game recaps, tactical notes and the numbers behind the final whistle, written for readers who want more than a scoreline.</p>
+              </div>
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">WC26 desk</h2>
+                <p className="mt-2 text-xs leading-relaxed text-white/48">African qualifying stories, squad news, bracket context and tournament explainers built for the road to 2026.</p>
+              </div>
+              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+                <h2 className="text-sm font-black uppercase tracking-widest text-white">Kenyan fan angle</h2>
+                <p className="mt-2 text-xs leading-relaxed text-white/48">Local club culture, supporter debates and Nairobi-first commentary that turns football data into something people can actually use.</p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-white/42">
+              BallMtaani publishes original football coverage alongside curated wire updates. We try to give every story a clear angle, a useful takeaway and a reason to exist beyond the homepage.
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Header */}
       <div className="border-b border-white/8 bg-[#07060a]">
         <div className="mx-auto max-w-4xl px-4 py-10">
@@ -172,5 +197,8 @@ export default function ArticlesPage() {
     </div>
   );
 }
+
+
+
 
 
