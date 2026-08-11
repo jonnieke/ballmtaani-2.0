@@ -156,9 +156,9 @@ export default function PublicationHomePage() {
   const take = useMemo(() => {
     if (featured) {
       const score = typeof featured.homeScore === "number" && typeof featured.awayScore === "number" ? ` at ${featured.homeScore}–${featured.awayScore}` : "";
-      return `${featured.home} vs ${featured.away}${score} is the room to watch. ${lead ? `The headline to follow is ${lead.title}.` : "Read the shape of the match before the timeline hardens into a take."}`;
+      return `${featured.home} vs ${featured.away}${score} is the room to watch. ${lead ? `Follow the line through ${lead.title}.` : "Read the shape of the match before the timeline hardens into a take."}`;
     }
-    return lead ? `The football week is moving through this story: ${lead.title}. Read the detail before the group chat rewrites it.` : "The useful calls live in the margins: team news, tempo and the one detail everyone else is missing.";
+    return lead ? `This week runs through ${lead.title}. Read the detail before the group chat rewrites it.` : "The useful calls live in the margins: team news, tempo and the one detail everyone else is missing.";
   }, [featured, lead]);
 
   const submitNewsletter = async (event: React.FormEvent) => {
@@ -189,7 +189,7 @@ export default function PublicationHomePage() {
       <section id="mtaa-daily" className="bg-black">
         <div className="mx-auto max-w-7xl px-4 py-5 lg:py-7">
           <div className="grid gap-4 lg:grid-cols-[1.35fr_0.7fr]">
-            {lead ? <Link href={href(lead)} className="group relative min-h-[540px] overflow-hidden border border-white/10 bg-[#0b0b0b]">
+            {lead ? <Link href={href(lead)} className="group relative min-h-[540px] overflow-hidden bg-[#0b0b0b] ring-1 ring-white/[0.06]">
               <img src={lead.thumbnail || DEFAULT_IMAGE} alt={lead.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/10 to-transparent" />
@@ -201,7 +201,7 @@ export default function PublicationHomePage() {
                 <div className="mt-6 flex flex-wrap items-center gap-3"><span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Read story <ArrowRight className="h-3.5 w-3.5" /></span><span className="text-[10px] uppercase tracking-[0.24em] text-white/35">Original reporting</span></div>
               </div>
             </Link> : <div className="min-h-[540px] animate-pulse border border-white/10 bg-white/5" />}
-            <aside className="space-y-3">{rail.length ? rail.slice(0, 3).map((article) => <StoryCard key={article.slug || article.link || article.id} article={article} compact />) : [1,2,3].map((i) => <div key={i} className="h-[166px] animate-pulse border border-white/10 bg-white/5" />)}<Link href="/news" className="flex items-center justify-between border border-white/10 bg-[#0d1013] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]/80 transition-colors hover:text-white">More top stories <ChevronRight className="h-4 w-4" /></Link></aside>
+            <aside className="space-y-3">{rail.length ? rail.slice(0, 3).map((article) => <StoryCard key={article.slug || article.link || article.id} article={article} compact />) : [1,2,3].map((i) => <div key={i} className="h-[166px] animate-pulse border border-white/10 bg-white/5" />)}<Link href="/news" className="flex items-center justify-between bg-[#0d1013] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]/80 ring-1 ring-white/[0.06] transition-colors hover:text-white hover:ring-white/[0.12]">More top stories <ChevronRight className="h-4 w-4" /></Link></aside>
           </div>
         </div>
       </section>
@@ -222,6 +222,7 @@ export default function PublicationHomePage() {
     </main>
   );
 }
+
 
 
 
