@@ -19,6 +19,7 @@ export interface NewsArticle {
   thumbnail: string;
   imageQuality: "feed" | "team-fallback" | "competition-fallback" | "generic-fallback";
   description?: string;
+  excerpt?: string;
   isInternal?: boolean;
   isWC26?: boolean;
 }
@@ -485,5 +486,7 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
     return fallbackArticles;
   }
 }
+
+
 
 
