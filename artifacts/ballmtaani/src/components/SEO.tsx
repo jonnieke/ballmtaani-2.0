@@ -137,7 +137,7 @@ export default function SEO({
       script.text = JSON.stringify(entry);
       document.head.appendChild(script);
     });
-  }, [title, description, keywords, image, url, path, type, noindex, breadcrumbs, structuredData]);
+  }, [title, description, keywords, image, url, path, canonicalUrl, type, noindex, breadcrumbs, structuredData]);
 
   return null;
 }

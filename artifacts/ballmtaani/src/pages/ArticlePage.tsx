@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { timeAgo } from "../lib/news-api";
@@ -52,6 +52,22 @@ function normalizeContent(raw: string): string {
     .join("\n");
 }
 
+function sanitizeHtml(raw: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${raw}</div>`, "text/html");
+  doc.querySelectorAll("script, style, iframe, object, embed, form").forEach((node) => node.remove());
+  doc.querySelectorAll("*").forEach((element) => {
+    [...element.attributes].forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      const value = attr.value.trim().toLowerCase();
+      if (name.startsWith("on") || value.startsWith("javascript:") || value.startsWith("data:text/html")) {
+        element.removeAttribute(attr.name);
+      }
+    });
+  });
+  return doc.body.firstElementChild?.innerHTML || raw;
+}
+
 /** Estimated reading time */
 function readingTime(content: string): string {
   const words = content.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
@@ -87,7 +103,7 @@ export default function ArticlePage() {
         if (error || !resolvedArticle) { setNotFound(true); setLoading(false); return; }
         setArticle(resolvedArticle);
         setLoading(false);
-        // Fetch related articles � same is_wc26 flag, exclude current
+        // Fetch related articles — same is_wc26 flag, exclude current
         supabase
           .from("articles")
           .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26")
@@ -138,14 +154,14 @@ export default function ArticlePage() {
   if (notFound || !article) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0B0B0B]">
-        <p className="text-4xl">⚽</p>
+        <p className="text-4xl">âš½</p>
         <h1 className="text-2xl font-black text-[#B30000]">Article Not Found</h1>
-        <Link href="/" className="text-sm text-white/40 hover:text-white">← Back to BallMtaani</Link>
+        <Link href="/" className="text-sm text-white/40 hover:text-white">â† Back to BallMtaani</Link>
       </div>
     );
   }
 
-  const formattedContent = normalizeContent(article.content);
+  const formattedContent = sanitizeHtml(normalizeContent(article.content));
   const mins = readingTime(article.content);
   const publishDate = new Date(article.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const authorName = (!article.author_name || article.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : article.author_name;
@@ -155,6 +171,7 @@ export default function ArticlePage() {
       <SEO
         title={article.seo_title || article.title}
         description={article.seo_description || article.excerpt || article.title}
+        canonicalUrl={`/news/${article.slug}`}
         image={article.thumbnail_url || DEFAULT_IMAGE}
         keywords={article.focus_keyword ? [article.focus_keyword, ...article.tags] : article.tags}
         type="article"
@@ -180,7 +197,7 @@ export default function ArticlePage() {
           },
           "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": `https://ballmtaani.com/article/${article.slug}`
+            "@id": `https://ballmtaani.com/news/${article.slug}`
           },
           "keywords": article.tags.join(", "),
           "articleSection": article.is_wc26 ? "World Cup 2026" : "Football",
@@ -191,7 +208,7 @@ export default function ArticlePage() {
 
       <div className="min-h-screen bg-[#0B0B0B] pb-24">
 
-        {/* ── HERO ─────────────────────────────────────────────────── */}
+        {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="relative w-full overflow-hidden bg-[#0B0B0B]">
           <img
             src={article.thumbnail_url || DEFAULT_IMAGE}
@@ -224,7 +241,7 @@ export default function ArticlePage() {
             )}
           </div>
 
-          {/* Title over hero — magazine cover style */}
+          {/* Title over hero â€” magazine cover style */}
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 sm:px-8 sm:pb-8">
             <div className="mx-auto max-w-2xl">
               {article.tags.length > 0 && (
@@ -243,7 +260,7 @@ export default function ArticlePage() {
           </div>
         </div>
 
-        {/* ── BYLINE ───────────────────────────────────────────────── */}
+        {/* â”€â”€ BYLINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="mx-auto max-w-2xl px-4 sm:px-8">
           <div className="flex items-center justify-between border-b border-white/8 py-4">
             <div className="flex items-center gap-3">
@@ -253,7 +270,7 @@ export default function ArticlePage() {
               </div>
               <div>
                 <p className="text-xs font-black text-white">{authorName}</p>
-                <p className="text-[10px] text-white/30">{publishDate} · {mins}</p>
+                <p className="text-[10px] text-white/30">{publishDate} Â· {mins}</p>
               </div>
             </div>
             <button
@@ -272,7 +289,7 @@ export default function ArticlePage() {
           )}
         </div>
 
-        {/* ── BODY ─────────────────────────────────────────────────── */}
+        {/* â”€â”€ BODY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="mx-auto max-w-2xl px-4 pt-6 sm:px-8">
           <div
             className="
@@ -310,7 +327,7 @@ export default function ArticlePage() {
           />
         </div>
 
-        {/* ── DIVIDER ──────────────────────────────────────────────── */}
+        {/* â”€â”€ DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="mx-auto max-w-2xl px-4 sm:px-8">
           <div className="my-10 flex items-center gap-4">
             <div className="h-px flex-1 bg-white/8" />
@@ -329,12 +346,12 @@ export default function ArticlePage() {
             </div>
           )}
 
-          {/* ── Likes + Comments + Share ── */}
+          {/* â”€â”€ Likes + Comments + Share â”€â”€ */}
           <ArticleEngagement articleId={article.id} articleTitle={article.title} />
 
           {/* CTA */}
           <div className="mt-8 rounded-2xl border border-white/8 bg-[#0d1018] p-6 text-center">
-            <div className="mb-1 text-xl">⚽</div>
+            <div className="mb-1 text-xl">âš½</div>
             <p className="mb-1 text-sm font-black uppercase tracking-widest text-white">Keep the receipt.</p>
             <p className="mb-5 text-xs text-white/40">Predict, debate, and score points on BallMtaani</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
@@ -348,7 +365,7 @@ export default function ArticlePage() {
           </div>
         </div>
 
-        {/* ── MORE FROM MTAA DAILY ─────────────────────────────────── */}
+        {/* â”€â”€ MORE FROM MTAA DAILY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {related.length > 0 && (
           <div className="mx-auto max-w-2xl px-4 pb-4 sm:px-8 mt-14">
             <div className="mb-6 flex items-center justify-between">
@@ -363,7 +380,7 @@ export default function ArticlePage() {
               {related.map(r => {
                 const rAuthor = (!r.author_name || r.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : r.author_name;
                 return (
-                  <Link key={r.id} href={`/article/${r.slug}`}
+                  <Link key={r.id} href={`/news/${r.slug}`}
                     className="group flex flex-col overflow-hidden rounded-xl border border-white/6 bg-[#0d1018] transition-all hover:border-white/14 hover:-translate-y-0.5">
                     <div className="relative h-32 overflow-hidden">
                       <img
@@ -394,5 +411,7 @@ export default function ArticlePage() {
     </>
   );
 }
+
+
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
@@ -32,7 +32,7 @@ const TAB_KEYWORDS: Record<string, string[]> = {
   "Analysis":         ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
   "Match Reports":    ["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
   "Kenyan Fan Angle": ["arsenal", "chelsea", "man utd", "man united", "liverpool", "man city", "manchester city", "real madrid", "barcelona", "bayern", "harambee", "gor mahia", "afc leopards", "tusker", "kenya", "nairobi", "kpl", "simba"],
-  "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
+  "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "cÃ´te d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
 };
 
 const TABS = ["Front Page", "WC26 Desk", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
@@ -98,7 +98,7 @@ export default function NewsPage() {
   const heroImg      = partner[0]?.thumbnail_url || DEFAULT_IMG;
   const heroTitle    = partner[0]?.title || "Africa's World Cup. Every Story. Right Here.";
   const heroSubtitle = partner[0]?.excerpt || null;
-  const heroHref     = partner[0]?.slug ? `/article/${partner[0].slug}` : "/world-cup-2026";
+  const heroHref     = partner[0]?.slug ? `/news/${partner[0].slug}` : "/world-cup-2026";
 
   const today = new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
   const edition = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
@@ -106,14 +106,14 @@ export default function NewsPage() {
   return (
     <>
       <SEO
-        title="Mtaa Daily | BallMtaani — Football for the Kenyan Fan"
-        description="Today's football newspaper for Kenyan fans. Match recaps, World Cup explainers, Kenyan fan angles, live fixtures and weekly receipts — on BallMtaani."
+        title="Mtaa Daily | BallMtaani â€” Football for the Kenyan Fan"
+        description="Today's football newspaper for Kenyan fans. Match recaps, World Cup explainers, Kenyan fan angles, live fixtures and weekly receipts â€” on BallMtaani."
         path="/news"
       />
 
       <div className="min-h-screen bg-[#070910] pb-24">
 
-        {/* ── MASTHEAD ── */}
+        {/* â”€â”€ MASTHEAD â”€â”€ */}
         <div className="border-b border-white/8 bg-[#05070d]">
           <div className="mx-auto max-w-6xl px-4 pt-5 pb-0">
 
@@ -121,9 +121,9 @@ export default function NewsPage() {
             <div className="flex items-center justify-between border-b border-white/6 pb-3 mb-5">
               <div className="flex items-center gap-2.5">
                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B30000]">BallMtaani</span>
-                <span className="text-white/12">·</span>
+                <span className="text-white/12">Â·</span>
                 <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/22">Mtaa Daily</span>
-                <span className="text-white/12">·</span>
+                <span className="text-white/12">Â·</span>
                 <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/18">{today}</span>
               </div>
               <div className="relative">
@@ -139,7 +139,7 @@ export default function NewsPage() {
 
             {/* Wordmark */}
             <div className="pb-4 text-center">
-              <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi · {edition}</p>
+              <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi Â· {edition}</p>
               <h1 className="text-[clamp(2.6rem,8vw,5rem)] font-black uppercase leading-none tracking-[0.03em] text-white">
                 Mtaa Daily
               </h1>
@@ -150,7 +150,7 @@ export default function NewsPage() {
               </div>
             </div>
 
-            {/* Platform doors — Read / Data / Play */}
+            {/* Platform doors â€” Read / Data / Play */}
             <div className="mb-4 grid grid-cols-3 gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-2">
               {[
                 { href: "/news",      icon: Newspaper,  label: "Read",       sub: "Mtaa Daily",   active: true,  color: "#B30000" },
@@ -195,7 +195,7 @@ export default function NewsPage() {
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">What we cover</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/48">Original match reports, WC26 explainers, African football context and Kenyan fan stories that add meaning to the day�s football.</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/48">Original match reports, WC26 explainers, African football context and Kenyan fan stories that add meaning to the day’s football.</p>
               </div>
               <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">Why it matters</p>
@@ -203,17 +203,17 @@ export default function NewsPage() {
               </div>
               <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">Editorial standard</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/48">Every story should answer what happened, why it happened and what fans should watch next � whether it is an original BallMtaani piece or a curated wire update.</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/48">Every story should answer what happened, why it happened and what fans should watch next — whether it is an original BallMtaani piece or a curated wire update.</p>
               </div>
             </div>
           </div>
         </div>
-        {/* ── TODAY'S MATCHES STRIP (front page only) ── */}
+        {/* â”€â”€ TODAY'S MATCHES STRIP (front page only) â”€â”€ */}
         {activeTab === "Front Page" && fixtures.length > 0 && (
           <div className="border-b border-white/6 bg-[#04060a] py-3">
             <div className="mx-auto max-w-6xl px-4">
               <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
-                <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.28em] text-white/30">Today ·</span>
+                <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.28em] text-white/30">Today Â·</span>
                 {fixtures.map((m: any) => (
                   <Link key={m.id} href="/matches"
                     className="flex shrink-0 items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-1.5 transition-all hover:border-white/15">
@@ -224,14 +224,14 @@ export default function NewsPage() {
                   </Link>
                 ))}
                 <Link href="/matches" className="shrink-0 text-[9px] font-black uppercase tracking-widest text-[#B30000] hover:underline">
-                  All Fixtures →
+                  All Fixtures â†’
                 </Link>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── EDITORIAL HERO ── */}
+        {/* â”€â”€ EDITORIAL HERO â”€â”€ */}
         <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6", minHeight: 140 }}>
           <img
             src={heroImg}
@@ -245,7 +245,7 @@ export default function NewsPage() {
           <div className="relative z-10 flex h-full items-center px-6 sm:px-10 lg:px-16">
             <div className="max-w-xl">
               <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">
-                {partner[0]?.is_wc26 ? "WC26 Desk · Latest" : "Front Page · Latest"}
+                {partner[0]?.is_wc26 ? "WC26 Desk Â· Latest" : "Front Page Â· Latest"}
               </p>
               <h2 className="mb-3 text-xl font-black leading-tight text-white sm:text-2xl lg:text-3xl line-clamp-2">
                 {heroTitle}
@@ -264,7 +264,7 @@ export default function NewsPage() {
           </div>
         </div>
 
-        {/* ── CONTENT ── */}
+        {/* â”€â”€ CONTENT â”€â”€ */}
         <div className="mx-auto max-w-6xl px-4 pt-8">
 
           {loading ? (
@@ -277,7 +277,7 @@ export default function NewsPage() {
             </div>
           ) : filteredPartner.length === 0 && filteredRss.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-24 text-center">
-              <div className="text-4xl font-black text-white/10">⚽</div>
+              <div className="text-4xl font-black text-white/10">âš½</div>
               <p className="font-black uppercase tracking-widest text-white/20">
                 {query ? `No results for "${query}"` : "No stories yet in this section"}
               </p>
@@ -290,11 +290,11 @@ export default function NewsPage() {
           ) : (
             <>
 
-              {/* ══ COVER STORY ══ */}
+              {/* â•â• COVER STORY â•â• */}
               {coverStory && (
                 <section className="mb-10">
-                  <SectionRule label={activeTab === "WC26 Desk" ? "WC26 Desk · Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle · Top Story" : "Cover Story"} accent />
-                  <Link href={`/article/${coverStory.slug}`} onClick={() => analytics.articleRead("partner", activeTab)} className="group block">
+                  <SectionRule label={activeTab === "WC26 Desk" ? "WC26 Desk Â· Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle Â· Top Story" : "Cover Story"} accent />
+                  <Link href={`/news/${coverStory.slug}`} onClick={() => analytics.articleRead("partner", activeTab)} className="group block">
                     <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "21/9" }}>
                       <img
                         src={coverStory.thumbnail_url || DEFAULT_IMG}
@@ -323,12 +323,12 @@ export default function NewsPage() {
                         )}
                         <div className="flex items-center gap-3">
                           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#B30000]">{coverStory.author_name}</span>
-                          <span className="text-white/15">·</span>
+                          <span className="text-white/15">Â·</span>
                           <span className="flex items-center gap-1 text-[10px] text-white/28">
                             <Clock className="h-3 w-3" />
                             {readTime(coverStory.excerpt)} read
                           </span>
-                          <span className="text-white/15">·</span>
+                          <span className="text-white/15">Â·</span>
                           <span className="text-[10px] text-white/28">{timeAgo(coverStory.published_at)}</span>
                         </div>
                       </div>
@@ -337,13 +337,13 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ FEATURES ══ */}
+              {/* â•â• FEATURES â•â• */}
               {features.length > 0 && (
                 <section className="mb-10">
                   <SectionRule label="Features" />
                   <div className={`grid gap-5 ${features.length === 1 ? "" : "sm:grid-cols-2"}`}>
                     {features.map(a => (
-                      <Link key={a.id} href={`/article/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
+                      <Link key={a.id} href={`/news/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
                         className="group overflow-hidden rounded-xl border border-white/7 bg-[#0c0f17] transition-all duration-200 hover:border-white/14 hover:shadow-xl hover:shadow-black/40">
                         <div className="relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
                           <img
@@ -368,7 +368,7 @@ export default function NewsPage() {
                           )}
                           <div className="mt-4 flex items-center gap-2.5 border-t border-white/[0.06] pt-3.5">
                             <span className="text-[9px] font-black uppercase tracking-[0.22em] text-[#B30000]">{a.author_name}</span>
-                            <span className="text-white/12">·</span>
+                            <span className="text-white/12">Â·</span>
                             <span className="flex items-center gap-1 text-[9px] text-white/22">
                               <Clock className="h-2.5 w-2.5" /> {readTime(a.excerpt)} read
                             </span>
@@ -380,13 +380,13 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ MORE STORIES ══ */}
+              {/* â•â• MORE STORIES â•â• */}
               {interior.length > 0 && (
                 <section className="mb-12">
                   <SectionRule label="More Stories" />
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {interior.map(a => (
-                      <Link key={a.id} href={`/article/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
+                      <Link key={a.id} href={`/news/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
                         className="group flex gap-3.5 rounded-xl border border-white/[0.06] bg-[#0c0f17] p-3 transition-all hover:border-white/12 hover:bg-[#0f131e]">
                         <div className="relative h-[4.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-lg">
                           <img
@@ -413,20 +413,20 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ SPONSOR SLOT ══ */}
+              {/* â•â• SPONSOR SLOT â•â• */}
               {activeTab === "Front Page" && (
                 <div className="mb-8 flex items-center justify-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-3">
                   <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/18">Mtaa Daily is powered by</span>
                   <span className="rounded border border-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white/25">Your Brand Here</span>
-                  <a href="mailto:info@ballmtaani.com" className="text-[8px] font-black uppercase tracking-widest text-[#B30000]/50 hover:text-[#B30000] transition-colors">Sponsor →</a>
+                  <a href="mailto:info@ballmtaani.com" className="text-[8px] font-black uppercase tracking-widest text-[#B30000]/50 hover:text-[#B30000] transition-colors">Sponsor â†’</a>
                 </div>
               )}
 
-              {/* ══ WIRE / RSS HEADLINES ══ */}
+              {/* â•â• WIRE / RSS HEADLINES â•â• */}
               {filteredRss.length > 0 && (
                 <section>
-                  <SectionRule label="Wire · Football Headlines" dim />
-                  <p className="mb-4 text-[9px] font-bold uppercase tracking-widest text-white/18">External sources — clearly marked</p>
+                  <SectionRule label="Wire Â· Football Headlines" dim />
+                  <p className="mb-4 text-[9px] font-bold uppercase tracking-widest text-white/18">External sources â€” clearly marked</p>
                   <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 sm:gap-x-10 lg:gap-x-12 divide-y divide-white/[0.05] sm:divide-y-0">
                     {filteredRss.map((a, i) => (
                       <a key={a.id} href={a.link} target="_blank" rel="noopener noreferrer"
@@ -461,7 +461,7 @@ export default function NewsPage() {
             </>
           )}
 
-          {/* ── BOTTOM PLATFORM DOORS ── */}
+          {/* â”€â”€ BOTTOM PLATFORM DOORS â”€â”€ */}
           {!loading && (
             <div className="mt-12 grid grid-cols-3 gap-3 border-t border-white/6 pt-8">
               {[
@@ -477,7 +477,7 @@ export default function NewsPage() {
                   <span className="text-[11px] font-black uppercase tracking-wide text-white">{label}</span>
                   <span className="text-[9px] leading-snug text-white/30">{sub}</span>
                   <span className="text-[9px] font-black uppercase tracking-widest transition-colors" style={{ color }}>
-                    Open →
+                    Open â†’
                   </span>
                 </Link>
               ))}
@@ -500,6 +500,7 @@ function SectionRule({ label, accent, dim }: { label: string; accent?: boolean; 
     </div>
   );
 }
+
 
 
 

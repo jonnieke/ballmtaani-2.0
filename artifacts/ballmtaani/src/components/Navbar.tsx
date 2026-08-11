@@ -1,214 +1,179 @@
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { Bell, Menu, Search, Shield, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect } from "react";
-import { Menu, X, Coins, ChevronDown, Search, Bell, Shield } from "lucide-react";
+import { useMatches, useUpcomingFixtures } from "../hooks/useData";
 import { ChooseClubModal } from "./ChooseClubModal";
-import { useTheme, ThemeAtmosphere } from "../context/ThemeContext";
+import NotificationBell from "./NotificationBell";
+import TeamLogo from "./TeamLogo";
+
+function leagueTag(league?: string) {
+  const value = String(league || "").toLowerCase();
+  if (value.includes("premier")) return "EPL";
+  if (value.includes("champions")) return "UCL";
+  if (value.includes("fkf") || value.includes("kpl") || value.includes("kenya")) return "KPL";
+  if (value.includes("caf") || value.includes("africa")) return "CAF";
+  return (league || "MATCH").split(" ")[0].toUpperCase();
+}
+
+function short(name: string) {
+  return String(name || "")
+    .replace(/\s+(FC|SC|AFC|City|United|Town|Rovers|Athletic|Stars?)$/i, "")
+    .trim()
+    .slice(0, 3)
+    .toUpperCase();
+}
+
+function tickerText(match: any) {
+  if (typeof match?.homeScore === "number" && typeof match?.awayScore === "number") return `${match.homeScore}–${match.awayScore}`;
+  return match?.status || match?.minute || match?.time || "LIVE";
+}
 
 export function Navbar() {
   const [location] = useLocation();
-  const { isLoggedIn, username, coins, logout } = useAuth();
+  const { isLoggedIn, username } = useAuth();
+  const { data: live = [] } = useMatches();
+  const { data: upcoming = [] } = useUpcomingFixtures();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [chooseClubOpen, setChooseClubOpen] = useState(false);
-  const { atmosphere, setAtmosphere } = useTheme();
 
-  const [walletAnimating, setWalletAnimating] = useState(false);
-  const [prevCoins, setPrevCoins] = useState(coins);
+  const tickerMatches = useMemo(() => {
+    const base = [...live, ...upcoming].slice(0, 4);
+    return base.map((match: any) => ({
+      id: match.id,
+      league: leagueTag(match.league),
+      home: match.home,
+      away: match.away,
+      homeLogo: match.homeLogo,
+      awayLogo: match.awayLogo,
+      homeColor: match.homeColor || "#1f2937",
+      awayColor: match.awayColor || "#1f2937",
+      score: tickerText(match),
+      status: match.status || match.time || match.minute || "",
+    }));
+  }, [live, upcoming]);
 
-  useEffect(() => {
-    if (coins > prevCoins && prevCoins !== 0) {
-      setWalletAnimating(true);
-      setPrevCoins(coins);
-      const timer = setTimeout(() => setWalletAnimating(false), 800);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [coins]);
+  const publicationLinks = [
+    ["MTAA DAILY", "/#mtaa-daily"],
+    ["KENYA", "/#kenya"],
+    ["AFRICA", "/#africa"],
+    ["EPL", "/#epl"],
+    ["EUROPE", "/#analysis"],
+    ["ANALYSIS", "/#analysis"],
+    ["TRANSFERS", "/news"],
+    ["OPINION", "/articles"],
+  ] as const;
 
-  const atmospheres: { id: ThemeAtmosphere; label: string; icon: string }[] = [
-    { id: "default", label: "Classic Brand", icon: "BM" },
-    { id: "gunners-city", label: "Gunners vs City", icon: "GC" },
-    { id: "el-clasico", label: "El Clasico", icon: "EC" },
-    { id: "night-mtaani", label: "Night Mtaani", icon: "NM" },
-  ];
-
-  const menuCategories = [
-    {
-      label: "Intelligence",
-      links: [
-        { href: "/edge", label: "BallMtaani Edge" },
-        { href: "/edge/performance", label: "Model Ledger" },
-        { href: "/edge/pricing", label: "Edge Pro Tiers" },
-      ]
-    },
-    {
-      label: "Matches",
-      links: [
-        { href: "/matches", label: "Directory" },
-        { href: "/leagues", label: "Leagues Hub" },
-        { href: "/live-center", label: "Live Pulse" },
-        { href: "/mchambuzi-halisi", label: "Mchambuzi AI" },
-        { href: "/world-cup-2026", label: "World Cup Archive" },
-      ]
-    },
-    {
-      label: "Games",
-      links: [
-        { href: "/predictions", label: "Calls" },
-        { href: "/war-room", label: "War Room" },
-        { href: "/rapid-fire", label: "Rapid Fire" },
-      ]
-    },
-    {
-      label: "Social",
-      links: [
-        { href: "/debates", label: "Debates" },
-        { href: "/fan-zones", label: "Fan Zones" },
-        { href: "/leaderboard", label: "Leaderboard" },
-      ]
-    }
-  ];
+  const tools = [
+    ["Scores", "/matches"],
+    ["Fixtures", "/matches"],
+    ["Tables", "/leagues"],
+    ["Mchambuzi", "/mchambuzi-halisi"],
+    ["Predictions", "/predictions"],
+    ["Fan Zone", "/fan-zones"],
+    ["Leaderboard", "/leaderboard"],
+  ] as const;
 
   return (
     <>
       <ChooseClubModal isOpen={chooseClubOpen} onClose={() => setChooseClubOpen(false)} />
-      <nav className="sticky top-0 z-50 bg-[#070707] border-b border-[#2A2A2A]">
-        <div className="w-full px-4 xl:px-8 h-[72px] flex items-center justify-between">
-          
-          {/* Logo */}
-          <Link href="/home" className="flex items-center shrink-0">
-            <span className="font-black text-2xl tracking-tighter italic">
-              <span className="text-white">BALL</span>
-              <span className="text-[#B30000]">MTAANI</span>
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-md">
+        <div className="border-b border-white/8">
+          <div className="mx-auto flex max-w-7xl items-center gap-4 overflow-x-auto px-4 py-2 whitespace-nowrap">
+            <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#B30000]">
+              <span className="h-2 w-2 rounded-full bg-[#B30000]" /> Live scores
             </span>
-          </Link>
-
-          {/* Hamburger — mobile only */}
-          <button
-            className="xl:hidden p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-colors ml-auto mr-3"
-            onClick={() => setMobileMenuOpen(v => !v)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-
-          {/* Desktop Nav */}
-          <div className="hidden xl:flex items-center gap-5 2xl:gap-7 mx-auto flex-1 justify-center px-4">
-            {[
-              { href: "/home", label: "HOME" },
-              { href: "/leagues", label: "LEAGUES" },
-              { href: "/matches?search=KPL", label: "KPL" },
-              { href: "/matches?search=Champions", label: "UCL" },
-              { href: "/matches?search=Premier", label: "EPL" },
-              { href: "/matches?search=LaLiga", label: "LA LIGA" },
-            ].map(({ href, label }) => {
-              const isActive = location === href || (location.startsWith(href.split("?")[0]) && href.includes("?"));
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`relative pb-1 font-black text-[10px] 2xl:text-[11px] uppercase tracking-widest transition-colors ${
-                    isActive ? "text-[#B30000]" : "text-white/60 hover:text-white"
-                  }`}
-                >
-                  {label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#B30000] rounded-full" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Global Controls */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setChooseClubOpen(true)}
-              className="px-3 py-1.5 rounded-full bg-[#1B1B1B] border border-white/15 text-[#FFD700] hover:text-white hover:border-[#FFD700]/60 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1 mr-1"
-            >
-              <Shield className="w-3.5 h-3.5" /> MY CLUBS
-            </button>
-            <Link href="/search" className="p-2 text-white/50 hover:text-white transition-colors">
-              <Search className="w-5 h-5" />
+            {tickerMatches.map((match) => (
+              <Link key={String(match.id)} href={match.score === "LIVE" ? "/matches" : `/live-center/${match.id}`} className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/75 hover:border-white/18 hover:text-white">
+                <span className="text-white/45">{match.league}</span>
+                <TeamLogo logo={match.homeLogo} initial={short(match.home)} color={match.homeColor} size="xs" />
+                <span>{short(match.home)}</span>
+                <span className="text-white/40">{match.score}</span>
+                <span>{short(match.away)}</span>
+                <TeamLogo logo={match.awayLogo} initial={short(match.away)} color={match.awayColor} size="xs" />
+                <span className="text-white/35 normal-case tracking-normal">{match.status}</span>
+              </Link>
+            ))}
+            <Link href="/matches" className="ml-auto inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/55 hover:text-white">
+              View all live scores <ChevronRightIcon />
             </Link>
-            <Link href="/notifications" className="p-2 text-white/50 hover:text-white transition-colors">
-              <Bell className="w-5 h-5" />
-            </Link>
-
-            {isLoggedIn ? (
-              <>
-                {/* MTC status wallet */}
-                <Link href="/store" className={`flex items-center gap-1.5 bg-[#1B1B1B] border px-3 py-1.5 rounded-full transition-all group duration-300 ${walletAnimating ? 'border-[#FFD700] scale-110 shadow-[0_0_20px_rgba(255,215,0,0.6)]' : 'border-[#FFD700]/30 hover:border-[#FFD700]/60 shadow-[0_0_10px_rgba(255,215,0,0.1)] hover:shadow-[0_0_15px_rgba(255,215,0,0.2)]'}`}>
-                  <Coins className={`w-4 h-4 text-[#FFD700] transition-transform duration-300 ${walletAnimating ? 'animate-bounce' : 'group-hover:scale-110'}`} />
-                  <span className={`font-black text-sm transition-colors duration-300 ${walletAnimating ? 'text-white drop-shadow-[0_0_8px_white]' : 'text-[#FFD700]'}`}>{coins.toLocaleString()}</span>
-                </Link>
-
-                <Link href="/profile" className="hidden lg:flex items-center gap-2 hover:opacity-80 transition-opacity ml-1">
-                  <div className="w-10 h-10 rounded-full bg-[#1B1B1B] border border-primary flex items-center justify-center text-primary font-black text-sm">
-                    {username.substring(0, 2).toUpperCase()}
-                  </div>
-                  <span className="font-bold text-sm text-white hidden xl:block">{username}</span>
-                </Link>
-              </>
-            ) : (
-              <div className="hidden xl:flex items-center gap-3">
-                <Link 
-                  href="/login"
-                  onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
-                  className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white border border-white/20 rounded-full hover:bg-white/5 transition-colors"
-                >
-                  LOGIN
-                </Link>
-                <Link 
-                  href="/login"
-                  onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
-                  className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-white bg-[#B30000] rounded-full hover:bg-red-800 transition-colors"
-                >
-                  SIGN UP
-                </Link>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden absolute top-24 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
-            <Link
-              href="/home"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block px-4 py-3 rounded font-bold text-sm uppercase tracking-wider transition-all ${
-                location === "/home"
-                  ? "bg-primary text-white"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              Home
+        <div className="mx-auto grid max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-5 lg:grid-cols-[1fr_auto_1fr]">
+          <div className="hidden items-center gap-4 text-[10px] uppercase tracking-[0.22em] text-white/45 lg:flex">
+            <span>{new Date().toLocaleDateString("en-KE", { weekday: "long" })}</span>
+            <span>{new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</span>
+            <span>Nairobi, Kenya</span>
+          </div>
+
+          <Link href="/" className="text-center">
+            <div className="font-serif text-3xl font-black tracking-tight text-white sm:text-4xl">BALLMTAANI</div>
+            <div className="mt-1 text-[10px] font-black uppercase tracking-[0.34em] text-[#B30000]">Football. From where we stand.</div>
+          </Link>
+
+          <div className="flex items-center justify-end gap-2 sm:gap-3">
+            <Link href="/search" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 hover:text-white">
+              <Search className="h-4 w-4" />
             </Link>
-            <button
-              onClick={() => { setChooseClubOpen(true); setMobileMenuOpen(false); }}
-              className="text-left px-4 py-3 rounded font-bold text-sm uppercase tracking-wider text-[#FFD700] hover:bg-white/5 flex items-center gap-2"
-            >
-              <Shield className="w-4 h-4" /> My Clubs & Preferences
+            <NotificationBell compact />
+            <button onClick={() => setChooseClubOpen(true)} className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/75 hover:text-white md:inline-flex">
+              <Shield className="h-3.5 w-3.5" /> My Clubs
             </button>
-            {menuCategories.flatMap(c => c.links).map((link) => {
-              const isActive = location === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-4 py-2 rounded text-sm font-bold uppercase transition-all ${
-                    isActive ? "text-primary bg-white/5" : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+            {isLoggedIn ? (
+              <Link href="/profile" className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/75 hover:text-white md:inline-flex">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#B30000] text-xs text-white">{username.slice(0, 2).toUpperCase()}</span>
+                <span className="max-w-[120px] truncate">{username}</span>
+              </Link>
+            ) : (
+              <Link href="/login" className="hidden rounded-full bg-[#B30000] px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white md:inline-flex">
+                Sign in
+              </Link>
+            )}
+            <button className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/75" onClick={() => setMobileMenuOpen((value) => !value)} aria-label="Toggle navigation">
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="hidden border-y border-white/8 lg:block">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+            <nav className="flex flex-wrap items-center gap-5">
+              {publicationLinks.map(([label, to]) => (
+                <a key={label} href={to} className={`text-[10px] font-black uppercase tracking-[0.22em] transition-colors ${location === to ? "text-[#B30000]" : "text-white/70 hover:text-white"}`}>
+                  {label}
+                </a>
+              ))}
+            </nav>
+            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">Tools</span>
+          </div>
+        </div>
+
+        <div className="hidden border-b border-white/8 lg:block">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-3">
+            {tools.map(([label, to]) => (
+              <Link key={label} href={to} className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${location === to ? "text-[#B30000]" : "text-white/65 hover:text-white"}`}>
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="border-t border-white/8 bg-black px-4 py-4 lg:hidden">
+            <nav className="grid gap-2">
+              {publicationLinks.map(([label, to]) => <a key={label} href={to} onClick={() => setMobileMenuOpen(false)} className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white/80">{label}</a>)}
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                {tools.map(([label, to]) => <Link key={label} href={to} onClick={() => setMobileMenuOpen(false)} className="rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm font-black uppercase tracking-[0.18em] text-white/80">{label}</Link>)}
+              </div>
+              <button onClick={() => { setChooseClubOpen(true); setMobileMenuOpen(false); }} className="rounded-xl border border-white/8 bg-[#B30000]/10 px-4 py-3 text-left text-sm font-black uppercase tracking-[0.18em] text-[#FFD700]">My Clubs</button>
+              {!isLoggedIn && <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="rounded-xl bg-[#B30000] px-4 py-3 text-center text-sm font-black uppercase tracking-[0.18em] text-white">Sign in</Link>}
+            </nav>
           </div>
         )}
-      </nav>
+      </header>
     </>
   );
 }
+
+function ChevronRightIcon() { return <span aria-hidden>→</span>; }

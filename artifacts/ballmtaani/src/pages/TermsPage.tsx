@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+﻿import { Link } from "wouter";
 import SEO from "../components/SEO";
 
 const sections = [
@@ -64,9 +64,10 @@ export default function TermsPage() {
         </div>
 
         <p className="mt-8 text-xs text-gray-600">
-          Last updated: May 29, 2026.
+          Last updated: August 10, 2026.
         </p>
       </div>
     </main>
   );
 }
+

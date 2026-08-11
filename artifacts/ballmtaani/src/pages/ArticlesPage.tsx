@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { timeAgo } from "../lib/news-api";
@@ -68,7 +68,7 @@ export default function ArticlesPage() {
     <div className="min-h-screen bg-[#0B0B0B] pb-24">
       <SEO
         title="Mtaa Daily Articles | BallMtaani Football Reporting"
-        description="All original articles from Mtaa Daily — World Cup 2026 analysis, match reports, African football coverage and Kenyan fan perspectives from BallMtaani."
+        description="All original articles from Mtaa Daily â€” World Cup 2026 analysis, match reports, African football coverage and Kenyan fan perspectives from BallMtaani."
         keywords={["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "WC26 analysis", "African football reporting"]}
         path="/articles"
         breadcrumbs={[
@@ -157,7 +157,7 @@ export default function ArticlesPage() {
               const author = (!a.author_name || a.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : a.author_name;
               const isFeatured = i === 0;
               return (
-                <Link key={a.id} href={`/article/${a.slug}`}
+                <Link key={a.id} href={`/news/${a.slug}`}
                   className={`group flex flex-col overflow-hidden rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40 ${
                     isFeatured ? "sm:col-span-2 border-[#FFD700]/15 bg-[#0a0900]" : "border-white/6 bg-[#0d1018] hover:border-white/14"
                   }`}>
@@ -180,7 +180,7 @@ export default function ArticlesPage() {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col p-4">
-                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/25">{timeAgo(a.published_at)} · {readTime(a.excerpt)} read</p>
+                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/25">{timeAgo(a.published_at)} Â· {readTime(a.excerpt)} read</p>
                     <h2 className={`flex-1 font-black leading-snug text-white ${isFeatured ? "text-lg sm:text-xl" : "text-sm line-clamp-3"}`}>{a.title}</h2>
                     {isFeatured && a.excerpt && (
                       <p className="mt-2 text-xs leading-relaxed text-white/45 line-clamp-2">{a.excerpt}</p>
@@ -197,6 +197,7 @@ export default function ArticlesPage() {
     </div>
   );
 }
+
 
 
 

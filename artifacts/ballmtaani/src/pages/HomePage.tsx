@@ -1,1 +1,1 @@
-export { default } from "./MarketHomePage";
+﻿export { default } from "./PublicationHomePage";

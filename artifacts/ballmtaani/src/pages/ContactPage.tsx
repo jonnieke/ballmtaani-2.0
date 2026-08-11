@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import SEO from "../components/SEO";
@@ -45,7 +45,7 @@ export default function ContactPage() {
       }
       setDone(true);
     } catch {
-      setError("Something went wrong — please email us directly at info@ballmtaani.com");
+      setError("Something went wrong â€” please email us directly at info@ballmtaani.com");
     } finally {
       setSending(false);
     }
@@ -61,12 +61,12 @@ export default function ContactPage() {
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "Contact", url: "/contact" }]}
       />
 
-      {/* ── HEADER ── */}
+      {/* â”€â”€ HEADER â”€â”€ */}
       <div className="border-b border-white/8 bg-[#07060a]">
         <div className="mx-auto max-w-3xl px-4 py-12">
           <h1 className="mb-2 text-3xl font-black text-white md:text-4xl">Get In Touch</h1>
           <p className="text-sm leading-relaxed text-white/45">
-            Questions, partnerships, press or feedback — we read everything.
+            Questions, partnerships, press or feedback â€” we read everything.
           </p>
         </div>
       </div>
@@ -74,14 +74,14 @@ export default function ContactPage() {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
 
-          {/* ── FORM ── */}
+          {/* â”€â”€ FORM â”€â”€ */}
           <div>
             {done ? (
               <div className="flex flex-col items-center gap-4 rounded-2xl border border-green-500/20 bg-green-500/8 py-16 text-center">
                 <CheckCircle2 className="h-10 w-10 text-green-400" />
                 <h2 className="text-lg font-black text-white">Message received</h2>
-                <p className="max-w-xs text-sm text-white/50">We'll get back to you at {email} within 1–2 working days.</p>
-                <Link href="/" className="mt-2 text-xs font-black uppercase tracking-widest text-[#B30000] hover:underline">← Back to BallMtaani</Link>
+                <p className="max-w-xs text-sm text-white/50">We'll get back to you at {email} within 1â€“2 working days.</p>
+                <Link href="/" className="mt-2 text-xs font-black uppercase tracking-widest text-[#B30000] hover:underline">â† Back to BallMtaani</Link>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -131,7 +131,7 @@ export default function ContactPage() {
                     onChange={e => setMessage(e.target.value)}
                     required
                     rows={6}
-                    placeholder="Tell us what's on your mind…"
+                    placeholder="Tell us what's on your mindâ€¦"
                     className="w-full resize-none rounded-xl border border-white/10 bg-[#0d1018] px-4 py-3 text-sm text-white placeholder-white/20 focus:border-white/25 focus:outline-none"
                   />
                 </div>
@@ -143,13 +143,13 @@ export default function ContactPage() {
                   disabled={sending || !name.trim() || !email.trim() || !message.trim()}
                   className="w-full rounded-xl bg-[#B30000] py-3 text-sm font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-[#cc0000] disabled:opacity-40"
                 >
-                  {sending ? "Sending…" : "Send Message"}
+                  {sending ? "Sendingâ€¦" : "Send Message"}
                 </button>
               </form>
             )}
           </div>
 
-          {/* ── SIDEBAR ── */}
+          {/* â”€â”€ SIDEBAR â”€â”€ */}
           <div className="space-y-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-white/25">Direct Channels</p>
             {CHANNELS.map(ch => (
@@ -166,15 +166,15 @@ export default function ContactPage() {
 
             <div className="rounded-xl border border-white/6 bg-[#0d1018] p-4 text-xs leading-relaxed text-white/40">
               <p className="mb-1 font-black uppercase tracking-wide text-white/60">Response time</p>
-              General enquiries: 1–2 working days.<br />
+              General enquiries: 1â€“2 working days.<br />
               Sponsorship: same day if sent before 3 PM EAT.
             </div>
 
             <div className="pt-2 text-[10px] text-white/20">
               <Link href="/about" className="hover:text-white/40">About BallMtaani</Link>
-              {" · "}
+              {" Â· "}
               <Link href="/privacy" className="hover:text-white/40">Privacy Policy</Link>
-              {" · "}
+              {" Â· "}
               <Link href="/terms" className="hover:text-white/40">Terms</Link>
             </div>
           </div>
@@ -184,3 +184,4 @@ export default function ContactPage() {
     </div>
   );
 }
+
