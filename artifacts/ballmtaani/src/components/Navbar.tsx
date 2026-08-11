@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Bell, Menu, Search, Shield, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -25,7 +25,7 @@ function short(name: string) {
 }
 
 function tickerText(match: any) {
-  if (typeof match?.homeScore === "number" && typeof match?.awayScore === "number") return `${match.homeScore}–${match.awayScore}`;
+  if (typeof match?.homeScore === "number" && typeof match?.awayScore === "number") return `${match.homeScore}�${match.awayScore}`;
   return match?.status || match?.minute || match?.time || "LIVE";
 }
 
@@ -79,7 +79,7 @@ export function Navbar() {
       <ChooseClubModal isOpen={chooseClubOpen} onClose={() => setChooseClubOpen(false)} />
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-md">
         <div className="border-b border-white/8">
-          <div className="mx-auto flex max-w-7xl items-center gap-4 overflow-x-auto px-4 py-2 whitespace-nowrap">
+          <div className="mx-auto flex max-w-7xl items-center gap-4 overflow-x-auto hide-scrollbar px-4 py-2 whitespace-nowrap">
             <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#B30000]">
               <span className="h-2 w-2 rounded-full bg-[#B30000]" /> Live scores
             </span>
@@ -176,4 +176,5 @@ export function Navbar() {
   );
 }
 
-function ChevronRightIcon() { return <span aria-hidden>→</span>; }
+function ChevronRightIcon() { return <span aria-hidden>?</span>; }
+
