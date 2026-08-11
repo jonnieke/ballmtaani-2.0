@@ -21,6 +21,7 @@ function text(article: Pick<NewsArticle, "title" | "description" | "source">) {
 }
 
 const FOOTBALL_TERMS = ["football", "soccer", "premier league", "champions league", "ucl", "epl", "serie a", "la liga", "bundesliga", "transfer", "fixture", "match", "league", "cup", "africa", "caf", "afcon", "kenya", "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "goal", "goals"];
+const ARCHIVE_TERMS = ["world cup 2026", "wc26", "wc 26", "world cup archive"];
 const NON_FOOTBALL_TERMS = ["president", "white house", "senate", "congress", "government", "politics", "election", "supreme court", "court", "war", "tariff", "economy", "economic", "minister", "policy"];
 
 function isFootballStory(article: Pick<NewsArticle, "title" | "description" | "source">) {
