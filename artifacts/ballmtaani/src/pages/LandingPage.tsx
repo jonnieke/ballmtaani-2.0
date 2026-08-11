@@ -835,7 +835,7 @@ function BreakingTicker({ items }: { items: HeadlineArticle[] }) {
             {loop.map((a, i) => (
               <Link
                 key={`${a.id}-${i}`}
-                href={`/article/${a.slug}`}
+                href={`/news/${a.slug}`}
                 className="mx-5 inline-flex items-center gap-2 py-2 text-xs font-bold text-white/75 transition-colors hover:text-[#FFD700]"
               >
                 <span className="text-[8px] text-primary">●</span>
@@ -874,7 +874,7 @@ function MtaaDailyBoard({ articles }: { articles: HeadlineArticle[] }) {
 
       <div className="grid gap-0 md:grid-cols-[1.25fr_1fr]">
         {/* Lead story */}
-        <Link href={`/article/${lead.slug}`} className="group relative block min-h-[220px] overflow-hidden md:min-h-[280px]">
+        <Link href={`/news/${lead.slug}`} className="group relative block min-h-[220px] overflow-hidden md:min-h-[280px]">
           {lead.thumbnail_url ? (
             <img
               src={lead.thumbnail_url}
@@ -908,7 +908,7 @@ function MtaaDailyBoard({ articles }: { articles: HeadlineArticle[] }) {
           {sideList.map((a, i) => (
             <Link
               key={a.id}
-              href={`/article/${a.slug}`}
+              href={`/news/${a.slug}`}
               className="group flex flex-1 items-center gap-3 border-b border-white/6 px-3 py-3 transition-colors last:border-0 hover:bg-white/[0.03]"
             >
               <span className="w-5 shrink-0 text-center text-lg font-black italic text-white/15">{i + 2}</span>
@@ -1742,3 +1742,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+

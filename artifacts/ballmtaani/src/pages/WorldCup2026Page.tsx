@@ -642,7 +642,7 @@ export default function WorldCup2026Page() {
             <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {wc26News.map(a => (
                 a.isInternal ? (
-                  <Link key={a.id} href={`/article/${a.slug}`}
+                  <Link key={a.id} href={`/news/${a.slug}`}
                     className="group relative flex w-56 shrink-0 flex-col overflow-hidden rounded-xl border border-white/8 bg-[#0c111a] transition-all hover:-translate-y-0.5 hover:border-[#FFD700]/30 sm:w-64">
                     <div className="relative h-32 overflow-hidden">
                       <img src={a.thumbnail} alt="" loading="lazy"
@@ -1445,3 +1445,5 @@ export default function WorldCup2026Page() {
     </div>
   );
 }
+
+
