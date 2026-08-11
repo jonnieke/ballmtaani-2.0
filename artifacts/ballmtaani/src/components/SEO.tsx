@@ -61,6 +61,7 @@ export default function SEO({
   image = DEFAULT_IMAGE,
   url,
   path,
+  canonicalUrl,
   type = "website",
   noindex = false,
   breadcrumbs,
@@ -68,7 +69,7 @@ export default function SEO({
 }: SEOProps) {
   useEffect(() => {
     const currentPath = path || window.location.pathname || "/";
-    const canonicalPath = currentPath === "/home" ? "/" : currentPath;
+    const canonicalPath = canonicalUrl || (currentPath === "/home" ? "/" : currentPath);
     const absoluteUrl = url || SITE_URL + (canonicalPath === "/" ? "/" : canonicalPath);
     const absoluteImage = image.startsWith("http") ? image : SITE_URL + (image.startsWith("/") ? image : "/" + image);
     const effectiveNoindex = noindex || shouldForceNoindex(canonicalPath);
@@ -141,3 +142,6 @@ export default function SEO({
 
   return null;
 }
+
+
+
