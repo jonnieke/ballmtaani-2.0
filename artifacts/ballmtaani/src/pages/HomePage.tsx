@@ -50,6 +50,12 @@ export default function MagazineHomePage() {
   const [email, setEmail] = useState(""); const [formState, setFormState] = useState<"idle" | "submitting" | "success" | "error">("idle"); const [formError, setFormError] = useState<string | null>(null);
   useEffect(() => { let cancelled = false; fetchTodaysFixtures().then((items) => { if (!cancelled) setToday(items); }).catch(() => undefined); Promise.allSettled([fetchPartnerArticles(), fetchFootballNews()]).then(([partners, wire]) => { if (cancelled) return; setNews(dedupe([...(partners.status === "fulfilled" ? partners.value : []), ...(wire.status === "fulfilled" ? wire.value : [])])); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, []);
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 60000); return () => window.clearInterval(timer); }, []);
+  useEffect(() => {
+    if (loading || !window.location.hash) return;
+    const targetId = window.location.hash.slice(1);
+    const timer = window.setTimeout(() => document.getElementById(targetId)?.scrollIntoView({ block: "start" }), 150);
+    return () => window.clearTimeout(timer);
+  }, [loading, today.length]);
   const stories = useMemo(() => { const all = dedupe(news.filter((a) => a.isInternal || isFootball(a))); return [...all.filter((a) => a.isInternal), ...all.filter((a) => !a.isInternal)]; }, [news]); const external = useMemo(() => dedupe(news.filter((a) => !a.isInternal && isFootball(a))), [news]);
   const layout = useMemo(() => {
     const used = new Set<string>();
