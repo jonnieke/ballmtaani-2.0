@@ -16,15 +16,15 @@ const sections = [
   },
   {
     title: "Advertising & Sponsorship",
-    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. During our review period, we are limiting monetized placements and not using Google AdSense on utility or interactive screens. We do not use hidden or unlabeled ad units.",
+    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. When Google AdSense is enabled, ad units will be limited to content-led pages and will stay clearly separated from logins, interactive tools and utility screens. We do not use hidden or unlabeled ad units.",
   },
   {
     title: "Cookies & Web Storage",
-    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party services such as Google Analytics may also set cookies to measure traffic and site performance.",
+    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party services such as Google Analytics and, when enabled, Google advertising technologies may also set cookies to measure traffic, ad delivery and site performance.",
   },
   {
     title: "Google Analytics 4",
-    body: "BallMtaani utilizes Google Analytics 4 to understand website traffic, user interaction patterns, and device breakdown. Google Analytics processes anonymized data according to Google's Privacy Policy. You can learn more about how Google uses data when you use our site at https://policies.google.com/technologies/partner-sites.",
+    body: "BallMtaani utilizes Google Analytics 4 to understand website traffic, user interaction patterns, and device breakdown. Google Analytics processes anonymized data according to Google's Privacy Policy. You can learn more about how Google uses data when you use our site at https://policies.google.com/technologies/partner-sites. If AdSense or another Google advertising product is enabled, users will be informed through this policy and, where required, through a consent banner or CMP before personalized advertising cookies are set.",
   },
   {
     title: "Your Choices & Data Rights",
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
         </div>
 
         <p className="mt-8 text-xs text-gray-600">
-          Last updated: August 10, 2026.
+          Last updated: August 11, 2026.
         </p>
       </div>
     </main>

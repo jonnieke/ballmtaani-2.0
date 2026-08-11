@@ -84,7 +84,7 @@ export default async function handler(req: any, res: any) {
         const supabase = createClient(supabaseUrl, supabaseKey);
         const { data } = await supabase.from("articles").select("slug, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false });
         if (data) {
-          articleEntries = data.map((a: any) => urlEntry(`${BASE}/article/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
+          articleEntries = data.map((a: any) => urlEntry(`${BASE}/news/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
         }
       }
     } catch {}
