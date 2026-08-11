@@ -29,23 +29,24 @@ interface PageMeta {
   links?: { name: string; url: string }[];
   jsonLdType?: string;
   status?: number;
+  noindex?: boolean;
 }
 
 const STATIC_ROUTES: Record<string, PageMeta> = {
   "/": {
-    title: "BallMtaani: Live Football Scores, Fixtures & Fan Predictions Kenya",
+    title: "BallMtaani | Football. From where we stand.",
     description:
-      "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.",
+      "Original Kenyan football reporting, African football, Premier League and FKF coverage, live scores, fixtures, analysis and fan debate.",
     keywords:
       "BallMtaani, Kenya football, Premier League Kenya, KPL live scores, Champions League Kenya, football predictions Kenya",
-    h1: "Kenyan Football Intelligence & Matchday Companion",
-    body: "Live scores, match fixtures, fearless predictions, Kenyan fan debates and real football intelligence—from the Premier League to FKF Premier League football. We predict. We debate. We keep receipts.",
+    h1: "Football. From where we stand.",
+    body: "BallMtaani is a Kenyan football publication covering the local game, African football and the major global leagues, with live match tools and community conversation alongside original reporting.",
     jsonLdType: "WebSite",
   },
   "/home": {
-    title: "BallMtaani: Live Football Scores, Fixtures & Fan Predictions Kenya",
+    title: "BallMtaani | Football. From where we stand.",
     description:
-      "Follow Premier League, Champions League, European and Kenyan football with live scores, fixtures, tables, predictions, fan debates and Mchambuzi AI analysis.",
+      "Original Kenyan football reporting, African football, Premier League and FKF coverage, live scores, fixtures, analysis and fan debate.",
     keywords:
       "BallMtaani, Kenya football, Premier League Kenya, KPL live scores, Champions League Kenya",
     h1: "The Season Starts Here — BallMtaani Football Hub",
@@ -268,6 +269,7 @@ function esc(s: string): string {
 }
 
 function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
+  const utilityNoindex = /\/(?:login|register|auth|otp|verify-otp|search|diagnostics|profile|account|admin|predictions|debates|rivalries|war-room|live-center|fun-zone|fun-zones|rapid-fire|trivia|store)(?:\/|$)/.test(canonical);
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -287,7 +289,7 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
         "url": "https://ballmtaani.com/",
         "logo": "https://ballmtaani.com/logo.png",
         "foundingDate": "2024",
-        "description": "Kenya's #1 football intelligence platform — live scores, original reporting, predictions, debates, and AI match analysis.",
+        "description": "A Kenyan football publication for original reporting, African football, live scores, fixtures, analysis and fan debate.",
         "sameAs": [
           "https://twitter.com/ballmtaani"
         ]
@@ -321,7 +323,7 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
 <title>${esc(meta.title)}</title>
 <meta name="description" content="${esc(meta.description)}"/>
 <meta name="keywords" content="${esc(meta.keywords)}"/>
-<meta name="robots" content="${meta.status === 404 ? "noindex,nofollow" : "index,follow,max-image-preview:large,max-snippet:-1"}"/>
+<meta name="robots" content="${meta.status === 404 ? "noindex,nofollow" : meta.noindex || utilityNoindex ? "noindex,follow" : "index,follow,max-image-preview:large,max-snippet:-1"}"/>
 <meta name="author" content="BallMtaani"/>
 <meta name="geo.region" content="KE"/>
 <meta name="geo.placename" content="Nairobi, Kenya"/>
@@ -582,13 +584,21 @@ export default function middleware(request: Request): Response | undefined {
     });
   }
 
-  // 5. Article Detail Route (/article/:slug and /articles/:slug)
+  // 5. Canonical article route. Legacy aliases permanently redirect to /news/:slug.
   if ((pathname.startsWith("/article/") && pathname !== "/article/") || (pathname.startsWith("/articles/") && pathname !== "/articles/")) {
     const slug = pathname.replace(/^\/(?:article|articles)\//, "").split("/")[0];
+    return new Response("", {
+      status: 301,
+      headers: { "Location": `https://ballmtaani.com/news/${slug}`, "Cache-Control": "public, max-age=86400" },
+    });
+  }
+
+  if (pathname.startsWith("/news/") && pathname !== "/news/") {
+    const slug = pathname.replace(/^\/news\//, "").split("/")[0];
     const formattedTitle = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
     const meta: PageMeta = {
       title: `${formattedTitle} | BallMtaani Mtaa Daily`,
-      description: `Read ${formattedTitle} on BallMtaani — Kenya's premier football intelligence platform for live scores, match analysis, and original reporting.`,
+      description: `Read ${formattedTitle} on BallMtaani — original football reporting and analysis from a Kenyan perspective.`,
       keywords: `${formattedTitle}, BallMtaani article, Kenya football news, Mtaa Daily`,
       h1: formattedTitle,
       body: `Original reporting, tactical deep-dives, and match analysis from BallMtaani's editorial team.`,
@@ -600,11 +610,19 @@ export default function middleware(request: Request): Response | undefined {
     });
   }
 
-  // Default Fallback: Homepage shell for all other discovery routes
-  const meta = STATIC_ROUTES["/"];
+  // Unknown discovery routes must be genuine, non-indexable 404 responses.
+  const meta: PageMeta = {
+    title: "Page Not Found | BallMtaani",
+    description: "The requested page does not exist on BallMtaani.",
+    keywords: "404, page not found",
+    h1: "404 — Page Not Found",
+    body: "The page may have moved or no longer exists. Continue with the latest BallMtaani reporting and match coverage.",
+    status: 404,
+    noindex: true,
+  };
   return new Response(generateCrawlableHTML(meta, canonical), {
-    status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600", "X-BallMtaani-Rendered": "edge-ssr" },
+    status: 404,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache", "X-BallMtaani-Rendered": "edge-404" },
   });
 }
 

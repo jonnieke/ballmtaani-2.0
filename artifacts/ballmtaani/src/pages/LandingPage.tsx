@@ -1166,7 +1166,7 @@ function WC26HeroBanner({ motd }: { motd: { match: any; isLive: boolean } | null
         {/* Google sign-in CTA — only for logged-out fans */}
         {!isLoggedIn && (
           <div className="mt-4 flex justify-center">
-            <GoogleSignInButton size="md" label="Join Free · Google" className="shadow-[0_0_24px_rgba(255,255,255,0.1)]" />
+            <GoogleSignInButton size="md" label="Join with Google" className="shadow-[0_0_24px_rgba(255,255,255,0.1)]" />
           </div>
         )}
       </div>
@@ -1723,19 +1723,19 @@ export default function LandingPage() {
         <div>BallMtaani match center for fans who want the full picture.</div>
       </footer>
 
-      {/* ── STICKY GOOGLE SIGN-IN BANNER ── logged-out fans only */}
+      {/* Optional sign-in prompt for logged-out readers. */}
       {!isLoggedIn && (
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#FFD700]/20 bg-[#0a0800]/96 backdrop-blur-xl px-4 py-3 shadow-[0_-4px_30px_rgba(0,0,0,0.6)]">
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black text-[#FFD700] leading-tight">
-                {Date.now() >= WC26_START.getTime() ? "⚽ WC26 Live · Predict & Win Ksh 50 Airtime" : "⚽ WC26 kicks off Jun 11 · Earn real airtime"}
+                Join the BallMtaani community
               </p>
               <p className="text-[10px] text-white/40">
-                Join free — earn MTC coins and redeem for airtime on any Kenyan network
+                Save clubs, join debates and make non-cash community predictions.
               </p>
             </div>
-            <GoogleSignInButton size="sm" label="Join · Google" />
+            <GoogleSignInButton size="sm" label="Join with Google" />
           </div>
         </div>
       )}

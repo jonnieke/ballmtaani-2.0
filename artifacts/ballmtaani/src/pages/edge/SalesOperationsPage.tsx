@@ -7,7 +7,7 @@ const STAGE_COLORS: Record<string, string> = {
 };
 const mockOpps = [
   { id:"opp-001", name:"Safaricom SuperApp", stage:"proposal", valueKes:"KES 2.4M/yr", type:"telecom", lastActivity:"2026-07-24", owner:"CEO" },
-  { id:"opp-002", name:"SportPesa Media Arm", stage:"demo",     valueKes:"KES 600k/yr", type:"publisher", lastActivity:"2026-07-22", owner:"Head of Sales" },
+  { id:"opp-002", name:"Sports Media Partner", stage:"demo",     valueKes:"KES 600k/yr", type:"publisher", lastActivity:"2026-07-22", owner:"Head of Sales" },
   { id:"opp-003", name:"KBC Radio Partnership", stage:"qualify", valueKes:"KES 300k/yr", type:"media", lastActivity:"2026-07-20", owner:"Head of Sales" },
 ];
 

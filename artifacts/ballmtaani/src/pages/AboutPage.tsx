@@ -1,4 +1,4 @@
-﻿import { Link } from "wouter";
+import { Link } from "wouter";
 import SEO from "../components/SEO";
 
 const PILLARS = [
@@ -25,7 +25,7 @@ const PILLARS = [
   {
     icon: "🎮",
     title: "Fan Games and Rewards",
-    body: "Making a correct prediction, winning a debate or completing trivia can earn MTC (Mtaa Coins). MTC can be redeemed for real Kenyan airtime, subject to the platform rules and campaign terms.",
+    body: "Predictions, debates and trivia can earn MTC status points. MTC has no cash value and cannot be bought, sold, withdrawn or exchanged for money. Separate promotional campaigns may offer non-cash prizes under published campaign rules.",
   },
   {
     icon: "📡",
@@ -46,7 +46,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-[#0B0B0B] pb-24">
       <SEO
         title="About BallMtaani | Kenya's Football Community Platform"
-        description="BallMtaani is Kenya's home for football - live scores, Mtaa Daily original reporting, fan predictions, Mchambuzi AI analysis and real airtime rewards. Built in Nairobi for African fans."
+        description="BallMtaani is a Kenyan football publication for live scores, Mtaa Daily original reporting, fan predictions and Mchambuzi analysis. Built in Nairobi for African fans."
         keywords={["about BallMtaani", "Kenya football platform", "Nairobi football", "World Cup 2026 archive Kenya", "African football coverage", "Mtaa Daily football news"]}
         path="/about"
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "About", url: "/about" }]}
@@ -56,7 +56,7 @@ export default function AboutPage() {
           "name": "BallMtaani",
           "url": "https://ballmtaani.com",
           "logo": "https://ballmtaani.com/logo.png",
-          "description": "Kenya's home for football - live scores, Premier League, KPL, original reporting and fan games with real rewards.",
+          "description": "A Kenyan football publication for live scores, Premier League, FKF coverage, original reporting and fan community.",
           "foundingLocation": { "@type": "Place", "name": "Nairobi, Kenya" },
           "contactPoint": {
             "@type": "ContactPoint",
@@ -77,7 +77,7 @@ export default function AboutPage() {
             Football, the way the <span className="text-[#B30000]">streets</span> see it.
           </h1>
           <p className="max-w-2xl text-base leading-relaxed text-white/55 md:text-lg">
-            BallMtaani is Kenya's home for football intelligence - live coverage, original reporting through Mtaa Daily, fan predictions, Mchambuzi AI analysis and engagement rewards that can become real Kenyan airtime.
+            BallMtaani is a Kenyan football publication combining live coverage, original reporting through Mtaa Daily, fan predictions and Mchambuzi analysis.
           </p>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
               The football internet did not have a home for that angle, so we built one.
             </p>
             <p>
-              BallMtaani launched as a prediction platform and grew into a football community: original editorial via Mtaa Daily, live match intelligence, AI analysis with African context and a rewards system that turns correct calls into Kenyan airtime.
+              BallMtaani grew into a football publication and community: original editorial through Mtaa Daily, live match intelligence, analysis with African context and free fan participation tools.
             </p>
             <p>
               The name means football in the streets - a reference to the informal match-day culture that runs through every Kenyan town. The barber who predicts a result before kick-off. The WhatsApp group that becomes a war room. The receipt culture where getting it right matters.

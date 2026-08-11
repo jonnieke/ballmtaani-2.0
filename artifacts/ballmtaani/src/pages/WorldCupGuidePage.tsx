@@ -47,7 +47,7 @@ export default function WorldCupGuidePage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFD700]" />
           </span>
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFD700]">WC26 is live — tournament is underway</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFD700]">World Cup 2026 archive — completed tournament</span>
           <Link href="/world-cup-2026" className="rounded-full border border-[#FFD700]/40 bg-[#FFD700]/12 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-[#FFD700] hover:bg-[#FFD700]/25 transition-colors">
             Live Hub →
           </Link>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
@@ -467,7 +467,7 @@ export default function NewsPage() {
               {[
                 { href: "/data-centre", icon: BarChart2, label: "Data Centre",  sub: "Live scores, fixtures & standings",  color: "#1E6FFF" },
                 { href: "/fun-zone", icon: Gamepad2,   label: "Fun Zone",     sub: "Trivia, duels, rapid fire & more",   color: "#22c55e" },
-                { href: "/store",    icon: Newspaper,  label: "Earn MTC",     sub: "Predict & redeem for airtime",       color: "#FFD700" },
+                { href: "/store",    icon: Newspaper,  label: "Mtaa Play",    sub: "Predictions, debates and rewards",       color: "#FFD700" },
               ].map(({ href, icon: Icon, label, sub, color }) => (
                 <Link key={href} href={href}
                   className="group flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-4 text-center transition-all hover:border-white/14 hover:bg-white/5">

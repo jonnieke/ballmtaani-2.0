@@ -117,7 +117,7 @@ export default function WorldCupBracketPage() {
     <div className="min-h-screen bg-[#05070b] pb-20 text-white">
       <SEO
         title="WC26 Knockout Bracket | BallMtaani"
-        description="Live World Cup 2026 knockout bracket — Round of 32, Round of 16, Quarter-finals, Semi-finals, and Final results as they happen."
+        description="World Cup 2026 knockout bracket archive — completed results from the Round of 32 through the Final."
         keywords={["World Cup 2026 bracket", "WC26 knockout", "WC26 Round of 16", "World Cup 2026 results"]}
         path="/world-cup-2026/bracket"
       />

@@ -6,11 +6,7 @@ import { useFixtureDetail, useUpcomingFixtures } from "../hooks/useData";
 import { supabase } from "../lib/supabase";
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, Trophy, Flame, Target, Star, ShieldAlert, Share2, Users, Bell, Sparkles } from "lucide-react";
 import TeamLogo from "../components/TeamLogo";
-import SponsorSlot from "../components/SponsorSlot";
-import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
-import EditorialIntro from "../components/EditorialIntro";
-import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 import { WC26BracketCard } from "../components/WC26BracketCard";
 import { analytics } from "../lib/analytics";
 import { askMchambuziHalisi } from "../lib/mchambuzi-halisi";
@@ -18,7 +14,7 @@ import { askMchambuziHalisi } from "../lib/mchambuzi-halisi";
 const WC26_SPECIAL_ID = "wc26-2026-winner";
 const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain","Portugal","Netherlands","Belgium","Morocco","Senegal","USA"];
 const WC26_LOCK = new Date("2026-06-11T17:00:00Z");
-const wc26IsLive = Date.now() >= WC26_LOCK.getTime();
+const wc26PicksClosed = Date.now() >= WC26_LOCK.getTime();
 
 // â”€â”€â”€ WC26 Tournament Prediction Questions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface WC26Question {
@@ -86,7 +82,7 @@ export default function PredictionsPage() {
   const initialTab = (() => {
     const tab = new URLSearchParams(window.location.search).get("tab");
     if (tab === "my" || tab === "make" || tab === "wc26") return tab;
-    return wc26IsLive ? "make" : "wc26";
+    return "make";
   })();
   const [activeTab, setActiveTab] = useState<"make" | "my" | "wc26">(initialTab);
 
@@ -123,31 +119,31 @@ export default function PredictionsPage() {
     [fixtures, leagueFilter]
   );
   const lockedCalls = useMemo(() => Object.values(predictions).filter((p) => p.saved).length, [predictions]);
-  const featuredRevenueFixture = visibleFixtures[0] || fixtures[0] || null;
+  const featuredFixture = visibleFixtures[0] || fixtures[0] || null;
   const wc26LockedCalls = useMemo(() => Object.keys(wc26Saved2).filter((key) => wc26Saved2[key]).length, [wc26Saved2]);
-  const revenueSignals = useMemo(() => ([
+  const communitySignals = useMemo(() => ([
     { label: "Live fixtures", value: visibleFixtures.length.toLocaleString(), sub: "call volume" },
     { label: "Locked receipts", value: lockedCalls.toString(), sub: "submitted calls" },
-    { label: "WC26 calls", value: wc26LockedCalls.toString(), sub: "tournament picks" },
-    { label: "Wallet balance", value: coins.toLocaleString(), sub: "fan spend power" },
+    { label: "Archive calls", value: wc26LockedCalls.toString(), sub: "saved tournament picks" },
+    { label: "MTC status", value: coins.toLocaleString(), sub: "non-cash points" },
   ]), [visibleFixtures.length, lockedCalls, wc26LockedCalls, coins]);
   const fixtureDetailQuery = useFixtureDetail(selectedFixtureId);
   const selectedFixture = useMemo(() => {
-    if (!selectedFixtureId) return featuredRevenueFixture || null;
-    return fixtures.find((item: any) => String(item.id) === String(selectedFixtureId)) || featuredRevenueFixture || null;
-  }, [fixtures, featuredRevenueFixture, selectedFixtureId]);
+    if (!selectedFixtureId) return featuredFixture || null;
+    return fixtures.find((item: any) => String(item.id) === String(selectedFixtureId)) || featuredFixture || null;
+  }, [fixtures, featuredFixture, selectedFixtureId]);
   const fixtureDetailData = fixtureDetailQuery.data;
   const fixtureStats = fixtureDetailData?.stats || [];
   const homeLineup = fixtureDetailData?.lineups?.home || null;
   const awayLineup = fixtureDetailData?.lineups?.away || null;
   useEffect(() => {
-    if (!selectedFixtureId && featuredRevenueFixture?.id) {
-      setSelectedFixtureId(String(featuredRevenueFixture.id));
+    if (!selectedFixtureId && featuredFixture?.id) {
+      setSelectedFixtureId(String(featuredFixture.id));
     }
-  }, [selectedFixtureId, featuredRevenueFixture]);
+  }, [selectedFixtureId, featuredFixture]);
   useEffect(() => {
     let cancelled = false;
-    askMchambuziHalisi("Give the current WC26 read in one short paragraph.", { live: visibleFixtures, upcoming: fixtures, recent: [] })
+    askMchambuziHalisi("Give a short tactical read of the most relevant current fixture.", { live: visibleFixtures, upcoming: fixtures, recent: [] })
       .then(({ answer }) => {
         if (!cancelled) setMchambuziAnswer(answer);
       })
@@ -291,7 +287,7 @@ export default function PredictionsPage() {
     if (!filled.length) return;
     const lines = filled.map(q => `${q.emoji} ${q.title}: ${wc26Picks[q.id]}`).join("\n");
     const total = filled.reduce((s, q) => s + q.mtc, 0);
-    const text = encodeURIComponent(`🏆 My WC26 Bold Calls on BallMtaani\n\n${lines}\n\nMTC on the line: ${total.toLocaleString()}\n\nMake yours → https://ballmtaani.com/predictions`);
+    const text = encodeURIComponent(`🏆 My World Cup archive calls on BallMtaani\n\n${lines}\n\nArchived MTC record: ${total.toLocaleString()}\n\nMake yours → https://ballmtaani.com/predictions`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
@@ -395,26 +391,10 @@ export default function PredictionsPage() {
       )}
       <SEO
         title="Predictions | BallMtaani Fan Calls & Receipts"
-        description="Call the scoreline on the biggest football fixtures. Earn MTC status. Keep receipts. Kenya's fan prediction platform."
+        description="Make non-cash community score predictions, compare calls and keep a transparent record alongside BallMtaani match coverage."
         path="/predictions"
       />
-
-      <EditorialIntro
-        eyebrow="BallMtaani prediction studio"
-        title="A call-making page with receipts, context and tournament stakes."
-        copy="Predictions are part of the publication, not a standalone gimmick. We pair score calls with fixture context, WC26 tournament picks and a clear paper trail so readers can follow the reasoning before kickoff and the result after full time."
-        bullets={[
-          "Match predictions with receipts and leaderboard history.",
-          "WC26 tournament calls, African team picks and community consensus.",
-          "Mchambuzi analysis that explains the shape of the game before you submit a call.",
-        ]}
-        links={[
-          { href: "/matches", label: "Check fixtures" },
-          { href: "/news", label: "Read match context" },
-        ]}
-      />
-
-      {/* â”€â”€ HERO â”€â”€ */}
+{/* â”€â”€ HERO â”€â”€ */}
       <div className="border-b border-white/6 bg-[#0c0e13] px-4 py-8 md:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="mb-1 flex items-center gap-2">
@@ -447,11 +427,9 @@ export default function PredictionsPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-3 md:px-4 py-6">
-        <div className="mb-6">
-          <AdBanner label="Platform Perks" type="horizontal" />
-        </div>
 
-        <div className="mb-6 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+
+        <div className="mb-6 grid gap-3 ">
           <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d12] shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
             <div className="bg-[linear-gradient(135deg,#3a1118_0%,#21120f_52%,#071116_100%)] p-4 md:p-5">
               <div className="flex items-center justify-between">
@@ -498,7 +476,7 @@ export default function PredictionsPage() {
                 {[
                   { key: "details", label: "Details" },
                   { key: "insights", label: "AI Insights" },
-                  { key: "odds", label: "Odds" },
+                  { key: "odds", label: "Community" },
                   { key: "lineups", label: "Lineups" },
                 ].map((tab) => (
                   <button
@@ -521,41 +499,24 @@ export default function PredictionsPage() {
                 <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                   <div className="rounded-[22px] bg-white p-5 shadow-sm">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#111] text-white">
-                      <Trophy className="h-6 w-6" />
+                      <Target className="h-6 w-6" />
                     </div>
-                    <div className="mx-auto mt-3 inline-flex rounded bg-emerald-500 px-3 py-1 text-xs font-black uppercase text-white">
-                      World Cup Special
-                    </div>
-                    <h3 className="mt-4 text-2xl font-extrabold leading-tight text-[#171717]">Predict smarter, win bigger</h3>
+                    <p className="mt-4 text-[10px] font-black uppercase tracking-[0.22em] text-blue-600">Community prediction</p>
+                    <h3 className="mt-2 text-2xl font-extrabold leading-tight text-[#171717]">Make an informed call</h3>
                     <p className="mt-2 text-sm leading-6 text-gray-700">
-                      Use live match context and BallMtaani receipts to move faster when a fixture heats up. Built for WC26 and the leagues we track every day.
+                      Review current form, confirmed team news, live statistics and Mchambuzi analysis before recording your score call.
                     </p>
                     <ul className="mt-4 space-y-2 text-sm text-[#222]">
-                      {[
-                        "Matchup analysis and prediction context",
-                        "Player form, injuries, and live event signals",
-                        "World Cup and 200+ leagues",
-                        "3-day free trial",
-                      ].map((item) => (
+                      {["No money or stake required", "MTC is a non-cash status point", "Calls are community opinions, not betting advice"].map((item) => (
                         <li key={item} className="flex items-start gap-2">
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                           <span>{item}</span>
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <Link href="/mchambuzi-halisi" className="rounded-xl bg-[#3557ff] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-[#2446f0]">
-                        Claim offer
-                      </Link>
-                      <Link href="/store" className="rounded-xl border border-[#3557ff]/25 bg-[#3557ff]/10 px-5 py-3 text-sm font-black uppercase tracking-wider text-[#3557ff] transition hover:bg-[#3557ff]/15">
-                        Learn more
-                      </Link>
-                    </div>
-                    <div className="mt-4 text-[11px] font-semibold text-gray-500">
-                      <Link href="/terms" className="hover:text-gray-700">Terms &amp; Conditions</Link>
-                      <span className="mx-2">|</span>
-                      <Link href="/privacy" className="hover:text-gray-700">Privacy Policy</Link>
-                    </div>
+                    <Link href="/mchambuzi-halisi" className="mt-5 inline-flex rounded-xl bg-[#3557ff] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-[#2446f0]">
+                      Read the match
+                    </Link>
                   </div>
 
                   <div className="grid gap-3">
@@ -627,11 +588,10 @@ export default function PredictionsPage() {
                     </Link>
                   </div>
                   <div className="space-y-3">
-                    <AdBanner label="AI Insights Sponsor" type="horizontal" />
                     <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
                       <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Why this matters</p>
                       <p className="mt-3 text-sm leading-6 text-gray-700">
-                        Sponsored insights only work when the fixture context is real. Keep the page anchored to live data, then route fans to the prediction flow or store once the case is strong enough to convert.
+                        Use the live fixture feed, confirmed team news and match statistics as context. Community calls remain opinions, not guarantees.
                       </p>
                     </div>
                   </div>
@@ -658,23 +618,15 @@ export default function PredictionsPage() {
                       ))}
                     </div>
                     <p className="mt-4 text-[11px] leading-5 text-gray-500">
-                      These are community cues, not bookmaker odds. They work best when paired with the live fixture feed and Mchambuzi analysis.
+                      These percentages summarize community calls. They are not betting odds and have no monetary value.
                     </p>
                   </div>
                   <div className="rounded-[22px] border border-[#111]/10 bg-white p-5 shadow-sm">
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Offer slot</p>
-                    <h3 className="mt-3 text-xl font-black text-[#111]">Turn this match into a paid touchpoint</h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">How to read the pulse</p>
+                    <h3 className="mt-3 text-xl font-black text-[#111]">Context matters more than consensus</h3>
                     <p className="mt-2 text-sm leading-6 text-gray-700">
-                      Sponsor this fixture, sell the prediction lane, or push fans toward the MTC store while the stakes are highest.
+                      Community percentages show what supporters expect. Check form, injuries, line-ups and Mchambuzi analysis before making a call. MTC is a non-cash status point.
                     </p>
-                    <div className="mt-5 flex flex-wrap gap-3">
-                      <a href="mailto:sponsors@ballmtaani.com?subject=World%20Cup%20Match%20Package" className="rounded-xl bg-[#111] px-5 py-3 text-sm font-black uppercase tracking-wider text-white transition hover:bg-black">
-                        Book sponsor
-                      </a>
-                      <Link href="/store" className="rounded-xl border border-[#111]/10 bg-[#3557ff]/10 px-5 py-3 text-sm font-black uppercase tracking-wider text-[#3557ff] transition hover:bg-[#3557ff]/15">
-                        Open store
-                      </Link>
-                    </div>
                   </div>
                 </div>
               ) : (
@@ -713,121 +665,27 @@ export default function PredictionsPage() {
               )}
             </div>
           </section>
-
-          <aside className="space-y-3">
-            <SponsorSlot placement="homepage-hero" />
-            <AdBanner label="Prediction Revenue Sponsor" type="horizontal" />
-          </aside>
         </div>
-        <div className="mb-6 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
-          <section className="overflow-hidden rounded-2xl border border-[#FFD700]/22 bg-gradient-to-br from-[#110d00] to-[#09080d] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">Revenue Hub</p>
-                <h2 className="mt-1 text-lg font-black uppercase text-white">Monetize the calls fans already want to make</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/48">
-                  Prediction traffic is highest when the stakes feel real. Use this surface for sponsored drops, premium placement, and fast-path calls that convert.
-                </p>
-              </div>
-              <div className="rounded-full border border-[#FFD700]/20 bg-[#FFD700]/8 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-[#FFD700]">
-                Live intent
-              </div>
+        <section className="mb-6 border-y border-white/10 bg-[#0d0f14] px-4 py-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">Community snapshot</p>
+              <h2 className="mt-1 text-lg font-black uppercase text-white">Calls, receipts and non-cash status</h2>
             </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {revenueSignals.map((signal) => (
-                <div key={signal.label} className="rounded-xl border border-white/8 bg-black/30 px-3 py-3">
-                  <div className="text-[9px] font-black uppercase tracking-[0.22em] text-white/34">{signal.label}</div>
-                  <div className="mt-1 text-xl font-black text-white">{signal.value}</div>
-                  <div className="mt-1 text-[10px] text-white/30">{signal.sub}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-[1.05fr_0.95fr]">
-              <div className="rounded-xl border border-white/8 bg-black/25 p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/32">Sponsored paths</p>
-                <h3 className="mt-2 text-sm font-black uppercase text-white">Sell sponsored prediction lanes, receipt shares, and feature drops.</h3>
-                <p className="mt-2 text-sm leading-6 text-white/48">
-                  Send high-intent partners here before kickoff, then route fans into the store for MTC-driven perks and conversion.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <a
-                    href="mailto:sponsors@ballmtaani.com?subject=Prediction%20Revenue%20Hub%20Partnership"
-                    className="inline-flex items-center justify-center rounded-lg bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition hover:bg-[#ffc928]"
-                  >
-                    Book sponsorship
-                  </a>
-                  <Link
-                    href="/store"
-                    className="inline-flex items-center justify-center rounded-lg border border-[#FFD700]/30 bg-[#FFD700]/8 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#FFD700] transition hover:bg-[#FFD700]/12"
-                  >
-                    Open MTC store
-                  </Link>
-                </div>
+            <Link href="/terms" className="text-[10px] font-black uppercase tracking-widest text-white/45 hover:text-white">How MTC works</Link>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {communitySignals.map((signal) => (
+              <div key={signal.label} className="border-l border-white/15 px-3 py-1">
+                <div className="text-[9px] font-black uppercase tracking-[0.22em] text-white/34">{signal.label}</div>
+                <div className="mt-1 text-xl font-black text-white">{signal.value}</div>
+                <div className="mt-1 text-[10px] text-white/30">{signal.sub}</div>
               </div>
+            ))}
+          </div>
+        </section>
 
-              <div className="rounded-xl border border-white/8 bg-black/25 p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.24em] text-white/32">Featured fixture</p>
-                    <h3 className="mt-2 text-sm font-black uppercase text-white">{featuredRevenueFixture ? `${featuredRevenueFixture.home} vs ${featuredRevenueFixture.away}` : "No fixture loaded"}</h3>
-                  </div>
-                  {featuredRevenueFixture ? (
-                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black uppercase text-white/40">
-                      {featuredRevenueFixture.league || "Matchday"}
-                    </span>
-                  ) : null}
-                </div>
-
-                {featuredRevenueFixture ? (
-                  <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                    <div className="text-center">
-                      <TeamLogo logo={featuredRevenueFixture.homeLogo} initial={featuredRevenueFixture.homeInitial} color={featuredRevenueFixture.homeColor} size="sm" />
-                      <p className="mt-2 truncate text-[10px] font-black uppercase text-white">{featuredRevenueFixture.home}</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-black text-white">VS</div>
-                      <div className="mt-1 text-[9px] font-black uppercase tracking-widest text-white/25">{featuredRevenueFixture.date || featuredRevenueFixture.time || "Upcoming"}</div>
-                    </div>
-                    <div className="text-center">
-                      <TeamLogo logo={featuredRevenueFixture.awayLogo} initial={featuredRevenueFixture.awayInitial} color={featuredRevenueFixture.awayColor} size="sm" />
-                      <p className="mt-2 truncate text-[10px] font-black uppercase text-white">{featuredRevenueFixture.away}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-white/40">The fixture feed is still syncing.</p>
-                )}
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {["1-0", "2-1", "1-1"].map((score) => (
-                    <button
-                      key={score}
-                      disabled={!featuredRevenueFixture}
-                      onClick={() => featuredRevenueFixture && applyQuickScore(String(featuredRevenueFixture.id), score)}
-                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white/65 transition hover:border-[#FFD700]/30 hover:text-[#FFD700] disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      {score}
-                    </button>
-                  ))}
-                  <Link
-                    href="/predictions?tab=make"
-                    className="rounded-lg border border-[#FFD700]/30 bg-[#FFD700] px-3 py-2 text-[10px] font-black uppercase tracking-widest text-black transition hover:bg-[#ffc928]"
-                  >
-                    Lock it
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <aside className="space-y-3">
-            <SponsorSlot placement="homepage-hero" />
-            <AdBanner label="Prediction Revenue Sponsor" type="horizontal" />
-          </aside>
-        </div>
-
-        {/* â”€â”€ TAB NAVIGATION â”€â”€ */}
+        {/* TAB NAVIGATION */}
 
         <div className="mb-8 overflow-x-auto hide-scrollbar">
           <div className="mx-auto flex w-max bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 shadow-xl">
@@ -861,7 +719,7 @@ export default function PredictionsPage() {
                   : "text-[#FFD700]/70 hover:text-[#FFD700] hover:bg-[#FFD700]/5"
               }`}
             >
-              🏆 WC26 Calls
+              World Cup archive
               {activeTab === "wc26" && <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2px] bg-[#FFD700] rounded-t-full shadow-[0_0_8px_#FFD700]" />}
             </button>
           </div>
@@ -875,26 +733,26 @@ export default function PredictionsPage() {
               <div className="flex items-center gap-3 border-b border-[#FFD700]/12 px-4 py-3">
                 <Trophy className="h-4 w-4 text-[#FFD700]" />
                 <div>
-                  <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">WC26 Champion Pick</div>
+                  <div className="text-xs font-black uppercase tracking-widest text-[#FFD700]">World Cup 2026 archive pick</div>
                   <div className="text-[9px] text-white/30 font-semibold">
-                    {wc26IsLive ? "WC26 is underway — picks closed. Receipts settle when the dust clears." : "Lock in your champion before June 11. Earn bonus MTC if they lift the trophy."}
+                    {wc26PicksClosed ? "The tournament has ended. Saved picks remain available as archive receipts." : "The tournament archive preserves calls made before kickoff."}
                   </div>
                 </div>
                 {wc26Saved
                   ? <span className="ml-auto flex items-center gap-1 text-[10px] font-black text-green-400"><CheckCircle2 className="h-3.5 w-3.5" /> Locked</span>
-                  : wc26IsLive && <span className="ml-auto text-[10px] font-black text-white/25 uppercase tracking-widest">Closed</span>
+                  : wc26PicksClosed && <span className="ml-auto text-[10px] font-black text-white/25 uppercase tracking-widest">Closed</span>
                 }
               </div>
               <div className="p-4">
                 <div className="mb-3 flex flex-wrap gap-2">
                   {WC26_NATIONS.map(n => (
-                    <button key={n} onClick={() => { if (!wc26Saved && !wc26IsLive) setWc26Pick(n); }}
-                      className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"} ${(wc26Saved || wc26IsLive) ? "pointer-events-none" : ""}`}>
+                    <button key={n} onClick={() => { if (!wc26Saved && !wc26PicksClosed) setWc26Pick(n); }}
+                      className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"} ${(wc26Saved || wc26PicksClosed) ? "pointer-events-none" : ""}`}>
                       {n}
                     </button>
                   ))}
                 </div>
-                {!wc26IsLive && (
+                {!wc26PicksClosed && (
                   <button onClick={handleWC26Winner}
                     disabled={!wc26Pick || wc26Saved || wc26Saving}
                     className="flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-2.5 text-xs font-black uppercase tracking-widest text-black shadow-[0_0_20px_rgba(255,214,0,0.3)] disabled:opacity-40 disabled:shadow-none transition-all hover:shadow-[0_0_30px_rgba(255,214,0,0.5)]">
@@ -1047,19 +905,9 @@ export default function PredictionsPage() {
                     </button>
                   )}
                 </div>
-                {shouldShowFeedAd(idx, AD_STRATEGY.predictionsFeedInterval, visibleFixtures.length) ? (
-                  <div className="lg:col-span-2">
-                    <AdBanner label="Prediction Feed Sponsor" type="horizontal" />
-                  </div>
-                ) : null}
                 </div>
               );
             })}
-            {visibleFixtures.length > 0 && visibleFixtures.length < AD_STRATEGY.predictionsFeedInterval && (
-              <div className="lg:col-span-2">
-                <AdBanner label="Prediction Feed Sponsor" type="horizontal" />
-              </div>
-            )}
           </div>
           </div>
       ) : activeTab === "my" ? (
@@ -1153,12 +1001,12 @@ export default function PredictionsPage() {
         // â”€â”€ WC26 TOURNAMENT PREDICTION TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         <div className="space-y-4 max-w-2xl mx-auto">
           {/* Live banner â€” only shown while WC26 is on */}
-          {wc26IsLive && (
+          {wc26PicksClosed && (
             <div className="flex items-center justify-between rounded-2xl border border-[#B30000]/30 bg-[#B30000]/8 px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 animate-ping rounded-full bg-[#B30000]" />
-                <span className="text-[11px] font-black uppercase tracking-widest text-[#B30000]">WC26 is Live</span>
-                <span className="text-[10px] text-white/35">· Scoreline calls still open</span>
+                <span className="h-2 w-2 rounded-full bg-[#B30000]" />
+                <span className="text-[11px] font-black uppercase tracking-widest text-[#B30000]">World Cup 2026 archive</span>
+                <span className="text-[10px] text-white/35">· Saved tournament receipts</span>
               </div>
               <button onClick={() => setActiveTab("make")}
                 className="flex items-center gap-1 rounded-lg bg-[#B30000]/20 border border-[#B30000]/30 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#B30000] hover:bg-[#B30000]/30 transition-all">
@@ -1171,10 +1019,10 @@ export default function PredictionsPage() {
           <div className="rounded-2xl border border-[#FFD700]/25 bg-gradient-to-br from-[#110d00] to-[#09080d] px-5 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-black uppercase tracking-widest text-[#FFD700]">WC26 Bold Calls</h2>
+                <h2 className="text-lg font-black uppercase tracking-widest text-[#FFD700]">World Cup archive calls</h2>
                 <p className="text-[11px] text-white/40 mt-0.5">
                   {Object.keys(wc26Saved2).filter(k => wc26Saved2[k]).length}/{WC26_QUESTIONS.length} calls locked ·{" "}
-                  {WC26_QUESTIONS.filter(q => wc26Saved2[q.id]).reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line
+                  {WC26_QUESTIONS.filter(q => wc26Saved2[q.id]).reduce((s, q) => s + q.mtc, 0).toLocaleString()} archived MTC points
                 </p>
               </div>
               {Object.keys(wc26Saved2).some(k => wc26Saved2[k]) && (
@@ -1198,7 +1046,7 @@ export default function PredictionsPage() {
             const picked = wc26Picks[q.id];
             const saved  = wc26Saved2[q.id];
             const saving = wc26Saving2 === q.id;
-            const locked = saved || wc26IsLive;
+            const locked = saved || wc26PicksClosed;
             return (
               <div key={q.id} className={`overflow-hidden rounded-2xl border transition-all ${
                 saved ? "border-[#FFD700]/35 bg-[#0c0a00]/95" : "border-white/8 bg-[#0d0f14]/95"
@@ -1217,7 +1065,7 @@ export default function PredictionsPage() {
                     </span>
                     {saved
                       ? <CheckCircle2 className="h-4 w-4 text-[#FFD700]" />
-                      : wc26IsLive && <span className="text-[10px] font-black text-white/20 uppercase">Closed</span>
+                      : wc26PicksClosed && <span className="text-[10px] font-black text-white/20 uppercase">Closed</span>
                     }
                   </div>
                 </div>
@@ -1309,9 +1157,9 @@ export default function PredictionsPage() {
               <div className="text-4xl mb-3">🏆</div>
               <h3 className="font-black text-[#FFD700] uppercase tracking-widest mb-2">All 6 calls locked.</h3>
               <p className="text-sm text-white/45 mb-5">
-                {wc26IsLive
-                  ? `WC26 is live — your receipts settle as results come in. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
-                  : `Come back after June 11 for your receipts. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} MTC on the line.`
+                {wc26PicksClosed
+                  ? `The tournament has ended — your saved calls remain in the archive. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} archived MTC points.`
+                  : `Come back after June 11 for your receipts. ${WC26_QUESTIONS.reduce((s, q) => s + q.mtc, 0).toLocaleString()} archived MTC points.`
                 }
               </p>
               <button onClick={() => setShowBracketCard(true)}
@@ -1322,7 +1170,7 @@ export default function PredictionsPage() {
           )}
 
           <p className="text-center text-[10px] font-bold uppercase tracking-widest text-white/20 pb-2">
-            {wc26IsLive ? "WC26 underway · Tournament picks closed · Receipts settle after each match" : "Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT"}
+            {wc26PicksClosed ? "World Cup 2026 archive · Tournament picks closed · Historical receipts" : "Closes at WC26 kickoff · Jun 11, 2026 · 10pm EAT"}
           </p>
 
         </div>

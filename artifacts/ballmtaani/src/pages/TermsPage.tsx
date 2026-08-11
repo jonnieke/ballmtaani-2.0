@@ -1,4 +1,4 @@
-﻿import { Link } from "wouter";
+import { Link } from "wouter";
 import SEO from "../components/SEO";
 
 const sections = [
@@ -12,7 +12,7 @@ const sections = [
   },
   {
     title: "MTC Status Points",
-    body: "MTC status points are engagement rewards used inside BallMtaani for platform perks, cosmetic items, leaderboard status, and fan identity. We may adjust rewards, limits, balances, or perks to keep the platform fair and safe.",
+    body: "MTC status points are used inside BallMtaani for cosmetic items, leaderboard status and fan identity. MTC never guarantees a prize. Separate promotional campaigns may offer non-cash rewards such as airtime under published campaign rules; entry does not require purchasing or staking MTC. We may adjust points, limits or perks to keep the platform fair and safe.",
   },
   {
     title: "Community Conduct",
@@ -64,7 +64,7 @@ export default function TermsPage() {
         </div>
 
         <p className="mt-8 text-xs text-gray-600">
-          Last updated: August 10, 2026.
+          Last updated: August 11, 2026.
         </p>
       </div>
     </main>

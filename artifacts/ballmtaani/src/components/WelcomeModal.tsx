@@ -83,7 +83,7 @@ export default function WelcomeModal() {
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-widest text-black">Make Your First Call</p>
-              <p className="text-[10px] text-black/60 mt-0.5">6 bold predictions · 1,700 MTC on the line</p>
+              <p className="text-[10px] text-black/60 mt-0.5">World Cup 2026 calls · archived receipts</p>
             </div>
           </button>
 

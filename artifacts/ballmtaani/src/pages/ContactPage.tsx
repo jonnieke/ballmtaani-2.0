@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
 import SEO from "../components/SEO";
@@ -155,8 +155,7 @@ export default function ContactPage() {
 
             <div className="rounded-xl border border-white/6 bg-[#0d1018] p-4 text-xs leading-relaxed text-white/40">
               <p className="mb-1 font-black uppercase tracking-wide text-white/60">Response time</p>
-              General enquiries: 1-2 working days.<br />
-              Sponsorship: same day if sent before 3 PM EAT.
+              We aim to respond to genuine enquiries as soon as possible.
             </div>
 
             <div className="pt-2 text-[10px] text-white/20">

@@ -16,7 +16,7 @@ const sections = [
   },
   {
     title: "Advertising & Sponsorship",
-    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. When Google AdSense is enabled, ad units will be limited to content-led pages and will stay clearly separated from logins, interactive tools and utility screens. We do not use hidden or unlabeled ad units.",
+    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. When Google AdSense is enabled, ad units will be limited to substantial editorial pages and will stay clearly separated from logins, predictions, games, rewards, live-score utilities and account screens. We do not use hidden or unlabeled ad units.",
   },
   {
     title: "Cookies & Web Storage",
@@ -24,7 +24,7 @@ const sections = [
   },
   {
     title: "Google Analytics 4",
-    body: "BallMtaani utilizes Google Analytics 4 to understand website traffic, user interaction patterns, and device breakdown. Google Analytics processes anonymized data according to Google's Privacy Policy. You can learn more about how Google uses data when you use our site at https://policies.google.com/technologies/partner-sites. If AdSense or another Google advertising product is enabled, users will be informed through this policy and, where required, through a consent banner or CMP before personalized advertising cookies are set.",
+    body: "Google Analytics and Google advertising scripts are not loaded until the required consent architecture is active. If these services are enabled, BallMtaani will use a Google-certified consent management platform where required and will respect the visitor's choices before setting advertising or analytics cookies. Learn how Google uses partner-site data at https://policies.google.com/technologies/partner-sites.",
   },
   {
     title: "Your Choices & Data Rights",

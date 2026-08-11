@@ -47,14 +47,14 @@ interface SEOProps {
 }
 
 export default function SEO({ 
-  title = "BallMtaani - Kenyan Football Intelligence, Live Scores and Fan Debate", 
-  description = "BallMtaani gives Kenyan football fans live scores, fixtures, World Cup 2026 tracking, predictions, debates, fan zones and AI-powered match intelligence.",
+  title = "BallMtaani | Football. From where we stand.",
+  description = "BallMtaani is a Kenyan football publication for original reporting, African football, live scores, fixtures, analysis and fan debate.",
   keywords = [
     "BallMtaani",
     "Kenyan football fans",
     "football live scores Kenya",
     "Premier League Kenya",
-    "World Cup 2026",
+    "African football",
     "football predictions",
     "football debates",
   ],
