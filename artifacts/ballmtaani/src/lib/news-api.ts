@@ -79,7 +79,7 @@ const SOURCE_FALLBACK_URLS: Record<string, string> = {
 
 const CACHE_KEY = "mtaani_news_cache";
 const CACHE_TTL = 15 * 60 * 1000;
-const CACHE_VERSION = "v11";
+const CACHE_VERSION = "v12";
 const DEFAULT_NEWS_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
 const TEAM_IMAGE_FALLBACKS: Array<{ key: string; image: string }> = [
   { key: "arsenal", image: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png" },
