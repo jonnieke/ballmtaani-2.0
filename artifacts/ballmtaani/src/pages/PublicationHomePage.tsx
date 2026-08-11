@@ -19,6 +19,17 @@ const DESCRIPTION = "Ball Mtaani is a premium Kenyan football publication with l
 function text(article: Pick<NewsArticle, "title" | "description" | "source">) {
   return `${article.title} ${article.description || ""} ${article.source || ""}`.toLowerCase();
 }
+
+const FOOTBALL_TERMS = ["football", "soccer", "premier league", "champions league", "ucl", "epl", "serie a", "la liga", "bundesliga", "transfer", "fixture", "match", "league", "cup", "africa", "caf", "afcon", "kenya", "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "goal", "goals"];
+const NON_FOOTBALL_TERMS = ["president", "white house", "senate", "congress", "government", "politics", "election", "supreme court", "court", "war", "tariff", "economy", "economic", "minister", "policy"];
+
+function isFootballStory(article: Pick<NewsArticle, "title" | "description" | "source">) {
+  const t = text(article);
+  const footballHits = FOOTBALL_TERMS.filter((term) => t.includes(term)).length;
+  const nonFootballHits = NON_FOOTBALL_TERMS.filter((term) => t.includes(term)).length;
+  return footballHits >= 2 && nonFootballHits === 0;
+}
+
 function href(article: NewsArticle) { return article.isInternal ? `/news/${article.slug}` : article.link; }
 function category(article: NewsArticle, fallback: string) {
   const t = text(article);
@@ -135,17 +146,21 @@ export default function PublicationHomePage() {
   useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 60_000); return () => window.clearInterval(timer); }, []);
 
   const allStories = useMemo(() => sortStories(news), [news]);
-  const internal = useMemo(() => allStories.filter((article) => article.isInternal), [allStories]);
+  const footballStories = useMemo(() => allStories.filter((article) => isFootballStory(article)), [allStories]);
+  const internal = useMemo(() => footballStories.filter((article) => article.isInternal), [footballStories]);
   const external = useMemo(() => allStories.filter((article) => !article.isInternal), [allStories]);
+  const footballExternal = useMemo(() => external.filter((article) => isFootballStory(article)), [external]);
+  const storyPool = footballStories.length ? footballStories : allStories;
+  const wirePool = footballExternal.length ? footballExternal : external;
   const usedStories = new Set<string>();
-  const lead = internal[0] || allStories[0];
+  const lead = internal[0] || footballStories[0] || allStories[0];
   if (lead) usedStories.add(storyKey(lead));
-  const rail = takeUnique(allStories, usedStories, 3);
-  const kenya = takeMatchingUnique(allStories, usedStories, ["kenya", "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "east africa"], 4);
-  const epl = takeMatchingUnique(allStories, usedStories, ["premier league", "arsenal", "chelsea", "liverpool", "manchester united", "man utd", "spurs"], 4);
-  const analysis = takeMatchingUnique(allStories, usedStories, ["analysis", "opinion", "tactical", "tactics", "preview", "breakdown"], 4);
-  const africa = takeMatchingUnique(allStories, usedStories, ["africa", "caf", "afcon", "east africa", "national team"], 4);
-  const wire = takeUnique(external, usedStories, 3);
+  const rail = takeUnique(storyPool, usedStories, 3);
+  const kenya = takeMatchingUnique(storyPool, usedStories, ["kenya", "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "east africa"], 4);
+  const epl = takeMatchingUnique(storyPool, usedStories, ["premier league", "arsenal", "chelsea", "liverpool", "manchester united", "man utd", "spurs"], 4);
+  const analysis = takeMatchingUnique(storyPool, usedStories, ["analysis", "opinion", "tactical", "tactics", "preview", "breakdown"], 4);
+  const africa = takeMatchingUnique(storyPool, usedStories, ["africa", "caf", "afcon", "east africa", "national team"], 4);
+  const wire = takeUnique(wirePool, usedStories, 3);
   const featured = useMemo(() => selectFeaturedMatch({ liveMatches: live, upcomingFixtures: upcoming, recentMatches: recent, followedClub: dbProfile?.favorite_team || null }).match, [dbProfile?.favorite_team, live, recent, upcoming]);
   const mode = getHomepageMode({ now, liveMatches: live, todaysFixtures: todayFixtures });
   const liveLine = featured || live[0] || upcoming[0] || recent[0];
@@ -189,16 +204,16 @@ export default function PublicationHomePage() {
       <section id="mtaa-daily" className="bg-black">
         <div className="mx-auto max-w-7xl px-4 py-5 lg:py-7">
           <div className="grid gap-4 lg:grid-cols-[1.35fr_0.7fr]">
-            {lead ? <Link href={href(lead)} className="group relative min-h-[540px] overflow-hidden bg-[#0b0b0b] ring-1 ring-white/[0.06]">
+            {lead ? <Link href={href(lead)} className="group relative min-h-[460px] overflow-hidden bg-[#0b0b0b] ring-1 ring-white/[0.06] md:min-h-[540px]">
               <img src={lead.thumbnail || DEFAULT_IMAGE} alt={lead.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/10 to-transparent" />
               <div className="relative z-10 flex h-full flex-col justify-end p-5 sm:p-6 lg:p-8">
-                <div className="mb-4 flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-[0.25em] text-white/60"><span className="rounded-sm bg-[#B30000] px-2 py-1 text-white">{badge}</span><span>{author}</span><span>•</span><span>{timeAgo(lead.pubDate)}</span></div>
+                <div className="mb-3 flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-[0.25em] text-white/60"><span className="rounded-sm bg-[#B30000] px-2 py-1 text-white">{badge}</span><span>{author}</span><span>•</span><span>{timeAgo(lead.pubDate)}</span></div>
                 <p className="mb-3 max-w-md text-xs font-bold uppercase tracking-[0.24em] text-[#FFD700]/80">{category(lead, "Mtaa Daily")}</p>
-                <h1 className="max-w-xl font-serif text-4xl leading-[0.92] text-white sm:text-5xl lg:text-6xl">{lead.title}</h1>
-                <p className="mt-4 max-w-lg text-base leading-7 text-white/75 sm:text-lg">{lead.description || "The front page story, told cleanly."}</p>
-                <div className="mt-6 flex flex-wrap items-center gap-3"><span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Read story <ArrowRight className="h-3.5 w-3.5" /></span><span className="text-[10px] uppercase tracking-[0.24em] text-white/35">Original reporting</span></div>
+                <h1 className="max-w-xl font-serif text-3xl leading-[0.93] text-white sm:text-5xl lg:text-6xl">{lead.title}</h1>
+                <p className="mt-4 max-w-lg text-sm leading-6 text-white/75 sm:text-base sm:leading-7">{lead.description || "The front page story, told cleanly."}</p>
+                <div className="mt-5 flex flex-wrap items-center gap-3"><span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/75">Read story <ArrowRight className="h-3.5 w-3.5" /></span><span className="text-[10px] uppercase tracking-[0.24em] text-white/35">Original reporting</span></div>
               </div>
             </Link> : <div className="min-h-[540px] animate-pulse border border-white/10 bg-white/5" />}
             <aside className="space-y-3">{rail.length ? rail.slice(0, 3).map((article) => <StoryCard key={article.slug || article.link || article.id} article={article} compact />) : [1,2,3].map((i) => <div key={i} className="h-[166px] animate-pulse border border-white/10 bg-white/5" />)}<Link href="/news" className="flex items-center justify-between bg-[#0d1013] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]/80 ring-1 ring-white/[0.06] transition-colors hover:text-white hover:ring-white/[0.12]">More top stories <ChevronRight className="h-4 w-4" /></Link></aside>
@@ -222,6 +237,13 @@ export default function PublicationHomePage() {
     </main>
   );
 }
+
+
+
+
+
+
+
 
 
 
