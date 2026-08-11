@@ -22,6 +22,8 @@ export interface NewsArticle {
   excerpt?: string;
   isInternal?: boolean;
   isWC26?: boolean;
+  desk?: "kenya" | "global";
+  isOfficial?: boolean;
 }
 
 const RSS_FEEDS = [
@@ -40,11 +42,17 @@ const RSS_FEEDS = [
     source: "API-Football",
     sourceLogo: "API",
   },
+  {
+    url: "https://footballkenya.org/news",
+    source: "Football Kenya Federation",
+    sourceLogo: "FKF",
+  },
 ];
 const SOURCE_FALLBACK_URLS: Record<string, string> = {
   "BBC Sport": "https://www.bbc.com/sport/football",
   "Goal.com": "https://www.goal.com/en/news",
   "API-Football": "https://www.api-football.com/news/",
+  "Football Kenya Federation": "https://footballkenya.org/news",
   KPL: "https://www.kpl.co.ke/",
   CAF: "https://www.cafonline.com/",
   SuperSport: "https://supersport.com/football",
@@ -54,7 +62,7 @@ const SOURCE_FALLBACK_URLS: Record<string, string> = {
 
 const CACHE_KEY = "mtaani_news_cache";
 const CACHE_TTL = 15 * 60 * 1000;
-const CACHE_VERSION = "v10";
+const CACHE_VERSION = "v11";
 const DEFAULT_NEWS_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
 const TEAM_IMAGE_FALLBACKS: Array<{ key: string; image: string }> = [
   { key: "arsenal", image: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png" },
@@ -334,6 +342,8 @@ function mapFeedItems(items: any[], feed: (typeof RSS_FEEDS)[number], sourceImag
       imageQuality: resolvedImage.quality,
       description: item.description || item.content || "",
       isWC26: !!item.isWC26,
+      desk: item.desk,
+      isOfficial: !!item.isOfficial,
     });
   }
 }

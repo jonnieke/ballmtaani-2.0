@@ -66,8 +66,8 @@ export const COMPETITION_REGISTRY: Record<string, SupportedCompetitionConfig> = 
   },
   kpl: {
     internalKey: "kpl",
-    providerId: 686,
-    name: "Kenyan Premier League",
+    providerId: 276,
+    name: "FKF Premier League",
     country: "Kenya",
     enabled: true,
     historicalSeasonsToImport: 2,

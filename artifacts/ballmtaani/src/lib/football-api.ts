@@ -44,7 +44,12 @@ export const MAJOR_LEAGUE_IDS = {
   "UEFA Europa League": 3,
   // African Leagues
   "CAF Champions League": 12,
-  // "Kenya Premier League": 686,  // REMOVED — API-Football ID 686 returns Czech teams, not KPL
+  // Country-validated East African competitions. Never restore 686: it is not Kenya.
+  "FKF Premier League": 276,
+  "Kenya Super League": 277,
+  "Uganda Premier League": 585,
+  "Tanzania Ligi Kuu Bara": 567,
+  "Rwanda National Soccer League": 405,
   "South Africa PSL": 288,
   "Nigeria NPFL": 332,
 };
@@ -326,8 +331,8 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
   const raw = await apiFetch(`/fixtures?date=${todayEAT}&timezone=Africa/Nairobi`);
   if (!raw || !raw.length) return [];
 
-  // 686 excluded — returns Czech teams not KPL. 288/332 excluded until verified.
-  const majorLeagues = new Set([1, 2, 3, 12, 39, 140, 135, 78, 61]);
+  // Includes only country-validated East African IDs. 686 is not a Kenyan competition.
+  const majorLeagues = new Set([1, 2, 3, 12, 39, 140, 135, 78, 61, 276, 277, 585, 567, 405]);
 
   return raw
     .filter((item: any) => majorLeagues.has(item.league?.id))
@@ -354,7 +359,7 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       kickoffAt: new Date(item.fixture.date).getTime(),
     }))
     .sort((a: any, b: any) => {
-      const priority: Record<number, number> = { 1:0, 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
+      const priority: Record<number, number> = { 276:0, 277:1, 585:2, 567:3, 405:4, 12:5, 39:6, 2:7, 3:8, 140:9, 135:10, 78:11, 61:12, 1:13 };
       const pa = priority[a.leagueId] ?? 99;
       const pb = priority[b.leagueId] ?? 99;
       if (pa !== pb) return pa - pb;
@@ -382,13 +387,14 @@ export async function fetchUpcomingFixtures(): Promise<any[]> {
       ]
     : isPreSeasonGap
     ? [
+        [567, 2026], // Tanzania Ligi Kuu Bara - verified East Africa coverage
         [667, 2026], // Pre-Season Friendlies 2026
         [2, 2026],   // UCL qualifying rounds
         [12, 2025],  // CAF Champions League
         [39, 2025],  // Premier League (any remaining summer fixtures)
       ]
     : [
-        [1, 2026],   // World Cup 2026
+        [567, 2026], // Tanzania Ligi Kuu Bara - verified East Africa coverage
         [2, 2025],   // UCL
         [3, 2025],   // UEL
         [12, 2025],  // CAF Champions League

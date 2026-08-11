@@ -2,7 +2,7 @@ type FeedConfig = {
   url: string;
   source: string;
   sourceLogo: string;
-  kind: "rss" | "html";
+  kind: "rss" | "html" | "fkf-api";
 };
 
 type RawArticle = {
@@ -14,6 +14,8 @@ type RawArticle = {
   sourceLogo: string;
   description?: string;
   thumbnail?: string;
+  desk?: "kenya" | "global";
+  isOfficial?: boolean;
 };
 
 const FEEDS: FeedConfig[] = [
@@ -21,13 +23,17 @@ const FEEDS: FeedConfig[] = [
   { url: "https://www.goal.com/feeds/en/news", source: "Goal.com", sourceLogo: "GOAL", kind: "rss" },
   { url: "https://www.api-football.com/news/", source: "API-Football", sourceLogo: "API", kind: "html" },
   { url: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players", source: "API-Football", sourceLogo: "API", kind: "html" },
+  { url: "https://wmcfdzqntemdnrguqijw.supabase.co/rest/v1/news", source: "Football Kenya Federation", sourceLogo: "FKF", kind: "fkf-api" },
 ];
 
 const SOURCE_FALLBACK_URLS: Record<string, string> = {
   "BBC Sport": "https://www.bbc.com/sport/football",
   "Goal.com": "https://www.goal.com/en/news",
   "API-Football": "https://www.api-football.com/news/",
+  "Football Kenya Federation": "https://footballkenya.org/news",
 };
+
+const FKF_NEWS_FIELDS = "id,slug,title,excerpt,category,featured_image_url,published_at,created_at";
 
 const FOOTBALL_KEYWORDS = [
   "football",
@@ -254,6 +260,45 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
   return articles;
 }
 
+async function fetchFkfNews(feed: FeedConfig): Promise<RawArticle[]> {
+  const apiKey = process.env.FKF_NEWS_ANON_KEY || "";
+  if (!apiKey) return [];
+
+  const params = new URLSearchParams({
+    select: FKF_NEWS_FIELDS,
+    published: "eq.true",
+    order: "published_at.desc.nullslast,created_at.desc",
+    limit: "12",
+  });
+  const response = await fetch(`${feed.url}?${params.toString()}`, {
+    headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` },
+  });
+  if (!response.ok) return [];
+
+  const rows = await response.json();
+  if (!Array.isArray(rows)) return [];
+
+  return rows
+    .map((row: any) => {
+      const slug = String(row.slug || "").trim();
+      const title = stripTags(String(row.title || ""));
+      if (!slug || title.length < 18) return null;
+      return {
+        id: `fkf-${row.id || slug}`,
+        title,
+        link: `https://footballkenya.org/news/${encodeURIComponent(slug)}`,
+        pubDate: row.published_at || row.created_at || new Date().toISOString(),
+        source: feed.source,
+        sourceLogo: feed.sourceLogo,
+        description: stripTags(String(row.excerpt || "")),
+        thumbnail: normalizeUrl(String(row.featured_image_url || ""), feed.source),
+        desk: "kenya" as const,
+        isOfficial: true,
+      } satisfies RawArticle;
+    })
+    .filter((article): article is RawArticle => Boolean(article));
+}
+
 function removeDuplicates(articles: RawArticle[]): RawArticle[] {
   const seen = new Set<string>();
   const result: RawArticle[] = [];
@@ -281,6 +326,7 @@ function mergeFallbacks(articles: RawArticle[]): RawArticle[] {
 
 async function fetchFeed(feed: FeedConfig): Promise<RawArticle[]> {
   try {
+    if (feed.kind === "fkf-api") return fetchFkfNews(feed);
     const response = await fetch(feed.url, {
       headers: {
         "User-Agent": "BallMtaani-News/1.0",
@@ -303,7 +349,9 @@ export default async function handler(req: any, res: any) {
   try {
     const results = await Promise.all(FEEDS.map((feed) => fetchFeed(feed)));
     const articles = mergeFallbacks(removeDuplicates(results.flat())).sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-    return json(res, 200, { articles: articles.slice(0, 24) });
+    const kenya = articles.filter((article) => article.desk === "kenya").slice(0, 8);
+    const global = articles.filter((article) => article.desk !== "kenya").slice(0, Math.max(16, 24 - kenya.length));
+    return json(res, 200, { articles: [...global, ...kenya] });
   } catch (error) {
     return json(res, 200, {
       articles: API_FOOTBALL_FALLBACKS.slice(0, 4),
