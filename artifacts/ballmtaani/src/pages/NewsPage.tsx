@@ -41,20 +41,27 @@ function readTime(text?: string | null) {
 
 const TAB_KEYWORDS: Record<string, string[]> = {
   "World Cup Archive":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+  "Transfers":         ["transfer", "signing", "signed", "deal", "contract", "loan", "move", "joins"],
+  "Opinion":           ["opinion", "column", "perspective", "analysis", "why ", "viewpoint"],
   "Analysis":         ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
   "Match Reports":    ["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
   "Kenyan Fan Angle": ["arsenal", "chelsea", "man utd", "man united", "liverpool", "man city", "manchester city", "real madrid", "barcelona", "bayern", "harambee", "gor mahia", "afc leopards", "tusker", "kenya", "nairobi", "kpl", "simba"],
   "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
 };
 
-const TABS = ["Front Page", "World Cup Archive", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
+const TABS = ["Front Page", "Transfers", "Opinion", "World Cup Archive", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
+const SECTION_TABS: Record<string, string> = { transfers: "Transfers", opinion: "Opinion" };
+function initialTab() {
+  const section = new URLSearchParams(window.location.search).get("section")?.toLowerCase() || "";
+  return SECTION_TABS[section] || "Front Page";
+}
 
 export default function NewsPage() {
   const [partner, setPartner] = useState<PartnerArticle[]>([]);
   const [rss, setRss] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("Front Page");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [fixtures, setFixtures] = useState<any[]>([]);
 
   useEffect(() => {
@@ -196,7 +203,11 @@ export default function NewsPage() {
               {TABS.map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    const section = Object.entries(SECTION_TABS).find(([, label]) => label === tab)?.[0];
+                    window.history.replaceState(null, "", section ? "/news?section=" + section : "/news");
+                  }}
                   className={`shrink-0 pb-1.5 text-[10px] font-black uppercase tracking-[0.22em] transition-colors border-b-2 ${
                     activeTab === tab
                       ? "border-[#B30000] text-white"

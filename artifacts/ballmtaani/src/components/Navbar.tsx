@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, Search, Shield, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -18,14 +18,26 @@ function leagueTag(league?: string) {
 function short(name: string) { return String(name || "").replace(/\s+(FC|SC|AFC|City|United|Town|Rovers|Athletic|Stars?)$/i, "").trim().slice(0, 3).toUpperCase(); }
 function score(match: any) { return typeof match?.homeScore === "number" && typeof match?.awayScore === "number" ? `${match.homeScore}-${match.awayScore}` : match?.status || match?.time || "TBC"; }
 
-const publication = [["MTAA DAILY", "/#mtaa-daily"], ["KENYA", "/#kenya"], ["AFRICA", "/#africa"], ["EPL", "/#epl"], ["EUROPE", "/leagues"], ["ANALYSIS", "/#analysis"], ["TRANSFERS", "/news"], ["OPINION", "/articles"]] as const;
-const tools = [["Scores", "/matches"], ["Fixtures", "/matches"], ["Tables", "/leagues"], ["Mchambuzi", "/mchambuzi-halisi"], ["Predictions", "/predictions"], ["Fan Zone", "/fan-zones"], ["Leaderboard", "/leaderboard"]] as const;
+const publication = [["MTAA DAILY", "/#mtaa-daily"], ["KENYA", "/#kenya"], ["AFRICA", "/#africa"], ["EPL", "/#epl"], ["EUROPE", "/leagues"], ["ANALYSIS", "/#analysis"], ["TRANSFERS", "/news?section=transfers"], ["OPINION", "/news?section=opinion"]] as const;
+const tools = [["Scores", "/matches?tab=live"], ["Fixtures", "/matches?tab=fixtures"], ["Tables", "/matches?tab=tables"], ["Mchambuzi", "/mchambuzi-halisi"], ["Predictions", "/predictions"], ["Fan Zone", "/fan-zones"], ["Leaderboard", "/leaderboard"]] as const;
 
 export function Navbar() {
   const [location] = useLocation();
   const { isLoggedIn, username } = useAuth();
   const { data: live = [] } = useMatches(); const { data: upcoming = [] } = useUpcomingFixtures();
   const [menuOpen, setMenuOpen] = useState(false); const [clubsOpen, setClubsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(() => window.location.hash.slice(1) || "mtaa-daily");
+  useEffect(() => {
+    const syncHash = () => setActiveSection(window.location.hash.slice(1) || "mtaa-daily");
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
+  const currentPath = location.split(/[?#]/)[0];
+  const isActive = (href: string) => {
+    if (href.startsWith("/#")) return currentPath === "/" && activeSection === href.slice(2);
+    const target = new URL(href, window.location.origin);
+    return currentPath === target.pathname && (!target.search || window.location.search === target.search);
+  };
   const ticker = useMemo(() => [...live, ...upcoming].slice(0, 4), [live, upcoming]);
   const now = new Date();
   return <>
@@ -45,8 +57,8 @@ export function Navbar() {
         <div className="flex items-center justify-end gap-2"><Link href="/search" aria-label="Search" className="grid h-9 w-9 place-items-center text-white/70 hover:text-white"><Search className="h-5 w-5" /></Link><NotificationBell compact /><button onClick={() => setClubsOpen(true)} className="hidden h-9 items-center gap-2 bg-[#b91b24] px-4 text-[10px] font-black sm:inline-flex"><Shield className="h-3.5 w-3.5" />My Clubs</button>{isLoggedIn ? <Link href="/profile" className="hidden text-[10px] font-black text-white/70 md:block">{username}</Link> : <Link href="/login" className="hidden text-[10px] font-black text-white/70 md:block">Sign in</Link>}<button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation" className="grid h-10 w-10 place-items-center lg:hidden">{menuOpen ? <X /> : <Menu />}</button></div>
       </div>
 
-      <div className="hidden border-y border-white/10 lg:block"><div className="mx-auto flex h-11 max-w-[1500px] items-center justify-between px-4"><nav className="flex h-full items-center gap-8">{publication.map(([label, href]) => <a key={label} href={href} className={`flex h-full items-center border-b-2 text-[10px] font-black tracking-[.1em] ${location === href ? "border-[#ef3038] text-[#ef3038]" : "border-transparent text-white/75 hover:text-white"}`}>{label}</a>)}</nav><span className="text-[10px] font-black tracking-[.14em] text-[#f5ca55]">TOOLS</span></div></div>
-      <div className="hidden border-b border-white/10 bg-[#0c0c0c] lg:block"><nav className="mx-auto flex h-11 max-w-[1500px] items-center gap-9 px-4">{tools.map(([label, href]) => <Link key={label} href={href} className={`text-[10px] font-bold ${location === href ? "text-[#ef3038]" : "text-white/68 hover:text-white"}`}>{label}</Link>)}</nav></div>
+      <div className="hidden border-y border-white/10 lg:block"><div className="mx-auto flex h-11 max-w-[1500px] items-center justify-between px-4"><nav className="flex h-full items-center gap-8">{publication.map(([label, href]) => <a key={label} href={href} className={`flex h-full items-center border-b-2 text-[10px] font-black tracking-[.1em] ${isActive(href) ? "border-[#ef3038] text-[#ef3038]" : "border-transparent text-white/75 hover:text-white"}`}>{label}</a>)}</nav><span className="text-[10px] font-black tracking-[.14em] text-[#f5ca55]">TOOLS</span></div></div>
+      <div className="hidden border-b border-white/10 bg-[#0c0c0c] lg:block"><nav className="mx-auto flex h-11 max-w-[1500px] items-center gap-9 px-4">{tools.map(([label, href]) => <Link key={label} href={href} className={`text-[10px] font-bold ${isActive(href) ? "text-[#ef3038]" : "text-white/68 hover:text-white"}`}>{label}</Link>)}</nav></div>
 
       {menuOpen && <div className="border-t border-white/10 bg-[#080808] p-3 lg:hidden"><nav className="grid grid-cols-2 gap-px bg-white/10">{publication.map(([label, href]) => <a key={label} href={href} onClick={() => setMenuOpen(false)} className="bg-[#0b0b0b] px-3 py-3 text-[10px] font-black tracking-[.1em] text-white/80">{label}</a>)}</nav><nav className="mt-3 flex gap-4 overflow-x-auto pb-1 whitespace-nowrap hide-scrollbar">{tools.map(([label, href]) => <Link key={label} href={href} onClick={() => setMenuOpen(false)} className="text-[10px] font-bold text-[#f5ca55]">{label}</Link>)}</nav></div>}
     </header>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Activity,
   CalendarDays,
@@ -663,6 +663,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function MatchesPage() {
+  const [routeLocation] = useLocation();
   const [view, setView] = useState<HubView>(() => {
     const tab = new URLSearchParams(window.location.search).get("tab");
     if (tab === "africa")   return "africa";
@@ -686,6 +687,15 @@ export default function MatchesPage() {
   const [selected, setSelected] = useState<{ match: any; variant: "live" | "fixture" | "result" } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    const nextView: HubView =
+      tab === "live" || tab === "results" || tab === "fixtures" || tab === "africa" || tab === "tables"
+        ? tab
+        : "all";
+    setView(nextView);
+  }, [routeLocation]);
 
   const { data: liveMatches = [],     isFetching: liveFetching }     = useMatches();
   const { data: recentMatches = [],    isFetching: recentFetching }   = useRecentMatches();
