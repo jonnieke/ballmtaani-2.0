@@ -6,6 +6,8 @@
  * Football-specific model artefacts are blocked from cross-sport reuse.
  */
 
+import { FOOTBALL_ONLY_FEATURES } from "./sport-opportunity-service";
+
 export type OnboardingStatus =
   | "discovered" | "research" | "data_contract_review" | "historical_import"
   | "identity_modelling" | "feature_design" | "baseline_model"
@@ -159,7 +161,7 @@ export class SportOnboardingService {
 
       case "public_beta":
         if (!workflow.performanceLedgerUrl) {
-          failures.push("Performance ledger URL not configured.");
+          failures.push("Public beta performance ledger URL not configured.");
         }
         if (workflow.blockingIssues.length > 0) {
           failures.push(...workflow.blockingIssues.map(i => `Blocking issue: ${i}`));
@@ -187,7 +189,6 @@ export class SportOnboardingService {
     baselineMetric: { brierScore: number; logLoss: number };
   }): ModelValidationResult {
     const blockers: string[] = [];
-    const { FOOTBALL_ONLY_FEATURES } = require("./sport-opportunity-service");
 
     // Block football-only model types for non-football sports
     if (params.sportKey !== "football" && FOOTBALL_ONLY_MODEL_TYPES.includes(params.modelType)) {

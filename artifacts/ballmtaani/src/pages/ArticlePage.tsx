@@ -1,7 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { supabase } from "../lib/supabase";
-import { timeAgo } from "../lib/news-api";
+import { isSubstantiveArticle, timeAgo } from "../lib/news-api";
 import { getEditorialFallbackArticle } from "../data/editorial-fallback-articles";
 import { ArrowLeft, Share2, ChevronRight } from "lucide-react";
 import SEO from "../components/SEO";
@@ -73,6 +73,48 @@ function readingTime(content: string): string {
   const words = content.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
   const mins = Math.max(1, Math.round(words / 200));
   return `${mins} min read`;
+}
+function comparableText(value: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(value, "text/html");
+  return (doc.body.textContent || value)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function removeDuplicateStandfirst(content: string, excerpt?: string | null): string {
+  if (!content || !excerpt) return content;
+  const expected = comparableText(excerpt);
+  if (expected.length < 40) return content;
+
+  if (/<[a-z][\s\S]*>/i.test(content)) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${content}</div>`, "text/html");
+    const wrapper = doc.body.firstElementChild;
+    const firstParagraph = wrapper?.querySelector("p");
+    if (!wrapper || !firstParagraph) return content;
+    const first = comparableText(firstParagraph.textContent || "");
+    if (first === expected) {
+      firstParagraph.remove();
+    } else {
+      const plain = (firstParagraph.textContent || "").trim();
+      const lead = excerpt.trim();
+      if (plain.toLowerCase().startsWith(lead.toLowerCase())) {
+        firstParagraph.textContent = plain.slice(lead.length).trim();
+      }
+    }
+    return wrapper.innerHTML;
+  }
+
+  const paragraphs = content.split(/\n{2,}/);
+  const first = comparableText(paragraphs[0] || "");
+  if (first === expected) return paragraphs.slice(1).join("\n\n");
+  if ((paragraphs[0] || "").trim().toLowerCase().startsWith(excerpt.trim().toLowerCase())) {
+    paragraphs[0] = paragraphs[0].trim().slice(excerpt.trim().length).trim();
+    return paragraphs.filter(Boolean).join("\n\n");
+  }
+  return content;
 }
 
 export default function ArticlePage() {
@@ -154,15 +196,16 @@ export default function ArticlePage() {
   if (notFound || !article) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0B0B0B]">
-        <p className="text-4xl">âš½</p>
+        <p className="text-4xl">⚽</p>
         <h1 className="text-2xl font-black text-[#B30000]">Article Not Found</h1>
-        <Link href="/" className="text-sm text-white/40 hover:text-white">â† Back to BallMtaani</Link>
+        <Link href="/" className="text-sm text-white/40 hover:text-white">← Back to BallMtaani</Link>
       </div>
     );
   }
 
-  const formattedContent = sanitizeHtml(normalizeContent(article.content));
-  const mins = readingTime(article.content);
+  const displayContent = removeDuplicateStandfirst(article.content, article.excerpt);
+  const formattedContent = sanitizeHtml(normalizeContent(displayContent));
+  const mins = readingTime(displayContent);
   const publishDate = new Date(article.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const authorName = (!article.author_name || article.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : article.author_name;
 
@@ -175,6 +218,7 @@ export default function ArticlePage() {
         image={article.thumbnail_url || DEFAULT_IMAGE}
         keywords={article.focus_keyword ? [article.focus_keyword, ...article.tags] : article.tags}
         type="article"
+        noindex={!isSubstantiveArticle(article.content)}
         structuredData={{
           "@context": "https://schema.org",
           "@type": "NewsArticle",
@@ -208,7 +252,7 @@ export default function ArticlePage() {
 
       <div className="min-h-screen bg-[#0B0B0B] pb-24">
 
-        {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── HERO ─────────────────────────────────────────────────── */}
         <div className="relative w-full overflow-hidden bg-[#0B0B0B]">
           <img
             src={article.thumbnail_url || DEFAULT_IMAGE}
@@ -241,7 +285,7 @@ export default function ArticlePage() {
             )}
           </div>
 
-          {/* Title over hero â€” magazine cover style */}
+          {/* Title over hero — magazine cover style */}
           <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 sm:px-8 sm:pb-8">
             <div className="mx-auto max-w-2xl">
               {article.tags.length > 0 && (
@@ -260,7 +304,7 @@ export default function ArticlePage() {
           </div>
         </div>
 
-        {/* â”€â”€ BYLINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── BYLINE ───────────────────────────────────────────────── */}
         <div className="mx-auto max-w-2xl px-4 sm:px-8">
           <div className="flex items-center justify-between border-b border-white/8 py-4">
             <div className="flex items-center gap-3">
@@ -270,7 +314,7 @@ export default function ArticlePage() {
               </div>
               <div>
                 <p className="text-xs font-black text-white">{authorName}</p>
-                <p className="text-[10px] text-white/30">{publishDate} Â· {mins}</p>
+                <p className="text-[10px] text-white/30">{publishDate} · {mins}</p>
               </div>
             </div>
             <button
@@ -289,7 +333,7 @@ export default function ArticlePage() {
           )}
         </div>
 
-        {/* â”€â”€ BODY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── BODY ─────────────────────────────────────────────────── */}
         <div className="mx-auto max-w-2xl px-4 pt-6 sm:px-8">
           <div
             className="
@@ -327,7 +371,7 @@ export default function ArticlePage() {
           />
         </div>
 
-        {/* â”€â”€ DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── DIVIDER ──────────────────────────────────────────────── */}
         <div className="mx-auto max-w-2xl px-4 sm:px-8">
           <div className="my-10 flex items-center gap-4">
             <div className="h-px flex-1 bg-white/8" />
@@ -346,12 +390,12 @@ export default function ArticlePage() {
             </div>
           )}
 
-          {/* â”€â”€ Likes + Comments + Share â”€â”€ */}
+          {/* ── Likes + Comments + Share ── */}
           <ArticleEngagement articleId={article.id} articleTitle={article.title} />
 
           {/* CTA */}
           <div className="mt-8 rounded-2xl border border-white/8 bg-[#0d1018] p-6 text-center">
-            <div className="mb-1 text-xl">âš½</div>
+            <div className="mb-1 text-xl">⚽</div>
             <p className="mb-1 text-sm font-black uppercase tracking-widest text-white">Keep the receipt.</p>
             <p className="mb-5 text-xs text-white/40">Predict, debate, and score points on BallMtaani</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
@@ -365,7 +409,7 @@ export default function ArticlePage() {
           </div>
         </div>
 
-        {/* â”€â”€ MORE FROM MTAA DAILY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── MORE FROM MTAA DAILY ─────────────────────────────────── */}
         {related.length > 0 && (
           <div className="mx-auto max-w-2xl px-4 pb-4 sm:px-8 mt-14">
             <div className="mb-6 flex items-center justify-between">

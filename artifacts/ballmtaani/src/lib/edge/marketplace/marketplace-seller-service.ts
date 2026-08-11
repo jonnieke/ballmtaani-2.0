@@ -131,7 +131,7 @@ export class MarketplaceSellerService {
     const total = Math.min(100, Object.values(components).reduce((a, b) => a + b, 0));
 
     let outcome: SellerRiskScore["outcome"];
-    if (total <= 20) outcome = "auto_approve";
+    if (total <= 30) outcome = "auto_approve";
     else if (total <= 60) outcome = "manual_review";
     else outcome = "reject";
 

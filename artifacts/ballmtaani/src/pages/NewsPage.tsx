@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
-import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
+import { fetchFootballNews, isSubstantiveArticle, timeAgo, type NewsArticle } from "../lib/news-api";
 import { fetchTodaysFixtures } from "../lib/football-api";
 import { ExternalLink, Search, Clock, ChevronRight, BarChart2, Gamepad2, Newspaper } from "lucide-react";
 import SEO from "../components/SEO";
 import { analytics } from "../lib/analytics";
+import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
 
 interface PartnerArticle {
   id: string;
   slug: string;
   title: string;
   excerpt: string | null;
+  content: string;
   thumbnail_url: string | null;
   author_name: string;
   partner_team_name: string | null;
@@ -20,6 +22,16 @@ interface PartnerArticle {
   published_at: string;
 }
 
+function dedupePartnerArticles(articles: PartnerArticle[]): PartnerArticle[] {
+  const seen = new Set<string>();
+  return articles.filter((article) => {
+    if (!isSubstantiveArticle(article.content)) return false;
+    const key = article.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 const DEFAULT_IMG = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
 
 function readTime(text?: string | null) {
@@ -28,14 +40,14 @@ function readTime(text?: string | null) {
 }
 
 const TAB_KEYWORDS: Record<string, string[]> = {
-  "WC26 Desk":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+  "World Cup Archive":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
   "Analysis":         ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
   "Match Reports":    ["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
   "Kenyan Fan Angle": ["arsenal", "chelsea", "man utd", "man united", "liverpool", "man city", "manchester city", "real madrid", "barcelona", "bayern", "harambee", "gor mahia", "afc leopards", "tusker", "kenya", "nairobi", "kpl", "simba"],
-  "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "cÃ´te d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
+  "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
 };
 
-const TABS = ["Front Page", "WC26 Desk", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
+const TABS = ["Front Page", "World Cup Archive", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
 
 export default function NewsPage() {
   const [partner, setPartner] = useState<PartnerArticle[]>([]);
@@ -48,12 +60,25 @@ export default function NewsPage() {
   useEffect(() => {
     Promise.all([
       supabase
-        ? supabase.from("articles").select("id,slug,title,excerpt,thumbnail_url,author_name,partner_team_name,tags,is_wc26,published_at").eq("status", "published").order("published_at", { ascending: false }).limit(50).then(({ data }) => (data as PartnerArticle[]) || [])
+        ? supabase.from("articles").select("id,slug,title,content,excerpt,thumbnail_url,author_name,partner_team_name,tags,is_wc26,published_at").eq("status", "published").order("published_at", { ascending: false }).limit(50).then(({ data }) => (data as PartnerArticle[]) || [])
         : Promise.resolve([]),
       fetchFootballNews(),
       fetchTodaysFixtures(),
     ]).then(([p, r, f]) => {
-      setPartner(p);
+      const fallbackPartner: PartnerArticle[] = getEditorialFallbackArticles().map(article => ({
+        id: article.id,
+        slug: article.slug,
+        title: article.title,
+        content: article.content,
+        excerpt: article.excerpt,
+        thumbnail_url: article.thumbnail_url,
+        author_name: article.author_name,
+        partner_team_name: article.partner_team_name,
+        tags: article.tags,
+        is_wc26: article.is_wc26,
+        published_at: article.published_at,
+      }));
+      setPartner(dedupePartnerArticles([...p, ...fallbackPartner]));
       setRss(r);
       setFixtures((f || []).slice(0, 6));
       setLoading(false);
@@ -74,7 +99,7 @@ export default function NewsPage() {
     const haystack = [a.title, a.partner_team_name || "", ...(a.tags || [])].join(" ");
     const matchesQuery = !q || haystack.toLowerCase().includes(q);
     if (!matchesQuery) return false;
-    if (activeTab === "WC26 Desk") return a.is_wc26 || matchesTab(haystack);
+    if (activeTab === "World Cup Archive") return a.is_wc26 || matchesTab(haystack);
     return matchesTab(haystack);
   });
 
@@ -83,7 +108,7 @@ export default function NewsPage() {
         const haystack = `${a.title} ${a.source} ${a.description || ""}`;
         const matchesQuery = !q || haystack.toLowerCase().includes(q);
         if (!matchesQuery) return false;
-        if (activeTab === "WC26 Desk") return !!(a.isWC26 || matchesTab(haystack));
+        if (activeTab === "World Cup Archive") return !!(a.isWC26 || matchesTab(haystack));
         return matchesTab(haystack);
       })
     : rss.filter(a => {
@@ -95,10 +120,6 @@ export default function NewsPage() {
   const features   = filteredPartner.slice(1, 3);
   const interior   = filteredPartner.slice(3);
 
-  const heroImg      = partner[0]?.thumbnail_url || DEFAULT_IMG;
-  const heroTitle    = partner[0]?.title || "Africa's World Cup. Every Story. Right Here.";
-  const heroSubtitle = partner[0]?.excerpt || null;
-  const heroHref     = partner[0]?.slug ? `/news/${partner[0].slug}` : "/world-cup-2026";
 
   const today = new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
   const edition = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
@@ -106,14 +127,14 @@ export default function NewsPage() {
   return (
     <>
       <SEO
-        title="Mtaa Daily | BallMtaani â€” Football for the Kenyan Fan"
-        description="Today's football newspaper for Kenyan fans. Match recaps, World Cup explainers, Kenyan fan angles, live fixtures and weekly receipts â€” on BallMtaani."
+        title="Mtaa Daily | BallMtaani — Football for the Kenyan Fan"
+        description="Original Kenyan and African football reporting, Premier League coverage, match analysis and the stories shaping today's game."
         path="/news"
       />
 
       <div className="min-h-screen bg-[#070910] pb-24">
 
-        {/* â”€â”€ MASTHEAD â”€â”€ */}
+        {/* ── MASTHEAD ── */}
         <div className="border-b border-white/8 bg-[#05070d]">
           <div className="mx-auto max-w-6xl px-4 pt-5 pb-0">
 
@@ -121,9 +142,9 @@ export default function NewsPage() {
             <div className="flex items-center justify-between border-b border-white/6 pb-3 mb-5">
               <div className="flex items-center gap-2.5">
                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#B30000]">BallMtaani</span>
-                <span className="text-white/12">Â·</span>
+                <span className="text-white/12">·</span>
                 <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/22">Mtaa Daily</span>
-                <span className="text-white/12">Â·</span>
+                <span className="text-white/12">·</span>
                 <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/18">{today}</span>
               </div>
               <div className="relative">
@@ -139,7 +160,7 @@ export default function NewsPage() {
 
             {/* Wordmark */}
             <div className="pb-4 text-center">
-              <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi Â· {edition}</p>
+              <p className="mb-1 text-[8px] font-black uppercase tracking-[0.5em] text-[#B30000]/70">Est. Nairobi · {edition}</p>
               <h1 className="text-[clamp(2.6rem,8vw,5rem)] font-black uppercase leading-none tracking-[0.03em] text-white">
                 Mtaa Daily
               </h1>
@@ -150,7 +171,7 @@ export default function NewsPage() {
               </div>
             </div>
 
-            {/* Platform doors â€” Read / Data / Play */}
+            {/* Platform doors — Read / Data / Play */}
             <div className="mb-4 grid grid-cols-3 gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-2">
               {[
                 { href: "/news",      icon: Newspaper,  label: "Read",       sub: "Mtaa Daily",   active: true,  color: "#B30000" },
@@ -188,32 +209,12 @@ export default function NewsPage() {
             </div>
           </div>
         </div>
-
-
-        <div className="border-b border-white/6 bg-[#060810]">
-          <div className="mx-auto max-w-6xl px-4 py-6">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">What we cover</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/48">Original match reports, WC26 explainers, African football context and Kenyan fan stories that add meaning to the day’s football.</p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">Why it matters</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/48">This desk is meant to be useful: we summarise the news, explain the angle and point readers to the match, player or tournament context behind it.</p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#FFD700]/80">Editorial standard</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/48">Every story should answer what happened, why it happened and what fans should watch next — whether it is an original BallMtaani piece or a curated wire update.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* â”€â”€ TODAY'S MATCHES STRIP (front page only) â”€â”€ */}
+        {/* ── TODAY'S MATCHES STRIP (front page only) ── */}
         {activeTab === "Front Page" && fixtures.length > 0 && (
           <div className="border-b border-white/6 bg-[#04060a] py-3">
             <div className="mx-auto max-w-6xl px-4">
-              <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
-                <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.28em] text-white/30">Today Â·</span>
+              <div className="flex items-center gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.28em] text-white/30">Today ·</span>
                 {fixtures.map((m: any) => (
                   <Link key={m.id} href="/matches"
                     className="flex shrink-0 items-center gap-2 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-1.5 transition-all hover:border-white/15">
@@ -224,47 +225,14 @@ export default function NewsPage() {
                   </Link>
                 ))}
                 <Link href="/matches" className="shrink-0 text-[9px] font-black uppercase tracking-widest text-[#B30000] hover:underline">
-                  All Fixtures â†’
+                  All Fixtures →
                 </Link>
               </div>
             </div>
           </div>
         )}
 
-        {/* â”€â”€ EDITORIAL HERO â”€â”€ */}
-        <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6", minHeight: 140 }}>
-          <img
-            src={heroImg}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700"
-            onError={e => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#05070d]/95 via-[#05070d]/60 to-[#05070d]/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#05070d]/80 via-transparent to-transparent" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B30000]/50 to-transparent" />
-          <div className="relative z-10 flex h-full items-center px-6 sm:px-10 lg:px-16">
-            <div className="max-w-xl">
-              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">
-                {partner[0]?.is_wc26 ? "WC26 Desk Â· Latest" : "Front Page Â· Latest"}
-              </p>
-              <h2 className="mb-3 text-xl font-black leading-tight text-white sm:text-2xl lg:text-3xl line-clamp-2">
-                {heroTitle}
-              </h2>
-              {heroSubtitle && (
-                <p className="mb-3 text-sm leading-relaxed text-white/45 line-clamp-2 hidden sm:block">{heroSubtitle}</p>
-              )}
-              <Link
-                href={heroHref}
-                onClick={() => analytics.articleRead("partner", activeTab)}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-[#cc0000] active:scale-95"
-              >
-                Read Story <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* â”€â”€ CONTENT â”€â”€ */}
+        {/* ── CONTENT ── */}
         <div className="mx-auto max-w-6xl px-4 pt-8">
 
           {loading ? (
@@ -277,7 +245,7 @@ export default function NewsPage() {
             </div>
           ) : filteredPartner.length === 0 && filteredRss.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-24 text-center">
-              <div className="text-4xl font-black text-white/10">âš½</div>
+              <div className="text-4xl font-black text-white/10">⚽</div>
               <p className="font-black uppercase tracking-widest text-white/20">
                 {query ? `No results for "${query}"` : "No stories yet in this section"}
               </p>
@@ -290,10 +258,10 @@ export default function NewsPage() {
           ) : (
             <>
 
-              {/* â•â• COVER STORY â•â• */}
+              {/* ══ COVER STORY ══ */}
               {coverStory && (
                 <section className="mb-10">
-                  <SectionRule label={activeTab === "WC26 Desk" ? "WC26 Desk Â· Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle Â· Top Story" : "Cover Story"} accent />
+                  <SectionRule label={activeTab === "World Cup Archive" ? "World Cup Archive · Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle · Top Story" : "Cover Story"} accent />
                   <Link href={`/news/${coverStory.slug}`} onClick={() => analytics.articleRead("partner", activeTab)} className="group block">
                     <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "21/9" }}>
                       <img
@@ -323,12 +291,12 @@ export default function NewsPage() {
                         )}
                         <div className="flex items-center gap-3">
                           <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#B30000]">{coverStory.author_name}</span>
-                          <span className="text-white/15">Â·</span>
+                          <span className="text-white/15">·</span>
                           <span className="flex items-center gap-1 text-[10px] text-white/28">
                             <Clock className="h-3 w-3" />
                             {readTime(coverStory.excerpt)} read
                           </span>
-                          <span className="text-white/15">Â·</span>
+                          <span className="text-white/15">·</span>
                           <span className="text-[10px] text-white/28">{timeAgo(coverStory.published_at)}</span>
                         </div>
                       </div>
@@ -337,7 +305,7 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* â•â• FEATURES â•â• */}
+              {/* ══ FEATURES ══ */}
               {features.length > 0 && (
                 <section className="mb-10">
                   <SectionRule label="Features" />
@@ -368,7 +336,7 @@ export default function NewsPage() {
                           )}
                           <div className="mt-4 flex items-center gap-2.5 border-t border-white/[0.06] pt-3.5">
                             <span className="text-[9px] font-black uppercase tracking-[0.22em] text-[#B30000]">{a.author_name}</span>
-                            <span className="text-white/12">Â·</span>
+                            <span className="text-white/12">·</span>
                             <span className="flex items-center gap-1 text-[9px] text-white/22">
                               <Clock className="h-2.5 w-2.5" /> {readTime(a.excerpt)} read
                             </span>
@@ -380,7 +348,7 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* â•â• MORE STORIES â•â• */}
+              {/* ══ MORE STORIES ══ */}
               {interior.length > 0 && (
                 <section className="mb-12">
                   <SectionRule label="More Stories" />
@@ -413,20 +381,12 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* â•â• SPONSOR SLOT â•â• */}
-              {activeTab === "Front Page" && (
-                <div className="mb-8 flex items-center justify-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-3">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/18">Mtaa Daily is powered by</span>
-                  <span className="rounded border border-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white/25">Your Brand Here</span>
-                  <a href="mailto:info@ballmtaani.com" className="text-[8px] font-black uppercase tracking-widest text-[#B30000]/50 hover:text-[#B30000] transition-colors">Sponsor â†’</a>
-                </div>
-              )}
 
-              {/* â•â• WIRE / RSS HEADLINES â•â• */}
+              {/* ══ WIRE / RSS HEADLINES ══ */}
               {filteredRss.length > 0 && (
                 <section>
-                  <SectionRule label="Wire Â· Football Headlines" dim />
-                  <p className="mb-4 text-[9px] font-bold uppercase tracking-widest text-white/18">External sources â€” clearly marked</p>
+                  <SectionRule label="Wire · Football Headlines" dim />
+                  <p className="mb-4 text-[9px] font-bold uppercase tracking-widest text-white/18">External sources — clearly marked</p>
                   <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 sm:gap-x-10 lg:gap-x-12 divide-y divide-white/[0.05] sm:divide-y-0">
                     {filteredRss.map((a, i) => (
                       <a key={a.id} href={a.link} target="_blank" rel="noopener noreferrer"
@@ -461,7 +421,7 @@ export default function NewsPage() {
             </>
           )}
 
-          {/* â”€â”€ BOTTOM PLATFORM DOORS â”€â”€ */}
+          {/* ── BOTTOM PLATFORM DOORS ── */}
           {!loading && (
             <div className="mt-12 grid grid-cols-3 gap-3 border-t border-white/6 pt-8">
               {[
@@ -477,7 +437,7 @@ export default function NewsPage() {
                   <span className="text-[11px] font-black uppercase tracking-wide text-white">{label}</span>
                   <span className="text-[9px] leading-snug text-white/30">{sub}</span>
                   <span className="text-[9px] font-black uppercase tracking-widest transition-colors" style={{ color }}>
-                    Open â†’
+                    Open →
                   </span>
                 </Link>
               ))}

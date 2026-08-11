@@ -79,12 +79,6 @@ export default function MagazineHomePage() {
 
     const epl = many(3, ["premier league", "arsenal", "chelsea", "liverpool", "manchester", "spurs"], true);
     const analysis = many(3, ["analysis", "opinion", "tactic", "breakdown", "preview", "explained"], true);
-    while (analysis.length < 3) {
-      const fallback = stories.find((article) => article.isInternal && !used.has(keyFor(article)));
-      if (!fallback) break;
-      used.add(keyFor(fallback));
-      analysis.push(fallback);
-    }
 
     return {
       lead,

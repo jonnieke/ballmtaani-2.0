@@ -262,7 +262,7 @@ export default function MarketHomePage() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-4">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-[#FFD700]/80">Mtaa Daily � Front Page</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-[#FFD700]/80">Mtaa Daily · Front Page</p>
             <h2 className="mt-2 text-2xl font-black leading-tight text-white md:text-4xl">Morning briefing, live desk and fan tools in one place.</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/45">A magazine-style front page for readers who want the story first, the data second, and the tools just a click away.</p>
           </div>
@@ -301,17 +301,17 @@ export default function MarketHomePage() {
                   </div>
                 </Link>
               ) : (
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5 text-sm text-white/50">We�re lining up today�s front page. Check back for the lead story, briefing and live desk.</div>
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-5 text-sm text-white/50">We're lining up today's front page. Check back for the lead story, briefing and live desk.</div>
               )}
 
               <div className="space-y-3">
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Today�s briefing</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Today's briefing</p>
                   <p className="mt-2 text-sm leading-relaxed text-white/48">Three things to know before kickoff: the lead story, the most important fixture, and the fan angle everyone is arguing about.</p>
                 </div>
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#FFD700]/80">Get the daily briefing</p>
-                  <p className="mt-2 text-sm leading-relaxed text-white/48">Turn on match alerts for live scores, WC26 updates and new stories � a lightweight newsletter feel powered by push notifications.</p>
+                  <p className="mt-2 text-sm leading-relaxed text-white/48">Turn on match alerts for live scores, WC26 updates and new stories — a lightweight newsletter feel powered by push notifications.</p>
                   <div className="mt-4 flex flex-wrap gap-3">
                     <NotificationBell compact />
                     <Link href="/articles" className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white transition-colors">

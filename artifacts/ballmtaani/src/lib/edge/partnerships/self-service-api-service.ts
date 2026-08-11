@@ -97,17 +97,17 @@ export class SelfServiceApiService {
     planKey: string;
     expiresInDays?: number;
   }): GeneratedKeyResult | { error: string } {
-    // Validate scopes against plan
+    // Block manual-approval scopes from self-service before applying plan limits.
+    const manualRequired = params.requestedScopes.filter(s => MANUAL_APPROVAL_SCOPES.includes(s));
+    if (manualRequired.length > 0) {
+      return { error: `Scopes require manual approval: ${manualRequired.join(", ")}. Please contact support.` };
+    }
+
+    // Validate remaining scopes against plan.
     const allowed = PLAN_SCOPE_ALLOWLIST[params.planKey] ?? [];
     const invalidScopes = params.requestedScopes.filter(s => !allowed.includes(s));
     if (invalidScopes.length > 0) {
       return { error: `Scopes not permitted on plan '${params.planKey}': ${invalidScopes.join(", ")}` };
-    }
-
-    // Block manual-approval scopes from self-service
-    const manualRequired = params.requestedScopes.filter(s => MANUAL_APPROVAL_SCOPES.includes(s));
-    if (manualRequired.length > 0) {
-      return { error: `Scopes require manual approval: ${manualRequired.length > 0 ? manualRequired.join(", ") : ""}. Please contact support.` };
     }
 
     // Generate a cryptographically random key

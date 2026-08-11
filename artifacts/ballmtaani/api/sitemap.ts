@@ -6,6 +6,11 @@ function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/'/g, "&apos;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+
+function articleWordCount(content?: string | null) {
+  if (!content) return 0;
+  return content.replace(/<[^>]+>/g, " ").replace(/&[a-z0-9#]+;/gi, " ").split(/\s+/).filter(Boolean).length;
+}
 function urlEntry(loc: string, opts: { lastmod?: string; changefreq?: string; priority?: string }) {
   const parts = [`  <url>\n    <loc>${esc(loc)}</loc>`];
   if (opts.lastmod) parts.push(`    <lastmod>${opts.lastmod}</lastmod>`);
@@ -82,9 +87,9 @@ export default async function handler(req: any, res: any) {
       const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
       if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const { data } = await supabase.from("articles").select("slug, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false });
+        const { data } = await supabase.from("articles").select("slug, content, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false });
         if (data) {
-          articleEntries = data.map((a: any) => urlEntry(`${BASE}/news/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
+          articleEntries = data.filter((a: any) => articleWordCount(a.content) >= 180).map((a: any) => urlEntry(`${BASE}/news/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
         }
       }
     } catch {}

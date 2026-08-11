@@ -213,9 +213,9 @@ export class ScaleProgrammeService {
 
     let decision: ChannelScaleDecision["decision"];
     if (passCount === 8) decision = "Scale";
-    else if (passCount >= 6 && complianceClean && refundControlled) decision = "Maintain";
-    else if (passCount >= 4) decision = "Optimize";
     else if (!complianceClean || !refundControlled) decision = "Restrict";
+    else if (passCount >= 6) decision = "Maintain";
+    else if (passCount >= 4) decision = "Optimize";
     else if (passCount >= 2) decision = "Pause";
     else decision = "Stop";
 

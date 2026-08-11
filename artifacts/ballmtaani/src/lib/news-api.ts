@@ -25,6 +25,18 @@ export interface NewsArticle {
   desk?: "kenya" | "global";
   isOfficial?: boolean;
 }
+export function articleWordCount(content?: string | null): number {
+  if (!content) return 0;
+  return content
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+export function isSubstantiveArticle(content?: string | null, minimumWords = 180): boolean {
+  return articleWordCount(content) >= minimumWords;
+}
 
 const RSS_FEEDS = [
   {
@@ -79,7 +91,7 @@ const SOURCE_FALLBACK_URLS: Record<string, string> = {
 
 const CACHE_KEY = "mtaani_news_cache";
 const CACHE_TTL = 15 * 60 * 1000;
-const CACHE_VERSION = "v12";
+const CACHE_VERSION = "v13-football-only";
 const DEFAULT_NEWS_IMAGE = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
 const TEAM_IMAGE_FALLBACKS: Array<{ key: string; image: string }> = [
   { key: "arsenal", image: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png" },
@@ -133,6 +145,22 @@ const TECHNICAL_NEWS_PATTERNS = [
   "integration",
   "setup",
 ];
+const NON_FOOTBALL_PATTERNS = [
+  "basketball", "cricket", "horse racing", "formula 1", "formula one", "motorsport",
+  "rugby", "tennis", "golf", "boxing", "baseball", "ice hockey", " nba ", " nfl ", " mlb ", " nhl ",
+];
+
+const FOOTBALL_PATTERNS = [
+  "football", "soccer", "premier league", "champions league", "europa league", "conference league",
+  "la liga", "serie a", "bundesliga", "ligue 1", "world cup", "afcon", "caf ", "fifa", "uefa",
+  "transfer", "goalkeeper", "defender", "midfielder", "striker", "fixture", "match", "goal",
+  "arsenal", "chelsea", "liverpool", "manchester", "tottenham", "barcelona", "real madrid",
+  "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "kenya premier league",
+];
+
+const TRUSTED_FOOTBALL_SOURCES = new Set([
+  "BBC Sport", "Goal.com", "API-Football", "Football Kenya Federation", "ESPN FC", "CAF",
+]);
 
 interface ImageTelemetry {
   total: number;
@@ -140,14 +168,18 @@ interface ImageTelemetry {
 }
 
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const date = new Date(dateStr);
+  const timestamp = date.getTime();
+  if (!dateStr || Number.isNaN(timestamp)) return "Date unavailable";
+  const diff = Date.now() - timestamp;
+  if (diff <= 0) return "Just now";
   const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days <= 30) return `${days}d ago`;
-  const date = new Date(dateStr);
   return date.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 
@@ -241,6 +273,13 @@ function pickCompetitionImageFromTitle(title?: string): string {
 export function isTechnicalFootballStory(article: Pick<NewsArticle, "title" | "description" | "source">): boolean {
   const text = `${article.title} ${article.description || ""}`.toLowerCase();
   return TECHNICAL_NEWS_PATTERNS.some((pattern) => text.includes(pattern));
+}
+
+export function isFootballNewsStory(article: Pick<NewsArticle, "title" | "description" | "source">): boolean {
+  const text = ` ${article.title} ${article.description || ""} `.toLowerCase();
+  if (NON_FOOTBALL_PATTERNS.some((pattern) => text.includes(pattern))) return false;
+  if (TRUSTED_FOOTBALL_SOURCES.has(article.source)) return true;
+  return FOOTBALL_PATTERNS.some((pattern) => text.includes(pattern));
 }
 
 function pickBestThumbnail(item: any, source: string): { thumbnail: string; quality: NewsArticle["imageQuality"] } {
@@ -383,13 +422,14 @@ async function fetchServerNewsItems(): Promise<any[]> {
 }
 
 function dedupeArticles(list: NewsArticle[]): NewsArticle[] {
-  const seen = new Set<string>();
+  const seenLinks = new Set<string>();
+  const seenTitles = new Set<string>();
   return list.filter((article) => {
-    // Same story can arrive from multiple feeds; link is the stable identity
-    // (id falls back to link anyway when the feed has no guid).
-    const key = article.link && article.link !== "#" ? article.link : String(article.id);
-    if (seen.has(key)) return false;
-    seen.add(key);
+    const link = article.link && article.link !== "#" ? article.link.trim().toLowerCase() : String(article.id);
+    const title = article.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (seenLinks.has(link) || (title && seenTitles.has(title))) return false;
+    seenLinks.add(link);
+    if (title) seenTitles.add(title);
     return true;
   });
 }
@@ -410,7 +450,7 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
           imageQuality: article.imageQuality || "generic-fallback",
           description: article.description || "",
         }))
-          .filter((article) => !isTechnicalFootballStory(article)));
+          .filter((article) => !isTechnicalFootballStory(article) && isFootballNewsStory(article)));
       }
     }
   } catch {
@@ -447,7 +487,7 @@ export async function fetchFootballNews(options: { network?: boolean; fallback?:
     slug: createArticleSlug(article),
     link: normalizeArticleLink(article.link, article.source),
     description: article.description || "",
-  })).filter((article) => !isTechnicalFootballStory(article)));
+  })).filter((article) => !isTechnicalFootballStory(article) && isFootballNewsStory(article)));
 
   const result = normalized.sort((a, b) => {
     const qualityDiff = getQualityRank(a.imageQuality) - getQualityRank(b.imageQuality);
@@ -490,7 +530,7 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
       .order("published_at", { ascending: false })
       .limit(9);
     if (error || !data) return fallbackArticles;
-    const published = data.map((a: any) => ({
+    const published = data.filter((a: any) => isSubstantiveArticle(a.content)).map((a: any) => ({
       id: a.id,
       slug: a.slug,
       title: a.title,

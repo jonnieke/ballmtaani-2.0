@@ -16,7 +16,7 @@ const WC26_NATIONS = ["Brazil","France","Argentina","England","Germany","Spain",
 const WC26_LOCK = new Date("2026-06-11T17:00:00Z");
 const wc26PicksClosed = Date.now() >= WC26_LOCK.getTime();
 
-// â”€â”€â”€ WC26 Tournament Prediction Questions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── WC26 Tournament Prediction Questions ─────────────────────────────────────
 interface WC26Question {
   id: string;
   emoji: string;
@@ -92,8 +92,8 @@ export default function PredictionsPage() {
   const [wc26Saving, setWc26Saving] = useState(false);
 
   // WC26 Tournament predictions
-  const [wc26Picks, setWc26Picks]   = useState<Record<string, string>>({});   // questionId â†’ pick
-  const [wc26Saved2, setWc26Saved2] = useState<Record<string, boolean>>({});   // questionId â†’ saved
+  const [wc26Picks, setWc26Picks]   = useState<Record<string, string>>({});   // questionId → pick
+  const [wc26Saved2, setWc26Saved2] = useState<Record<string, boolean>>({});   // questionId → saved
   const [wc26Saving2, setWc26Saving2] = useState<string | null>(null);         // questionId being saved
   const [wc26Consensus, setWc26Consensus] = useState<Record<string, Record<string, number>>>({});
   const [showBracketCard, setShowBracketCard] = useState(false);
@@ -394,7 +394,7 @@ export default function PredictionsPage() {
         description="Make non-cash community score predictions, compare calls and keep a transparent record alongside BallMtaani match coverage."
         path="/predictions"
       />
-{/* â”€â”€ HERO â”€â”€ */}
+{/* ── HERO ── */}
       <div className="border-b border-white/6 bg-[#0c0e13] px-4 py-8 md:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="mb-1 flex items-center gap-2">
@@ -807,7 +807,7 @@ export default function PredictionsPage() {
                       <ShieldAlert className="w-4 h-4 text-gray-500" />
                       <span className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">{fixture.league}</span>
                     </div>
-                    <span className="text-gray-500 text-[10px] md:text-xs font-bold bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-wider">{fixture.date} â€¢ {fixture.time}</span>
+                    <span className="text-gray-500 text-[10px] md:text-xs font-bold bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-wider">{fixture.date} • {fixture.time}</span>
                   </div>
 
                   <div className="flex items-center justify-between mb-5 relative z-10">
@@ -880,7 +880,7 @@ export default function PredictionsPage() {
                         </button>
                         <button
                           onClick={() => {
-                            const text = `âš½ I called ${fixture.home} ${hScore}â€“${aScore} ${fixture.away} on BallMtaani.\n\nReceipt locked. Make your call â†’ https://ballmtaani.com/predictions`;
+                            const text = `⚽ I called ${fixture.home} ${hScore}–${aScore} ${fixture.away} on BallMtaani.\n\nReceipt locked. Make your call → https://ballmtaani.com/predictions`;
                             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                             analytics.shareWhatsapp("prediction");
                           }}
@@ -998,9 +998,9 @@ export default function PredictionsPage() {
           )}
         </div>
       ) : activeTab === "wc26" ? (
-        // â”€â”€ WC26 TOURNAMENT PREDICTION TAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── WC26 TOURNAMENT PREDICTION TAB ──────────────────────────────
         <div className="space-y-4 max-w-2xl mx-auto">
-          {/* Live banner â€” only shown while WC26 is on */}
+          {/* Live banner — only shown while WC26 is on */}
           {wc26PicksClosed && (
             <div className="flex items-center justify-between rounded-2xl border border-[#B30000]/30 bg-[#B30000]/8 px-4 py-3">
               <div className="flex items-center gap-2">
@@ -1072,7 +1072,7 @@ export default function PredictionsPage() {
 
                 <div className="p-4">
                   {locked ? (
-                    // Locked state â€” full ranked breakdown of all options
+                    // Locked state — full ranked breakdown of all options
                     (() => {
                       const qCounts = wc26Consensus[q.id] || {};
                       const total = Object.values(qCounts).reduce((s: number, n) => s + (n as number), 0);
@@ -1104,7 +1104,7 @@ export default function PredictionsPage() {
                               <div key={opt} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 ${isMyPick ? "bg-[#FFD700]/8 border border-[#FFD700]/20" : "border border-transparent"}`}>
                                 <span className={`w-24 shrink-0 truncate text-[11px] font-bold ${isMyPick ? "text-[#FFD700]" : "text-white/55"}`}>
                                   {opt}
-                                  {isLead && !isMyPick && <span className="ml-1 text-[8px] font-black uppercase text-white/25"> â–²</span>}
+                                  {isLead && !isMyPick && <span className="ml-1 text-[8px] font-black uppercase text-white/25"> ▲</span>}
                                 </span>
                                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/6">
                                   <div
@@ -1127,7 +1127,7 @@ export default function PredictionsPage() {
                       );
                     })()
                   ) : (
-                    // Pick buttons â€” only shown pre-WC26
+                    // Pick buttons — only shown pre-WC26
                     <div className="flex flex-wrap gap-2">
                       {q.options.map(opt => (
                         <button key={opt}

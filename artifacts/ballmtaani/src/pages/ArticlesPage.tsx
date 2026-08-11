@@ -1,7 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
-import { timeAgo } from "../lib/news-api";
+import { isSubstantiveArticle, timeAgo } from "../lib/news-api";
 import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
 import SEO from "../components/SEO";
 import { ChevronRight, Newspaper } from "lucide-react";
@@ -11,6 +11,7 @@ interface ArticleItem {
   slug: string;
   title: string;
   excerpt: string | null;
+  content: string;
   thumbnail_url: string | null;
   author_name: string;
   published_at: string;
@@ -37,6 +38,7 @@ export default function ArticlesPage() {
       slug: article.slug,
       title: article.title,
       excerpt: article.excerpt,
+      content: article.content,
       thumbnail_url: article.thumbnail_url,
       author_name: article.author_name,
       published_at: article.published_at,
@@ -47,12 +49,12 @@ export default function ArticlesPage() {
     if (!supabase) { setArticles(fallbackArticles as ArticleItem[]); setLoading(false); return; }
     supabase
       .from("articles")
-      .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26, tags")
+      .select("id, slug, title, content, excerpt, thumbnail_url, author_name, published_at, is_wc26, tags")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(50)
       .then(({ data }) => {
-        const published = (data || []) as ArticleItem[];
+        const published = ((data || []) as ArticleItem[]).filter(article => isSubstantiveArticle(article.content));
         const seen = new Set(published.map((article) => article.slug));
         for (const article of fallbackArticles) {
           if (!seen.has(article.slug)) published.push(article as ArticleItem);
@@ -68,8 +70,8 @@ export default function ArticlesPage() {
     <div className="min-h-screen bg-[#0B0B0B] pb-24">
       <SEO
         title="Mtaa Daily Articles | BallMtaani Football Reporting"
-        description="All original articles from Mtaa Daily â€” World Cup 2026 analysis, match reports, African football coverage and Kenyan fan perspectives from BallMtaani."
-        keywords={["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "WC26 analysis", "African football reporting"]}
+        description="Original Kenyan and African football reporting, match analysis and archive coverage from BallMtaani."
+        keywords={["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "African football reporting", "football analysis"]}
         path="/articles"
         breadcrumbs={[
           { name: "BallMtaani", url: "/" },
@@ -77,33 +79,7 @@ export default function ArticlesPage() {
           { name: "All Articles", url: "/articles" },
         ]}
       />
-
-
-      <div className="border-b border-white/8 bg-[#090b12]">
-        <div className="mx-auto max-w-4xl px-4 py-7">
-          <div className="rounded-2xl border border-white/8 bg-[#0d1119] p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#FFD700]/80">Mtaa Daily editorial desk</p>
-            <div className="mt-3 grid gap-4 md:grid-cols-3">
-              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
-                <h2 className="text-sm font-black uppercase tracking-widest text-white">Match reports</h2>
-                <p className="mt-2 text-xs leading-relaxed text-white/48">Game recaps, tactical notes and the numbers behind the final whistle, written for readers who want more than a scoreline.</p>
-              </div>
-              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
-                <h2 className="text-sm font-black uppercase tracking-widest text-white">WC26 desk</h2>
-                <p className="mt-2 text-xs leading-relaxed text-white/48">African qualifying stories, squad news, bracket context and tournament explainers built for the road to 2026.</p>
-              </div>
-              <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
-                <h2 className="text-sm font-black uppercase tracking-widest text-white">Kenyan fan angle</h2>
-                <p className="mt-2 text-xs leading-relaxed text-white/48">Local club culture, supporter debates and Nairobi-first commentary that turns football data into something people can actually use.</p>
-              </div>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-white/42">
-              BallMtaani publishes original football coverage alongside curated wire updates. We try to give every story a clear angle, a useful takeaway and a reason to exist beyond the homepage.
-            </p>
-          </div>
-        </div>
-      </div>
-      {/* Header */}
+{/* Header */}
       <div className="border-b border-white/8 bg-[#07060a]">
         <div className="mx-auto max-w-4xl px-4 py-10">
           <div className="mb-2 flex items-center gap-2">
@@ -124,7 +100,7 @@ export default function ArticlesPage() {
               className={`rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
                 filter === f ? "bg-[#B30000] text-white" : "border border-white/10 text-white/40 hover:text-white"
               }`}>
-              {f === "all" ? "All Stories" : "WC26"}
+              {f === "all" ? "All Stories" : "World Cup Archive"}
             </button>
           ))}
           <Link href="/news" className="ml-auto flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#B30000] hover:underline self-center">
@@ -180,7 +156,7 @@ export default function ArticlesPage() {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col p-4">
-                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/25">{timeAgo(a.published_at)} Â· {readTime(a.excerpt)} read</p>
+                    <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-white/25">{timeAgo(a.published_at)} · {readTime(a.excerpt)} read</p>
                     <h2 className={`flex-1 font-black leading-snug text-white ${isFeatured ? "text-lg sm:text-xl" : "text-sm line-clamp-3"}`}>{a.title}</h2>
                     {isFeatured && a.excerpt && (
                       <p className="mt-2 text-xs leading-relaxed text-white/45 line-clamp-2">{a.excerpt}</p>
