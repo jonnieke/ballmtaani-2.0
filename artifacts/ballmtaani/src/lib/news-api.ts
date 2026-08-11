@@ -47,12 +47,29 @@ const RSS_FEEDS = [
     source: "Football Kenya Federation",
     sourceLogo: "FKF",
   },
+  {
+    url: "https://www.skysports.com/rss/12040",
+    source: "Sky Sports",
+    sourceLogo: "SKY",
+  },
+  {
+    url: "https://www.espn.com/espn/rss/soccer/news",
+    source: "ESPN FC",
+    sourceLogo: "ESPN",
+  },
+  {
+    url: "https://www.cafonline.com/en-us/news/rss/football",
+    source: "CAF",
+    sourceLogo: "CAF",
+  },
 ];
 const SOURCE_FALLBACK_URLS: Record<string, string> = {
   "BBC Sport": "https://www.bbc.com/sport/football",
   "Goal.com": "https://www.goal.com/en/news",
   "API-Football": "https://www.api-football.com/news/",
   "Football Kenya Federation": "https://footballkenya.org/news",
+  "Sky Sports": "https://www.skysports.com/football/news",
+  "ESPN FC": "https://www.espn.com/soccer/",
   KPL: "https://www.kpl.co.ke/",
   CAF: "https://www.cafonline.com/",
   SuperSport: "https://supersport.com/football",
