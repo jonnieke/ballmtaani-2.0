@@ -1,379 +1,66 @@
-﻿import { Link, useLocation } from "wouter";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "wouter";
+import { Menu, Search, Shield, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useState, useEffect } from "react";
-import { Menu, X, Coins, Paintbrush, ChevronDown, Trophy, Search, Bell } from "lucide-react";
+import { useMatches, useUpcomingFixtures } from "../hooks/useData";
+import { ChooseClubModal } from "./ChooseClubModal";
+import NotificationBell from "./NotificationBell";
+import TeamLogo from "./TeamLogo";
 
-import { useTheme, ThemeAtmosphere } from "../context/ThemeContext";
+function leagueTag(league?: string) {
+  const value = String(league || "").toLowerCase();
+  if (value.includes("premier")) return "EPL";
+  if (value.includes("champions")) return "UCL";
+  if (value.includes("fkf") || value.includes("kpl") || value.includes("kenya")) return "KPL";
+  if (value.includes("caf") || value.includes("africa")) return "CAF";
+  return String(league || "MATCH").split(" ")[0].toUpperCase();
+}
+function short(name: string) { return String(name || "").replace(/\s+(FC|SC|AFC|City|United|Town|Rovers|Athletic|Stars?)$/i, "").trim().slice(0, 3).toUpperCase(); }
+function score(match: any) { return typeof match?.homeScore === "number" && typeof match?.awayScore === "number" ? `${match.homeScore}-${match.awayScore}` : match?.status || match?.time || "TBC"; }
+
+const publication = [["MTAA DAILY", "/#mtaa-daily"], ["KENYA", "/#kenya"], ["AFRICA", "/#africa"], ["EPL", "/#epl"], ["EUROPE", "/leagues"], ["ANALYSIS", "/#analysis"], ["TRANSFERS", "/news?section=transfers"], ["OPINION", "/news?section=opinion"]] as const;
+const tools = [["Scores", "/matches?tab=live"], ["Fixtures", "/matches?tab=fixtures"], ["Tables", "/matches?tab=tables"], ["Mchambuzi", "/mchambuzi-halisi"], ["Predictions", "/predictions"], ["Fan Zone", "/fan-zones"], ["Leaderboard", "/leaderboard"]] as const;
 
 export function Navbar() {
   const [location] = useLocation();
-  const { isLoggedIn, username, coins, logout } = useAuth();
-  const { atmosphere, setAtmosphere } = useTheme();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
-  const [walletAnimating, setWalletAnimating] = useState(false);
-
+  const { isLoggedIn, username } = useAuth();
+  const { data: live = [] } = useMatches(); const { data: upcoming = [] } = useUpcomingFixtures();
+  const [menuOpen, setMenuOpen] = useState(false); const [clubsOpen, setClubsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(() => window.location.hash.slice(1) || "mtaa-daily");
   useEffect(() => {
-    if (coins > 0) {
-      setWalletAnimating(true);
-      const timer = setTimeout(() => setWalletAnimating(false), 800);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [coins]);
-
-
-  const atmospheres: { id: ThemeAtmosphere; label: string; icon: string }[] = [
-    { id: "default", label: "Classic Brand", icon: "BM" },
-    { id: "gunners-city", label: "Gunners vs City", icon: "GC" },
-    { id: "el-clasico", label: "El Clasico", icon: "EC" },
-    { id: "night-mtaani", label: "Night Mtaani", icon: "NM" },
-  ];
-
-  const menuCategories = [
-    {
-      label: "Mtaa Daily",
-      links: [
-        { href: "/news", label: "Latest News" },
-        { href: "/articles", label: "All Articles" },
-        { href: "/videos", label: "Videos" },
-        { href: "/world-cup-2026", label: "WC26 Hub" },
-        { href: "/search", label: "Search" },
-      ]
-    },
-    {
-      label: "Matches",
-      links: [
-        { href: "/matches", label: "Directory" },
-        { href: "/live-center", label: "Live Pulse" },
-        { href: "/mchambuzi-halisi", label: "Mchambuzi AI" },
-        { href: "/world-cup-2026", label: "WC26 Guide" },
-        { href: "/market-watch", label: "Market Watch" },
-      ]
-    },
-    {
-      label: "Social",
-      links: [
-        { href: "/debates", label: "Debates" },
-        { href: "/rivalries", label: "Rivalries" },
-        { href: "/fan-zones", label: "Fan Zones" },
-        { href: "/leaderboard", label: "Leaderboard" },
-      ]
-    },
-    {
-      label: "Games",
-      links: [
-        { href: "/fun-zone", label: "Fun Zone" },
-        { href: "/ai-fan-zone", label: "AI Fan Zone" },
-        { href: "/predictions", label: "Calls" },
-        { href: "/war-room", label: "War Room" },
-        { href: "/rapid-fire", label: "Rapid Fire" },
-        { href: "/trivia", label: "Millionaire" },
-      ]
-    },
-    {
-      label: "BallMtaani",
-      links: [
-        { href: "/about", label: "About Us" },
-        { href: "/contact", label: "Contact" },
-      ]
-    },
-    {
-      label: "BallMtaani",
-      links: [
-        { href: "/about",   label: "About Us" },
-        { href: "/contact", label: "Contact" },
-      ]
-    }
-  ];
-
-  const primaryNav = [
-    { href: "/news", label: "News" },
-    { href: "/matches", label: "Matches" },
-    { href: "/live-center", label: "Live" },
-    { href: "/predictions", label: "Predictions" },
-    { href: "/debates", label: "Debates" },
-    { href: "/fan-zones", label: "Tribes" },
-    { href: "/mchambuzi-halisi", label: "Mchambuzi", badge: "New" },
-    { href: "/store", label: "Store" },
-  ];
-  const primaryHrefs = new Set(primaryNav.map((item) => item.href));
-  const moreLinks = menuCategories
-    .flatMap((category) => category.links)
-    .filter((link, index, allLinks) => !primaryHrefs.has(link.href) && allLinks.findIndex((item) => item.href === link.href) === index);
-  return (
-    <nav className="sticky top-0 z-50 bg-[#0B0B0B]/95 backdrop-blur-md border-b border-[#1B1B1B]">
-      <div className="mx-auto flex h-20 max-w-[1800px] items-center justify-between px-4 md:px-7">
-        <Link href="/home" className="flex shrink-0 items-center gap-2">
-          <img src="/logo.png" alt="BallMtaani" className="h-11 w-11 object-contain" />
-          <span className="hidden leading-none sm:block"><span className="block text-2xl font-black italic tracking-wide text-white">BALL <span className="text-[#FFD700]">MTAANI</span></span><span className="block text-[8px] font-black uppercase tracking-[0.18em] text-white/75">Predict. Debate. Earn. Rep your tribe.</span></span>
-        </Link>
-
-        {/* Hamburger - mobile only */}
-        <button
-          className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors ml-auto mr-3"
-          onClick={() => setMobileMenuOpen(v => !v)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-
-        {/* Desktop Nav - Hidden on mobile */}
-        <div className="hidden lg:flex items-center gap-5 mx-4">
-          <Link
-            href="/home"
-            className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-              location === "/home" ? "border-b-2 border-[#FFD700] pb-1 text-[#FFD700]" : "border-b-2 border-transparent pb-1 text-gray-400 hover:text-white"
-            }`}
-          >
-            Home
-          </Link>
-          {primaryNav.map((item) => {
-            const isActive = location === item.href || location.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-1.5 font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-                  isActive ? "border-b-2 border-[#FFD700] pb-1 text-[#FFD700]" : "border-b-2 border-transparent pb-1 text-gray-400 hover:text-white"
-                }`}
-              >
-                {item.label}
-                {item.badge && <span className="rounded bg-[#FFD700] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-normal text-black">{item.badge}</span>}
-              </Link>
-            );
-          })}
-          <div className="relative group/nav py-6">
-            <button
-              type="button"
-              className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all flex items-center gap-1 ${
-                moreLinks.some(link => location.startsWith(link.href)) ? "text-primary border-b-2 border-primary pb-1" : "text-gray-400 hover:text-white border-b-2 border-transparent pb-1"
-              }`}
-            >
-              More <ChevronDown className="w-3.5 h-3.5 opacity-70 group-hover/nav:opacity-100 transition-opacity" />
-            </button>
-            <div className="absolute top-16 left-0 w-56 bg-[#111111]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 transform translate-y-2 group-hover/nav:translate-y-0 p-2 z-[100]">
-              {moreLinks.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`block px-4 py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors ${
-                    location.startsWith(link.href) ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* WC26 tournament badge - visible on desktop during tournament window */}
-        {(() => {
-          const now = Date.now();
-          const start = new Date("2026-06-11").getTime();
-          const end = new Date("2026-07-20").getTime();
-          const daysUntil = Math.ceil((start - now) / 86400000);
-          if (now > end) return null;
-          return (
-            <Link
-              href="/world-cup-2026"
-              className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-[#FFD700]/40 bg-[#FFD700]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFD700] transition-colors hover:bg-[#FFD700]/20 shrink-0"
-            >
-              {now >= start ? (
-                <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#FFD700]" />
-                </span>
-              ) : (
-                <Trophy className="h-3 w-3" />
-              )}
-              {now >= start ? "WC26 Live" : `WC26 · ${daysUntil}d`}
-            </Link>
-          );
-        })()}
-
-        {/* Global Controls (Atmosphere & Wallet) */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link href="/search" className="hidden h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 transition hover:border-[#FFD700]/40 hover:text-white lg:grid" title="Search">
-            <Search className="h-4 w-4" />
-          </Link>
-          <Link href="/notifications" className="hidden h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 transition hover:border-[#FFD700]/40 hover:text-white lg:grid" title="Notifications">
-            <Bell className="h-4 w-4" />
-          </Link>
-          {/* Atmosphere Switcher */}
-          <div className="relative">
-            <button 
-              onClick={() => setThemeMenuOpen(!themeMenuOpen)}
-              className="p-2 rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white hover:border-white/30 transition-all group relative"
-              title="Change Atmosphere"
-            >
-              <Paintbrush className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#FFD700] rounded-full animate-pulse shadow-[0_0_5px_rgba(255,214,0,0.8)]" />
-            </button>
-
-            {themeMenuOpen && (
-              <div className="absolute top-full mt-3 right-0 w-64 bg-[#111111] border border-white/10 rounded-2xl shadow-2xl p-2 animate-in slide-in-from-top-2 duration-200 z-[100]">
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 px-3 py-2 border-b border-white/5 mb-1">
-                  App Atmosphere
-                </div>
-                {atmospheres.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      setAtmosphere(t.id);
-                      setThemeMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${atmosphere === t.id ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{t.icon}</span>
-                      <span className="text-[11px] font-black uppercase tracking-wider">{t.label}</span>
-                    </div>
-                    {atmosphere === t.id && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_#B30000]" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {isLoggedIn ? (
-            <>
-              {/* MTC status wallet */}
-              <Link href="/store" className={`flex items-center gap-1.5 bg-[#1B1B1B] border px-3 py-1.5 rounded-full transition-all group duration-300 ${walletAnimating ? 'border-[#FFD700] scale-110 shadow-[0_0_20px_rgba(255,215,0,0.6)]' : 'border-[#FFD700]/30 hover:border-[#FFD700]/60 shadow-[0_0_10px_rgba(255,215,0,0.1)] hover:shadow-[0_0_15px_rgba(255,215,0,0.2)]'}`}>
-                <Coins className={`w-4 h-4 text-[#FFD700] transition-transform duration-300 ${walletAnimating ? 'animate-bounce' : 'group-hover:scale-110'}`} />
-                <span className={`font-black text-sm transition-colors duration-300 ${walletAnimating ? 'text-white drop-shadow-[0_0_8px_white]' : 'text-[#FFD700]'}`}>{coins.toLocaleString()}</span>
-              </Link>
-
-              <Link href="/profile" className="hidden lg:flex items-center gap-2 hover:opacity-80 transition-opacity ml-1">
-                <div className="w-10 h-10 rounded-full bg-[#1B1B1B] border border-primary flex items-center justify-center text-primary font-black text-sm">
-                  {username.substring(0, 2).toUpperCase()}
-                </div>
-                <span className="font-bold text-sm text-white hidden xl:block">{username}</span>
-              </Link>
-            </>
-          ) : (
-            <div className="hidden lg:flex items-center gap-3">
-              <Link 
-                href="/login"
-                onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
-                className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded hover:bg-white/5 transition-colors"
-              >
-                Log In
-              </Link>
-              <Link 
-                href="/login"
-                onClick={() => sessionStorage.setItem("auth_return_url", window.location.pathname)}
-                className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-white bg-primary rounded hover:bg-red-800 transition-colors shadow-[0_0_15px_rgba(179,0,0,0.3)]"
-              >
-                Sign Up
-              </Link>
-            </div>
-          )}
+    const syncHash = () => setActiveSection(window.location.hash.slice(1) || "mtaa-daily");
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
+  const currentPath = location.split(/[?#]/)[0];
+  const isActive = (href: string) => {
+    if (href.startsWith("/#")) return currentPath === "/" && activeSection === href.slice(2);
+    const target = new URL(href, window.location.origin);
+    return currentPath === target.pathname && (!target.search || window.location.search === target.search);
+  };
+  const ticker = useMemo(() => [...live, ...upcoming].slice(0, 4), [live, upcoming]);
+  const now = new Date();
+  return <>
+    <ChooseClubModal isOpen={clubsOpen} onClose={() => setClubsOpen(false)} />
+    <header className="relative z-50 bg-black text-white">
+      <div className="border-b border-white/10">
+        <div className="mx-auto flex h-10 max-w-[1500px] items-center gap-5 overflow-x-auto px-4 whitespace-nowrap hide-scrollbar">
+          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.16em] text-[#ef3038]"><span className="h-2 w-2 rounded-full bg-[#ef3038]" />Live scores</span>
+          {ticker.length ? ticker.map((match: any) => <Link key={String(match.id)} href={`/live-center/${match.id}`} className="inline-flex h-full items-center gap-2 border-l border-white/10 pl-5 text-[10px] font-bold text-white/75 hover:text-white"><span className="text-white/38">{leagueTag(match.league)}</span><TeamLogo logo={match.homeLogo} initial={short(match.home)} color={match.homeColor || "#1f2937"} size="xs" /><span>{short(match.home)}</span><span className="text-[#f5ca55]">{score(match)}</span><span>{short(match.away)}</span><span className="text-white/35">{match.minute || ""}</span></Link>) : <Link href="/matches" className="border-l border-white/10 pl-5 text-[10px] text-white/45 hover:text-white">Today&apos;s fixtures and live scores</Link>}
+          <Link href="/matches" className="ml-auto text-[9px] font-bold text-white/55 hover:text-white">View all live scores</Link>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden absolute top-20 left-0 w-full bg-[#0B0B0B] border-b border-[#1B1B1B] shadow-2xl py-4 px-4 flex flex-col gap-2">
-          <Link
-            href="/home"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-4 py-3 rounded font-bold text-sm uppercase tracking-wider transition-all ${
-              location === "/home"
-                ? "bg-primary text-white"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            Home
-          </Link>
-          {menuCategories.flatMap(c => c.links).map((link) => {
-            const isActive = location === link.href || (link.href !== "/" && location.startsWith(link.href));
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded font-bold text-sm uppercase tracking-wider transition-all ${
-                  isActive
-                    ? "bg-primary text-white"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-          
-          <div className="h-px bg-white/10 my-2"></div>
+      <div className="mx-auto grid min-h-[102px] max-w-[1500px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4">
+        <div className="hidden text-[10px] leading-5 text-white/55 lg:block"><p>{now.toLocaleDateString("en-KE", { weekday: "long" })}</p><p>{now.toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</p><p>Nairobi, Kenya</p></div>
+        <Link href="/" className="text-center"><div className="font-serif text-[2.45rem] font-black leading-none tracking-[-.045em] sm:text-[3.35rem]">BALLMTAANI</div><div className="mt-1.5 text-[9px] font-black uppercase tracking-[.22em] text-[#ef3038] sm:text-[11px]">Football. From where we stand.</div></Link>
+        <div className="flex items-center justify-end gap-2"><Link href="/search" aria-label="Search" className="grid h-9 w-9 place-items-center text-white/70 hover:text-white"><Search className="h-5 w-5" /></Link><NotificationBell compact /><button onClick={() => setClubsOpen(true)} className="hidden h-9 items-center gap-2 bg-[#b91b24] px-4 text-[10px] font-black sm:inline-flex"><Shield className="h-3.5 w-3.5" />My Clubs</button>{isLoggedIn ? <Link href="/profile" className="hidden text-[10px] font-black text-white/70 md:block">{username}</Link> : <Link href="/login" className="hidden text-[10px] font-black text-white/70 md:block">Sign in</Link>}<button onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation" className="grid h-10 w-10 place-items-center lg:hidden">{menuOpen ? <X /> : <Menu />}</button></div>
+      </div>
 
-          {/* Mobile Atmosphere Swatches */}
-          <div className="px-4 py-2">
-            <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Atmosphere</div>
-            <div className="grid grid-cols-4 gap-2">
-              {atmospheres.map((t) => (
-                <button 
-                  key={t.id}
-                  onClick={() => setAtmosphere(t.id)}
-                  className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${atmosphere === t.id ? 'bg-primary/10 border-primary/50' : 'bg-white/5 border-white/10 opacity-60'}`}
-                >
-                  <span className="text-lg mb-1">{t.icon}</span>
-                  <span className="text-[8px] font-black uppercase tracking-tighter text-center leading-none">{t.label.split(' ')[0]}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="h-px bg-white/10 my-2"></div>
-          
-          {isLoggedIn ? (
-            <div className="flex flex-col gap-2 px-4 py-2">
-              <div className="flex items-center justify-between w-full">
-                <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#1B1B1B] border border-primary flex items-center justify-center text-primary font-black">
-                    {username.substring(0, 2).toUpperCase()}
-                  </div>
-                  <span className="font-bold text-white">{username}</span>
-                </Link>
-                <button 
-                  onClick={() => { logout(); setMobileMenuOpen(false); }}
-                  className="text-xs font-bold uppercase text-gray-500 hover:text-white"
-                >
-                  Logout
-                </button>
-              </div>
-              <Link 
-                href="/store" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 bg-[#1B1B1B] border border-[#FFD700]/30 py-2 rounded-lg mt-2"
-              >
-                <Coins className="w-4 h-4 text-[#FFD700]" />
-                <span className="font-black text-[#FFD700] uppercase text-xs tracking-wider">{coins.toLocaleString()} MTC</span>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              <Link 
-                href="/login"
-                onClick={() => { sessionStorage.setItem("auth_return_url", window.location.pathname); setMobileMenuOpen(false); }}
-                className="py-3 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded hover:bg-white/5 transition-colors text-center block w-full"
-              >
-                Log In
-              </Link>
-              <Link 
-                href="/login"
-                onClick={() => { sessionStorage.setItem("auth_return_url", window.location.pathname); setMobileMenuOpen(false); }}
-                className="py-3 text-sm font-bold uppercase tracking-wider text-white bg-primary rounded hover:bg-red-800 transition-colors text-center block w-full"
-              >
-                Sign Up
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-    </nav>
-  );
+      <div className="hidden border-y border-white/10 lg:block"><div className="mx-auto flex h-11 max-w-[1500px] items-center justify-between px-4"><nav className="flex h-full items-center gap-8">{publication.map(([label, href]) => <a key={label} href={href} className={`flex h-full items-center border-b-2 text-[10px] font-black tracking-[.1em] ${isActive(href) ? "border-[#ef3038] text-[#ef3038]" : "border-transparent text-white/75 hover:text-white"}`}>{label}</a>)}</nav><span className="text-[10px] font-black tracking-[.14em] text-[#f5ca55]">TOOLS</span></div></div>
+      <div className="hidden border-b border-white/10 bg-[#0c0c0c] lg:block"><nav className="mx-auto flex h-11 max-w-[1500px] items-center gap-9 px-4">{tools.map(([label, href]) => <Link key={label} href={href} className={`text-[10px] font-bold ${isActive(href) ? "text-[#ef3038]" : "text-white/68 hover:text-white"}`}>{label}</Link>)}</nav></div>
+
+      {menuOpen && <div className="border-t border-white/10 bg-[#080808] p-3 lg:hidden"><nav className="grid grid-cols-2 gap-px bg-white/10">{publication.map(([label, href]) => <a key={label} href={href} onClick={() => setMenuOpen(false)} className="bg-[#0b0b0b] px-3 py-3 text-[10px] font-black tracking-[.1em] text-white/80">{label}</a>)}</nav><nav className="mt-3 flex gap-4 overflow-x-auto pb-1 whitespace-nowrap hide-scrollbar">{tools.map(([label, href]) => <Link key={label} href={href} onClick={() => setMenuOpen(false)} className="text-[10px] font-bold text-[#f5ca55]">{label}</Link>)}</nav></div>}
+    </header>
+  </>;
 }
-
-
-

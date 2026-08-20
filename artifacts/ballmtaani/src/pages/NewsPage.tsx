@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
-import { fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
+import { fetchFootballNews, isSubstantiveArticle, timeAgo, type NewsArticle } from "../lib/news-api";
 import { fetchTodaysFixtures } from "../lib/football-api";
 import { ExternalLink, Search, Clock, ChevronRight, BarChart2, Gamepad2, Newspaper } from "lucide-react";
 import SEO from "../components/SEO";
 import { analytics } from "../lib/analytics";
+import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
 
 interface PartnerArticle {
   id: string;
   slug: string;
   title: string;
   excerpt: string | null;
+  content: string;
   thumbnail_url: string | null;
   author_name: string;
   partner_team_name: string | null;
@@ -20,6 +22,16 @@ interface PartnerArticle {
   published_at: string;
 }
 
+function dedupePartnerArticles(articles: PartnerArticle[]): PartnerArticle[] {
+  const seen = new Set<string>();
+  return articles.filter((article) => {
+    if (!isSubstantiveArticle(article.content)) return false;
+    const key = article.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 const DEFAULT_IMG = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
 
 function readTime(text?: string | null) {
@@ -28,32 +40,52 @@ function readTime(text?: string | null) {
 }
 
 const TAB_KEYWORDS: Record<string, string[]> = {
-  "WC26 Desk":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+  "World Cup Archive":        ["world cup", "wc26", "wc 26", "2026 fifa", "fifa 2026"],
+  "Transfers":         ["transfer", "signing", "signed", "deal", "contract", "loan", "move", "joins"],
+  "Opinion":           ["opinion", "column", "perspective", "analysis", "why ", "viewpoint"],
   "Analysis":         ["analysis", "tactical", "tactics", "opinion", "explainer", "deep dive", "breakdown"],
   "Match Reports":    ["match report", "match day", "matchday", "recap", "result", "highlights", "full time", "final whistle", " vs "],
   "Kenyan Fan Angle": ["arsenal", "chelsea", "man utd", "man united", "liverpool", "man city", "manchester city", "real madrid", "barcelona", "bayern", "harambee", "gor mahia", "afc leopards", "tusker", "kenya", "nairobi", "kpl", "simba"],
   "Africa":           ["africa", "afcon", "caf", "nigeria", "morocco", "senegal", "egypt", "cameroon", "ghana", "south africa", "ivory coast", "mali", "tunisia", "côte d'ivoire", "ethiopia", "uganda", "rwanda", "tanzania"],
 };
 
-const TABS = ["Front Page", "WC26 Desk", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
+const TABS = ["Front Page", "Transfers", "Opinion", "World Cup Archive", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
+const SECTION_TABS: Record<string, string> = { transfers: "Transfers", opinion: "Opinion" };
+function initialTab() {
+  const section = new URLSearchParams(window.location.search).get("section")?.toLowerCase() || "";
+  return SECTION_TABS[section] || "Front Page";
+}
 
 export default function NewsPage() {
   const [partner, setPartner] = useState<PartnerArticle[]>([]);
   const [rss, setRss] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("Front Page");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [fixtures, setFixtures] = useState<any[]>([]);
 
   useEffect(() => {
     Promise.all([
       supabase
-        ? supabase.from("articles").select("id,slug,title,excerpt,thumbnail_url,author_name,partner_team_name,tags,is_wc26,published_at").eq("status", "published").order("published_at", { ascending: false }).limit(50).then(({ data }) => (data as PartnerArticle[]) || [])
+        ? supabase.from("articles").select("id,slug,title,content,excerpt,thumbnail_url,author_name,partner_team_name,tags,is_wc26,published_at").eq("status", "published").order("published_at", { ascending: false }).limit(50).then(({ data }) => (data as PartnerArticle[]) || [])
         : Promise.resolve([]),
       fetchFootballNews(),
       fetchTodaysFixtures(),
     ]).then(([p, r, f]) => {
-      setPartner(p);
+      const fallbackPartner: PartnerArticle[] = getEditorialFallbackArticles().map(article => ({
+        id: article.id,
+        slug: article.slug,
+        title: article.title,
+        content: article.content,
+        excerpt: article.excerpt,
+        thumbnail_url: article.thumbnail_url,
+        author_name: article.author_name,
+        partner_team_name: article.partner_team_name,
+        tags: article.tags,
+        is_wc26: article.is_wc26,
+        published_at: article.published_at,
+      }));
+      setPartner(dedupePartnerArticles([...p, ...fallbackPartner]));
       setRss(r);
       setFixtures((f || []).slice(0, 6));
       setLoading(false);
@@ -74,7 +106,7 @@ export default function NewsPage() {
     const haystack = [a.title, a.partner_team_name || "", ...(a.tags || [])].join(" ");
     const matchesQuery = !q || haystack.toLowerCase().includes(q);
     if (!matchesQuery) return false;
-    if (activeTab === "WC26 Desk") return a.is_wc26 || matchesTab(haystack);
+    if (activeTab === "World Cup Archive") return a.is_wc26 || matchesTab(haystack);
     return matchesTab(haystack);
   });
 
@@ -83,7 +115,7 @@ export default function NewsPage() {
         const haystack = `${a.title} ${a.source} ${a.description || ""}`;
         const matchesQuery = !q || haystack.toLowerCase().includes(q);
         if (!matchesQuery) return false;
-        if (activeTab === "WC26 Desk") return !!(a.isWC26 || matchesTab(haystack));
+        if (activeTab === "World Cup Archive") return !!(a.isWC26 || matchesTab(haystack));
         return matchesTab(haystack);
       })
     : rss.filter(a => {
@@ -95,10 +127,6 @@ export default function NewsPage() {
   const features   = filteredPartner.slice(1, 3);
   const interior   = filteredPartner.slice(3);
 
-  const heroImg      = partner[0]?.thumbnail_url || DEFAULT_IMG;
-  const heroTitle    = partner[0]?.title || "Africa's World Cup. Every Story. Right Here.";
-  const heroSubtitle = partner[0]?.excerpt || null;
-  const heroHref     = partner[0]?.slug ? `/article/${partner[0].slug}` : "/world-cup-2026";
 
   const today = new Date().toLocaleDateString("en-KE", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
   const edition = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
@@ -107,7 +135,7 @@ export default function NewsPage() {
     <>
       <SEO
         title="Mtaa Daily | BallMtaani — Football for the Kenyan Fan"
-        description="Today's football newspaper for Kenyan fans. Match recaps, World Cup explainers, Kenyan fan angles, live fixtures and weekly receipts — on BallMtaani."
+        description="Original Kenyan and African football reporting, Premier League coverage, match analysis and the stories shaping today's game."
         path="/news"
       />
 
@@ -175,7 +203,11 @@ export default function NewsPage() {
               {TABS.map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    const section = Object.entries(SECTION_TABS).find(([, label]) => label === tab)?.[0];
+                    window.history.replaceState(null, "", section ? "/news?section=" + section : "/news");
+                  }}
                   className={`shrink-0 pb-1.5 text-[10px] font-black uppercase tracking-[0.22em] transition-colors border-b-2 ${
                     activeTab === tab
                       ? "border-[#B30000] text-white"
@@ -188,12 +220,11 @@ export default function NewsPage() {
             </div>
           </div>
         </div>
-
         {/* ── TODAY'S MATCHES STRIP (front page only) ── */}
         {activeTab === "Front Page" && fixtures.length > 0 && (
           <div className="border-b border-white/6 bg-[#04060a] py-3">
             <div className="mx-auto max-w-6xl px-4">
-              <div className="flex items-center gap-3 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.28em] text-white/30">Today ·</span>
                 {fixtures.map((m: any) => (
                   <Link key={m.id} href="/matches"
@@ -211,39 +242,6 @@ export default function NewsPage() {
             </div>
           </div>
         )}
-
-        {/* ── EDITORIAL HERO ── */}
-        <div className="relative overflow-hidden border-b border-white/6" style={{ aspectRatio: "21/6", minHeight: 140 }}>
-          <img
-            src={heroImg}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700"
-            onError={e => { (e.target as HTMLImageElement).src = DEFAULT_IMG; }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#05070d]/95 via-[#05070d]/60 to-[#05070d]/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#05070d]/80 via-transparent to-transparent" />
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#B30000]/50 to-transparent" />
-          <div className="relative z-10 flex h-full items-center px-6 sm:px-10 lg:px-16">
-            <div className="max-w-xl">
-              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.4em] text-[#B30000]/80">
-                {partner[0]?.is_wc26 ? "WC26 Desk · Latest" : "Front Page · Latest"}
-              </p>
-              <h2 className="mb-3 text-xl font-black leading-tight text-white sm:text-2xl lg:text-3xl line-clamp-2">
-                {heroTitle}
-              </h2>
-              {heroSubtitle && (
-                <p className="mb-3 text-sm leading-relaxed text-white/45 line-clamp-2 hidden sm:block">{heroSubtitle}</p>
-              )}
-              <Link
-                href={heroHref}
-                onClick={() => analytics.articleRead("partner", activeTab)}
-                className="inline-flex items-center gap-2 rounded-lg bg-[#B30000] px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white transition-all hover:bg-[#cc0000] active:scale-95"
-              >
-                Read Story <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
 
         {/* ── CONTENT ── */}
         <div className="mx-auto max-w-6xl px-4 pt-8">
@@ -274,8 +272,8 @@ export default function NewsPage() {
               {/* ══ COVER STORY ══ */}
               {coverStory && (
                 <section className="mb-10">
-                  <SectionRule label={activeTab === "WC26 Desk" ? "WC26 Desk · Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle · Top Story" : "Cover Story"} accent />
-                  <Link href={`/article/${coverStory.slug}`} onClick={() => analytics.articleRead("partner", activeTab)} className="group block">
+                  <SectionRule label={activeTab === "World Cup Archive" ? "World Cup Archive · Top Story" : activeTab === "Kenyan Fan Angle" ? "Kenyan Fan Angle · Top Story" : "Cover Story"} accent />
+                  <Link href={`/news/${coverStory.slug}`} onClick={() => analytics.articleRead("partner", activeTab)} className="group block">
                     <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "21/9" }}>
                       <img
                         src={coverStory.thumbnail_url || DEFAULT_IMG}
@@ -324,7 +322,7 @@ export default function NewsPage() {
                   <SectionRule label="Features" />
                   <div className={`grid gap-5 ${features.length === 1 ? "" : "sm:grid-cols-2"}`}>
                     {features.map(a => (
-                      <Link key={a.id} href={`/article/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
+                      <Link key={a.id} href={`/news/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
                         className="group overflow-hidden rounded-xl border border-white/7 bg-[#0c0f17] transition-all duration-200 hover:border-white/14 hover:shadow-xl hover:shadow-black/40">
                         <div className="relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
                           <img
@@ -367,7 +365,7 @@ export default function NewsPage() {
                   <SectionRule label="More Stories" />
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {interior.map(a => (
-                      <Link key={a.id} href={`/article/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
+                      <Link key={a.id} href={`/news/${a.slug}`} onClick={() => analytics.articleRead("partner", activeTab)}
                         className="group flex gap-3.5 rounded-xl border border-white/[0.06] bg-[#0c0f17] p-3 transition-all hover:border-white/12 hover:bg-[#0f131e]">
                         <div className="relative h-[4.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-lg">
                           <img
@@ -394,14 +392,6 @@ export default function NewsPage() {
                 </section>
               )}
 
-              {/* ══ SPONSOR SLOT ══ */}
-              {activeTab === "Front Page" && (
-                <div className="mb-8 flex items-center justify-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-3">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/18">Mtaa Daily is powered by</span>
-                  <span className="rounded border border-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white/25">Your Brand Here</span>
-                  <a href="mailto:info@ballmtaani.com" className="text-[8px] font-black uppercase tracking-widest text-[#B30000]/50 hover:text-[#B30000] transition-colors">Sponsor →</a>
-                </div>
-              )}
 
               {/* ══ WIRE / RSS HEADLINES ══ */}
               {filteredRss.length > 0 && (
@@ -448,7 +438,7 @@ export default function NewsPage() {
               {[
                 { href: "/data-centre", icon: BarChart2, label: "Data Centre",  sub: "Live scores, fixtures & standings",  color: "#1E6FFF" },
                 { href: "/fun-zone", icon: Gamepad2,   label: "Fun Zone",     sub: "Trivia, duels, rapid fire & more",   color: "#22c55e" },
-                { href: "/store",    icon: Newspaper,  label: "Earn MTC",     sub: "Predict & redeem for airtime",       color: "#FFD700" },
+                { href: "/store",    icon: Newspaper,  label: "Mtaa Play",    sub: "Predictions, debates and rewards",       color: "#FFD700" },
               ].map(({ href, icon: Icon, label, sub, color }) => (
                 <Link key={href} href={href}
                   className="group flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-white/[0.02] p-4 text-center transition-all hover:border-white/14 hover:bg-white/5">
@@ -481,3 +471,7 @@ function SectionRule({ label, accent, dim }: { label: string; accent?: boolean; 
     </div>
   );
 }
+
+
+
+

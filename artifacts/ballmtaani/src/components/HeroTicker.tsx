@@ -13,8 +13,9 @@
  * Because the track has NO padding, -50% = exactly one content set.
  * At -50% the visual is identical to 0 → seamless jump.
  */
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
+import { Zap, ChevronRight } from "lucide-react";
 import type { NewsArticle } from "../lib/news-api";
 
 interface TickerMatch {
@@ -65,26 +66,16 @@ function buildItems(articles: NewsArticle[], matches: TickerMatch[]): TickerItem
       isLive: false,
     });
   });
-  // Same article can arrive from multiple sources with the same id/link —
-  // keep the first occurrence so the belt never repeats within one set.
-  const seen = new Set<string>();
-  return out.filter(item => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
+  return Array.from(new Map(out.map((item) => [`${item.type}:${item.href}:${item.label}`, item])).values());
 }
 
-const PIN_WIDTH = 110; // px — brand pin width
+const PIN_WIDTH = 135; // px — brand pin width
+const RIGHT_PIN_WIDTH = 130; // px - right link width
 
 export default function HeroTicker({ articles, matches }: HeroTickerProps) {
   const [paused, setPaused] = useState(false);
 
-  const items = useMemo(
-    () => buildItems(articles, matches),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [articles.length, matches.length],
-  );
+  const items = buildItems(articles, matches);
 
   if (items.length === 0) return null;
 
@@ -96,29 +87,26 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
   const duration = Math.max(8, items.length * 1.5);
 
   const Chip = ({ item }: { item: TickerItem }) => (
-    <span className="inline-flex h-full shrink-0 cursor-pointer items-center gap-2 border-r border-white/8 px-4 transition-colors hover:bg-white/5">
-      {/* Indicator */}
-      {item.isLive ? (
-        <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-[#B30000]" />
-      ) : item.type === "article" ? (
-        <span className="shrink-0 text-[9px] text-white/20">📰</span>
-      ) : (
-        <span className="shrink-0 text-[9px] text-white/20">⚽</span>
+    <span className="inline-flex h-full shrink-0 cursor-pointer items-center gap-3 px-4 transition-colors hover:bg-white/5">
+      {/* Red dot separator before each item */}
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#B30000]" />
+
+      {/* Live ping overlay for live matches */}
+      {item.isLive && (
+        <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-[#B30000] -ml-4 absolute" />
       )}
 
-      {/* Label — truncated so multiple items are visible */}
-      <span className={`max-w-[180px] truncate text-[11px] font-bold sm:max-w-[240px] ${item.isLive ? "text-white" : "text-white/65"}`}>
+      {/* Label */}
+      <span className={`max-w-[200px] truncate text-[11px] font-semibold sm:max-w-[260px] ${
+        item.isLive ? "text-white" : "text-white/70"
+      }`}>
         {item.label}
       </span>
 
-      {/* Sub badge */}
-      {item.sub && (
-        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${
-          item.isLive        ? "bg-[#B30000]/15 text-[#B30000]" :
-          item.type === "article" ? "bg-[#FFD700]/8 text-[#FFD700]/60" :
-          "text-white/25"
-        }`}>
-          {item.isLive ? `${item.sub}'` : item.sub}
+      {/* Sub badge for live matches */}
+      {item.isLive && item.sub && (
+        <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-[#B30000]/15 text-[#B30000]">
+          {item.sub}'
         </span>
       )}
     </span>
@@ -131,10 +119,21 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
+        .hero-ticker-track {
+          animation-name: hero-belt;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .hero-ticker-track {
+            animation: none !important;
+            transform: translateX(0) !important;
+          }
+        }
       `}</style>
 
       <div
-        className="relative z-20 border-b border-white/6 bg-black/80 backdrop-blur-sm"
+        className="relative z-20 border-b border-[#2A2A2A] bg-[#0B0B0B]"
         style={{ height: 36 }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
@@ -143,28 +142,38 @@ export default function HeroTicker({ articles, matches }: HeroTickerProps) {
       >
         {/* ── Brand pin — absolute overlay, NOT in scroll flow ── */}
         <div
-          className="absolute inset-y-0 left-0 z-20 flex items-center gap-2 border-r border-white/8 bg-[#B30000]"
-          style={{ width: PIN_WIDTH, paddingLeft: 10, paddingRight: 10 }}
+          className="absolute inset-y-0 left-0 z-20 flex items-center justify-center gap-1.5 border-r border-[#B30000] bg-[#B30000]"
+          style={{ width: PIN_WIDTH }}
         >
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
-          <span className="whitespace-nowrap text-[9px] font-black uppercase tracking-[0.2em] text-white">
-            BallMtaani
+          <Zap className="h-3 w-3 text-white fill-white" />
+          <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-widest text-white">
+            MTAA WIRE
           </span>
         </div>
 
-        {/* ── Right fade ── */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black/80 to-transparent" />
+        {/* ── Right Action Pin ── */}
+        <Link
+          href="/news"
+          className="absolute inset-y-0 right-0 z-20 flex items-center justify-center gap-1 border-l border-[#2A2A2A] bg-[#0B0B0B] text-[10px] font-black uppercase tracking-widest text-[#FFD700] hover:text-white transition-colors"
+          style={{ width: RIGHT_PIN_WIDTH }}
+        >
+          VIEW ALL NEWS <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+
+        {/* ── Left/Right fades ── */}
+        <div className="pointer-events-none absolute inset-y-0 left-[135px] z-10 w-8 bg-gradient-to-r from-[#0B0B0B] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-[130px] z-10 w-12 bg-gradient-to-l from-[#0B0B0B] to-transparent" />
 
         {/* ── Clip zone — keeps track behind the brand pin ── */}
         <div
           className="absolute inset-0 overflow-hidden"
-          style={{ paddingLeft: PIN_WIDTH }}
+          style={{ paddingLeft: PIN_WIDTH, paddingRight: RIGHT_PIN_WIDTH }}
         >
           {/* ── Animating track — zero padding, pure content width ── */}
           <div
-            className="flex h-full items-center whitespace-nowrap will-change-transform"
+            className="hero-ticker-track flex h-full items-center whitespace-nowrap will-change-transform motion-reduce:will-change-auto"
             style={{
-              animation: `hero-belt ${duration}s linear infinite`,
+              animationDuration: `${duration}s`,
               animationPlayState: paused ? "paused" : "running",
             }}
           >

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { supabase } from "../lib/supabase";
-import { timeAgo } from "../lib/news-api";
+import { isSubstantiveArticle, timeAgo } from "../lib/news-api";
+import { getEditorialFallbackArticle } from "../data/editorial-fallback-articles";
 import { ArrowLeft, Share2, ChevronRight } from "lucide-react";
 import SEO from "../components/SEO";
 import ArticleEngagement from "../components/ArticleEngagement";
@@ -51,11 +52,69 @@ function normalizeContent(raw: string): string {
     .join("\n");
 }
 
+function sanitizeHtml(raw: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${raw}</div>`, "text/html");
+  doc.querySelectorAll("script, style, iframe, object, embed, form").forEach((node) => node.remove());
+  doc.querySelectorAll("*").forEach((element) => {
+    [...element.attributes].forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      const value = attr.value.trim().toLowerCase();
+      if (name.startsWith("on") || value.startsWith("javascript:") || value.startsWith("data:text/html")) {
+        element.removeAttribute(attr.name);
+      }
+    });
+  });
+  return doc.body.firstElementChild?.innerHTML || raw;
+}
+
 /** Estimated reading time */
 function readingTime(content: string): string {
   const words = content.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
   const mins = Math.max(1, Math.round(words / 200));
   return `${mins} min read`;
+}
+function comparableText(value: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(value, "text/html");
+  return (doc.body.textContent || value)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function removeDuplicateStandfirst(content: string, excerpt?: string | null): string {
+  if (!content || !excerpt) return content;
+  const expected = comparableText(excerpt);
+  if (expected.length < 40) return content;
+
+  if (/<[a-z][\s\S]*>/i.test(content)) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<div>${content}</div>`, "text/html");
+    const wrapper = doc.body.firstElementChild;
+    const firstParagraph = wrapper?.querySelector("p");
+    if (!wrapper || !firstParagraph) return content;
+    const first = comparableText(firstParagraph.textContent || "");
+    if (first === expected) {
+      firstParagraph.remove();
+    } else {
+      const plain = (firstParagraph.textContent || "").trim();
+      const lead = excerpt.trim();
+      if (plain.toLowerCase().startsWith(lead.toLowerCase())) {
+        firstParagraph.textContent = plain.slice(lead.length).trim();
+      }
+    }
+    return wrapper.innerHTML;
+  }
+
+  const paragraphs = content.split(/\n{2,}/);
+  const first = comparableText(paragraphs[0] || "");
+  if (first === expected) return paragraphs.slice(1).join("\n\n");
+  if ((paragraphs[0] || "").trim().toLowerCase().startsWith(excerpt.trim().toLowerCase())) {
+    paragraphs[0] = paragraphs[0].trim().slice(excerpt.trim().length).trim();
+    return paragraphs.filter(Boolean).join("\n\n");
+  }
+  return content;
 }
 
 export default function ArticlePage() {
@@ -66,7 +125,15 @@ export default function ArticlePage() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!slug || !supabase) { setLoading(false); setNotFound(true); return; }
+    const fallbackArticle = getEditorialFallbackArticle(slug);
+
+    if (!slug || !supabase) {
+      if (!fallbackArticle) { setLoading(false); setNotFound(true); return; }
+      setArticle(fallbackArticle as Article);
+      setLoading(false);
+      return;
+    }
+
     supabase
       .from("articles")
       .select("*")
@@ -74,15 +141,16 @@ export default function ArticlePage() {
       .eq("status", "published")
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error || !data) { setNotFound(true); setLoading(false); return; }
-        setArticle(data as Article);
+        const resolvedArticle = (data || fallbackArticle) as Article | null;
+        if (error || !resolvedArticle) { setNotFound(true); setLoading(false); return; }
+        setArticle(resolvedArticle);
         setLoading(false);
         // Fetch related articles — same is_wc26 flag, exclude current
         supabase
           .from("articles")
           .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26")
           .eq("status", "published")
-          .eq("is_wc26", (data as Article).is_wc26)
+          .eq("is_wc26", resolvedArticle.is_wc26)
           .neq("slug", slug)
           .order("published_at", { ascending: false })
           .limit(3)
@@ -135,8 +203,9 @@ export default function ArticlePage() {
     );
   }
 
-  const formattedContent = normalizeContent(article.content);
-  const mins = readingTime(article.content);
+  const displayContent = removeDuplicateStandfirst(article.content, article.excerpt);
+  const formattedContent = sanitizeHtml(normalizeContent(displayContent));
+  const mins = readingTime(displayContent);
   const publishDate = new Date(article.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const authorName = (!article.author_name || article.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : article.author_name;
 
@@ -145,9 +214,11 @@ export default function ArticlePage() {
       <SEO
         title={article.seo_title || article.title}
         description={article.seo_description || article.excerpt || article.title}
+        canonicalUrl={`/news/${article.slug}`}
         image={article.thumbnail_url || DEFAULT_IMAGE}
         keywords={article.focus_keyword ? [article.focus_keyword, ...article.tags] : article.tags}
         type="article"
+        noindex={!isSubstantiveArticle(article.content)}
         structuredData={{
           "@context": "https://schema.org",
           "@type": "NewsArticle",
@@ -170,7 +241,7 @@ export default function ArticlePage() {
           },
           "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": `https://ballmtaani.com/article/${article.slug}`
+            "@id": `https://ballmtaani.com/news/${article.slug}`
           },
           "keywords": article.tags.join(", "),
           "articleSection": article.is_wc26 ? "World Cup 2026" : "Football",
@@ -353,7 +424,7 @@ export default function ArticlePage() {
               {related.map(r => {
                 const rAuthor = (!r.author_name || r.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : r.author_name;
                 return (
-                  <Link key={r.id} href={`/article/${r.slug}`}
+                  <Link key={r.id} href={`/news/${r.slug}`}
                     className="group flex flex-col overflow-hidden rounded-xl border border-white/6 bg-[#0d1018] transition-all hover:border-white/14 hover:-translate-y-0.5">
                     <div className="relative h-32 overflow-hidden">
                       <img
@@ -384,3 +455,7 @@ export default function ArticlePage() {
     </>
   );
 }
+
+
+
+

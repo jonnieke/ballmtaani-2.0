@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { href: "/search",           label: "Search",    icon: Search },
   { href: "/live-center",      label: "Live",       icon: Radio },
   { href: "/matches",          label: "Matches",    icon: Trophy },
-  { href: "/world-cup-2026",   label: "WC26",       icon: Star, gold: true },
+  { href: "/world-cup-2026",   label: "Archive",       icon: Star, gold: true },
 ];
 
 export default function FloatingNav() {

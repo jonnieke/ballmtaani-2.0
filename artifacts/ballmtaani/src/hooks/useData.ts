@@ -57,7 +57,7 @@ export function useUpcomingFixtures() {
 /**
  * Recent fixtures — from API-Football (major leagues), past 5 days.
  */
-export function useRecentMatches() {
+export function useRecentMatches(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["recent-fixtures"],
     queryFn: async () => {
@@ -70,6 +70,7 @@ export function useRecentMatches() {
     },
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled: options.enabled ?? true,
   });
 }
 
@@ -154,7 +155,9 @@ export function useDebates() {
       } catch {
         return [];
       }
-    }
+    },
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -190,7 +193,9 @@ export function useLeaderboard() {
       } catch (err) {
         return ENABLE_CONTENT_MOCKS ? mock.LEADERBOARD : [];
       }
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 

@@ -3,28 +3,32 @@ import SEO from "../components/SEO";
 
 const sections = [
   {
-    title: "Information We Use",
-    body: "We may use your phone number for login, your selected club for personalization, and your activity such as calls, votes, debates, room posts, invites, and wallet activity to run the app.",
+    title: "Information We Collect & Use",
+    body: "We may collect and use your phone number for secure authentication, your chosen favorite club for personalization, and your platform activity (such as predictions, votes, debates, room posts, invites, and MTC status wallet activity) to deliver the BallMtaani experience.",
   },
   {
-    title: "Why We Use It",
-    body: "We use this information to protect accounts, show relevant fan rooms, keep receipts, power leaderboards, reduce spam, and improve the BallMtaani experience.",
+    title: "Why We Use Your Data",
+    body: "We use this information to maintain account security, display relevant fan rooms, keep match prediction receipts, power global and local leaderboards, prevent spam or abuse, and continuously improve platform performance.",
   },
   {
-    title: "Public Activity",
-    body: "Some activity is visible to other fans, including usernames, posts, votes in aggregate, fan duel status, leaderboard placement, and room participation.",
+    title: "Public Fan Activity",
+    body: "Certain community activities are visible to other fans, including your chosen username, club avatar badge, public posts, aggregate votes, fan duel challenges, leaderboard rank, and room interactions.",
   },
   {
-    title: "Third-Party Services",
-    body: "BallMtaani may use third-party services for authentication, analytics, hosting, football data, news feeds, and advertising. Those services may process data according to their own policies.",
+    title: "Advertising & Sponsorship",
+    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. When Google AdSense is enabled, ad units will be limited to substantial editorial pages and will stay clearly separated from logins, predictions, games, rewards, live-score utilities and account screens. We do not use hidden or unlabeled ad units.",
   },
   {
-    title: "Advertising",
-    body: "BallMtaani uses advertising to keep the service free. We avoid misleading, betting-adjacent, or unsafe ad experiences. Advertising density is kept moderate and never placed around interactive fan features.",
+    title: "Cookies & Web Storage",
+    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party services such as Google Analytics and, when enabled, Google advertising technologies may also set cookies to measure traffic, ad delivery and site performance.",
   },
   {
-    title: "Your Choices",
-    body: "You can avoid posting personal information in public rooms, choose what club identity you show, and request account or data help through the support channel once available.",
+    title: "Google Analytics 4",
+    body: "Google Analytics and Google advertising scripts are not loaded until the required consent architecture is active. If these services are enabled, BallMtaani will use a Google-certified consent management platform where required and will respect the visitor's choices before setting advertising or analytics cookies. Learn how Google uses partner-site data at https://policies.google.com/technologies/partner-sites.",
+  },
+  {
+    title: "Your Choices & Data Rights",
+    body: "You can control cookie preferences in your web browser settings, choose what public club profile details to display, and contact our team at info@ballmtaani.com for account, privacy, or data removal enquiries.",
   },
 ];
 
@@ -33,7 +37,7 @@ export default function PrivacyPage() {
     <main className="min-h-screen bg-[#0B0B0B] text-white">
       <SEO
         title="Privacy Policy | BallMtaani"
-        description="BallMtaani privacy basics for phone login, fan activity, personalization, ads, and public community content."
+        description="BallMtaani privacy basics for phone login, fan activity, personalization, sponsorships, and public community content."
       />
 
       <div className="mx-auto max-w-4xl px-4 py-8 md:py-12">
@@ -50,7 +54,7 @@ export default function PrivacyPage() {
           <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#FFD700]">Legal</p>
           <h1 className="mt-4 text-4xl md:text-5xl font-black uppercase tracking-tight text-white">Privacy Policy</h1>
           <p className="mt-4 text-gray-400 leading-relaxed">
-            This policy explains the information BallMtaani uses to run phone login, fan rooms, calls, receipts, and community features.
+            This policy explains the information BallMtaani uses to run phone login, fan rooms, calls, receipts, sponsorships, and community features.
           </p>
         </div>
 
@@ -64,7 +68,7 @@ export default function PrivacyPage() {
         </div>
 
         <p className="mt-8 text-xs text-gray-600">
-          Last updated: May 29, 2026.
+          Last updated: August 11, 2026.
         </p>
       </div>
     </main>

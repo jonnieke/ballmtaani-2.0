@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { supabase } from "../lib/supabase";
-import { timeAgo } from "../lib/news-api";
+import { isSubstantiveArticle, timeAgo } from "../lib/news-api";
+import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
 import SEO from "../components/SEO";
 import { ChevronRight, Newspaper } from "lucide-react";
 
@@ -10,6 +11,7 @@ interface ArticleItem {
   slug: string;
   title: string;
   excerpt: string | null;
+  content: string;
   thumbnail_url: string | null;
   author_name: string;
   published_at: string;
@@ -31,15 +33,33 @@ export default function ArticlesPage() {
   const [filter, setFilter] = useState<"all" | "wc26">("all");
 
   useEffect(() => {
-    if (!supabase) { setLoading(false); return; }
+    const fallbackArticles = getEditorialFallbackArticles().map((article) => ({
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      excerpt: article.excerpt,
+      content: article.content,
+      thumbnail_url: article.thumbnail_url,
+      author_name: article.author_name,
+      published_at: article.published_at,
+      is_wc26: article.is_wc26,
+      tags: article.tags,
+    }));
+
+    if (!supabase) { setArticles(fallbackArticles as ArticleItem[]); setLoading(false); return; }
     supabase
       .from("articles")
-      .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26, tags")
+      .select("id, slug, title, content, excerpt, thumbnail_url, author_name, published_at, is_wc26, tags")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(50)
       .then(({ data }) => {
-        setArticles((data || []) as ArticleItem[]);
+        const published = ((data || []) as ArticleItem[]).filter(article => isSubstantiveArticle(article.content));
+        const seen = new Set(published.map((article) => article.slug));
+        for (const article of fallbackArticles) {
+          if (!seen.has(article.slug)) published.push(article as ArticleItem);
+        }
+        setArticles(published);
         setLoading(false);
       });
   }, []);
@@ -50,8 +70,8 @@ export default function ArticlesPage() {
     <div className="min-h-screen bg-[#0B0B0B] pb-24">
       <SEO
         title="Mtaa Daily Articles | BallMtaani Football Reporting"
-        description="All original articles from Mtaa Daily — World Cup 2026 analysis, match reports, African football coverage and Kenyan fan perspectives from BallMtaani."
-        keywords={["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "WC26 analysis", "African football reporting"]}
+        description="Original Kenyan and African football reporting, match analysis and archive coverage from BallMtaani."
+        keywords={["BallMtaani articles", "Mtaa Daily", "Kenya football articles", "African football reporting", "football analysis"]}
         path="/articles"
         breadcrumbs={[
           { name: "BallMtaani", url: "/" },
@@ -59,8 +79,7 @@ export default function ArticlesPage() {
           { name: "All Articles", url: "/articles" },
         ]}
       />
-
-      {/* Header */}
+{/* Header */}
       <div className="border-b border-white/8 bg-[#07060a]">
         <div className="mx-auto max-w-4xl px-4 py-10">
           <div className="mb-2 flex items-center gap-2">
@@ -81,7 +100,7 @@ export default function ArticlesPage() {
               className={`rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
                 filter === f ? "bg-[#B30000] text-white" : "border border-white/10 text-white/40 hover:text-white"
               }`}>
-              {f === "all" ? "All Stories" : "WC26"}
+              {f === "all" ? "All Stories" : "World Cup Archive"}
             </button>
           ))}
           <Link href="/news" className="ml-auto flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#B30000] hover:underline self-center">
@@ -114,7 +133,7 @@ export default function ArticlesPage() {
               const author = (!a.author_name || a.author_name.toLowerCase() === "ballmtaani") ? DEFAULT_AUTHOR : a.author_name;
               const isFeatured = i === 0;
               return (
-                <Link key={a.id} href={`/article/${a.slug}`}
+                <Link key={a.id} href={`/news/${a.slug}`}
                   className={`group flex flex-col overflow-hidden rounded-xl border transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/40 ${
                     isFeatured ? "sm:col-span-2 border-[#FFD700]/15 bg-[#0a0900]" : "border-white/6 bg-[#0d1018] hover:border-white/14"
                   }`}>
@@ -154,3 +173,9 @@ export default function ArticlesPage() {
     </div>
   );
 }
+
+
+
+
+
+

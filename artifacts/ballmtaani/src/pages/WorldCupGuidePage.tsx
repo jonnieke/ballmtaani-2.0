@@ -9,10 +9,10 @@ function notFound() {
       <div className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-[#090d14] p-8 text-center">
         <Trophy className="mx-auto mb-4 h-10 w-10 text-[#FFD700]" />
         <h1 className="text-2xl font-black">WC26 guide not found</h1>
-        <p className="mt-2 text-sm leading-7 text-white/55">The guide you opened is not available. Head back to the WC26 hub.</p>
+        <p className="mt-2 text-sm leading-7 text-white/55">The guide you opened is not available. Head back to the World Cup archive.</p>
         <Link href="/world-cup-2026" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black">
           <ChevronLeft className="h-3.5 w-3.5" />
-          WC26 Hub
+          World Cup Archive
         </Link>
       </div>
     </div>
@@ -30,7 +30,7 @@ export default function WorldCupGuidePage() {
   return (
     <div className="min-h-screen bg-[#05070b] pb-20 text-white">
       <SEO
-        title={`${guide.title} | BallMtaani WC26 Guide`}
+        title={`${guide.title} | BallMtaani World Cup 2026 Archive`}
         description={guide.deck}
         keywords={["World Cup 2026", guide.eyebrow, "WC26 Kenya", "BallMtaani World Cup guide", guide.title]}
         path={`/world-cup-2026/${guide.slug}`}
@@ -47,7 +47,7 @@ export default function WorldCupGuidePage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFD700] opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FFD700]" />
           </span>
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFD700]">WC26 is live — tournament is underway</span>
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[#FFD700]">World Cup 2026 archive — completed tournament</span>
           <Link href="/world-cup-2026" className="rounded-full border border-[#FFD700]/40 bg-[#FFD700]/12 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-[#FFD700] hover:bg-[#FFD700]/25 transition-colors">
             Live Hub →
           </Link>
@@ -62,7 +62,7 @@ export default function WorldCupGuidePage() {
         <div className="relative mx-auto max-w-5xl px-4 py-10 md:py-16">
           <Link href="/world-cup-2026" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/45 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/70 backdrop-blur-sm">
             <ChevronLeft className="h-3.5 w-3.5" />
-            WC26 Hub
+            World Cup Archive
           </Link>
 
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#FFD700]">

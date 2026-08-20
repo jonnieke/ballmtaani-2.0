@@ -308,7 +308,7 @@ export default function AdminArticlesPage() {
                     <div>
                       <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-white/40">URL Slug Preview</label>
                       <div className="flex items-center gap-1.5 rounded-xl border border-white/8 bg-[#111] px-3 py-2.5">
-                        <span className="text-[11px] text-white/25">ballmtaani.com/article/</span>
+                        <span className="text-[11px] text-white/25">ballmtaani.com/news/</span>
                         <span className="text-[11px] font-mono font-bold text-[#FFD700]/70">{slugify(form.title)}-…</span>
                       </div>
                     </div>
@@ -363,7 +363,7 @@ export default function AdminArticlesPage() {
                       <p className="text-sm font-medium text-blue-400 leading-snug line-clamp-1">
                         {form.seo_title || form.title || "Article Title"}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-green-600">ballmtaani.com/article/{form.title ? slugify(form.title) : "article-slug"}</p>
+                      <p className="mt-0.5 text-[11px] text-green-600">ballmtaani.com/news/{form.title ? slugify(form.title) : "article-slug"}</p>
                       <p className="mt-1 text-[11px] text-white/35 line-clamp-2 leading-relaxed">
                         {form.seo_description || form.excerpt || "Meta description will appear here. Write something compelling that makes people click."}
                       </p>
@@ -491,7 +491,7 @@ export default function AdminArticlesPage() {
 
                     <div className="flex shrink-0 items-center gap-1">
                       {article.status === "published" && (
-                        <a href={`/article/${article.slug}`} target="_blank" rel="noopener noreferrer"
+                        <a href={`/news/${article.slug}`} target="_blank" rel="noopener noreferrer"
                           className="rounded-lg p-2 text-white/25 transition-all hover:bg-white/8 hover:text-white">
                           <Eye className="h-4 w-4" />
                         </a>
@@ -600,3 +600,5 @@ function FormField({ label, value, onChange, placeholder, bold }: { label: strin
     </div>
   );
 }
+
+

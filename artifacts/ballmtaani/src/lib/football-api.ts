@@ -44,7 +44,12 @@ export const MAJOR_LEAGUE_IDS = {
   "UEFA Europa League": 3,
   // African Leagues
   "CAF Champions League": 12,
-  // "Kenya Premier League": 686,  // REMOVED — API-Football ID 686 returns Czech teams, not KPL
+  // Country-validated East African competitions. Never restore 686: it is not Kenya.
+  "FKF Premier League": 276,
+  "Kenya Super League": 277,
+  "Uganda Premier League": 585,
+  "Tanzania Ligi Kuu Bara": 567,
+  "Rwanda National Soccer League": 405,
   "South Africa PSL": 288,
   "Nigeria NPFL": 332,
 };
@@ -326,8 +331,8 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
   const raw = await apiFetch(`/fixtures?date=${todayEAT}&timezone=Africa/Nairobi`);
   if (!raw || !raw.length) return [];
 
-  // 686 excluded — returns Czech teams not KPL. 288/332 excluded until verified.
-  const majorLeagues = new Set([1, 2, 3, 12, 39, 140, 135, 78, 61]);
+  // Includes only country-validated East African IDs. 686 is not a Kenyan competition.
+  const majorLeagues = new Set([1, 2, 3, 12, 39, 140, 135, 78, 61, 276, 277, 585, 567, 405]);
 
   return raw
     .filter((item: any) => majorLeagues.has(item.league?.id))
@@ -354,7 +359,7 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       kickoffAt: new Date(item.fixture.date).getTime(),
     }))
     .sort((a: any, b: any) => {
-      const priority: Record<number, number> = { 1:0, 2:1, 3:2, 12:3, 39:4, 140:5, 135:6, 78:7, 61:8 };
+      const priority: Record<number, number> = { 276:0, 277:1, 585:2, 567:3, 405:4, 12:5, 39:6, 2:7, 3:8, 140:9, 135:10, 78:11, 61:12, 1:13 };
       const pa = priority[a.leagueId] ?? 99;
       const pb = priority[b.leagueId] ?? 99;
       if (pa !== pb) return pa - pb;
@@ -367,16 +372,29 @@ const WC26_LIVE_START = new Date("2026-06-11T17:00:00Z").getTime();
 const WC26_LIVE_END   = new Date("2026-07-20T00:00:00Z").getTime();
 
 export async function fetchUpcomingFixtures(): Promise<any[]> {
-  // During WC26: EPL, LaLiga, SerieA, Bundesliga, Ligue1 are in off-season — skip them.
-  // This cuts API calls from 9 → 2, preventing per-minute rate-limit bursts.
-  const wc26IsLive = Date.now() >= WC26_LIVE_START && Date.now() < WC26_LIVE_END;
+  const now = Date.now();
+  const wc26IsLive = now >= WC26_LIVE_START && now < WC26_LIVE_END;
+
+  // July 20 → Aug 21: WC26 done, leagues not started yet — query pre-season friendlies + early UCL qualifiers
+  const WC26_END_MS = WC26_LIVE_END;
+  const PL_START_MS = new Date("2026-08-21T19:00:00Z").getTime();
+  const isPreSeasonGap = now >= WC26_END_MS && now < PL_START_MS;
+
   const leagueSeasons: [number, number][] = wc26IsLive
     ? [
         [1, 2026],   // World Cup 2026
-        [12, CURRENT_SEASON],
+        [12, 2025],  // CAF Champions League (final runs to July)
+      ]
+    : isPreSeasonGap
+    ? [
+        [567, 2026], // Tanzania Ligi Kuu Bara - verified East Africa coverage
+        [667, 2026], // Pre-Season Friendlies 2026
+        [2, 2026],   // UCL qualifying rounds
+        [12, CURRENT_SEASON],  // CAF Champions League
+        [39, CURRENT_SEASON],  // Premier League opening fixtures
       ]
     : [
-        [1, 2026],   // World Cup 2026
+        [567, CURRENT_SEASON], // Tanzania Ligi Kuu Bara
         [2, CURRENT_SEASON],   // UCL
         [3, CURRENT_SEASON],   // UEL
         [12, CURRENT_SEASON],  // CAF Champions League
@@ -598,7 +616,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const leagueSeasons: [number, number][] = wc26IsLive
     ? [
         [1, 2026],   // World Cup 2026
-        [12, CURRENT_SEASON],  // CAF Champions League
+        [12, 2025],  // CAF Champions League
       ]
     : [
         [1, 2026],   // World Cup 2026
@@ -611,7 +629,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
 
   const results = await throttledAll(
     leagueSeasons.map(([leagueId, season]) =>
-      () => apiFetch(`/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}`).catch(() => null)
+      () => apiFetch(`/fixtures?league=${leagueId}&season=${season}&from=${fromStr}&to=${toStr}&status=FT-AET-PEN`).catch(() => null)
     ),
     3,
     150
@@ -620,9 +638,7 @@ export async function fetchRecentMatches(): Promise<any[]> {
   const allFixtures: any[] = [];
   for (const raw of results) {
     if (!raw || !raw.length) continue;
-    const mapped = raw
-      .filter((item: any) => ["FT", "AET", "PEN"].includes(item.fixture?.status?.short))
-      .map((item: any) => ({
+    const mapped = raw.map((item: any) => ({
       id: String(item.fixture.id),
       homeTeamId: item.teams.home.id,
       awayTeamId: item.teams.away.id,
@@ -657,8 +673,15 @@ export async function fetchRecentMatches(): Promise<any[]> {
 }
 
 // ─── 3. STANDINGS (per league) ──────────────────────────────
+// Season map: explicit seasons per league (avoids 3-call season fallback loop)
+const LEAGUE_SEASON_MAP: Record<number, number> = {
+  39: 2025, 140: 2025, 135: 2025, 78: 2025, 61: 2025, 288: 2025,
+  // 686 excluded — returns Czech teams, not KPL
+};
+
 export async function fetchStandings(leagueId: number): Promise<StandingEntry[]> {
-  const raw = await apiFetch(`/standings?league=${leagueId}&season=${CURRENT_SEASON}`);
+  const season = LEAGUE_SEASON_MAP[leagueId] ?? CURRENT_SEASON;
+  const raw = await apiFetch(`/standings?league=${leagueId}&season=${season}`);
   if (!raw || raw.length === 0) return [];
 
   const league = raw[0]?.league;

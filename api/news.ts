@@ -4,6 +4,21 @@ type FeedConfig = {
   sourceLogo: string;
 };
 
+type NewsItem = {
+  id: string;
+  title: string;
+  link: string;
+  pubDate: string;
+  description: string;
+  content?: string;
+  thumbnail?: string;
+  source: string;
+  sourceLogo: string;
+  isWC26?: boolean;
+  desk?: "kenya" | "global";
+  isOfficial?: boolean;
+};
+
 const RSS_FEEDS: FeedConfig[] = [
   { url: "https://feeds.bbci.co.uk/sport/football/rss.xml",              source: "BBC Sport",    sourceLogo: "BBC"    },
   { url: "https://www.goal.com/feeds/en/news",                           source: "Goal.com",     sourceLogo: "GOAL"   },
@@ -61,7 +76,7 @@ function isTechnical(title: string, description: string): boolean {
   return TECHNICAL_PATTERNS.some(p => text.includes(p));
 }
 
-function parseItems(xml: string, feed: FeedConfig) {
+function parseItems(xml: string, feed: FeedConfig): NewsItem[] {
   const items = xml.match(/<item[\s\S]*?<\/item>/gi) || [];
   return items.slice(0, 8).map((item, idx) => {
     const title       = pickTag(item, "title");
@@ -84,6 +99,49 @@ function parseItems(xml: string, feed: FeedConfig) {
   }).filter(item => item.title && item.link && !isTechnical(item.title, item.description));
 }
 
+async function fetchFkfNews(): Promise<NewsItem[]> {
+  const apiKey = process.env.FKF_NEWS_ANON_KEY || "";
+  if (!apiKey) return [];
+
+  const params = new URLSearchParams({
+    select: "id,slug,title,excerpt,category,featured_image_url,published_at,created_at",
+    published: "eq.true",
+    order: "published_at.desc.nullslast,created_at.desc",
+    limit: "12",
+  });
+  try {
+    const response = await fetch(`https://wmcfdzqntemdnrguqijw.supabase.co/rest/v1/news?${params.toString()}`, {
+      headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    if (!Array.isArray(rows)) return [];
+
+    return rows.flatMap((row: any) => {
+      const slug = String(row.slug || "").trim();
+      const title = String(row.title || "").trim();
+      if (!slug || title.length < 18) return [];
+      const description = String(row.excerpt || "").trim();
+      return [{
+        id: `fkf-${row.id || slug}`,
+        title,
+        link: `https://footballkenya.org/news/${encodeURIComponent(slug)}`,
+        pubDate: row.published_at || row.created_at || new Date().toISOString(),
+        description,
+        thumbnail: String(row.featured_image_url || ""),
+        source: "Football Kenya Federation",
+        sourceLogo: "FKF",
+        isWC26: isWC26Article(title, description),
+        desk: "kenya" as const,
+        isOfficial: true,
+      }];
+    });
+  } catch {
+    return [];
+  }
+}
+
 export default async function handler(_req: any, res: any) {
   if (_req.method !== "GET") return json(res, 405, { error: "Method not allowed" });
 
@@ -104,11 +162,12 @@ export default async function handler(_req: any, res: any) {
       }),
     );
 
-    const articles = results
+    const rssArticles = results
       .flatMap(r => r.status === "fulfilled" ? r.value : [])
       .filter(item => item.title && item.link);
+    const fkfArticles = await fetchFkfNews();
 
-    return json(res, 200, { articles });
+    return json(res, 200, { articles: [...rssArticles, ...fkfArticles] });
   } catch {
     return json(res, 200, { articles: [] });
   }

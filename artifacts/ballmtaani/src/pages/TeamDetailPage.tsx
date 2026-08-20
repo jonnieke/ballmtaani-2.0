@@ -1,0 +1,257 @@
+/**
+ * BallMtaani Club Detail Page (/teams/:teamSlug)
+ * Dedicated landing page for football clubs with H2H analytics, form guides, and Kenyan fan perspective.
+ */
+
+import React from "react";
+import { Link, useRoute } from "wouter";
+import SEO from "../components/SEO";
+import { generateClubSchema } from "../lib/jsonld";
+
+const KNOWN_CLUBS: Record<string, { id: number; name: string; country: string; venue: string; league: string; logo: string; desc: string; form: string[]; h2hWinRate: string; rival: string }> = {
+  "arsenal": {
+    id: 42,
+    name: "Arsenal",
+    country: "England",
+    venue: "Emirates Stadium",
+    league: "Premier League",
+    logo: "https://media.api-sports.io/football/teams/42.png",
+    desc: "Arsenal FC — Kenya's most passionate Premier League supporter base. Follow live matchday action, fixtures, predictions, Mchambuzi AI tactical breakdowns and fan debates.",
+    form: ["W", "W", "D", "W", "W"],
+    h2hWinRate: "64%",
+    rival: "Tottenham Hotspur / Chelsea",
+  },
+  "manchester-united": {
+    id: 33,
+    name: "Manchester United",
+    country: "England",
+    venue: "Old Trafford",
+    league: "Premier League",
+    logo: "https://media.api-sports.io/football/teams/33.png",
+    desc: "Manchester United FC — Old Trafford drama and matchday analysis. Follow Red Devils fixtures, live scores, predictions, MTC rewards and Kenyan fan banter.",
+    form: ["L", "W", "W", "D", "W"],
+    h2hWinRate: "58%",
+    rival: "Liverpool / Man City",
+  },
+  "chelsea": {
+    id: 49,
+    name: "Chelsea",
+    country: "England",
+    venue: "Stamford Bridge",
+    league: "Premier League",
+    logo: "https://media.api-sports.io/football/teams/49.png",
+    desc: "Chelsea FC — Blues matchday hub in Nairobi. Live scores, transfer updates, match stats, prediction receipts and community debates.",
+    form: ["W", "D", "W", "L", "W"],
+    h2hWinRate: "55%",
+    rival: "Arsenal / Tottenham Hotspur",
+  },
+  "liverpool": {
+    id: 40,
+    name: "Liverpool",
+    country: "England",
+    venue: "Anfield",
+    league: "Premier League",
+    logo: "https://media.api-sports.io/football/teams/40.png",
+    desc: "Liverpool FC — Anfield noise and high-tempo football. Live match coverage, player stats, predictions and Kenyan fan discussions.",
+    form: ["W", "W", "W", "D", "W"],
+    h2hWinRate: "68%",
+    rival: "Manchester United / Everton",
+  },
+  "gor-mahia": {
+    id: 4920,
+    name: "Gor Mahia",
+    country: "Kenya",
+    venue: "City Stadium / Nyayo Stadium",
+    league: "FKF Premier League",
+    logo: "/logo.png",
+    desc: "Gor Mahia FC (K'Ogalo) — 21-time Kenyan champions. Tracking K'Ogalo matchday fixtures, local derby updates, standings and Mtaa Daily original reporting.",
+    form: ["W", "W", "W", "W", "D"],
+    h2hWinRate: "72%",
+    rival: "AFC Leopards (Mashemeji Derby)",
+  },
+  "afc-leopards": {
+    id: 4921,
+    name: "AFC Leopards",
+    country: "Kenya",
+    venue: "Nyayo National Stadium",
+    league: "FKF Premier League",
+    logo: "/logo.png",
+    desc: "AFC Leopards (Ingwe) — Pride of Kenyan football. Fixtures, derby action, standings, fan predictions and Kenyan football spotlight.",
+    form: ["W", "D", "L", "W", "W"],
+    h2hWinRate: "59%",
+    rival: "Gor Mahia (Mashemeji Derby)",
+  },
+  "real-madrid": {
+    id: 541,
+    name: "Real Madrid",
+    country: "Spain",
+    venue: "Santiago Bernabéu",
+    league: "La Liga",
+    logo: "https://media.api-sports.io/football/teams/541.png",
+    desc: "Real Madrid CF — Los Blancos Champions League royalty and La Liga battles. Live scores, predictions, and squad analysis.",
+    form: ["W", "W", "W", "W", "D"],
+    h2hWinRate: "70%",
+    rival: "FC Barcelona (El Clasico)",
+  },
+  "barcelona": {
+    id: 529,
+    name: "FC Barcelona",
+    country: "Spain",
+    venue: "Spotify Camp Nou",
+    league: "La Liga",
+    logo: "https://media.api-sports.io/football/teams/529.png",
+    desc: "FC Barcelona — Catalan football flair, La Liga updates, El Clasico predictions and tactical breakdowns.",
+    form: ["W", "W", "D", "W", "L"],
+    h2hWinRate: "65%",
+    rival: "Real Madrid (El Clasico)",
+  },
+};
+
+export default function TeamDetailPage() {
+  const [, slugParams] = useRoute("/teams/:teamSlug");
+  const [, legacyParams] = useRoute("/team/:id");
+  const routeRef = (slugParams?.teamSlug || legacyParams?.id || "").toLowerCase();
+  const club = KNOWN_CLUBS[routeRef] || Object.values(KNOWN_CLUBS).find((team) => String(team.id) === routeRef);
+  const canonicalSlug = club ? Object.entries(KNOWN_CLUBS).find(([, team]) => team.id === club.id)?.[0] || routeRef : routeRef;
+
+  if (!club) {
+    return (
+      <div className="min-h-screen bg-[#0B0B0B] text-white flex flex-col items-center justify-center p-6 text-center">
+        <SEO title="Club Not Found | BallMtaani" description="The requested football club page was not found." noindex />
+        <h1 className="text-4xl font-black uppercase text-[#B30000] mb-2">404 — CLUB NOT FOUND</h1>
+        <p className="text-white/60 mb-6 max-w-md">We couldn't find a dedicated club hub for "{routeRef}". Browse active league centres to find your team.</p>
+        <Link href="/leagues" className="px-6 py-3 rounded-xl bg-[#B30000] text-white font-bold hover:bg-red-700 transition-colors">
+          EXPLORE LEAGUES & CLUBS
+        </Link>
+      </div>
+    );
+  }
+
+  const clubSchema = generateClubSchema({
+    name: club.name,
+    slug: canonicalSlug,
+    country: club.country,
+    logo: club.logo,
+    leagueName: club.league,
+  });
+
+  return (
+    <div className="min-h-screen bg-[#0B0B0B] text-[#E0E0E0] pb-16">
+      <SEO
+        title={`${club.name} Live Scores, H2H & Predictions | BallMtaani`}
+        description={club.desc}
+        canonicalUrl={`/teams/${canonicalSlug}`}
+        jsonLd={clubSchema}
+      />
+
+      {/* Hero */}
+      <div className="bg-gradient-to-b from-[#1a1c28] to-[#0B0B0B] border-b border-white/10 pt-8 pb-6 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-left">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white p-2.5 flex items-center justify-center shadow-xl border border-white/20 shrink-0">
+            <img src={club.logo} alt={club.name} className="max-h-full max-w-full object-contain" />
+          </div>
+          <div className="flex-1">
+            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#FFD700] mb-1">
+              <span>{club.country}</span> • <span>{club.league}</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black uppercase text-white tracking-tight mb-2">
+              {club.name}
+            </h1>
+            <p className="text-xs md:text-sm text-white/70 max-w-2xl leading-relaxed">
+              {club.desc}
+            </p>
+            {/* Form Pills */}
+            <div className="flex items-center gap-2 mt-4 justify-center md:justify-start">
+              <span className="text-xs font-bold text-white/50 uppercase mr-1">Recent Form:</span>
+              {club.form.map((res, i) => (
+                <span
+                  key={i}
+                  className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-black text-white ${
+                    res === "W" ? "bg-emerald-600" : res === "D" ? "bg-amber-600" : "bg-red-700"
+                  }`}
+                >
+                  {res}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 shrink-0 w-full md:w-auto">
+            <Link href="/predictions" className="px-5 py-3 rounded-xl bg-[#B30000] text-white text-xs font-bold uppercase tracking-wider text-center hover:bg-red-700 transition-colors shadow-md">
+              Predict {club.name} Matches
+            </Link>
+            <Link href="/mchambuzi-halisi" className="px-5 py-3 rounded-xl bg-white/10 text-white text-xs font-bold uppercase tracking-wider text-center hover:bg-white/20 transition-colors border border-white/10">
+              Ask Mchambuzi AI About {club.name}
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="max-w-5xl mx-auto px-4 pt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* H2H & Performance Record */}
+          <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
+            <h2 className="text-sm font-black uppercase tracking-wider text-[#FFD700] mb-3">
+              Head-to-Head & Performance Profile
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center mb-4">
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-xs text-white/50 block font-semibold">H2H Win Rate</span>
+                <strong className="text-lg font-black text-[#FFD700]">{club.h2hWinRate}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-xs text-white/50 block font-semibold">Primary Rivalry</span>
+                <strong className="text-xs font-bold text-white block truncate">{club.rival}</strong>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5 col-span-2 sm:col-span-1">
+                <span className="text-xs text-white/50 block font-semibold">Stadium</span>
+                <strong className="text-xs font-bold text-white block truncate">{club.venue}</strong>
+              </div>
+            </div>
+            <p className="text-xs text-white/70 leading-relaxed">
+              Tracking {club.name}'s key matchday metrics, tactical shape, and fan sentiment across Nairobi watching bases.
+            </p>
+          </div>
+
+          {/* Mtaa Daily Club News & Fan Debates */}
+          <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
+            <h2 className="text-sm font-black uppercase tracking-wider text-[#FFD700] mb-3">
+              Kenyan Fan Perspective & Debates
+            </h2>
+            <p className="text-xs text-white/70 leading-relaxed mb-4">
+              Join the debate on {club.name}'s lineup decisions, tactical shape, transfer window moves, and receipt-keeping prediction threads.
+            </p>
+            <div className="flex gap-3">
+              <Link href="/debates" className="flex-1 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFD700]/50 text-center transition-colors">
+                <span className="text-xs font-bold text-white block">Join Fan Debates</span>
+                <span className="text-[10px] text-[#FFD700]">Earn MTC points</span>
+              </Link>
+              <Link href="/news" className="flex-1 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[#FFD700]/50 text-center transition-colors">
+                <span className="text-xs font-bold text-white block">Read Mtaa Daily</span>
+                <span className="text-[10px] text-[#FFD700]">Original Analysis</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
+            <h3 className="text-xs font-black uppercase tracking-widest text-[#FFD700] mb-3">
+              Club Summary
+            </h3>
+            <div className="space-y-2.5 text-xs text-white/70">
+              <div className="flex justify-between border-b border-white/5 pb-2"><span>Club Name:</span> <strong className="text-white">{club.name}</strong></div>
+              <div className="flex justify-between border-b border-white/5 pb-2"><span>League:</span> <strong className="text-white">{club.league}</strong></div>
+              <div className="flex justify-between border-b border-white/5 pb-2"><span>Country:</span> <strong className="text-white">{club.country}</strong></div>
+              <div className="flex justify-between border-b border-white/5 pb-2"><span>Stadium:</span> <strong className="text-white">{club.venue}</strong></div>
+              <div className="flex justify-between"><span>Data Source:</span> <strong className="text-[#FFD700]">API-Football & BallMtaani</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+

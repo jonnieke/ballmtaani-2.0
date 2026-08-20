@@ -25,19 +25,31 @@ const paddingMap: Record<string, string> = {
   xl: "p-3",
 };
 
+const dimensionMap: Record<string, number> = {
+  xs: 28,
+  sm: 36,
+  md: 44,
+  lg: 80,
+  xl: 96,
+};
+
 export default function TeamLogo({ logo, initial, color, size = "md", className = "", shadow = false }: TeamLogoProps) {
   const [imgError, setImgError] = useState(false);
   const showFallback = !logo || imgError;
 
   return (
     <div
-      className={`${sizeMap[size]} rounded-full flex items-center justify-center overflow-hidden border border-white/20 shrink-0 ${shadow ? "shadow-[0_0_20px_rgba(255,255,255,0.15)]" : ""} ${className}`}
-      style={{ backgroundColor: showFallback ? color : "white" }}
+      className={`${sizeMap[size]} rounded-full flex items-center justify-center overflow-hidden border border-white/10 shrink-0 ${shadow ? "shadow-[0_0_20px_rgba(255,255,255,0.15)]" : ""} ${className}`}
+      style={{ backgroundColor: showFallback ? color : "transparent" }}
     >
       {!showFallback ? (
         <img
           src={logo}
           alt={initial}
+          width={dimensionMap[size]}
+          height={dimensionMap[size]}
+          decoding="async"
+          loading="lazy"
           className={`w-full h-full object-contain ${paddingMap[size]}`}
           onError={() => setImgError(true)}
         />

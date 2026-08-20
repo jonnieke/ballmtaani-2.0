@@ -29,7 +29,7 @@ export function WC26BracketCard({ picks, consensus, questions, onClose }: Props)
   const totalMtc = filled.reduce((s, q) => s + q.mtc, 0);
 
   const lines = filled.map(q => `${q.emoji} ${q.title}: ${picks[q.id]}`).join("\n");
-  const shareText = `🏆 My WC26 Bold Calls on BallMtaani\n\n${lines}\n\n${totalMtc.toLocaleString()} MTC on the line — can you top me?\n👉 https://ballmtaani.com/predictions`;
+  const shareText = `🏆 My WC26 Bold Calls on BallMtaani\n\n${lines}\n\nArchived MTC record: ${totalMtc.toLocaleString()} — compare your calls\n👉 https://ballmtaani.com/predictions`;
 
   const shareWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
   const shareTwitter  = () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`, "_blank");

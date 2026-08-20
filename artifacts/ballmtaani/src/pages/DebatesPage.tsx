@@ -8,6 +8,7 @@ import AdBanner from "../components/AdBanner";
 import { SkeletonDebate } from "../components/Skeletons";
 import { UserBadge } from "../components/UserBadge";
 import SEO from "../components/SEO";
+import EditorialIntro from "../components/EditorialIntro";
 import { AD_STRATEGY, shouldShowFeedAd } from "../lib/adStrategy";
 import DebateModerationUI from "../components/DebateModerationUI";
 import DebateModerationDashboard from "../components/DebateModerationDashboard";
@@ -220,6 +221,21 @@ export default function DebatesPage() {
         title="Fan Debates & Hot Takes | BallMtaani"
         description="Vote on football debates, bring backup from your group chat, and keep receipts with Kenyan fans."
       />
+      <EditorialIntro
+        eyebrow="BallMtaani fan debate desk"
+        title="A debate room with editorial framing, not just noise."
+        copy="This page exists to surface the arguments fans are actually having, but it still needs structure. The editorial copy keeps the room anchored to football news, match context and the questions worth debating instead of endless empty shouting."
+        bullets={[
+          "Debates are grouped, searchable and moderated for quality.",
+          "The best arguments stay tied to fixtures, clubs and real football context.",
+          "Fans can vote, share and keep receipts without losing the editorial thread.",
+        ]}
+        links={[
+          { href: "/news", label: "Read the newsroom" },
+          { href: "/articles", label: "Open articles" },
+        ]}
+      />
+
       <div className="text-center mb-12">
         <div className="flex items-center justify-center gap-3 mb-3">
           <h1 className="text-4xl md:text-5xl font-black uppercase tracking-widest text-white">
@@ -581,3 +597,6 @@ export default function DebatesPage() {
     </div>
   );
 }
+
+
+

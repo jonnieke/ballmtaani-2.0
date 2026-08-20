@@ -2,7 +2,7 @@ type FeedConfig = {
   url: string;
   source: string;
   sourceLogo: string;
-  kind: "rss" | "html";
+  kind: "rss" | "html" | "fkf-api";
 };
 
 type RawArticle = {
@@ -14,6 +14,8 @@ type RawArticle = {
   sourceLogo: string;
   description?: string;
   thumbnail?: string;
+  desk?: "kenya" | "global";
+  isOfficial?: boolean;
 };
 
 const FEEDS: FeedConfig[] = [
@@ -21,13 +23,17 @@ const FEEDS: FeedConfig[] = [
   { url: "https://www.goal.com/feeds/en/news", source: "Goal.com", sourceLogo: "GOAL", kind: "rss" },
   { url: "https://www.api-football.com/news/", source: "API-Football", sourceLogo: "API", kind: "html" },
   { url: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players", source: "API-Football", sourceLogo: "API", kind: "html" },
+  { url: "https://wmcfdzqntemdnrguqijw.supabase.co/rest/v1/news", source: "Football Kenya Federation", sourceLogo: "FKF", kind: "fkf-api" },
 ];
 
 const SOURCE_FALLBACK_URLS: Record<string, string> = {
   "BBC Sport": "https://www.bbc.com/sport/football",
   "Goal.com": "https://www.goal.com/en/news",
   "API-Football": "https://www.api-football.com/news/",
+  "Football Kenya Federation": "https://footballkenya.org/news",
 };
+
+const FKF_NEWS_FIELDS = "id,slug,title,excerpt,category,featured_image_url,published_at,created_at";
 
 const FOOTBALL_KEYWORDS = [
   "football",
@@ -73,62 +79,7 @@ const TECHNICAL_PATTERNS = [
 
 const LOW_QUALITY_TITLES = ["line ups", "coachs & players"];
 
-const API_FOOTBALL_FALLBACKS: RawArticle[] = [
-  {
-    id: "api-football-lineups-2026",
-    title: "FIFA World Cup 2026 Lineups: All Teams, Coaches and Players",
-    link: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players",
-    pubDate: "2026-06-04T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Team-by-team World Cup 2026 lineups, coaches and players before kickoff in USA, Canada and Mexico.",
-  },
-  {
-    id: "ballmtaani-wc26-format-guide",
-    title: "World Cup 2026 Format: What Changes for Fans",
-    link: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026",
-    pubDate: "2026-06-03T00:00:00.000Z",
-    source: "FIFA",
-    sourceLogo: "FIFA",
-    description: "The 48-team World Cup changes the group stage, knockout path and upset math for every fan tracking 2026.",
-  },
-  {
-    id: "ballmtaani-wc26-stadium-guide",
-    title: "World Cup 2026 Stadium Guide: The Venues That Matter",
-    link: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/destination",
-    pubDate: "2026-06-02T00:00:00.000Z",
-    source: "FIFA",
-    sourceLogo: "FIFA",
-    description: "Sixteen host venues across the United States, Mexico and Canada will shape travel, climate and match rhythm.",
-  },
-  {
-    id: "ballmtaani-africa-wc26-watch",
-    title: "Africa at World Cup 2026: Teams, Pressure and Dark Horses",
-    link: "https://www.cafonline.com/",
-    pubDate: "2026-06-01T00:00:00.000Z",
-    source: "CAF",
-    sourceLogo: "CAF",
-    description: "More World Cup places create a bigger African story: qualification pressure, squad depth and teams Kenyan fans should watch.",
-  },
-  {
-    id: "ballmtaani-squad-depth-watch",
-    title: "Squad Depth Watch: How to Read a 2026 World Cup Team",
-    link: "https://www.api-football.com/news/post/fifa-world-cup-2026-lineups-all-teams-coaches-and-players",
-    pubDate: "2026-05-31T00:00:00.000Z",
-    source: "API-Football",
-    sourceLogo: "API",
-    description: "Lineups, coaches and player pools tell fans where a team is strong, thin or one injury away from trouble.",
-  },
-  {
-    id: "ballmtaani-matchday-form-guide",
-    title: "Matchday Form Guide: What the Table Does Not Tell You",
-    link: "https://www.bbc.com/sport/football",
-    pubDate: "2026-05-30T00:00:00.000Z",
-    source: "BBC Sport",
-    sourceLogo: "BBC",
-    description: "Recent fixtures, home-away records, injuries and lineups give fans a better argument than table position alone.",
-  },
-];
+const API_FOOTBALL_FALLBACKS: RawArticle[] = [];
 
 function json(res: any, status: number, body: unknown) {
   res.statusCode = status;
@@ -254,13 +205,55 @@ function parseHtmlArticles(html: string, feed: FeedConfig): RawArticle[] {
   return articles;
 }
 
+async function fetchFkfNews(feed: FeedConfig): Promise<RawArticle[]> {
+  const apiKey = process.env.FKF_NEWS_ANON_KEY || "";
+  if (!apiKey) return [];
+
+  const params = new URLSearchParams({
+    select: FKF_NEWS_FIELDS,
+    published: "eq.true",
+    order: "published_at.desc.nullslast,created_at.desc",
+    limit: "12",
+  });
+  const response = await fetch(`${feed.url}?${params.toString()}`, {
+    headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` },
+  });
+  if (!response.ok) return [];
+
+  const rows = await response.json();
+  if (!Array.isArray(rows)) return [];
+
+  return rows
+    .map((row: any) => {
+      const slug = String(row.slug || "").trim();
+      const title = stripTags(String(row.title || ""));
+      if (!slug || title.length < 18) return null;
+      return {
+        id: `fkf-${row.id || slug}`,
+        title,
+        link: `https://footballkenya.org/news/${encodeURIComponent(slug)}`,
+        pubDate: row.published_at || row.created_at || new Date().toISOString(),
+        source: feed.source,
+        sourceLogo: feed.sourceLogo,
+        description: stripTags(String(row.excerpt || "")),
+        thumbnail: normalizeUrl(String(row.featured_image_url || ""), feed.source),
+        desk: "kenya" as const,
+        isOfficial: true,
+      } satisfies RawArticle;
+    })
+    .filter((article): article is RawArticle => Boolean(article));
+}
+
 function removeDuplicates(articles: RawArticle[]): RawArticle[] {
-  const seen = new Set<string>();
+  const seenTitles = new Set<string>();
+  const seenLinks = new Set<string>();
   const result: RawArticle[] = [];
   for (const article of articles) {
-    const key = `${article.title.toLowerCase()}|${article.link}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const title = article.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const link = article.link.trim().toLowerCase();
+    if ((title && seenTitles.has(title)) || seenLinks.has(link)) continue;
+    if (title) seenTitles.add(title);
+    seenLinks.add(link);
     result.push(article);
   }
   return result;
@@ -281,6 +274,7 @@ function mergeFallbacks(articles: RawArticle[]): RawArticle[] {
 
 async function fetchFeed(feed: FeedConfig): Promise<RawArticle[]> {
   try {
+    if (feed.kind === "fkf-api") return fetchFkfNews(feed);
     const response = await fetch(feed.url, {
       headers: {
         "User-Agent": "BallMtaani-News/1.0",
@@ -303,7 +297,9 @@ export default async function handler(req: any, res: any) {
   try {
     const results = await Promise.all(FEEDS.map((feed) => fetchFeed(feed)));
     const articles = mergeFallbacks(removeDuplicates(results.flat())).sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-    return json(res, 200, { articles: articles.slice(0, 24) });
+    const kenya = articles.filter((article) => article.desk === "kenya").slice(0, 8);
+    const global = articles.filter((article) => article.desk !== "kenya").slice(0, Math.max(16, 24 - kenya.length));
+    return json(res, 200, { articles: [...global, ...kenya] });
   } catch (error) {
     return json(res, 200, {
       articles: API_FOOTBALL_FALLBACKS.slice(0, 4),

@@ -193,7 +193,7 @@ export default function AdminAdsPage() {
             {error && <p className="mb-3 rounded-lg bg-[#B30000]/15 px-3 py-2 text-xs text-[#ff6b6b]">{error}</p>}
 
             <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-              <Field label="Campaign Name *" value={editing.name || ""} onChange={v => setEditing(e => ({ ...e!, name: v }))} placeholder="e.g. SportPesa June 2026" />
+              <Field label="Campaign Name *" value={editing.name || ""} onChange={v => setEditing(e => ({ ...e!, name: v }))} placeholder="e.g. Local football partner" />
               <Field label="Advertiser" value={editing.advertiser || ""} onChange={v => setEditing(e => ({ ...e!, advertiser: v }))} placeholder="Company name" />
               <Field label="Destination URL *" value={editing.destination_url || ""} onChange={v => setEditing(e => ({ ...e!, destination_url: v }))} placeholder="https://..." />
               <Field label="Banner Image URL" value={editing.image_url || ""} onChange={v => setEditing(e => ({ ...e!, image_url: v }))} placeholder="https://..." />

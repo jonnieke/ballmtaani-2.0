@@ -139,7 +139,7 @@ function buildFallbackAnswer(question: string, context: MchambuziContext): strin
     return `Prediction mode, lakini with brakes. ${recentLine(context)} ${upcomingLine} Form matters, but football also enjoys embarrassing confident people. Check recent results, injuries and home advantage before calling it.`;
   }
 
-  return `Mchambuzi Halisi says: ${liveLine} ${upcomingLine} ${newsLine} Ask me about a team, fixture, transfer, injury, table race or WC26 and I will break it down without behaving like a sofa pundit after two highlights.`;
+  return `Mchambuzi Halisi says: ${liveLine} ${upcomingLine} ${newsLine} Ask me about a team, fixture, transfer, injury, table race, Kenyan football or a past tournament and I will break it down without behaving like a sofa pundit after two highlights.`;
 }
 
 function recentLine(context: MchambuziContext): string {
@@ -189,18 +189,24 @@ ${question}
 Answer as short football chat with practical insight, not generic hype.`;
 }
 
+export type MchambuziLanguage = "en" | "sw" | "sheng";
+
+export type MchambuziPageContext = {
+  pageType?: "match" | "team" | "league" | "article" | "general";
+  entityName?: string;
+  matchDetails?: any;
+};
+
 /**
  * Public entry point — always tries the secure serverless endpoint first.
  * If the endpoint is unavailable (e.g. missing API keys on Vercel, network error),
  * falls back to a data-only text answer built from the live football context.
- * No AI keys ever touch the browser bundle.
- *
- * @param question  Fan's football question
- * @param preloaded Optional pre-loaded context from React Query hooks (avoids duplicate API calls)
  */
 export async function askMchambuziHalisi(
   question: string,
-  preloaded?: { live?: any[]; upcoming?: any[]; recent?: any[] }
+  preloaded?: { live?: any[]; upcoming?: any[]; recent?: any[] },
+  language: MchambuziLanguage = "en",
+  pageContext?: MchambuziPageContext
 ): Promise<{
   answer: string;
   context: MchambuziContext;
@@ -234,7 +240,7 @@ export async function askMchambuziHalisi(
       upcoming: preloaded.upcoming || [],
       recent: preloaded.recent || [],
       news,
-      wc26StartDate: "June 11, 2026",
+      wc26StartDate: "Tournament completed July 19, 2026",
       sources: ["App live feed", "BBC Sport RSS", "Goal.com RSS"],
     };
   } else {

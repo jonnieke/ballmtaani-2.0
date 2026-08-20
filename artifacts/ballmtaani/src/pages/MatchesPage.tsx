@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Activity,
   CalendarDays,
@@ -15,6 +15,7 @@ import {
 import { useMatches, useRecentMatches, useUpcomingFixtures, useStandings, useFixtureDetail } from "../hooks/useData";
 import AdBanner from "../components/AdBanner";
 import SEO from "../components/SEO";
+import EditorialIntro from "../components/EditorialIntro";
 import DataFreshnessChip from "../components/DataFreshnessChip";
 import { formatFreshnessLabel } from "../lib/freshness";
 import type { TournamentStandingEntry } from "../lib/football-api";
@@ -680,6 +681,7 @@ function EmptyState({ title, body }: { title: string; body: string }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function MatchesPage() {
+  const [routeLocation] = useLocation();
   const [view, setView] = useState<HubView>(() => {
     const tab = new URLSearchParams(window.location.search).get("tab");
     if (tab === "africa")   return "africa";
@@ -704,6 +706,15 @@ export default function MatchesPage() {
   const [selected, setSelected] = useState<{ match: any; variant: "live" | "fixture" | "result" } | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [clockTick, setClockTick] = useState(0);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    const nextView: HubView =
+      tab === "live" || tab === "results" || tab === "fixtures" || tab === "africa" || tab === "tables"
+        ? tab
+        : "all";
+    setView(nextView);
+  }, [routeLocation]);
 
   const { data: liveMatches = [],     isFetching: liveFetching }     = useMatches();
   const { data: recentMatches = [],    isFetching: recentFetching }   = useRecentMatches();
@@ -796,11 +807,26 @@ export default function MatchesPage() {
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "Matches", url: "/matches" }]}
       />
 
+      <EditorialIntro
+        eyebrow="BallMtaani match desk"
+        title="The fixtures page with context, not just a list."
+        copy="This hub is built to help fans understand what is live, what is next and what the tables mean. It pairs real-time scores with league context, freshness labels and Africa-focused coverage so the page reads like a sports desk instead of a raw feed."
+        bullets={[
+          "Live scores, results and upcoming fixtures in one place.",
+          "Standings and competition context for the major leagues we cover.",
+          "African football widgets and freshness indicators for trustworthy updates.",
+        ]}
+        links={[
+          { href: "/news", label: "Read the edition" },
+          { href: "/articles", label: "Long-form stories" },
+        ]}
+      />
+
       {/* ── Top bar ──────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-b border-white/8 bg-[#080d16]">
         <div className="flex items-center gap-4 px-4 py-2.5">
           <div>
-            <h1 className="text-[13px] font-black uppercase tracking-widest text-white">Football Hub</h1>
+            <h1 className="text-[13px] font-black uppercase tracking-widest text-white">Sports Data Center</h1>
             <DataFreshnessChip label={freshnessLabelSafe} className="mt-0.5" />
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -1030,3 +1056,7 @@ export default function MatchesPage() {
     </div>
   );
 }
+
+
+
+

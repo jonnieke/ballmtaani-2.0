@@ -1,60 +1,120 @@
-import type { IncomingMessage, ServerResponse } from "http";
 import { createClient } from "@supabase/supabase-js";
 
-const SITE = "https://ballmtaani.com";
+const BASE = "https://ballmtaani.com";
 
-const STATIC = [
-  { loc: "/", priority: "1.0", changefreq: "daily" },
-  { loc: "/news", priority: "0.9", changefreq: "daily" },
-  { loc: "/world-cup-2026", priority: "0.9", changefreq: "daily" },
-  { loc: "/matches", priority: "0.8", changefreq: "hourly" },
-  { loc: "/predictions", priority: "0.8", changefreq: "daily" },
-  { loc: "/debates", priority: "0.7", changefreq: "daily" },
-  { loc: "/rivalries", priority: "0.7", changefreq: "daily" },
-  { loc: "/leaderboard", priority: "0.7", changefreq: "daily" },
-  { loc: "/store", priority: "0.6", changefreq: "weekly" },
+function esc(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/'/g, "&apos;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+
+function articleWordCount(content?: string | null) {
+  if (!content) return 0;
+  return content.replace(/<[^>]+>/g, " ").replace(/&[a-z0-9#]+;/gi, " ").split(/\s+/).filter(Boolean).length;
+}
+function urlEntry(loc: string, opts: { lastmod?: string; changefreq?: string; priority?: string }) {
+  const parts = [`  <url>\n    <loc>${esc(loc)}</loc>`];
+  if (opts.lastmod) parts.push(`    <lastmod>${opts.lastmod}</lastmod>`);
+  if (opts.changefreq) parts.push(`    <changefreq>${opts.changefreq}</changefreq>`);
+  if (opts.priority) parts.push(`    <priority>${opts.priority}</priority>`);
+  parts.push("  </url>");
+  return parts.join("\n");
+}
+
+const STATIC_PAGES = [
+  { loc: "/", priority: "1.00", changefreq: "hourly" },
+  { loc: "/about", priority: "0.80", changefreq: "monthly" },
+  { loc: "/contact", priority: "0.75", changefreq: "monthly" },
+  { loc: "/privacy", priority: "0.40", changefreq: "monthly" },
+  { loc: "/terms", priority: "0.40", changefreq: "monthly" },
+  { loc: "/world-cup-2026", priority: "0.50", changefreq: "monthly" },
+  { loc: "/world-cup-2026/bracket", priority: "0.45", changefreq: "monthly" },
 ];
 
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key = process.env.VITE_SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || "";
+const LEAGUES = [
+  { slug: "premier-league", priority: "0.95" },
+  { slug: "champions-league", priority: "0.95" },
+  { slug: "fkf-premier-league", priority: "0.95" },
+  { slug: "la-liga", priority: "0.90" },
+  { slug: "serie-a", priority: "0.90" },
+  { slug: "bundesliga", priority: "0.85" },
+  { slug: "ligue-1", priority: "0.85" },
+  { slug: "caf-champions-league", priority: "0.85" },
+  { slug: "caf-confederation-cup", priority: "0.80" },
+  { slug: "harambee-stars", priority: "0.90" },
+];
 
-  let articles: { slug: string; published_at: string }[] = [];
-  if (url && key) {
-    try {
-      const sb = createClient(url, key);
-      const { data } = await sb
-        .from("articles")
-        .select("slug, published_at")
-        .eq("status", "published")
-        .order("published_at", { ascending: false })
-        .limit(500);
-      articles = (data as any[]) || [];
-    } catch { /* ignore */ }
+const TEAMS = [
+  { slug: "arsenal" },
+  { slug: "manchester-united" },
+  { slug: "chelsea" },
+  { slug: "liverpool" },
+  { slug: "gor-mahia" },
+  { slug: "afc-leopards" },
+  { slug: "real-madrid" },
+  { slug: "barcelona" },
+];
+
+export default async function handler(req: any, res: any) {
+  const today = new Date().toISOString().slice(0, 10);
+  const type = req.query?.type || (req.url ? req.url.split("type=")[1] : "");
+
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+
+  if (type === "pages") {
+    const entries = STATIC_PAGES.map(p => urlEntry(`${BASE}${p.loc}`, { lastmod: today, changefreq: p.changefreq, priority: p.priority }));
+    return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`);
   }
 
-  const urls = [
-    ...STATIC.map(s => `
-  <url>
-    <loc>${SITE}${s.loc}</loc>
-    <changefreq>${s.changefreq}</changefreq>
-    <priority>${s.priority}</priority>
-  </url>`),
-    ...articles.map(a => `
-  <url>
-    <loc>${SITE}/article/${a.slug}</loc>
-    <lastmod>${new Date(a.published_at).toISOString().split("T")[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>`),
-  ].join("");
+  if (type === "leagues") {
+    const entries = LEAGUES.flatMap(l => [
+      urlEntry(`${BASE}/leagues/${l.slug}`, { lastmod: today, changefreq: "daily", priority: l.priority }),
+      urlEntry(`${BASE}/leagues/${l.slug}/fixtures`, { lastmod: today, changefreq: "daily", priority: "0.80" }),
+      urlEntry(`${BASE}/leagues/${l.slug}/table`, { lastmod: today, changefreq: "daily", priority: "0.80" }),
+    ]);
+    return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`);
+  }
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
-</urlset>`;
+  if (type === "teams") {
+    const entries = TEAMS.map(t => urlEntry(`${BASE}/teams/${t.slug}`, { lastmod: today, changefreq: "weekly", priority: "0.85" }));
+    return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`);
+  }
 
-  res.setHeader("Content-Type", "application/xml");
-  res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600");
-  res.end(xml);
+  if (type === "articles") {
+    let articleEntries: string[] = [];
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data } = await supabase.from("articles").select("slug, content, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false });
+        if (data) {
+          articleEntries = data.filter((a: any) => articleWordCount(a.content) >= 180).map((a: any) => urlEntry(`${BASE}/news/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
+        }
+      }
+    } catch {}
+    return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${articleEntries.join("\n")}\n</urlset>`);
+  }
+
+  const index = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${BASE}/api/sitemap?type=pages</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${BASE}/api/sitemap?type=leagues</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${BASE}/api/sitemap?type=teams</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${BASE}/api/sitemap?type=articles</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
+</sitemapindex>`;
+
+  res.end(index);
 }
