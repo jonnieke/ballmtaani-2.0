@@ -527,12 +527,12 @@ export default function WorldCup2026Page() {
           <div className="flex-1 bg-[#006847]" /><div className="flex-1 bg-white/30" /><div className="flex-1 bg-[#CE1126]" />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-6xl px-4 py-16 text-center md:py-24">
+        <div className="relative z-10 mx-auto max-w-6xl px-4 py-12 text-center md:py-24">
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-5 py-2 backdrop-blur-sm">
+          <div className="mb-6 inline-flex max-w-full flex-wrap items-center justify-center gap-2 rounded-full border border-[#FFD700]/30 bg-[#FFD700]/10 px-4 py-2 text-center backdrop-blur-sm sm:px-5">
             {cd.live && <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse" />}
             <Trophy className="h-4 w-4 text-[#FFD700]" />
-            <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#FFD700]">
+            <span className="text-[10px] font-black uppercase leading-tight tracking-[0.18em] text-[#FFD700] sm:text-[11px] sm:tracking-[0.22em]">
               {cd.live ? "World Cup 2026  -  Live Now" : "FIFA World Cup 2026"}
             </span>
             <Trophy className="h-4 w-4 text-[#FFD700]" />
@@ -540,7 +540,7 @@ export default function WorldCup2026Page() {
 
           {/* Headline */}
           <h1
-            className="mb-4 text-5xl font-black italic leading-[0.88] tracking-tight md:text-7xl lg:text-8xl"
+            className="mx-auto mb-4 max-w-4xl text-[clamp(2.7rem,12vw,6rem)] font-black italic leading-[0.88] tracking-tight md:text-7xl lg:text-8xl"
             style={{
               color: "#FFE033",
               WebkitTextStroke: "1px #C47200",
@@ -580,9 +580,9 @@ export default function WorldCup2026Page() {
           )}
 
           {/* Host nations */}
-          <div className="mb-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="mb-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
             {HOSTS.map(h => (
-              <span key={h.name} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white/70 backdrop-blur-sm hover:bg-white/10 transition-colors">
+              <span key={h.name} className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[11px] font-bold text-white/70 backdrop-blur-sm transition-colors hover:bg-white/10 sm:px-4 sm:text-xs">
                 <img src={h.flag} alt={h.name} className="h-4 w-4 object-contain rounded-sm" />
                 {h.name}
               </span>
@@ -590,18 +590,18 @@ export default function WorldCup2026Page() {
           </div>
 
           {/* Primary CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link href="/predictions"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-7 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_28px_rgba(255,214,0,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_45px_rgba(255,214,0,0.7)] active:scale-95">
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_28px_rgba(255,214,0,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_45px_rgba(255,214,0,0.7)] active:scale-95">
               {cd.live ? "Call the Scoreline" : "Make Your Group Stage Call"}
               <ChevronRight className="h-4 w-4" />
             </Link>
             <Link href="/mchambuzi-halisi"
-              className="inline-flex items-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-7 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10 active:scale-95">
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#FFD700]/35 bg-black/40 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-[#FFD700] backdrop-blur-sm transition-all hover:border-[#FFD700]/70 hover:bg-[#FFD700]/10 active:scale-95">
               <Sparkles className="h-4 w-4" /> Ask Mchambuzi
             </Link>
             <Link href="/ai-fan-zone"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/10 active:scale-95">
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/10 active:scale-95">
               &#127914; AI Fan Zone
             </Link>
           </div>
@@ -1106,7 +1106,7 @@ export default function WorldCup2026Page() {
             <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">R32 → R16 → QF → SF → Final · Jul 19 · MetLife</p>
           </div>
           <div className="overflow-x-auto rounded-2xl border border-white/8 bg-[#0b0f18] p-4">
-            <div className="flex min-w-[640px] items-start gap-2">
+            <div className="flex min-w-[480px] items-start gap-2 sm:min-w-[640px]">
               {[
                 { label: "R32", slots: 16, color: "border-white/10 text-white/50" },
                 { label: "R16", slots: 8,  color: "border-[#FFD700]/15 text-[#FFD700]/50" },
@@ -1409,8 +1409,8 @@ export default function WorldCup2026Page() {
         {/* -- WC26 TOP CALLERS -- */}
         {wc26Board.length > 0 && (
           <section className="mb-8 overflow-hidden rounded-2xl border border-white/8 bg-[#080d14]/90">
-            <div className="flex items-center justify-between border-b border-white/6 px-5 py-4">
-              <div>
+            <div className="flex flex-col gap-2 border-b border-white/6 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-sm font-black uppercase tracking-widest text-white">Top WC26 Callers</h2>
                 <p className="text-[10px] text-white/30">Ranked by correct tournament predictions</p>
               </div>
