@@ -3,13 +3,15 @@
  * Supports sub-views: /leagues/:leagueSlug/fixtures & /leagues/:leagueSlug/table
  */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useRoute } from "wouter";
 import SEO from "../components/SEO";
 import { getLeagueBySlug } from "../config/football-catalog";
-import { useMatches, useStandings } from "../hooks/useData";
+import { useMatches, useRecentMatches, useStandings, useUpcomingFixtures } from "../hooks/useData";
 import { formatKenyanTime, formatMatchDateHeader } from "../lib/date-utils";
 import { generateLeagueSchema } from "../lib/jsonld";
+import { fetchLeagueFixtures } from "../lib/football-api";
 
 interface Props {
   subView?: "main" | "fixtures" | "table";
@@ -26,10 +28,37 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
   const isTablePath = Boolean(params3);
 
   const league = getLeagueBySlug(leagueSlug);
+  const leagueId = league?.id;
   const { data: rawMatches, isLoading: matchesLoading } = useMatches();
+  const { data: rawUpcomingFixtures = [], isLoading: upcomingLoading } = useUpcomingFixtures();
+  const { data: rawRecentMatches = [], isLoading: recentLoading } = useRecentMatches();
   const { data: rawStandingsMap, isLoading: standingsLoading } = useStandings();
+  const { data: leagueFixtures = [], isLoading: leagueFixturesLoading } = useQuery({
+    queryKey: ["league-fixtures", league?.id, league?.currentSeason],
+    queryFn: async () => {
+      if (!league) return [];
+      return fetchLeagueFixtures(league.id, league.currentSeason, 10);
+    },
+    enabled: !!league,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const fixturesLoading = matchesLoading || upcomingLoading || recentLoading;
 
-  const matches = (rawMatches || []).filter((m: any) => m?.league?.id === league?.id);
+  const matches = useMemo(() => {
+    const pool = [...(rawMatches || []), ...rawRecentMatches, ...rawUpcomingFixtures, ...leagueFixtures];
+    if (!leagueId) return [];
+
+    const deduped = new Map<string, any>();
+    for (const item of pool) {
+      if (Number(item?.leagueId) !== Number(leagueId)) continue;
+      if (!item?.id) continue;
+      deduped.set(String(item.id), item);
+    }
+
+    return [...deduped.values()].sort((a, b) => (a.kickoffAt || 0) - (b.kickoffAt || 0));
+  }, [leagueId, leagueFixtures, rawMatches, rawRecentMatches, rawUpcomingFixtures]);
+  const allFixturesLoading = fixturesLoading || leagueFixturesLoading;
   const standings = league && rawStandingsMap ? rawStandingsMap[String(league.id)] || [] : [];
 
   const [activeTab, setActiveTab] = useState<"overview" | "fixtures" | "table">(
@@ -190,7 +219,7 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   </h2>
                   <span className="text-[10px] text-white/40 font-semibold">Africa/Nairobi (EAT)</span>
                 </div>
-                {matchesLoading ? (
+                {allFixturesLoading ? (
                   <div className="py-8 text-center text-xs text-white/40">Fetching live match schedule...</div>
                 ) : matches && matches.length > 0 ? (
                   <div className="space-y-3">
@@ -233,7 +262,7 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-xs text-white/50 bg-white/5 rounded-xl border border-white/5">
-                    No active matchday fixtures found for this competition window.
+                    No fixtures or results are available for this competition window yet.
                   </div>
                 )}
               </div>
