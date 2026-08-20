@@ -16,7 +16,7 @@ const sections = [
   },
   {
     title: "Advertising & Sponsorship",
-    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. When Google AdSense is enabled, ad units will be limited to substantial editorial pages and will stay clearly separated from logins, predictions, games, rewards, live-score utilities and account screens. We do not use hidden or unlabeled ad units.",
+    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. If Google AdSense is enabled, ad units will be limited to substantial editorial pages and will stay clearly separated from logins, predictions, games, rewards, live-score utilities and account screens. We do not use hidden or unlabeled ad units.",
   },
   {
     title: "Cookies & Web Storage",

@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { canShowAdsOnPath } from "../lib/ad-surface";
 
 interface Props {
   sponsorName?: string;
@@ -17,6 +18,8 @@ export function SponsorPlacement({
   tagline = "Fuel your football matchday experience with BallMtaani MTC rewards.",
   linkUrl = "/store",
 }: Props) {
+  if (!canShowAdsOnPath()) return null;
+
   return (
     <div className="w-full min-h-[80px] rounded-2xl bg-gradient-to-r from-[#181d2a] to-[#111319] border border-white/10 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
       <div className="flex items-center gap-3">

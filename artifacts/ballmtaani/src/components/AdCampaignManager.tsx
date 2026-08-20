@@ -6,12 +6,14 @@
 import React, { useState } from "react";
 import { getActiveCampaign, AdPlacementType } from "../lib/ad-campaigns";
 import { trackEvent } from "../lib/analytics-events";
+import { canShowAdsOnPath } from "../lib/ad-surface";
 
 interface Props {
   placement: AdPlacementType;
 }
 
 export function AdCampaignManager({ placement }: Props) {
+  if (!canShowAdsOnPath()) return null;
   const campaign = getActiveCampaign(placement);
   const [clickCount, setClickCount] = useState(0);
 
