@@ -156,7 +156,7 @@ export default function MchambuziHalisiPage() {
       </div>
 
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-10">
-        <Link href="/home" className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm font-bold text-white/75 backdrop-blur-xl transition-colors hover:border-primary/60 hover:text-primary">
+        <Link href="/home" className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-sm font-bold text-white/75 backdrop-blur-xl transition-colors hover:border-primary/60 hover:text-primary sm:mb-5">
           <ArrowLeft className="h-4 w-4" />
           Home
         </Link>
@@ -166,8 +166,10 @@ export default function MchambuziHalisiPage() {
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <p className="text-[10px] font-black uppercase tracking-[0.26em] text-primary">AI football analyst · WC26 ready</p>
           </div>
-          <h1 className="text-4xl font-black italic leading-none md:text-5xl">Mchambuzi Halisi</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55">
+          <h1 className="max-w-3xl text-[clamp(2.25rem,8vw,3.8rem)] font-black italic leading-[0.94] text-white md:text-5xl">
+            Mchambuzi Halisi
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55 sm:leading-relaxed">
             Ask about live scores, WC26 predictions, transfers, African football, or why your club is stressing you like rent day. Routed through live API feeds.
           </p>
           {latestContext && (
@@ -179,12 +181,12 @@ export default function MchambuziHalisiPage() {
 
         <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_320px]">
           <div className="rounded-3xl border border-white/10 bg-[#0b1119]/92 p-3 md:p-4">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-bold uppercase text-white">Ask the analyst</h2>
+                <h2 className="text-base font-bold uppercase text-white sm:text-lg">Ask the analyst</h2>
               </div>
-              <span className="rounded-full border border-green-400/20 bg-green-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-green-300">
+              <span className="shrink-0 rounded-full border border-green-400/20 bg-green-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-green-300 sm:px-3 sm:text-[10px] sm:tracking-[0.14em]">
                 Football only
               </span>
             </div>
@@ -192,7 +194,7 @@ export default function MchambuziHalisiPage() {
             <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
               {messages.map((message, index) => (
                 <div key={`${message.role}-${index}`} className={`flex ${message.role === "fan" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[86%] rounded-2xl border px-4 py-3 text-sm leading-6 ${
+                  <div className={`max-w-[92%] rounded-2xl border px-4 py-3 text-sm leading-6 sm:max-w-[86%] ${
                     message.role === "fan"
                       ? "border-primary/35 bg-primary/14 text-white"
                       : "border-white/10 bg-white/[0.04] text-white/76"
@@ -230,7 +232,7 @@ export default function MchambuziHalisiPage() {
               ) : null}
             </div>
 
-            <form onSubmit={submit} className="mt-4 flex gap-2">
+            <form onSubmit={submit} className="mt-4 flex flex-col gap-2 sm:flex-row">
               <input
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
@@ -240,7 +242,7 @@ export default function MchambuziHalisiPage() {
               <button
                 type="submit"
                 disabled={!canAsk}
-                className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold uppercase tracking-[0.12em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40 sm:shrink-0"
               >
                 <Send className="h-4 w-4" />
                 Ask
@@ -253,7 +255,7 @@ export default function MchambuziHalisiPage() {
             <div className="overflow-hidden rounded-2xl border border-[#FFD700]/22 bg-[#0c0b02]/90">
               <div className="flex items-center gap-2 border-b border-[#FFD700]/12 px-4 py-2.5">
                 <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-[#FFD700]">WC26 — Ask Now</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD700] sm:text-[11px] sm:tracking-widest">WC26 — Ask Now</h3>
               </div>
               <div className="divide-y divide-white/5">
                 {WC26_QUESTIONS.map((item) => (
@@ -261,7 +263,7 @@ export default function MchambuziHalisiPage() {
                     key={item}
                     onClick={() => ask(item)}
                     disabled={isThinking}
-                    className="block w-full px-4 py-2.5 text-left text-[12px] text-white/60 transition-colors hover:bg-[#FFD700]/5 hover:text-white disabled:opacity-40"
+                    className="block w-full px-4 py-3 text-left text-[11px] leading-5 text-white/60 transition-colors hover:bg-[#FFD700]/5 hover:text-white disabled:opacity-40 sm:py-2.5 sm:text-[12px]"
                   >
                     {item}
                   </button>
@@ -272,7 +274,7 @@ export default function MchambuziHalisiPage() {
             {/* General questions */}
             <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0b1119]/90">
               <div className="border-b border-white/6 px-4 py-2.5">
-                <h3 className="text-[11px] font-black uppercase tracking-widest text-white/55">General football</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55 sm:text-[11px] sm:tracking-widest">General football</h3>
               </div>
               <div className="divide-y divide-white/5">
                 {GENERAL_QUESTIONS.map((item) => (
@@ -280,7 +282,7 @@ export default function MchambuziHalisiPage() {
                     key={item}
                     onClick={() => ask(item)}
                     disabled={isThinking}
-                    className="block w-full px-4 py-2.5 text-left text-[12px] text-white/55 transition-colors hover:bg-white/[0.03] hover:text-white disabled:opacity-40"
+                    className="block w-full px-4 py-3 text-left text-[11px] leading-5 text-white/55 transition-colors hover:bg-white/[0.03] hover:text-white disabled:opacity-40 sm:py-2.5 sm:text-[12px]"
                   >
                     {item}
                   </button>
