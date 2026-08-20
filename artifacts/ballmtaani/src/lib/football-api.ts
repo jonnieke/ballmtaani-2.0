@@ -493,6 +493,25 @@ export async function fetchLeagueFixtures(leagueId: number, season: number, next
   }));
 }
 
+/**
+ * Full competition timetable for league pages. Unlike the global upcoming feed,
+ * this asks API-Football for the selected competition and season directly.
+ */
+export async function fetchLeagueSeasonFixtures(leagueId: number, season: number): Promise<any[]> {
+  const raw = await apiFetch(`/fixtures?league=${leagueId}&season=${season}`);
+  if (!raw || raw.length === 0) return [];
+
+  return raw.map((item: any) => ({
+    id: String(item.fixture.id),
+    teams: item.teams,
+    fixture: item.fixture,
+    goals: item.goals,
+    league: item.league,
+    leagueId: item.league.id,
+    kickoffAt: new Date(item.fixture.date).getTime(),
+  })).sort((a: any, b: any) => a.kickoffAt - b.kickoffAt);
+}
+
 export async function fetchTournamentFixtures(leagueId: number, season: number): Promise<any[]> {
   const raw = await apiFetch(`/fixtures?league=${leagueId}&season=${season}`);
   if (!raw || raw.length === 0) return [];

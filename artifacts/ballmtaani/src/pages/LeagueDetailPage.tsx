@@ -11,7 +11,7 @@ import { getLeagueBySlug } from "../config/football-catalog";
 import { useMatches, useRecentMatches, useStandings, useUpcomingFixtures } from "../hooks/useData";
 import { formatKenyanTime, formatMatchDateHeader } from "../lib/date-utils";
 import { generateLeagueSchema } from "../lib/jsonld";
-import { fetchLeagueFixtures } from "../lib/football-api";
+import { fetchLeagueSeasonFixtures } from "../lib/football-api";
 
 interface Props {
   subView?: "main" | "fixtures" | "table";
@@ -37,7 +37,7 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
     queryKey: ["league-fixtures", league?.id, league?.currentSeason],
     queryFn: async () => {
       if (!league) return [];
-      return fetchLeagueFixtures(league.id, league.currentSeason, 10);
+      return fetchLeagueSeasonFixtures(league.id, league.currentSeason);
     },
     enabled: !!league,
     staleTime: 5 * 60 * 1000,
@@ -159,15 +159,16 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
       <div className="max-w-6xl mx-auto px-4 pt-6">
         {/* Tab Views */}
         {activeTab === "table" ? (
-          <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
-            <h2 className="text-base font-black uppercase tracking-wider text-[#FFD700] mb-4">
-              {league.officialName} Standings ({league.currentSeason})
-            </h2>
-            {standingsLoading ? (
-              <div className="py-8 text-center text-xs text-white/40">Loading standings table...</div>
-            ) : standings && standings.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+          <div className="space-y-6">
+            <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
+              <h2 className="text-base font-black uppercase tracking-wider text-[#FFD700] mb-4">
+                {league.officialName} Standings ({league.currentSeason})
+              </h2>
+              {standingsLoading ? (
+                <div className="py-8 text-center text-xs text-white/40">Loading standings table...</div>
+              ) : standings && standings.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
                   <thead className="text-[10px] font-black uppercase tracking-widest text-white/40 border-b border-white/10">
                     <tr>
                       <th className="py-2 px-2">Pos</th>
@@ -180,30 +181,44 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                       <th className="py-2 px-2 text-center font-bold text-[#FFD700]">Pts</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {standings.map((row: any) => (
-                      <tr key={row.rank} className="hover:bg-white/5 transition-colors">
-                        <td className="py-2.5 px-2 font-bold text-white/70">{row.rank}</td>
-                        <td className="py-2.5 px-2 font-bold text-white flex items-center gap-2">
-                          {row.team.logo && <img src={row.team.logo} alt={row.team.name} className="w-5 h-5 object-contain" />}
-                          <Link href={`/teams/${row.team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="hover:text-[#FFD700] transition-colors">
-                            {row.team.name}
-                          </Link>
-                        </td>
-                        <td className="py-2.5 px-2 text-center text-white/80">{row.all.played}</td>
-                        <td className="py-2.5 px-2 text-center text-white/80">{row.all.win}</td>
-                        <td className="py-2.5 px-2 text-center text-white/80">{row.all.draw}</td>
-                        <td className="py-2.5 px-2 text-center text-white/80">{row.all.lose}</td>
-                        <td className="py-2.5 px-2 text-center text-white/80">{row.goalsDiff > 0 ? `+${row.goalsDiff}` : row.goalsDiff}</td>
-                        <td className="py-2.5 px-2 text-center font-black text-[#FFD700]">{row.points}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="py-8 text-center text-xs text-white/50 bg-white/5 rounded-xl border border-white/5">
-                Standings for the {league.currentSeason} season are being updated. Check back shortly.
+                    <tbody className="divide-y divide-white/5">
+                      {standings.map((row: any) => (
+                        <tr key={row.rank} className="hover:bg-white/5 transition-colors">
+                          <td className="py-2.5 px-2 font-bold text-white/70">{row.rank}</td>
+                          <td className="py-2.5 px-2 font-bold text-white flex items-center gap-2">
+                            {row.team.logo && <img src={row.team.logo} alt={row.team.name} className="w-5 h-5 object-contain" />}
+                            <Link href={`/teams/${row.team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="hover:text-[#FFD700] transition-colors">
+                              {row.team.name}
+                            </Link>
+                          </td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.played}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.win}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.draw}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.lose}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.goalsDiff > 0 ? `+${row.goalsDiff}` : row.goalsDiff}</td>
+                          <td className="py-2.5 px-2 text-center font-black text-[#FFD700]">{row.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-white/50 bg-white/5 rounded-xl border border-white/5">
+                  Standings for the {league.currentSeason} season are being updated. Check back shortly.
+                </div>
+              )}
+            </div>
+            {league.profile && (
+              <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <h2 className="text-sm font-black uppercase tracking-widest text-[#FFD700]">About {league.officialName}</h2>
+                  <span className="text-[9px] uppercase tracking-widest text-white/35">Editorial context</span>
+                </div>
+                <div className="grid gap-4 md:grid-cols-[1.3fr_1fr_1fr]">
+                  <p className="text-xs text-white/70 leading-relaxed">{league.profile.history}</p>
+                  <div className="text-xs text-white/70"><span className="block text-[9px] uppercase tracking-widest text-white/35">Players & coaches</span><p className="mt-1">{league.profile.notablePlayers.join(" · ")}<br /><span className="text-white/45">Coaches:</span> {league.profile.notableCoaches.join(" · ")}</p></div>
+                  <div className="text-xs text-white/70"><span className="block text-[9px] uppercase tracking-widest text-white/35">Ownership & stadia</span><p className="mt-1">{league.profile.notableOwners.join(" ")}<br /><span className="text-white/45">Stadia:</span> {league.profile.stadia.join(" · ")}</p></div>
+                </div>
               </div>
             )}
           </div>
@@ -223,12 +238,14 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   <div className="py-8 text-center text-xs text-white/40">Fetching live match schedule...</div>
                 ) : matches && matches.length > 0 ? (
                   <div className="space-y-3">
-                    {matches.slice(0, 10).map((m: any) => {
+                    {matches.slice(0, 30).map((m: any) => {
                       const homeName = m?.teams?.home?.name;
                       const awayName = m?.teams?.away?.name;
                       const fixtureDate = m?.fixture?.date;
                       const fixtureId = m?.fixture?.id;
-                      const isFullTime = m?.fixture?.status?.short === "FT";
+                      const status = m?.fixture?.status?.short || "NS";
+                      const isFullTime = ["FT", "AET", "PEN"].includes(status);
+                      const isLive = ["1H", "HT", "2H", "ET", "BT", "P", "LIVE"].includes(status);
                       const homeGoals = m?.goals?.home ?? "-";
                       const awayGoals = m?.goals?.away ?? "-";
                       if (!homeName || !awayName || !fixtureDate || !fixtureId) return null;
@@ -245,12 +262,15 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                             <span className="text-xs font-bold text-white text-right truncate">{homeName}</span>
                             {m?.teams?.home?.logo && <img src={m.teams.home.logo} alt={homeName} className="w-6 h-6 object-contain shrink-0" />}
                           </div>
-                          <div className="px-3 py-1 rounded-lg bg-black/40 border border-white/10 text-center shrink-0 min-w-[70px]">
+                          <div className="px-3 py-1 rounded-lg bg-black/40 border border-white/10 text-center shrink-0 min-w-[86px]">
                             {isFullTime ? (
                               <span className="text-xs font-black text-[#FFD700]">{homeGoals} - {awayGoals}</span>
+                            ) : isLive ? (
+                              <span className="text-[10px] font-black uppercase text-red-400">{status}</span>
                             ) : (
                               <span className="text-[11px] font-bold text-white/90">{formatKenyanTime(fixtureDate, false)}</span>
                             )}
+                            <span className="block text-[9px] uppercase tracking-wide text-white/35">{formatMatchDateHeader(fixtureDate)}</span>
                           </div>
                           <div className="flex items-center gap-3 w-5/12">
                             {m?.teams?.away?.logo && <img src={m.teams.away.logo} alt={awayName} className="w-6 h-6 object-contain shrink-0" />}
@@ -262,8 +282,13 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-xs text-white/50 bg-white/5 rounded-xl border border-white/5">
-                    No fixtures or results are available for this competition window yet.
+                    No fixtures or results are available for this competition season yet.
                   </div>
+                )}
+                {matches.length > 30 && (
+                  <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-white/35">
+                    Showing the first 30 fixtures in chronological order
+                  </p>
                 )}
               </div>
             </div>
@@ -285,6 +310,26 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   <div className="flex justify-between"><span>Timezone:</span> <strong className="text-white">Africa/Nairobi (EAT)</strong></div>
                 </div>
               </div>
+
+              {league.profile && (
+                <div className="bg-[#111319] rounded-2xl border border-white/10 p-5 shadow-lg">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#FFD700]">League guide</h3>
+                    <span className="text-[9px] uppercase tracking-widest text-white/35">Editorial context</span>
+                  </div>
+                  <p className="text-xs text-white/70 leading-relaxed">{league.profile.history}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-[10px] text-white/65">
+                    <div className="rounded-lg bg-white/[0.04] p-2"><span className="block uppercase tracking-widest text-white/35">Founded</span><strong className="mt-1 block text-white">{league.profile.founded}</strong></div>
+                    <div className="rounded-lg bg-white/[0.04] p-2"><span className="block uppercase tracking-widest text-white/35">Roots</span><strong className="mt-1 block text-white">{league.profile.roots}</strong></div>
+                  </div>
+                  <div className="mt-4 space-y-3 text-[11px]">
+                    <div><span className="uppercase tracking-widest text-white/35">Players to know</span><p className="mt-1 text-white/75">{league.profile.notablePlayers.join(" · ")}</p></div>
+                    <div><span className="uppercase tracking-widest text-white/35">Coaches to know</span><p className="mt-1 text-white/75">{league.profile.notableCoaches.join(" · ")}</p></div>
+                    <div><span className="uppercase tracking-widest text-white/35">Ownership</span><p className="mt-1 text-white/75">{league.profile.notableOwners.join(" ")}</p></div>
+                    <div><span className="uppercase tracking-widest text-white/35">Stadia & cities</span><p className="mt-1 text-white/75">{league.profile.stadia.join(" · ")}</p></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
