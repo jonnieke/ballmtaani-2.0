@@ -195,6 +195,7 @@ export interface LiveMatch {
   venue?: string;
   time?: string;
   date?: string;
+  kickoffAt?: number;
 }
 
 export interface StandingEntry {
@@ -327,9 +328,8 @@ export async function fetchLiveMatches(): Promise<LiveMatch[]> {
 
 // ─── 2a. TODAY'S FIXTURES — all major league matches today by date ───────────
 // Uses /fixtures?date=YYYY-MM-DD — most reliable way to get today's matches
-export async function fetchTodaysFixtures(): Promise<any[]> {
-  const todayEAT = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Nairobi' }); // YYYY-MM-DD in EAT
-  const raw = await apiFetch(`/fixtures?date=${todayEAT}&timezone=Africa/Nairobi`);
+export async function fetchFixturesByDate(dateKey: string): Promise<LiveMatch[]> {
+  const raw = await apiFetch(`/fixtures?date=${dateKey}&timezone=Africa/Nairobi`);
   if (!raw || !raw.length) return [];
 
   // Includes only country-validated East African IDs. 686 is not a Kenyan competition.
@@ -343,10 +343,15 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       awayTeamId: item.teams.away.id,
       home: item.teams.home.name,
       homeLogo: item.teams.home.logo,
+      homeColor: "#555",
       homeInitial: item.teams.home.name.substring(0, 3).toUpperCase(),
       away: item.teams.away.name,
       awayLogo: item.teams.away.logo,
+      awayColor: "#777",
       awayInitial: item.teams.away.name.substring(0, 3).toUpperCase(),
+      homeScore: item.goals?.home ?? 0,
+      awayScore: item.goals?.away ?? 0,
+      minute: item.fixture.status?.elapsed ? `${item.fixture.status.elapsed}'` : "",
       time: new Date(item.fixture.date).toLocaleTimeString('en-KE', {
         hour: '2-digit',
         minute: '2-digit',
@@ -357,6 +362,8 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       leagueId: item.league.id,
       leagueLogo: item.league.logo,
       status: item.fixture.status?.short || 'NS',
+      venue: [item.fixture.venue?.name, item.fixture.venue?.city].filter(Boolean).join(", "),
+      date: dateKey,
       kickoffAt: new Date(item.fixture.date).getTime(),
     }))
     .sort((a: any, b: any) => {
@@ -366,6 +373,11 @@ export async function fetchTodaysFixtures(): Promise<any[]> {
       if (pa !== pb) return pa - pb;
       return a.kickoffAt - b.kickoffAt;
     });
+}
+
+export async function fetchTodaysFixtures(): Promise<LiveMatch[]> {
+  const todayEAT = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Nairobi' });
+  return fetchFixturesByDate(todayEAT);
 }
 
 // ─── 2. UPCOMING FIXTURES (next matches from major leagues) ─
