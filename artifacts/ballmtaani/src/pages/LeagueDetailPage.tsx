@@ -64,6 +64,7 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "fixtures" | "table">(
     subView === "table" || isTablePath ? "table" : subView === "fixtures" || isFixturesPath ? "fixtures" : "overview"
   );
+  const [scheduleFilter, setScheduleFilter] = useState<"upcoming" | "results" | "all">("upcoming");
 
   if (!league) {
     return (
@@ -85,6 +86,16 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
     country: league.country,
     season: league.currentSeason,
   });
+
+  const scheduleMatches = useMemo(() => {
+    const completedStatuses = new Set(["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO"]);
+    const now = Date.now();
+    const upcoming = matches.filter((match: any) => !completedStatuses.has(match?.fixture?.status?.short) && (match?.kickoffAt || 0) >= now);
+    const results = matches.filter((match: any) => completedStatuses.has(match?.fixture?.status?.short));
+    if (scheduleFilter === "results") return results.slice(-30).reverse();
+    if (scheduleFilter === "all") return matches;
+    return upcoming.length ? upcoming.slice(0, 30) : matches.slice(0, 30);
+  }, [matches, scheduleFilter]);
 
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-[#E0E0E0] pb-16">
@@ -232,13 +243,29 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   <h2 className="text-sm font-black uppercase tracking-wider text-[#FFD700]">
                     Matchday Fixtures & Results
                   </h2>
-                  <span className="text-[10px] text-white/40 font-semibold">Africa/Nairobi (EAT)</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex rounded-lg border border-white/10 bg-black/20 p-0.5" role="tablist" aria-label="Fixture view">
+                      {(["upcoming", "results", "all"] as const).map((filter) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          role="tab"
+                          aria-selected={scheduleFilter === filter}
+                          onClick={() => setScheduleFilter(filter)}
+                          className={`rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-wider transition-colors ${scheduleFilter === filter ? "bg-[#FFD700] text-black" : "text-white/45 hover:text-white"}`}
+                        >
+                          {filter === "all" ? "All rounds" : filter}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="hidden text-[10px] text-white/40 font-semibold sm:inline">Africa/Nairobi (EAT)</span>
+                  </div>
                 </div>
                 {allFixturesLoading ? (
                   <div className="py-8 text-center text-xs text-white/40">Fetching live match schedule...</div>
-                ) : matches && matches.length > 0 ? (
+                ) : scheduleMatches.length > 0 ? (
                   <div className="space-y-3">
-                    {matches.slice(0, 30).map((m: any) => {
+                    {scheduleMatches.map((m: any) => {
                       const homeName = m?.teams?.home?.name;
                       const awayName = m?.teams?.away?.name;
                       const fixtureDate = m?.fixture?.date;
@@ -282,12 +309,12 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-xs text-white/50 bg-white/5 rounded-xl border border-white/5">
-                    No fixtures or results are available for this competition season yet.
+                    {scheduleFilter === "results" ? "No completed results are available for this competition season yet." : "No fixtures are available for this competition season yet."}
                   </div>
                 )}
-                {matches.length > 30 && (
+                {((scheduleFilter === "all" && matches.length > 30) || (scheduleFilter !== "all" && scheduleMatches.length >= 30)) && (
                   <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-white/35">
-                    Showing the first 30 fixtures in chronological order
+                    Showing 30 matches. Use the view controls to switch between season sections.
                   </p>
                 )}
               </div>
