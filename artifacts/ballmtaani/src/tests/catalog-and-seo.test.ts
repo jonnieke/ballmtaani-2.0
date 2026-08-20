@@ -13,7 +13,7 @@ test("1. League Slug Resolution", () => {
   assert.strictEqual(ucl?.id, 2);
 
   const kpl = getLeagueBySlug("fkf-premier-league");
-  assert.strictEqual(kpl?.id, 326);
+  assert.strictEqual(kpl?.id, 276);
 });
 
 test("2. Team Slug Resolution", () => {

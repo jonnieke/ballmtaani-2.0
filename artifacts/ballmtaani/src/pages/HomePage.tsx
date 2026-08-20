@@ -1,123 +1,1026 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "wouter";
-import { ArrowRight, BarChart3, Bot, ChevronRight, Newspaper, Trophy, Users } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { useDebates, useLeaderboard, useMatches, useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
-import { fetchTodaysFixtures } from "../lib/football-api";
-import { fetchFootballNews, fetchPartnerArticles, timeAgo, type NewsArticle } from "../lib/news-api";
-import { getHomepageMode, selectFeaturedMatch, type HomepageMatch } from "../lib/home-season";
+import {
+  ArrowRight,
+  CalendarDays,
+  ChevronDown,
+  CircleDot,
+  Globe2,
+  MessageCircle,
+  Radio,
+  Trophy,
+  Users,
+} from "lucide-react";
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
-import { supabase } from "../lib/supabase";
+import {
+  useDebates,
+  useMatches,
+  useRecentMatches,
+  useStandings,
+  useUpcomingFixtures,
+} from "../hooks/useData";
+import {
+  COMPETITIONS,
+  type CompetitionConfig,
+} from "../config/football-catalog";
+import { fetchTodaysFixtures, type StandingEntry } from "../lib/football-api";
+import {
+  fetchFootballNews,
+  fetchPartnerArticles,
+  timeAgo,
+  type NewsArticle,
+} from "../lib/news-api";
+import type { HomepageMatch } from "../lib/home-season";
 
 const DEFAULT_IMAGE = "/images/hero_player_celebration.png";
-const ANALYST_IMAGE = "/images/analyst_chalkboard.png";
 const FANS_IMAGE = "/images/kenyan_fans.png";
-const FOOTBALL_TERMS = ["football", "soccer", "premier league", "champions league", "epl", "transfer", "fixture", "match", "league", "cup", "africa", "caf", "afcon", "kenya", "harambee", "fkf", "gor mahia", "afc leopards", "tusker", "goal"];
-const NON_FOOTBALL_TERMS = ["president", "senate", "congress", "government", "politics", "election", "court", "war", "tariff", "economy", "minister"];
+const TOP_LEAGUE_IDS = [39, 140, 135, 78];
+const LIVE_STATUSES = new Set(["1H", "2H", "HT", "ET", "P", "LIVE", "BT"]);
 
-function copyOf(a: Pick<NewsArticle, "title" | "description" | "source">) { return `${a.title} ${a.description || ""} ${a.source || ""}`.toLowerCase(); }
-function isFootball(a: Pick<NewsArticle, "title" | "description" | "source">) { const value = copyOf(a); return FOOTBALL_TERMS.some((term) => value.includes(term)) && !NON_FOOTBALL_TERMS.some((term) => value.includes(term)); }
-function linkFor(a: NewsArticle) { return a.isInternal ? `/news/${a.slug}` : a.link; }
-function keyFor(a: NewsArticle) { return a.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
-function category(a: NewsArticle, fallback = "Mtaa Daily") { const value = copyOf(a); if (a.isOfficial) return "Official FKF"; if (a.desk === "kenya" || /kenya|fkf|harambee|gor mahia|afc leopards|tusker/.test(value)) return "Kenya"; if (/africa|caf|afcon|east africa/.test(value)) return "Africa"; if (/analysis|opinion|tactic|breakdown|preview/.test(value)) return "Analysis"; if (/transfer/.test(value)) return "Transfers"; if (/premier league|arsenal|chelsea|liverpool|manchester|spurs/.test(value)) return "Premier League"; return fallback; }
-function short(name: string) { return String(name || "").replace(/\s+(FC|SC|AFC|City|United|Town|Rovers|Athletic|Stars?)$/i, "").trim(); }
-function kickoff(match?: HomepageMatch) { return match?.time || (match?.kickoffAt ? new Date(match.kickoffAt).toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Africa/Nairobi" }) : "TBC"); }
-function dedupe(list: NewsArticle[]) { const map = new Map<string, NewsArticle>(); for (const a of list) { const key = keyFor(a); const old = map.get(key); if (!old || (!old.isInternal && a.isInternal)) map.set(key, a); } return [...map.values()].sort((a, b) => +new Date(b.pubDate) - +new Date(a.pubDate)); }
+type HomeMatch = HomepageMatch & {
+  leagueLogo?: string;
+  venue?: string;
+  kickoff?: string;
+};
 
-function ArticleAnchor({ article, className, children }: { article: NewsArticle; className: string; children: ReactNode }) {
-  return article.isInternal ? <Link href={linkFor(article)} className={className}>{children}</Link> : <a href={linkFor(article)} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>;
+function articleCopy(article: NewsArticle) {
+  return `${article.title} ${article.description || ""} ${article.source || ""}`.toLowerCase();
 }
-function Heading({ title, href, action = "View all" }: { title: string; href: string; action?: string }) {
-  return <div className="flex h-9 items-center justify-between border-b border-white/10 px-3"><h2 className="text-[10px] font-black uppercase tracking-[.16em] text-[#ef3038]">{title}</h2><Link href={href} className="flex items-center gap-1 text-[9px] font-bold text-white/45 hover:text-white">{action}<ChevronRight className="h-3 w-3" /></Link></div>;
+function articleKey(article: NewsArticle) {
+  return article.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
-function RailStory({ article }: { article: NewsArticle }) {
-  return <ArticleAnchor article={article} className="group grid min-h-0 flex-1 grid-cols-[42%_1fr] overflow-hidden bg-[#111]"><img src={article.thumbnail || DEFAULT_IMAGE} alt="" className="h-full min-h-[96px] w-full object-cover transition duration-500 group-hover:scale-[1.03]" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} /><div className="flex min-w-0 flex-col justify-center px-4 py-3"><p className="text-[9px] font-black uppercase tracking-[.15em] text-[#ef3038]">{category(article, article.source)}</p><h3 className="mt-1.5 line-clamp-3 text-[15px] font-extrabold leading-[1.08] group-hover:text-[#f5ca55]">{article.title}</h3><p className="mt-2 text-[9px] text-white/45">{timeAgo(article.pubDate)}</p></div></ArticleAnchor>;
+function dedupeArticles(articles: NewsArticle[]) {
+  const seen = new Set<string>();
+  return articles
+    .filter(
+      (article) =>
+        !/\b(politics|election|senate|parliament|war|tariff)\b/.test(
+          articleCopy(article),
+        ),
+    )
+    .filter((article) => {
+      const key = articleKey(article);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort(
+      (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
+    );
 }
-function FeatureRail({ icon, label, title, href }: { icon: ReactNode; label: string; title: string; href: string }) {
-  return <Link href={href} className="group grid min-h-[96px] flex-1 grid-cols-[42%_1fr] overflow-hidden bg-[#111]"><div className="flex items-center justify-center bg-[#151515] text-[#f5ca55]">{icon}</div><div className="flex flex-col justify-center px-4 py-3"><p className="text-[9px] font-black uppercase tracking-[.15em] text-[#ef3038]">{label}</p><h3 className="mt-1.5 text-[15px] font-extrabold leading-[1.08] group-hover:text-[#f5ca55]">{title}</h3><p className="mt-2 text-[9px] text-white/45">Open desk</p></div></Link>;
+function articleHref(article: NewsArticle) {
+  return article.isInternal ? `/news/${article.slug}` : article.link;
 }
-function StoryDesk({ id, title, href, feature, supporting, fallback }: { id?: string; title: string; href: string; feature?: NewsArticle; supporting: NewsArticle[]; fallback: { title: string; copy: string; href: string; image: string } }) {
-  return <section id={id} className="min-w-0 scroll-mt-4 bg-[#0c0c0c] ring-1 ring-white/10"><Heading title={title} href={href} />{feature ? <ArticleAnchor article={feature} className="group block"><div className="relative aspect-[16/8.3] overflow-hidden bg-[#121212]"><img src={feature.thumbnail || DEFAULT_IMAGE} alt={feature.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} /><div className="absolute inset-0 bg-gradient-to-t from-black via-black/5 to-transparent" /></div><div className="px-3 pb-2.5 pt-2"><h3 className="line-clamp-2 text-[15px] font-extrabold leading-[1.08] group-hover:text-[#f5ca55]">{feature.title}</h3>{feature.description && <p className="mt-1 line-clamp-2 text-[11px] leading-[1.45] text-white/55">{feature.description}</p>}<p className="mt-1.5 text-[9px] text-white/35">{timeAgo(feature.pubDate)}</p></div></ArticleAnchor> : <Link href={fallback.href} className="group block"><div className="relative aspect-[16/8.3] overflow-hidden"><img src={fallback.image} alt="" className="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-[1.03]" loading="lazy" /><div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" /></div><div className="px-3 pb-3 pt-2"><h3 className="text-[15px] font-extrabold leading-tight group-hover:text-[#f5ca55]">{fallback.title}</h3><p className="mt-1 text-[11px] leading-[1.45] text-white/55">{fallback.copy}</p></div></Link>}{supporting.slice(0, 2).map((article) => <ArticleAnchor key={article.id || article.link} article={article} className="group grid grid-cols-[58px_1fr] gap-2.5 border-t border-white/10 p-2.5"><img src={article.thumbnail || DEFAULT_IMAGE} alt="" className="h-11 w-[58px] object-cover" loading="lazy" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} /><div className="min-w-0"><h4 className="line-clamp-2 text-[11px] font-bold leading-[1.2] group-hover:text-[#f5ca55]">{article.title}</h4><p className="mt-1 text-[8px] text-white/35">{timeAgo(article.pubDate)}</p></div></ArticleAnchor>)}</section>;
+function ArticleLink({
+  article,
+  className,
+  children,
+}: {
+  article: NewsArticle;
+  className?: string;
+  children: ReactNode;
+}) {
+  return article.isInternal ? (
+    <Link href={articleHref(article)} className={className}>
+      {children}
+    </Link>
+  ) : (
+    <a
+      href={articleHref(article)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+    >
+      {children}
+    </a>
+  );
 }
-function FooterColumn({ title, links }: { title: string; links: Array<[string, string]> }) { return <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-white/70">{title}</p><ul className="mt-3 space-y-2 text-[11px] text-white/48">{links.map(([label, href]) => <li key={label}><Link href={href} className="hover:text-white">{label}</Link></li>)}</ul></div>; }
-
-export default function MagazineHomePage() {
-  const { dbProfile } = useAuth();
-  const { data: live = [] } = useMatches(); const { data: upcoming = [] } = useUpcomingFixtures(); const { data: recent = [] } = useRecentMatches();
-  const { data: debates = [] } = useDebates(); const { data: leaderboard = [] } = useLeaderboard();
-  const [today, setToday] = useState<HomepageMatch[]>([]); const [news, setNews] = useState<NewsArticle[]>([]); const [loading, setLoading] = useState(true); const [now, setNow] = useState(() => new Date());
-  const [email, setEmail] = useState(""); const [formState, setFormState] = useState<"idle" | "submitting" | "success" | "error">("idle"); const [formError, setFormError] = useState<string | null>(null);
-  useEffect(() => { let cancelled = false; fetchTodaysFixtures().then((items) => { if (!cancelled) setToday(items); }).catch(() => undefined); Promise.allSettled([fetchPartnerArticles(), fetchFootballNews()]).then(([partners, wire]) => { if (cancelled) return; setNews(dedupe([...(partners.status === "fulfilled" ? partners.value : []), ...(wire.status === "fulfilled" ? wire.value : [])])); }).finally(() => { if (!cancelled) setLoading(false); }); return () => { cancelled = true; }; }, []);
-  useEffect(() => { const timer = window.setInterval(() => setNow(new Date()), 60000); return () => window.clearInterval(timer); }, []);
-  useEffect(() => {
-    if (loading || !window.location.hash) return;
-    const targetId = window.location.hash.slice(1);
-    const timer = window.setTimeout(() => document.getElementById(targetId)?.scrollIntoView({ block: "start" }), 150);
-    return () => window.clearTimeout(timer);
-  }, [loading, today.length]);
-  const stories = useMemo(() => { const all = dedupe(news.filter((a) => a.isInternal || isFootball(a))); return [...all.filter((a) => a.isInternal), ...all.filter((a) => !a.isInternal)]; }, [news]); const external = useMemo(() => dedupe(news.filter((a) => !a.isInternal && isFootball(a))), [news]);
-  const layout = useMemo(() => {
-    const used = new Set<string>();
-    const take = (terms: string[] = [], strict = false) => {
-      const ranked = terms.length ? stories.filter((article) => terms.some((term) => copyOf(article).includes(term))) : stories;
-      const candidates = strict && terms.length ? ranked : [...ranked, ...stories];
-      const found = candidates.find((article) => !used.has(keyFor(article)));
-      if (found) used.add(keyFor(found));
-      return found;
-    };
-    const many = (count: number, terms: string[] = [], strict = false) =>
-      Array.from({ length: count }, () => take(terms, strict)).filter(Boolean) as NewsArticle[];
-
-    const lead = take();
-    const rail = many(3);
-
-    const kenyaTerms = ["harambee", "fkf", "kenya premier league", "kenyan premier league", "fkf premier league", "gor mahia", "afc leopards", "tusker", "shabana", "kakamega homeboyz", "bandari", "sofapaka", "kenya police", "east africa", "uganda premier league", "tanzania premier league"];
-    const kenya = Array.from({ length: 3 }, () => {
-      const found = stories.find((article) =>
-        !used.has(keyFor(article)) &&
-        !/world cup|wc26/.test(article.title.toLowerCase()) &&
-        (article.desk === "kenya" || kenyaTerms.some((term) => copyOf(article).includes(term)))
-      );
-      if (found) used.add(keyFor(found));
-      return found;
-    }).filter(Boolean) as NewsArticle[];
-
-    const epl = many(3, ["premier league", "arsenal", "chelsea", "liverpool", "manchester", "spurs"], true);
-    const analysis = many(3, ["analysis", "opinion", "tactic", "breakdown", "preview", "explained"], true);
-
-    return {
-      lead,
-      rail,
-      kenya,
-      epl,
-      analysis,
-      africa: many(1, ["africa", "caf", "afcon"], true),
-    };
-  }, [stories]);
-  const featured = useMemo(() => selectFeaturedMatch({ liveMatches: live, upcomingFixtures: upcoming, recentMatches: recent, followedClub: dbProfile?.favorite_team || null }).match, [dbProfile?.favorite_team, live, upcoming, recent]);
-  const liveLine = featured || live[0] || upcoming[0] || recent[0]; const fixtures = (today.length ? today : [...live, ...upcoming]).slice(0, 4); const scoreReady = !!liveLine && typeof liveLine.homeScore === "number" && typeof liveLine.awayScore === "number"; const mode = getHomepageMode({ now, liveMatches: live, todaysFixtures: today }); const badge = mode === "matchday" ? "MATCHDAY" : mode === "pre-season" ? "PRE-SEASON" : "FOOTBALL WEEK";
-  const subscribe = async (event: FormEvent) => { event.preventDefault(); const clean = email.trim().toLowerCase(); if (!/^\S+@\S+\.\S+$/.test(clean)) { setFormError("Enter a valid email address."); setFormState("error"); return; } setFormState("submitting"); setFormError(null); try { if (!supabase) throw new Error(); const { error } = await supabase.from("newsletter_subscribers").insert({ email: clean, source_page: "homepage", consent_timestamp: new Date().toISOString(), favorite_club: dbProfile?.favorite_team || null, created_at: new Date().toISOString() }); if (error) throw error; setEmail(""); setFormState("success"); } catch { setFormState("error"); setFormError("Subscription is temporarily unavailable."); } };
-  const lead = layout.lead;
-  return <main className="min-h-screen bg-[#050505] text-white"><SEO title="BALLMTAANI | Football. From where we stand." description="Premium Kenyan football news, live scores, analysis and fan community." path="/" canonicalUrl="/" image={lead?.thumbnail || DEFAULT_IMAGE} />
-    <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 lg:py-4">
-      <section id="mtaa-daily" className="grid gap-2 lg:grid-cols-[1.88fr_1fr]">
-        {lead ? <ArticleAnchor article={lead} className="group relative min-h-[410px] overflow-hidden bg-[#101010] sm:min-h-[480px] lg:min-h-[520px]"><img src={lead.thumbnail || DEFAULT_IMAGE} alt={lead.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} /><div className="absolute inset-0 bg-gradient-to-r from-black via-black/45 to-transparent" /><div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/10" /><div className="absolute inset-x-0 bottom-0 z-10 max-w-[680px] p-5 sm:p-8 lg:p-10"><div className="mb-4 flex items-center gap-3 text-[9px] font-black uppercase tracking-[.2em]"><span className="bg-[#bf1721] px-2.5 py-1">{category(lead, badge)}</span><span className="text-white/55">{timeAgo(lead.pubDate)}</span></div><h1 className="font-serif text-[2.15rem] font-black leading-[.97] tracking-[-.025em] sm:text-5xl lg:text-[3.5rem]">{lead.title}</h1>{lead.description && <p className="mt-4 line-clamp-2 max-w-[540px] text-sm leading-6 text-white/78 sm:text-base">{lead.description}</p>}<div className="mt-5 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-[#ff3c44]">Read story <ArrowRight className="h-4 w-4" /></div></div></ArticleAnchor> : <Link href="/news" className="relative flex min-h-[410px] items-end overflow-hidden bg-[#101010] sm:min-h-[480px] lg:min-h-[520px]"><img src={DEFAULT_IMAGE} alt="Ball Mtaani football" className="absolute inset-0 h-full w-full object-cover opacity-70" /><div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" /><div className="relative p-8"><p className="text-[10px] font-black uppercase tracking-[.2em] text-[#ef3038]">Mtaa Daily</p><h1 className="mt-3 max-w-xl font-serif text-5xl font-black leading-none">Football. From where we stand.</h1><p className="mt-4 text-sm text-white/65">Original Kenyan football reporting and analysis.</p></div></Link>}
-        <aside className="flex min-h-[410px] flex-col gap-2 sm:min-h-[480px] lg:min-h-[520px]">{layout.rail.map((a) => <RailStory key={a.id || a.link} article={a} />)}{layout.rail.length < 3 && <FeatureRail icon={<Newspaper className="h-8 w-8" />} label="Mtaa Daily" title="News, analysis and the Kenyan angle" href="/news" />}{layout.rail.length < 2 && <FeatureRail icon={<Trophy className="h-8 w-8" />} label="Archive" title="World Cup 2026 stories and results" href="/world-cup-2026" />}{layout.rail.length < 1 && <FeatureRail icon={<Users className="h-8 w-8" />} label="Community" title="The debates Kenyan fans are having" href="/debates" />}<Link href="/news" className="flex h-9 flex-none items-center justify-center border border-white/15 text-[9px] font-black uppercase tracking-[.18em] text-[#f5ca55]">More top stories <ArrowRight className="ml-2 h-3 w-3" /></Link></aside>
-      </section>
-      <section className="mt-2 grid gap-2 lg:grid-cols-[1.05fr_.92fr_1.03fr]">
-        <div className="bg-[#0d0d0d] ring-1 ring-white/10"><Heading title="Today in football" href="/matches" action="All fixtures" /><div className="divide-y divide-white/10 px-3">{fixtures.length ? fixtures.map((match) => <Link key={String(match.id)} href={`/match/${match.id}`} className="grid h-[42px] grid-cols-[42px_1fr_auto_1fr] items-center gap-2 text-[10px]"><span className="truncate uppercase text-white/35">{match.league || "Match"}</span><span className="truncate text-right font-bold text-white/80">{short(match.home)}</span><span className="font-black text-[#f5ca55]">{kickoff(match)}</span><span className="truncate font-bold text-white/80">{short(match.away)}</span></Link>) : <div className="grid h-[168px] place-items-center"><Link href="/matches" className="text-xs text-white/50 hover:text-white">Open today&apos;s fixtures</Link></div>}</div></div>
-        <div className="bg-[#0d0d0d] ring-1 ring-white/10"><Heading title="Live match centre" href="/live-center" action="Live stats" />{liveLine ? <div className="flex h-[168px] flex-col justify-center px-4"><p className="text-center text-[9px] font-black uppercase tracking-[.18em] text-[#ef3038]">{liveLine.league || liveLine.status || "Match centre"}</p><div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3"><div className="flex flex-col items-center gap-1.5"><TeamLogo logo={liveLine.homeLogo} initial={short(liveLine.home).slice(0,3).toUpperCase()} color={liveLine.homeColor || "#1f2937"} size="md" /><span className="line-clamp-1 text-xs font-bold">{short(liveLine.home)}</span></div><div className="text-center"><div className="text-4xl font-black">{scoreReady ? `${liveLine.homeScore}-${liveLine.awayScore}` : "VS"}</div><p className="mt-1 text-[9px] uppercase text-white/40">{kickoff(liveLine)}</p></div><div className="flex flex-col items-center gap-1.5"><TeamLogo logo={liveLine.awayLogo} initial={short(liveLine.away).slice(0,3).toUpperCase()} color={liveLine.awayColor || "#1f2937"} size="md" /><span className="line-clamp-1 text-xs font-bold">{short(liveLine.away)}</span></div></div></div> : <div className="grid h-[168px] place-items-center"><Link href="/live-center" className="text-xs text-white/50 hover:text-white"><BarChart3 className="mx-auto mb-2 h-5 w-5 text-[#ef3038]" />Open match centre</Link></div>}</div>
-        <div className="relative min-h-[207px] overflow-hidden bg-[#0d0d0d] ring-1 ring-white/10"><Heading title="Mtaa intelligence" href="/mchambuzi-halisi" action="Ask Mchambuzi" /><div className="relative z-10 max-w-[72%] px-4 py-4"><p className="text-[10px] font-black uppercase tracking-[.18em] text-[#f5ca55]">Mchambuzi&apos;s read</p><p className="mt-2 text-[12px] leading-[1.55] text-white/72">{liveLine ? `${short(liveLine.home)} against ${short(liveLine.away)} is the match to read closely. Team news, tempo and game state will decide where the advantage shifts.` : "Team news, tempo and the detail everyone else misses."}</p><Link href="/mchambuzi-halisi" className="mt-4 inline-flex items-center gap-1.5 border border-[#f5ca55]/35 px-3 py-2 text-[9px] font-black uppercase text-[#f5ca55]"><Bot className="h-3.5 w-3.5" />Ask Mchambuzi</Link></div><img src={ANALYST_IMAGE} alt="" className="absolute bottom-0 right-0 h-[88%] w-[44%] object-cover object-left-top opacity-70" loading="lazy" /><div className="absolute inset-0 bg-gradient-to-r from-[#0d0d0d] via-[#0d0d0d]/85 to-transparent" /></div>
-      </section>
-      <section className="mt-2 grid items-stretch gap-2 md:grid-cols-2 xl:grid-cols-4"><StoryDesk id="kenya" title="Kenya & East Africa" href="/news" feature={layout.kenya[0]} supporting={layout.kenya.slice(1)} fallback={{ title: "Kenyan football, every matchday", copy: "Follow fixtures, clubs and the stories shaping the local game.", href: "/leagues", image: FANS_IMAGE }} /><StoryDesk id="epl" title="Premier League" href="/leagues" feature={layout.epl[0]} supporting={layout.epl.slice(1)} fallback={{ title: "The Premier League desk", copy: "Fixtures, tables, form and the latest coverage.", href: "/leagues", image: DEFAULT_IMAGE }} /><StoryDesk id="analysis" title="Analysis & Features" href="/articles" feature={layout.analysis[0]} supporting={layout.analysis.slice(1)} fallback={{ title: "Original football features", copy: "Reporting and perspective from the BallMtaani editorial desk.", href: "/articles", image: ANALYST_IMAGE }} /><section className="flex flex-col bg-[#080808] ring-1 ring-white/15"><div className="flex-1 p-5"><p className="text-[10px] font-black uppercase tracking-[.18em] text-[#ef3038]">The Mtaa Brief</p><h2 className="mt-3 font-serif text-[1.65rem] font-black leading-[1.05]">Football you need to know before the group chat starts.</h2><p className="mt-4 text-[11px] leading-5 text-white/55">Morning edition / Kenya / Africa / EPL / Transfers / Today&apos;s matches</p></div><form onSubmit={subscribe} className="border-t border-white/10 p-4"><label htmlFor="newsletter-email" className="sr-only">Email</label><input id="newsletter-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className="h-11 w-full border border-white/15 bg-black px-3 text-xs outline-none placeholder:text-white/30 focus:border-[#ef3038]" /><button disabled={formState === "submitting"} className="mt-2 h-10 w-full bg-[#bf1721] text-[10px] font-black uppercase tracking-[.18em]">{formState === "submitting" ? "Joining..." : "Join free"}</button>{formError && <p className="mt-2 text-[10px] text-red-300">{formError}</p>}{formState === "success" && <p className="mt-2 text-[10px] text-emerald-300">You&apos;re in. The next edition is yours.</p>}</form></section></section>
-      <section className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        <section id="africa" className="bg-[#0c0c0c] ring-1 ring-white/10"><Heading title="Africa" href="/news" />{layout.africa[0] ? <ArticleAnchor article={layout.africa[0]} className="group grid min-h-[168px] grid-cols-[38%_1fr]"><img src={layout.africa[0].thumbnail || FANS_IMAGE} alt="" className="h-full min-h-[168px] w-full object-cover" loading="lazy" /><div className="flex flex-col justify-center p-3"><h3 className="text-[15px] font-extrabold leading-tight group-hover:text-[#f5ca55]">{layout.africa[0].title}</h3><p className="mt-2 line-clamp-3 text-[11px] leading-4 text-white/55">{layout.africa[0].description}</p></div></ArticleAnchor> : <Link href="/news" className="grid min-h-[168px] grid-cols-[38%_1fr]"><img src={FANS_IMAGE} alt="" className="h-full min-h-[168px] w-full object-cover" /><div className="flex flex-col justify-center p-3"><h3 className="text-[15px] font-extrabold">African football belongs on the front page</h3><p className="mt-2 text-[11px] leading-4 text-white/55">CAF, national teams, players abroad and East Africa.</p></div></Link>}</section>
-        <section id="fan-zone" className="bg-[#0c0c0c] ring-1 ring-white/10"><Heading title="Fan zone" href="/debates" action="Join debate" /><div className="p-4"><p className="text-[15px] font-extrabold leading-tight">{debates[0]?.title || "What is the biggest football argument in your group chat today?"}</p><div className="mt-4 grid grid-cols-2 gap-2">{debates[0] ? <><Link href="/debates" className="border border-white/12 px-3 py-2 text-[11px] text-white/75">{debates[0].left}</Link><Link href="/debates" className="border border-white/12 px-3 py-2 text-[11px] text-white/75">{debates[0].right}</Link></> : <><Link href="/debates" className="border border-white/12 px-3 py-2 text-[11px] text-white/75">Open debates</Link><Link href="/fan-zones" className="border border-white/12 px-3 py-2 text-[11px] text-white/75">Fan posts</Link></>}</div><p className="mt-4 text-[9px] uppercase tracking-[.14em] text-white/35">{debates[0] ? `${debates[0].totalVotes} community votes` : leaderboard[0] ? `${String(leaderboard[0].name)} leads` : "Kenyan football conversation"}</p></div></section>
-        <section id="predictions" className="bg-[#0c0c0c] ring-1 ring-white/10"><Heading title="Predictions" href="/leaderboard" action="Leaderboard" /><div className="p-4"><p className="text-[9px] uppercase tracking-[.14em] text-white/40">Next match</p><h3 className="mt-1 text-[15px] font-extrabold">{liveLine ? `${short(liveLine.home)} vs ${short(liveLine.away)}` : "Make your football prediction"}</h3><p className="mt-1 text-[10px] text-white/45">{liveLine ? kickoff(liveLine) : "Fixtures, score calls and community picks"}</p><div className="mt-4 grid grid-cols-3 gap-1.5"><Link href="/predictions" className="bg-[#bf1721] px-2 py-2 text-center text-[9px] font-black uppercase">Home</Link><Link href="/predictions" className="bg-white/10 px-2 py-2 text-center text-[9px] font-black uppercase">Draw</Link><Link href="/predictions" className="bg-[#244b88] px-2 py-2 text-center text-[9px] font-black uppercase">Away</Link></div><p className="mt-3 text-[9px] text-[#f5ca55]">Community prediction / MTC points only</p></div></section>
-        <section id="wire" className="bg-[#0c0c0c] ring-1 ring-white/10"><Heading title="The wire" href="/news" />{external.length ? <div className="divide-y divide-white/10 px-3">{external.slice(0,3).map((a) => <ArticleAnchor key={a.id || a.link} article={a} className="group grid grid-cols-[1fr_52px] gap-2 py-2.5"><div><p className="text-[8px] font-black uppercase tracking-[.12em] text-[#ef3038]">{a.source}</p><h3 className="mt-1 line-clamp-2 text-[11px] font-bold leading-[1.2] group-hover:text-[#f5ca55]">{a.title}</h3></div><img src={a.thumbnail || DEFAULT_IMAGE} alt="" className="h-10 w-[52px] object-cover" loading="lazy" /></ArticleAnchor>)}</div> : <div className="grid min-h-[168px] place-items-center px-5 text-center"><Link href="/videos" className="text-xs text-white/55 hover:text-white"><Newspaper className="mx-auto mb-2 h-5 w-5 text-[#ef3038]" />News and videos from the wider football world</Link></div>}</section>
-      </section>
+function articleCategory(article: NewsArticle) {
+  const copy = articleCopy(article);
+  if (
+    article.desk === "kenya" ||
+    /kenya|fkf|harambee|gor mahia|afc leopards|tusker/.test(copy)
+  )
+    return "Kenyan football";
+  if (/africa|caf|afcon/.test(copy)) return "Africa";
+  if (/la liga|barcelona|real madrid/.test(copy)) return "La Liga";
+  if (/serie a|inter milan|ac milan|juventus/.test(copy)) return "Serie A";
+  if (/bundesliga|bayern|dortmund/.test(copy)) return "Bundesliga";
+  if (/champions league|uefa/.test(copy)) return "Champions League";
+  if (
+    /premier league|arsenal|chelsea|liverpool|manchester|tottenham/.test(copy)
+  )
+    return "Premier League";
+  if (/transfer/.test(copy)) return "Transfers";
+  return article.source || "Football";
+}
+function shortTeam(name: string) {
+  return String(name || "")
+    .replace(/\s+(FC|SC|AFC)$/i, "")
+    .trim();
+}
+function matchTime(match?: HomeMatch) {
+  if (!match) return "TBC";
+  if (match.time) return match.time.replace(/\s*EAT$/i, "");
+  const value = match.kickoffAt || match.timestamp;
+  if (!value) return "TBC";
+  return new Date(value).toLocaleTimeString("en-KE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Africa/Nairobi",
+  });
+}
+function matchDate(match?: HomeMatch) {
+  if (!match) return "Schedule pending";
+  if (match.date) return match.date;
+  const value = match.kickoffAt || match.timestamp;
+  return value
+    ? new Date(value).toLocaleDateString("en-KE", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        timeZone: "Africa/Nairobi",
+      })
+    : "Schedule pending";
+}
+function leagueCode(match: HomeMatch) {
+  const competition = COMPETITIONS.find(
+    (item) => item.id === Number(match.leagueId),
+  );
+  return (
+    competition?.shortName ||
+    match.league
+      ?.split(" ")
+      .map((word) => word[0])
+      .join("")
+      .slice(0, 6) ||
+    "MATCH"
+  );
+}
+function isLive(match: HomeMatch) {
+  return (
+    LIVE_STATUSES.has(String(match.status || "").toUpperCase()) ||
+    Boolean(match.minute)
+  );
+}
+function scoreText(match: HomeMatch) {
+  return typeof match.homeScore === "number" &&
+    typeof match.awayScore === "number"
+    ? `${match.homeScore} - ${match.awayScore}`
+    : "vs";
+}
+function Panel({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      className={`overflow-hidden rounded-[5px] border border-white/15 bg-[#111] ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+function SectionHeader({
+  title,
+  href,
+  action,
+}: {
+  title: string;
+  href?: string;
+  action?: string;
+}) {
+  return (
+    <div className="flex min-h-10 items-center justify-between gap-3 px-4">
+      <h2 className="text-[15px] font-black uppercase text-[#f4f4f4]">
+        {title}
+      </h2>
+      {href && (
+        <Link
+          href={href}
+          className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-[#ef3038] hover:text-white"
+        >
+          {action || "View all"}
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+      )}
     </div>
-    <footer className="mt-4 border-t border-white/15 bg-black"><div className="mx-auto max-w-[1500px] px-4 py-7"><div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-[1.35fr_repeat(4,1fr)]"><div><p className="font-serif text-3xl font-black">BALLMTAANI</p><p className="mt-3 max-w-[250px] text-[11px] leading-5 text-white/45">Kenya&apos;s football fan platform for news, analysis, live scores and community.</p></div><FooterColumn title="BallMtaani" links={[["About", "/about"], ["Editorial", "/news"], ["Contact", "/contact"]]} /><FooterColumn title="Match centre" links={[["Scores & fixtures", "/matches"], ["League tables", "/leagues"], ["Live centre", "/live-center"]]} /><FooterColumn title="Mtaa Play" links={[["Predictions", "/predictions"], ["Debates", "/debates"], ["Trivia", "/trivia"]]} /><FooterColumn title="Legal" links={[["Privacy", "/privacy"], ["Terms", "/terms"], ["Contact", "/contact"]]} /></div><div className="mt-7 flex flex-col gap-2 border-t border-white/10 pt-4 text-[9px] text-white/30 sm:flex-row sm:justify-between"><p>Copyright {new Date().getFullYear()} Ball Mtaani. Football. From where we stand.</p><p>MTC is not cash. Ball Mtaani is not gambling</p></div></div></footer>
-  </main>;
+  );
+}
+
+function LeagueRail() {
+  const railIds = [39, 140, 135, 78, 61, 2, 276, 12];
+  const rail = railIds
+    .map((id) => COMPETITIONS.find((item) => item.id === id))
+    .filter(Boolean) as CompetitionConfig[];
+  return (
+    <nav
+      aria-label="Popular competitions"
+      className="border-b border-white/10 bg-[#111]"
+    >
+      <div className="mx-auto flex h-[58px] max-w-[1500px] overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <Link
+          href="/matches"
+          className="flex h-full shrink-0 items-center gap-2 bg-[#d8212d] px-4 text-[11px] font-black uppercase"
+        >
+          <span className="grid grid-cols-3 gap-0.5" aria-hidden="true">
+            {Array.from({ length: 9 }, (_, index) => (
+              <i key={index} className="h-1 w-1 bg-white" />
+            ))}
+          </span>
+          All
+        </Link>
+        {rail.map((league) => (
+          <Link
+            key={league.id}
+            href={`/leagues/${league.slug}`}
+            className="flex h-full min-w-[128px] shrink-0 items-center gap-2.5 border-r border-white/10 px-4 hover:bg-white/[0.04]"
+          >
+            <img
+              src={league.logo}
+              alt=""
+              className="h-7 w-7 object-contain"
+              loading="eager"
+            />
+            <span className="min-w-0">
+              <b className="block truncate text-[11px] uppercase text-white">
+                {league.shortName}
+              </b>
+              <small className="block truncate text-[8px] text-white/48">
+                {league.country}
+              </small>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function EdgeBanner({ match, image }: { match?: HomeMatch; image?: string }) {
+  return (
+    <Panel className="grid min-h-[122px] md:grid-cols-[minmax(0,1fr)_285px]">
+      <div className="relative flex min-h-[122px] items-center overflow-hidden px-5 sm:px-7">
+        <img
+          src={image || DEFAULT_IMAGE}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover opacity-45"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#190407] via-[#5c0911]/85 to-black/45" />
+        <div className="relative grid w-full items-center gap-4 sm:grid-cols-[120px_1fr_auto]">
+          <div className="text-2xl font-black italic leading-[0.85] text-white">
+            BALLMTAANI
+            <span className="mt-1 block text-[2rem] text-[#ef2430]">EDGE</span>
+          </div>
+          <p className="hidden max-w-[230px] text-[11px] leading-4 text-white/80 sm:block">
+            Advanced football predictions.
+            <br />
+            Powered by data. Driven by insight.
+          </p>
+          <Link
+            href="/edge"
+            className="mt-3 inline-flex h-8 w-fit items-center bg-[#d8212d] px-4 text-[9px] font-black uppercase text-white sm:mt-0"
+          >
+            Explore Edge
+          </Link>
+        </div>
+      </div>
+      <div className="flex flex-col justify-center border-t border-white/10 px-5 py-4 md:border-l md:border-t-0">
+        {match ? (
+          <>
+            <p className="text-[8px] text-white/45">
+              {matchDate(match)} · {match.league || "Featured match"}
+            </p>
+            <p className="mt-1 truncate text-[13px] font-black">
+              {shortTeam(match.home)} vs {shortTeam(match.away)}
+            </p>
+            <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-[3px] border border-white/10 bg-white/[0.04] text-center">
+              <span className="py-2 text-[9px] text-white/55">
+                HOME
+                <b className="mt-0.5 block text-[12px] text-white">
+                  {shortTeam(match.home).slice(0, 3).toUpperCase()}
+                </b>
+              </span>
+              <span className="border-x border-white/10 py-2 text-[9px] text-white/55">
+                KICKOFF
+                <b className="mt-0.5 block text-[12px] text-white">
+                  {matchTime(match)}
+                </b>
+              </span>
+              <span className="py-2 text-[9px] text-white/55">
+                AWAY
+                <b className="mt-0.5 block text-[12px] text-white">
+                  {shortTeam(match.away).slice(0, 3).toUpperCase()}
+                </b>
+              </span>
+            </div>
+            <Link
+              href={`/edge/match/${match.id}`}
+              className="mt-2 inline-flex items-center gap-1 text-[9px] font-black uppercase text-[#ef3038]"
+            >
+              View prediction <ArrowRight className="h-3 w-3" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="text-[9px] font-black uppercase text-[#ef3038]">
+              Today&apos;s featured Edge
+            </p>
+            <p className="mt-2 text-[12px] leading-5 text-white/65">
+              No approved match prediction is available yet.
+            </p>
+            <Link
+              href="/edge/today"
+              className="mt-2 inline-flex items-center gap-1 text-[9px] font-black uppercase text-[#ef3038]"
+            >
+              Open Edge <ArrowRight className="h-3 w-3" />
+            </Link>
+          </>
+        )}
+      </div>
+    </Panel>
+  );
+}
+
+function FixtureRows({ matches }: { matches: HomeMatch[] }) {
+  if (!matches.length)
+    return (
+      <div className="grid min-h-[210px] place-items-center px-6 text-center">
+        <div>
+          <CalendarDays className="mx-auto h-5 w-5 text-white/30" />
+          <p className="mt-2 text-[11px] font-bold">
+            No fixtures scheduled today.
+          </p>
+          <Link
+            href="/matches?tab=fixtures"
+            className="mt-2 inline-block text-[9px] font-black uppercase text-[#ef3038]"
+          >
+            View upcoming fixtures
+          </Link>
+        </div>
+      </div>
+    );
+  return (
+    <div className="divide-y divide-white/10 px-3">
+      {matches.slice(0, 6).map((match) => (
+        <Link
+          key={String(match.id)}
+          href={`/match/${match.id}`}
+          className="grid min-h-[37px] grid-cols-[42px_50px_minmax(0,1fr)_18px_auto_18px_minmax(0,1fr)_auto] items-center gap-2 text-[9px] hover:bg-white/[0.025]"
+        >
+          <time className="font-bold tabular-nums text-white/82">
+            {matchTime(match)}
+          </time>
+          <span className="truncate text-white/45">{leagueCode(match)}</span>
+          <span className="truncate text-right font-bold">
+            {shortTeam(match.home)}
+          </span>
+          <TeamLogo
+            logo={match.homeLogo}
+            initial={shortTeam(match.home).slice(0, 3).toUpperCase()}
+            color={match.homeColor || "#333"}
+            size="xs"
+            className="!h-[18px] !w-[18px] !border-0 !p-0"
+          />
+          <span className="font-black text-white/45">{scoreText(match)}</span>
+          <TeamLogo
+            logo={match.awayLogo}
+            initial={shortTeam(match.away).slice(0, 3).toUpperCase()}
+            color={match.awayColor || "#333"}
+            size="xs"
+            className="!h-[18px] !w-[18px] !border-0 !p-0"
+          />
+          <span className="truncate font-bold">{shortTeam(match.away)}</span>
+          {isLive(match) ? (
+            <span className="rounded-[2px] bg-[#d8212d] px-1.5 py-1 text-[7px] font-black uppercase">
+              Live
+            </span>
+          ) : (
+            <span className="w-7" />
+          )}
+        </Link>
+      ))}
+    </div>
+  );
+}
+function LiveRows({ matches }: { matches: HomeMatch[] }) {
+  if (!matches.length)
+    return (
+      <div className="grid min-h-[210px] place-items-center px-5 text-center">
+        <div>
+          <Radio className="mx-auto h-5 w-5 text-white/30" />
+          <p className="mt-2 text-[11px] font-bold">
+            No matches live right now.
+          </p>
+          <Link
+            href="/matches?tab=fixtures"
+            className="mt-2 inline-block text-[9px] font-black uppercase text-[#ef3038]"
+          >
+            View today&apos;s fixtures
+          </Link>
+        </div>
+      </div>
+    );
+  return (
+    <div className="divide-y divide-white/10 px-3">
+      {matches.slice(0, 3).map((match) => (
+        <Link
+          key={String(match.id)}
+          href={`/live-center/${match.id}`}
+          className="grid min-h-[69px] grid-cols-[36px_1fr_auto_1fr] items-center gap-2 text-[9px] hover:bg-white/[0.025]"
+        >
+          <span className="font-black text-[#65b631]">
+            {match.minute || match.status || "LIVE"}
+          </span>
+          <span className="min-w-0 text-right">
+            <small className="block truncate text-[8px] uppercase text-white/35">
+              {leagueCode(match)}
+            </small>
+            <b className="block truncate text-[10px]">
+              {shortTeam(match.home)}
+            </b>
+          </span>
+          <strong className="text-[17px] tabular-nums">
+            {scoreText(match)}
+          </strong>
+          <span className="truncate text-[10px] font-bold">
+            {shortTeam(match.away)}
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function StandingsTable({
+  rows,
+  compact = false,
+}: {
+  rows: StandingEntry[];
+  compact?: boolean;
+}) {
+  if (!rows.length)
+    return (
+      <div
+        className={`grid place-items-center px-5 text-center text-[10px] leading-4 text-white/45 ${compact ? "min-h-[132px]" : "min-h-[220px]"}`}
+      >
+        Standings will appear when the current league table is available.
+      </div>
+    );
+  return (
+    <div className="px-3">
+      <div className="grid h-7 grid-cols-[18px_1fr_24px_28px_28px] items-center gap-1 border-y border-white/10 text-[7px] uppercase text-white/40">
+        <span>#</span>
+        <span>Team</span>
+        <span className="text-center">P</span>
+        <span className="text-center">GD</span>
+        <span className="text-center">Pts</span>
+      </div>
+      {rows.slice(0, 5).map((row, index) => (
+        <div
+          key={`${row.rank}-${row.team}`}
+          className="relative grid min-h-[35px] grid-cols-[18px_1fr_24px_28px_28px] items-center gap-1 border-b border-white/[0.07] text-[9px]"
+        >
+          <i
+            className={`absolute bottom-0 left-[-12px] top-0 w-0.5 ${index < 4 ? "bg-[#65b631]" : "bg-[#df1f2d]"}`}
+          />
+          <span className="tabular-nums text-white/60">{row.rank}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <img
+              src={row.logo}
+              alt=""
+              className="h-[17px] w-[17px] shrink-0 object-contain"
+              loading="lazy"
+            />
+            <b className="truncate">{row.team}</b>
+          </span>
+          <span className="text-center tabular-nums">{row.played}</span>
+          <span className="text-center tabular-nums">{row.gd}</span>
+          <strong className="text-center tabular-nums">{row.points}</strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MatchCentre({
+  fixtures,
+  live,
+  standings,
+}: {
+  fixtures: HomeMatch[];
+  live: HomeMatch[];
+  standings: StandingEntry[];
+}) {
+  return (
+    <Panel className="grid min-[900px]:grid-cols-[minmax(0,2.25fr)_minmax(250px,0.95fr)]">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between border-b border-white/15 px-4">
+          <h2 className="py-3 text-[18px] font-black uppercase">
+            Match centre
+          </h2>
+          <div className="flex h-10 items-center gap-1 text-[9px] font-black uppercase">
+            <Link
+              href="/matches?tab=fixtures"
+              className="flex h-8 items-center bg-[#d8212d] px-4"
+            >
+              Today
+            </Link>
+            <Link
+              href="/matches?tab=fixtures"
+              className="flex h-8 items-center px-3 hover:text-[#ef3038]"
+            >
+              Tomorrow
+            </Link>
+            <Link
+              href="/matches?tab=fixtures"
+              className="hidden h-8 items-center px-3 sm:flex hover:text-[#ef3038]"
+            >
+              Weekend
+            </Link>
+            <Link
+              href="/matches?tab=results"
+              className="flex h-8 items-center px-3 hover:text-[#ef3038]"
+            >
+              Results
+            </Link>
+          </div>
+          <Link
+            href="/matches"
+            className="hidden items-center gap-2 text-[9px] text-white/70 sm:flex"
+          >
+            All leagues <ChevronDown className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="grid md:grid-cols-[minmax(0,1.65fr)_minmax(220px,0.95fr)]">
+          <div className="min-w-0 border-b border-white/10 md:border-b-0 md:border-r">
+            <div className="flex h-9 items-center gap-2 border-b border-white/10 px-4">
+              <CalendarDays className="h-4 w-4" />
+              <h3 className="text-[10px] font-black uppercase">
+                Today&apos;s fixtures
+              </h3>
+            </div>
+            <FixtureRows matches={fixtures} />
+            <Link
+              href="/matches?tab=fixtures"
+              className="flex h-8 items-center px-3 text-[8px] font-black uppercase text-[#ef3038]"
+            >
+              View all fixtures <ArrowRight className="ml-1 h-3 w-3" />
+            </Link>
+          </div>
+          <div>
+            <div className="flex h-9 items-center gap-2 border-b border-white/10 px-4">
+              <CircleDot className="h-3.5 w-3.5 fill-[#65b631] text-[#65b631]" />
+              <h3 className="text-[10px] font-black uppercase">Live scores</h3>
+            </div>
+            <LiveRows matches={live} />
+            <Link
+              href="/matches?tab=live"
+              className="flex h-8 items-center px-3 text-[8px] font-black uppercase text-[#ef3038]"
+            >
+              All live scores <ArrowRight className="ml-1 h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-white/15 min-[900px]:border-l min-[900px]:border-t-0">
+        <SectionHeader
+          title="Premier League"
+          href="/leagues/premier-league/table"
+          action="View table"
+        />
+        <StandingsTable rows={standings} />
+        <div className="flex h-9 items-center gap-5 px-4 text-[7px] font-bold uppercase text-white/55">
+          <span>
+            <i className="mr-1 inline-block h-2 w-2 bg-[#65b631]" />
+            UCL
+          </span>
+          <span>
+            <i className="mr-1 inline-block h-2 w-2 bg-[#1478cf]" />
+            Europe
+          </span>
+          <span>
+            <i className="mr-1 inline-block h-2 w-2 bg-[#df1f2d]" />
+            Relegation
+          </span>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function EditorialGrid({ articles }: { articles: NewsArticle[] }) {
+  const [lead, ...supporting] = articles;
+  if (!lead)
+    return (
+      <Panel className="grid min-h-[280px] place-items-center text-center">
+        <div>
+          <p className="text-sm font-black uppercase">
+            Latest football stories
+          </p>
+          <p className="mt-2 text-[11px] text-white/45">
+            The newsroom feed is refreshing.
+          </p>
+          <Link
+            href="/news"
+            className="mt-4 inline-flex bg-[#d8212d] px-4 py-2 text-[9px] font-black uppercase"
+          >
+            Open news
+          </Link>
+        </div>
+      </Panel>
+    );
+  return (
+    <section className="grid gap-2 min-[900px]:grid-cols-[1.55fr_1fr]">
+      <ArticleLink
+        article={lead}
+        className="group relative min-h-[296px] overflow-hidden rounded-[5px] border border-white/15 bg-[#111]"
+      >
+        <img
+          src={lead.thumbnail || DEFAULT_IMAGE}
+          alt={lead.title}
+          className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+          onError={(event) => {
+            event.currentTarget.src = DEFAULT_IMAGE;
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-transparent" />
+        <div className="absolute inset-y-0 left-0 flex w-[68%] flex-col justify-center p-4 sm:w-[55%] sm:p-6">
+          <span className="w-fit rounded-[2px] bg-[#d8212d] px-2 py-1 text-[8px] font-black uppercase">
+            {articleCategory(lead)}
+          </span>
+          <h2 className="mt-4 text-[24px] font-black leading-[1.08] sm:text-[28px]">
+            {lead.title}
+          </h2>
+          {lead.description && (
+            <p className="mt-3 line-clamp-2 text-[11px] leading-5 text-white/65">
+              {lead.description}
+            </p>
+          )}
+          <span className="mt-4 w-fit bg-[#d8212d] px-4 py-2 text-[9px] font-black uppercase">
+            Read more
+          </span>
+        </div>
+      </ArticleLink>
+      <div className="grid gap-2 sm:grid-cols-3 min-[900px]:grid-cols-1">
+        {supporting.slice(0, 3).map((article) => (
+          <ArticleLink
+            key={articleKey(article)}
+            article={article}
+            className="group relative min-h-[93px] overflow-hidden rounded-[5px] border border-white/15 bg-[#111]"
+          >
+            <img
+              src={article.thumbnail || DEFAULT_IMAGE}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              loading="lazy"
+              onError={(event) => {
+                event.currentTarget.src = DEFAULT_IMAGE;
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/20" />
+            <div className="relative flex h-full w-[72%] flex-col justify-center p-3">
+              <span className="w-fit rounded-[2px] bg-[#d8212d] px-1.5 py-0.5 text-[7px] font-black uppercase">
+                {articleCategory(article)}
+              </span>
+              <h3 className="mt-2 line-clamp-2 text-[13px] font-black leading-[1.15]">
+                {article.title}
+              </h3>
+              <p className="mt-1 text-[8px] text-white/50">
+                {timeAgo(article.pubDate)}
+              </p>
+            </div>
+          </ArticleLink>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LeagueSnapshot({
+  league,
+  rows,
+  next,
+}: {
+  league: CompetitionConfig;
+  rows: StandingEntry[];
+  next?: HomeMatch;
+}) {
+  return (
+    <Panel className="min-h-[235px]">
+      <div className="flex h-11 items-center justify-between gap-2 border-b border-white/10 px-3">
+        <span className="flex min-w-0 items-center gap-2">
+          <img src={league.logo} alt="" className="h-6 w-6 object-contain" />
+          <b className="truncate text-[10px] uppercase">{league.shortName}</b>
+        </span>
+        <Link
+          href={`/leagues/${league.slug}/table`}
+          className="shrink-0 text-[7px] font-black uppercase text-[#ef3038]"
+        >
+          View table <ArrowRight className="inline h-2.5 w-2.5" />
+        </Link>
+      </div>
+      <StandingsTable rows={rows} compact />
+      <div className="border-t border-white/10 px-3 py-2">
+        <p className="text-[7px] font-bold uppercase text-white/35">Up next</p>
+        {next ? (
+          <Link
+            href={`/match/${next.id}`}
+            className="mt-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[9px]"
+          >
+            <span className="truncate font-bold">{shortTeam(next.home)}</span>
+            <b className="text-white/35">vs</b>
+            <span className="truncate text-right font-bold">
+              {shortTeam(next.away)}
+            </span>
+            <small className="col-span-3 text-[8px] text-white/45">
+              {matchDate(next)}, {matchTime(next)} EAT
+            </small>
+          </Link>
+        ) : (
+          <p className="mt-1 text-[9px] text-white/45">
+            Next fixture unavailable
+          </p>
+        )}
+      </div>
+    </Panel>
+  );
+}
+function CompactStories({ articles }: { articles: NewsArticle[] }) {
+  if (!articles.length)
+    return (
+      <p className="p-4 text-[10px] leading-4 text-white/45">
+        No current stories in this desk.
+      </p>
+    );
+  return (
+    <div className="divide-y divide-white/10 px-3">
+      {articles.slice(0, 3).map((article) => (
+        <ArticleLink
+          key={articleKey(article)}
+          article={article}
+          className="grid min-h-[55px] grid-cols-[72px_1fr] items-center gap-3 py-2"
+        >
+          <img
+            src={article.thumbnail || DEFAULT_IMAGE}
+            alt=""
+            className="h-[43px] w-[72px] object-cover"
+            loading="lazy"
+          />
+          <span className="min-w-0">
+            <b className="line-clamp-2 text-[10px] leading-[1.2]">
+              {article.title}
+            </b>
+            <small className="mt-1 block text-[8px] text-white/40">
+              {timeAgo(article.pubDate)}
+            </small>
+          </span>
+        </ArticleLink>
+      ))}
+    </div>
+  );
+}
+
+export default function HomePage() {
+  const { data: live = [] } = useMatches();
+  const { data: upcoming = [] } = useUpcomingFixtures();
+  const { data: recent = [] } = useRecentMatches();
+  const { data: standings = {} } = useStandings();
+  const { data: debates = [] } = useDebates();
+  const [today, setToday] = useState<HomeMatch[]>([]);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([
+      fetchTodaysFixtures(),
+      fetchPartnerArticles(),
+      fetchFootballNews(),
+    ]).then(([fixtureResult, partnerResult, newsResult]) => {
+      if (!active) return;
+      if (fixtureResult.status === "fulfilled")
+        setToday(fixtureResult.value as HomeMatch[]);
+      const partner =
+        partnerResult.status === "fulfilled" ? partnerResult.value : [];
+      const wire = newsResult.status === "fulfilled" ? newsResult.value : [];
+      setNews(dedupeArticles([...partner, ...wire]));
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const liveMatches = live as HomeMatch[];
+  const upcomingMatches = upcoming as HomeMatch[];
+  const recentMatches = recent as HomeMatch[];
+  const fixtures = useMemo(
+    () => (today.length ? today : upcomingMatches).slice(0, 6),
+    [today, upcomingMatches],
+  );
+  const featuredMatch = upcomingMatches[0] || liveMatches[0];
+  const topLeagues = TOP_LEAGUE_IDS.map((id) =>
+    COMPETITIONS.find((league) => league.id === id),
+  ).filter(Boolean) as CompetitionConfig[];
+  const rowsFor = (league: CompetitionConfig) =>
+    (standings as Record<string, StandingEntry[]>)[league.officialName] ||
+    (standings as Record<string, StandingEntry[]>)[league.shortName] ||
+    [];
+  const kenyaStories = news.filter(
+    (article) => articleCategory(article) === "Kenyan football",
+  );
+  const editorialPicks = news
+    .filter((article) => !kenyaStories.includes(article))
+    .slice(4, 7);
+  const fixtureCount = new Set(
+    [...liveMatches, ...upcomingMatches, ...recentMatches].map((match) =>
+      String(match.id),
+    ),
+  ).size;
+  return (
+    <div className="min-h-screen bg-[#050505] text-[#f4f4f4]">
+      <SEO
+        title="BallMtaani | Live Football Scores, Fixtures, Tables & Kenyan Football News"
+        description="Kenya's football match centre for live scores, fixtures, league tables, data-backed predictions and current football reporting."
+        path="/"
+        canonicalUrl="/"
+        image={news[0]?.thumbnail || DEFAULT_IMAGE}
+      />
+      <LeagueRail />
+      <div className="mx-auto max-w-[1500px] space-y-3 px-4 py-3">
+        <EdgeBanner match={featuredMatch} image={news[0]?.thumbnail} />
+        <MatchCentre
+          fixtures={fixtures}
+          live={liveMatches}
+          standings={
+            (standings as Record<string, StandingEntry[]>)["Premier League"] ||
+            []
+          }
+        />
+        <EditorialGrid articles={news.slice(0, 4)} />
+        <section>
+          <SectionHeader
+            title="Top leagues"
+            href="/leagues"
+            action="View all leagues"
+          />
+            <div className="grid gap-2 sm:grid-cols-2 min-[900px]:grid-cols-4">
+            {topLeagues.map((league) => (
+              <LeagueSnapshot
+                key={league.id}
+                league={league}
+                rows={rowsFor(league)}
+                next={upcomingMatches.find(
+                  (match) => Number(match.leagueId) === league.id,
+                )}
+              />
+            ))}
+          </div>
+        </section>
+          <section className="grid gap-2 min-[900px]:grid-cols-[1.55fr_.82fr_.72fr]">
+          <Panel>
+            <SectionHeader
+              title="Kenyan football"
+              href="/news?section=kenya"
+              action="More Kenya"
+            />
+            <div className="grid sm:grid-cols-[1fr_.95fr]">
+              <CompactStories articles={kenyaStories} />
+              <div className="border-t border-white/10 sm:border-l sm:border-t-0">
+                <div className="flex h-9 items-center justify-between px-3">
+                  <b className="text-[9px] uppercase">FKF Premier League</b>
+                  <Link
+                    href="/leagues/fkf-premier-league/table"
+                    className="text-[7px] font-black uppercase text-[#ef3038]"
+                  >
+                    View table
+                  </Link>
+                </div>
+                <div className="grid min-h-[145px] place-items-center border-t border-white/10 px-5 text-center">
+                  <div>
+                    <Trophy className="mx-auto h-5 w-5 text-white/25" />
+                    <p className="mt-2 text-[10px] text-white/48">
+                      Current FKF standings are temporarily unavailable from the
+                      verified provider.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Panel>
+          <Panel>
+            <SectionHeader title="Editorial picks" href="/news" />
+            <CompactStories articles={editorialPicks} />
+          </Panel>
+          <Panel className="relative min-h-[220px]">
+            <img
+              src={FANS_IMAGE}
+              alt="Kenyan football supporters"
+              className="absolute inset-0 h-full w-full object-cover opacity-45"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/20" />
+            <div className="relative flex h-full min-h-[220px] flex-col justify-center p-4">
+              <Users className="h-5 w-5 text-[#ef3038]" />
+              <h2 className="mt-3 text-[17px] font-black uppercase">
+                Join the community
+              </h2>
+              <p className="mt-2 max-w-[190px] text-[11px] font-bold uppercase leading-4">
+                Be part of the conversation
+              </p>
+              <p className="mt-2 max-w-[190px] text-[10px] leading-4 text-white/65">
+                {debates[0]?.title ||
+                  "Share your opinions, predict matches and connect with fans."}
+              </p>
+              <Link
+                href="/fan-zones"
+                className="mt-4 w-fit bg-[#d8212d] px-4 py-2 text-[9px] font-black uppercase"
+              >
+                Join now
+              </Link>
+            </div>
+          </Panel>
+        </section>
+      </div>
+      <footer className="mt-1 border-t border-white/15 bg-[#0b0b0b]">
+        <div className="mx-auto grid max-w-[1500px] gap-4 px-4 py-5 sm:grid-cols-2 min-[900px]:grid-cols-[repeat(4,1fr)_1.3fr]">
+          <div className="flex items-center gap-3">
+            <Globe2 className="h-8 w-8 rounded-full border border-[#d8212d] p-1.5 text-white" />
+            <span>
+              <b className="block text-lg tabular-nums">
+                {COMPETITIONS.filter((item) => item.enabled).length}
+              </b>
+              <small className="text-[8px] uppercase text-white/45">
+                Verified competitions
+              </small>
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Radio className="h-8 w-8 rounded-full border border-[#d8212d] p-1.5 text-white" />
+            <span>
+              <b className="block text-lg tabular-nums">{liveMatches.length}</b>
+              <small className="text-[8px] uppercase text-white/45">
+                Matches live now
+              </small>
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <CalendarDays className="h-8 w-8 rounded-full border border-[#d8212d] p-1.5 text-white" />
+            <span>
+              <b className="block text-lg tabular-nums">{fixtureCount}</b>
+              <small className="text-[8px] uppercase text-white/45">
+                Fixtures loaded
+              </small>
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <MessageCircle className="h-8 w-8 rounded-full border border-[#d8212d] p-1.5 text-white" />
+            <span>
+              <b className="block text-lg tabular-nums">{debates.length}</b>
+              <small className="text-[8px] uppercase text-white/45">
+                Open debates
+              </small>
+            </span>
+          </div>
+          <div className="flex items-center gap-3 border-t border-white/10 pt-4 min-[900px]:border-l min-[900px]:border-t-0 min-[900px]:pl-5 min-[900px]:pt-0">
+            <span className="text-[8px] font-black uppercase text-white/45">
+              Stay connected
+            </span>
+            <a
+              href="https://twitter.com/ballmtaani"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[10px] font-black"
+              aria-label="BallMtaani on X"
+            >
+              X
+            </a>
+            <a
+              href="https://www.facebook.com/ballmtaani"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[10px] font-black"
+              aria-label="BallMtaani on Facebook"
+            >
+              f
+            </a>
+            <a
+              href="https://www.instagram.com/ballmtaani"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[10px] font-black"
+              aria-label="BallMtaani on Instagram"
+            >
+              IG
+            </a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }

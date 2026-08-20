@@ -2,6 +2,7 @@
  * Service for interacting with the Football API (API-Sports).
  * All endpoints filter by major leagues to ensure data accuracy.
  */
+import { getLeagueById } from "../config/football-catalog";
 
 // Route all football API calls through our server-side proxy.
 // Direct browser → api-sports.io is blocked by CORS in production.
@@ -673,14 +674,8 @@ export async function fetchRecentMatches(): Promise<any[]> {
 }
 
 // ─── 3. STANDINGS (per league) ──────────────────────────────
-// Season map: explicit seasons per league (avoids 3-call season fallback loop)
-const LEAGUE_SEASON_MAP: Record<number, number> = {
-  39: 2025, 140: 2025, 135: 2025, 78: 2025, 61: 2025, 288: 2025,
-  // 686 excluded — returns Czech teams, not KPL
-};
-
 export async function fetchStandings(leagueId: number): Promise<StandingEntry[]> {
-  const season = LEAGUE_SEASON_MAP[leagueId] ?? CURRENT_SEASON;
+  const season = getLeagueById(leagueId)?.currentSeason ?? CURRENT_SEASON;
   const raw = await apiFetch(`/standings?league=${leagueId}&season=${season}`);
   if (!raw || raw.length === 0) return [];
 
