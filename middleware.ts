@@ -184,6 +184,16 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
     body: "Have a question, editorial feedback, press inquiry, or sponsorship proposal? Reach out to our Nairobi team via info@ballmtaani.com or sponsors@ballmtaani.com.",
     jsonLdType: "ContactPage",
   },
+  "/notifications": {
+    title: "Football Notification Settings | BallMtaani",
+    description:
+      "Manage BallMtaani football alerts, match reminders and email briefing preferences.",
+    keywords: "BallMtaani notifications, football alerts Kenya, match reminders",
+    h1: "BallMtaani Notification Settings",
+    body: "Choose the teams, competitions and football updates you want to receive. Email and push alerts require explicit consent and can be switched off at any time.",
+    jsonLdType: "WebPage",
+    noindex: true,
+  },
   "/privacy": {
     title: "Privacy Policy | BallMtaani",
     description:
@@ -269,7 +279,7 @@ function esc(s: string): string {
 }
 
 function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
-  const utilityNoindex = /\/(?:login|register|auth|otp|verify-otp|search|diagnostics|profile|account|admin|predictions|debates|rivalries|war-room|live-center|fun-zone|fun-zones|rapid-fire|trivia|store)(?:\/|$)/.test(canonical);
+  const utilityNoindex = /\/(?:login|register|auth|otp|verify-otp|search|diagnostics|profile|notifications|account|admin|predictions|debates|rivalries|war-room|live-center|fun-zone|fun-zones|rapid-fire|trivia|store)(?:\/|$)/.test(canonical);
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
