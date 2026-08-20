@@ -26,6 +26,15 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
   const isTablePath = Boolean(params3);
 
   const league = getLeagueBySlug(leagueSlug);
+  const { data: rawMatches, isLoading: matchesLoading } = useMatches();
+  const { data: rawStandingsMap, isLoading: standingsLoading } = useStandings();
+
+  const matches = (rawMatches || []).filter((m: any) => m?.league?.id === league?.id);
+  const standings = league && rawStandingsMap ? rawStandingsMap[String(league.id)] || [] : [];
+
+  const [activeTab, setActiveTab] = useState<"overview" | "fixtures" | "table">(
+    subView === "table" || isTablePath ? "table" : subView === "fixtures" || isFixturesPath ? "fixtures" : "overview"
+  );
 
   if (!league) {
     return (
@@ -39,17 +48,6 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
       </div>
     );
   }
-
-  const { data: rawMatches, isLoading: matchesLoading } = useMatches();
-  const { data: rawStandingsMap, isLoading: standingsLoading } = useStandings();
-
-  // Filter matches for current league ID if matches present
-  const matches = (rawMatches || []).filter((m: any) => m.league?.id === league.id || true);
-  const standings = rawStandingsMap ? rawStandingsMap[String(league.id)] || [] : [];
-
-  const [activeTab, setActiveTab] = useState<"overview" | "fixtures" | "table">(
-    subView === "table" || isTablePath ? "table" : subView === "fixtures" || isFixturesPath ? "fixtures" : "overview"
-  );
 
   const leagueSchema = generateLeagueSchema({
     name: league.officialName,
@@ -197,29 +195,37 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                 ) : matches && matches.length > 0 ? (
                   <div className="space-y-3">
                     {matches.slice(0, 10).map((m: any) => {
-                      const matchSlug = `${m.teams.home.name}-v-${m.teams.away.name}-${m.fixture.date.slice(0, 10)}-${m.fixture.id}`
+                      const homeName = m?.teams?.home?.name;
+                      const awayName = m?.teams?.away?.name;
+                      const fixtureDate = m?.fixture?.date;
+                      const fixtureId = m?.fixture?.id;
+                      const isFullTime = m?.fixture?.status?.short === "FT";
+                      const homeGoals = m?.goals?.home ?? "-";
+                      const awayGoals = m?.goals?.away ?? "-";
+                      if (!homeName || !awayName || !fixtureDate || !fixtureId) return null;
+                      const matchSlug = `${homeName}-v-${awayName}-${fixtureDate.slice(0, 10)}-${fixtureId}`
                         .toLowerCase()
                         .replace(/[^a-z0-9-]+/g, "-");
                       return (
                         <Link
-                          key={m.fixture.id}
+                          key={fixtureId}
                           href={`/matches/${matchSlug}`}
                           className="flex items-center justify-between p-3 rounded-xl bg-[#161822] hover:bg-[#1d202e] border border-white/5 hover:border-[#FFD700]/40 transition-all"
                         >
                           <div className="flex items-center gap-3 w-5/12 justify-end">
-                            <span className="text-xs font-bold text-white text-right truncate">{m.teams.home.name}</span>
-                            <img src={m.teams.home.logo} alt={m.teams.home.name} className="w-6 h-6 object-contain shrink-0" />
+                            <span className="text-xs font-bold text-white text-right truncate">{homeName}</span>
+                            {m?.teams?.home?.logo && <img src={m.teams.home.logo} alt={homeName} className="w-6 h-6 object-contain shrink-0" />}
                           </div>
                           <div className="px-3 py-1 rounded-lg bg-black/40 border border-white/10 text-center shrink-0 min-w-[70px]">
-                            {m.fixture.status.short === "FT" ? (
-                              <span className="text-xs font-black text-[#FFD700]">{m.goals.home} - {m.goals.away}</span>
+                            {isFullTime ? (
+                              <span className="text-xs font-black text-[#FFD700]">{homeGoals} - {awayGoals}</span>
                             ) : (
-                              <span className="text-[11px] font-bold text-white/90">{formatKenyanTime(m.fixture.date, false)}</span>
+                              <span className="text-[11px] font-bold text-white/90">{formatKenyanTime(fixtureDate, false)}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-3 w-5/12">
-                            <img src={m.teams.away.logo} alt={m.teams.away.name} className="w-6 h-6 object-contain shrink-0" />
-                            <span className="text-xs font-bold text-white truncate">{m.teams.away.name}</span>
+                            {m?.teams?.away?.logo && <img src={m.teams.away.logo} alt={awayName} className="w-6 h-6 object-contain shrink-0" />}
+                            <span className="text-xs font-bold text-white truncate">{awayName}</span>
                           </div>
                         </Link>
                       );
