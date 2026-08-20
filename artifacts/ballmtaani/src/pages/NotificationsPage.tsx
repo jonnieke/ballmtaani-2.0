@@ -197,8 +197,27 @@ export default function NotificationsPage() {
       <section className="border-b border-white/8 bg-[#091016]">
         <div className="mx-auto max-w-6xl px-4 py-8 md:px-6 md:py-10">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div><p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#F7B500]">Your matchday signal</p><h1 className="mt-2 text-3xl font-black uppercase md:text-4xl">Alerts without the noise</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-white/48">Follow the football that matters to you. Ball Mtaani uses EAT, respects quiet hours, and never invents an update when a verified feed is unavailable.</p></div>
-            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-white/8 bg-white/8"><div className="bg-[#0b1116] px-4 py-3"><p className="text-[9px] uppercase tracking-wider text-white/28">Channels</p><p className="mt-1 text-xs font-black text-white">{channelSummary}</p></div><div className="bg-[#0b1116] px-4 py-3"><p className="text-[9px] uppercase tracking-wider text-white/28">Following</p><p className="mt-1 text-xs font-black text-white">{selectedCount} topics</p></div></div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#F7B500]">Kenya-first matchday signal</p>
+              <h1 className="mt-2 text-3xl font-black uppercase md:text-4xl">Alerts that land at the right moment</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/48">Follow the football that matters to you with East Africa Time, low-noise delivery, and opt-in channels built for the Kenyan fan rhythm.</p>
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
+                <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2">EAT-first</span>
+                <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2">Low-data</span>
+                <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2">Opt-in only</span>
+                <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2">No spam</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-white/8 bg-white/8">
+              <div className="bg-[#0b1116] px-4 py-3">
+                <p className="text-[9px] uppercase tracking-wider text-white/28">Channels</p>
+                <p className="mt-1 text-xs font-black text-white">{channelSummary}</p>
+              </div>
+              <div className="bg-[#0b1116] px-4 py-3">
+                <p className="text-[9px] uppercase tracking-wider text-white/28">Following</p>
+                <p className="mt-1 text-xs font-black text-white">{selectedCount} topics</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -206,7 +225,12 @@ export default function NotificationsPage() {
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-7 md:px-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,.65fr)]">
         <div className="space-y-6">
           {!user && !authLoading ? (
-            <section className="rounded-lg border border-[#F7B500]/25 bg-[#0b1116] p-6"><BellRing className="h-7 w-7 text-[#F7B500]" /><h2 className="mt-4 text-xl font-black uppercase">Sign in for personal match alerts</h2><p className="mt-2 text-sm leading-6 text-white/45">Your teams, competitions and quiet hours sync securely across devices.</p><Link href="/login" className="mt-5 inline-flex h-11 items-center rounded-md bg-[#F7B500] px-5 text-xs font-black uppercase tracking-wider text-black">Sign in to customise</Link></section>
+            <section className="rounded-lg border border-[#F7B500]/25 bg-[#0b1116] p-6">
+              <BellRing className="h-7 w-7 text-[#F7B500]" />
+              <h2 className="mt-4 text-xl font-black uppercase">Sign in for personal match alerts</h2>
+              <p className="mt-2 text-sm leading-6 text-white/45">Your teams, competitions and quiet hours sync securely across devices. Start with push and email, then layer on future WhatsApp delivery when you want it.</p>
+              <Link href="/login" className="mt-5 inline-flex h-11 items-center rounded-md bg-[#F7B500] px-5 text-xs font-black uppercase tracking-wider text-black">Sign in to customise</Link>
+            </section>
           ) : loading ? (
             <div className="grid min-h-[260px] place-items-center"><Loader2 className="h-7 w-7 animate-spin text-[#F7B500]" /></div>
           ) : (
@@ -215,7 +239,16 @@ export default function NotificationsPage() {
                 <div className="flex items-center gap-3 border-b border-white/8 pb-4"><Smartphone className="h-5 w-5 text-[#F7B500]" /><div><h2 id="channels-heading" className="text-sm font-black uppercase tracking-wider">Delivery channels</h2><p className="mt-1 text-[10px] text-white/35">Every channel is separately controlled.</p></div></div>
                 <PreferenceRow title="Browser push" body={isSupported ? "Fast alerts on this device, including when Ball Mtaani is closed." : "Push is not supported by this browser."} checked={isSubscribed} onChange={togglePush} disabled={!isSupported || pushLoading} />
                 <PreferenceRow title="Email briefings" body="Morning football briefing and matchday schedule at your chosen cadence." checked={preferences.email_enabled} onChange={value => setPreference("email_enabled", value)} />
-                <div className="flex min-h-[68px] items-center gap-4 py-3"><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-sm font-bold text-white">WhatsApp alerts</p><span className="rounded bg-[#F7B500]/12 px-2 py-0.5 text-[8px] font-black uppercase text-[#F7B500]">Next release</span></div><p className="mt-1 text-[11px] leading-4 text-white/38">Reserved for high-value, explicitly opted-in Kenyan match alerts.</p></div><Switch checked={false} disabled aria-label="WhatsApp alerts coming next" /></div>
+                <div className="flex min-h-[68px] items-center gap-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-white">WhatsApp alerts</p>
+                      <span className="rounded bg-[#F7B500]/12 px-2 py-0.5 text-[8px] font-black uppercase text-[#F7B500]">Next release</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/38">Reserved for high-value, explicitly opted-in Kenyan match alerts.</p>
+                  </div>
+                  <Switch checked={false} disabled aria-label="WhatsApp alerts coming next" />
+                </div>
               </section>
 
               <section className="rounded-lg border border-white/8 bg-[#0b1116] p-5" aria-labelledby="events-heading">
@@ -250,7 +283,26 @@ export default function NotificationsPage() {
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          <section className="rounded-lg border border-[#F7B500]/22 bg-[#0b1116] p-5"><Mail className="h-6 w-6 text-[#F7B500]" /><h2 className="mt-4 text-lg font-black uppercase">Mtaa Morning Brief</h2><p className="mt-2 text-xs leading-5 text-white/42">The latest football fire, Kenyan stories, table movement and tonight's fixtures in one compact email.</p><input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" className="mt-4 h-11 w-full rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-[#F7B500]/45" /><label className="mt-3 flex items-start gap-2 text-[10px] leading-4 text-white/42"><input type="checkbox" checked={newsletterConsent} onChange={event => setNewsletterConsent(event.target.checked)} className="mt-0.5 accent-[#F7B500]" />I agree to receive Ball Mtaani football news and match briefings by email. I can unsubscribe at any time.</label><button onClick={subscribeNewsletter} className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#F7B500] text-[10px] font-black uppercase tracking-wider text-[#F7B500] transition hover:bg-[#F7B500] hover:text-black"><Newspaper className="h-4 w-4" />Join the briefing</button>{newsletterStatus && <p className="mt-3 text-[10px] leading-4 text-white/48">{newsletterStatus}</p>}</section>
+          <section className="rounded-lg border border-[#F7B500]/22 bg-[#0b1116] p-5">
+            <Mail className="h-6 w-6 text-[#F7B500]" />
+            <h2 className="mt-4 text-lg font-black uppercase">Mtaa Morning Brief</h2>
+            <p className="mt-2 text-xs leading-5 text-white/42">The latest football fire, Kenyan stories, table movement and tonight&apos;s fixtures in one compact email.</p>
+            <div className="mt-4 rounded-md border border-white/8 bg-white/[0.03] px-3 py-3 text-[10px] uppercase tracking-[0.18em] text-white/45">
+              <div className="flex items-center justify-between">
+                <span>What you get</span>
+                <span>Kenya-friendly</span>
+              </div>
+              <div className="mt-3 space-y-2 text-[11px] leading-4 text-white/55">
+                <p>• Morning briefing at 7:00 AM EAT</p>
+                <p>• Matchday notes, verified news and tables</p>
+                <p>• A clean path to push, then WhatsApp later</p>
+              </div>
+            </div>
+            <input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@example.com" className="mt-4 h-11 w-full rounded-md border border-white/10 bg-black/30 px-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-[#F7B500]/45" />
+            <label className="mt-3 flex items-start gap-2 text-[10px] leading-4 text-white/42"><input type="checkbox" checked={newsletterConsent} onChange={event => setNewsletterConsent(event.target.checked)} className="mt-0.5 accent-[#F7B500]" />I agree to receive Ball Mtaani football news and match briefings by email. I can unsubscribe at any time.</label>
+            <button onClick={subscribeNewsletter} className="mt-4 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#F7B500] text-[10px] font-black uppercase tracking-wider text-[#F7B500] transition hover:bg-[#F7B500] hover:text-black"><Newspaper className="h-4 w-4" />Join the briefing</button>
+            {newsletterStatus && <p className="mt-3 text-[10px] leading-4 text-white/48">{newsletterStatus}</p>}
+          </section>
           <section className="rounded-lg border border-white/8 bg-[#0b1116] p-5"><ShieldCheck className="h-5 w-5 text-[#F7B500]" /><h2 className="mt-3 text-sm font-black uppercase">Your consent stays visible</h2><p className="mt-2 text-[11px] leading-5 text-white/38">Every channel records when consent was granted or withdrawn. Ball Mtaani does not enable sponsored alerts inside your football preferences.</p><Link href="/privacy" className="mt-3 inline-flex text-[10px] font-black uppercase tracking-wider text-[#F7B500]">Privacy policy</Link></section>
           <section className="rounded-lg border border-white/8 bg-[#0b1116] p-5"><Target className="h-5 w-5 text-[#F7B500]" /><h2 className="mt-3 text-sm font-black uppercase">Best setup</h2><div className="mt-3 space-y-3 text-[11px] text-white/42"><p className="flex gap-2"><Users className="h-4 w-4 shrink-0 text-[#F7B500]" />Follow your club and one competition.</p><p className="flex gap-2"><BellRing className="h-4 w-4 shrink-0 text-[#F7B500]" />Enable kickoff, lineups and full-time first.</p><p className="flex gap-2"><Clock3 className="h-4 w-4 shrink-0 text-[#F7B500]" />Keep quiet hours on to avoid alert fatigue.</p></div></section>
         </aside>
