@@ -13,42 +13,42 @@ export default function EdgeLandingPage() {
       <RouteSEO path="/edge" />
 
       {/* Hero Section */}
-      <div className="relative border-b border-white/10 bg-gradient-to-b from-[#121212] via-[#0A0A0A] to-[#0A0A0A] py-16 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto text-center space-y-6">
-          <Badge className="bg-[#B30000]/20 text-[#B30000] border-[#B30000]/30 font-bold px-3 py-1 text-xs">
+      <div className="relative border-b border-white/10 bg-gradient-to-b from-[#121212] via-[#0A0A0A] to-[#0A0A0A] px-4 py-10 sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-5xl space-y-5 text-center sm:space-y-6">
+          <Badge className="mx-auto inline-flex max-w-full flex-wrap justify-center border-[#B30000]/30 bg-[#B30000]/20 px-3 py-1 text-xs font-bold leading-none text-[#B30000]">
             BallMtaani Edge — Match Intelligence Engine
           </Badge>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Smarter football predictions, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">
+          <h1 className="mx-auto max-w-3xl text-[clamp(2rem,8vw,3.75rem)] font-extrabold tracking-tight text-white leading-[1.02] sm:leading-tight">
+            Smarter football predictions,
+            <span className="mt-2 block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">
               powered by statistical data.
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          <p className="mx-auto max-w-2xl text-sm leading-6 text-gray-300 sm:text-base sm:leading-relaxed">
             Explore match win probabilities, expected goals, likely scorelines, model confidence levels, and transparent public performance history before kickoff.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          <div className="flex flex-col items-stretch justify-center gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <Link href="/edge/today">
-              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6">
+              <Button size="lg" className="h-11 w-full bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 sm:w-auto">
                 View Today's Matches <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
 
             <Link href="/edge/performance">
-              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 font-bold px-6">
+              <Button size="lg" variant="outline" className="h-11 w-full border-white/20 px-5 text-sm font-bold text-white hover:bg-white/10 sm:w-auto">
                 See Model Performance <BarChart2 className="ml-2 h-4 w-4 text-emerald-400" />
               </Button>
             </Link>
           </div>
 
           {/* Responsible Use Disclaimer Banner */}
-          <div className="pt-6 max-w-2xl mx-auto">
-            <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 flex items-center justify-center gap-2">
+          <div className="mx-auto max-w-2xl pt-4 sm:pt-6">
+            <div className="flex items-start justify-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-left text-[11px] leading-5 text-gray-400 sm:items-center sm:text-xs">
               <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span>
+              <span className="min-w-0">
                 <strong>Informational Notice:</strong> BallMtaani Edge provides statistical analysis for match intelligence. Football outcomes are uncertain, and no prediction is guaranteed.
               </span>
             </div>

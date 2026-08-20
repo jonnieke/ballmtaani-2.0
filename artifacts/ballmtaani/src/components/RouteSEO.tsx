@@ -4,6 +4,9 @@ export interface RouteSEOProps {
   path: string;
 }
 
+const SITE_URL = (import.meta.env.VITE_SITE_URL || "https://ballmtaani.com").replace(/\/$/, "");
+const DEFAULT_IMAGE = `${SITE_URL}/opengraph.jpg`;
+
 const SEO_ROUTES: Record<string, { title: string; description: string }> = {
   "/": {
     title: "BallMtaani — The Heart of African Football News & Match Center",
@@ -65,12 +68,18 @@ export default function RouteSEO({ path }: RouteSEOProps) {
     <>
       <title>{seo.title}</title>
       <meta name="description" content={seo.description} />
+      <meta name="robots" content="index, follow, max-image-preview:large" />
       <meta property="og:title" content={seo.title} />
       <meta property="og:description" content={seo.description} />
       <meta property="og:site_name" content="BallMtaani" />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content={DEFAULT_IMAGE} />
+      <meta property="og:url" content={SITE_URL + (normPath === "/" ? "/" : normPath)} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={seo.title} />
       <meta name="twitter:description" content={seo.description} />
+      <meta name="twitter:image" content={DEFAULT_IMAGE} />
+      <link rel="canonical" href={SITE_URL + (normPath === "/" ? "/" : normPath)} />
     </>
   );
 }

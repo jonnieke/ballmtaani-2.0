@@ -268,7 +268,7 @@ function LeagueRail() {
 function EdgeBanner({ match, image }: { match?: HomeMatch; image?: string }) {
   return (
     <Panel className="grid min-h-[122px] md:grid-cols-[minmax(0,1fr)_285px]">
-      <div className="relative flex min-h-[122px] items-center overflow-hidden px-5 sm:px-7">
+      <div className="relative flex min-h-[122px] items-end overflow-hidden px-4 py-4 sm:px-7 sm:py-6 md:items-center">
         <img
           src={image || DEFAULT_IMAGE}
           alt=""
@@ -276,11 +276,11 @@ function EdgeBanner({ match, image }: { match?: HomeMatch; image?: string }) {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#190407] via-[#5c0911]/85 to-black/45" />
         <div className="relative grid w-full items-center gap-4 sm:grid-cols-[120px_1fr_auto]">
-          <div className="text-2xl font-black italic leading-[0.85] text-white">
+          <div className="max-w-[11ch] text-[1.55rem] font-black italic leading-[0.8] tracking-[-0.03em] text-white sm:max-w-none sm:text-2xl">
             BALLMTAANI
             <span className="mt-1 block text-[2rem] text-[#ef2430]">EDGE</span>
           </div>
-          <p className="hidden max-w-[230px] text-[11px] leading-4 text-white/80 sm:block">
+          <p className="mt-1 max-w-[230px] text-[11px] leading-4 text-white/80 sm:mt-0">
             Advanced football predictions.
             <br />
             Powered by data. Driven by insight.
