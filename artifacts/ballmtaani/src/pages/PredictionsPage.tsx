@@ -395,30 +395,30 @@ export default function PredictionsPage() {
         path="/predictions"
       />
 {/* ── HERO ── */}
-      <div className="border-b border-white/6 bg-[#0c0e13] px-4 py-8 md:px-6">
+      <div className="border-b border-white/6 bg-[#0c0e13] px-4 py-7 sm:py-8 md:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="mb-1 flex items-center gap-2">
             <Star className="h-3.5 w-3.5 text-[#FFD700]" />
             <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#FFD700]">Calls & Receipts</span>
           </div>
-          <h1 className="mb-2 text-3xl font-black uppercase tracking-tight text-white md:text-4xl">
+          <h1 className="mb-2 text-[clamp(2.15rem,8vw,3rem)] font-black uppercase tracking-tight leading-[0.92] text-white sm:text-4xl sm:leading-tight">
             Call It. <span className="text-[#FFD700]">Keep the Receipt.</span>
           </h1>
-          <p className="mb-5 max-w-xl text-sm text-white/45">
+          <p className="mb-5 max-w-xl text-sm leading-6 text-white/45 sm:text-base sm:leading-7">
             Pick the scoreline before kickoff. Earn MTC when you're right. Come back after full time — the receipt doesn't lie.
           </p>
           {/* MTC reward strip */}
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
             {[
               { icon: Target, label: "+50 MTC", sub: "Exact scoreline", color: "text-[#FFD700]", bg: "bg-[#FFD700]/8 border-[#FFD700]/20" },
               { icon: Flame, label: "+20 MTC", sub: "Correct result", color: "text-[#B30000]", bg: "bg-[#B30000]/8 border-[#B30000]/20" },
               { icon: Trophy, label: "Leaderboard", sub: "Top callers rise", color: "text-blue-400", bg: "bg-blue-500/8 border-blue-500/20" },
             ].map(({ icon: Icon, label, sub, color, bg }) => (
-              <div key={label} className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${bg}`}>
+              <div key={label} className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-2 ${bg}`}>
                 <Icon className={`h-4 w-4 shrink-0 ${color}`} />
-                <div>
+                <div className="min-w-0">
                   <div className={`text-xs font-black ${color}`}>{label}</div>
-                  <div className="text-[9px] text-white/35 font-semibold">{sub}</div>
+                  <div className="truncate text-[9px] font-semibold text-white/35">{sub}</div>
                 </div>
               </div>
             ))}
@@ -432,20 +432,20 @@ export default function PredictionsPage() {
         <div className="mb-6 grid gap-3 ">
           <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d12] shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
             <div className="bg-[linear-gradient(135deg,#3a1118_0%,#21120f_52%,#071116_100%)] p-4 md:p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <Link href="/matches" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 transition hover:bg-white/10">
                   <ChevronLeft className="h-4 w-4" />
                 </Link>
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
+                <div className="flex min-w-0 items-center gap-2 text-[9px] font-black uppercase tracking-[0.22em] text-white/80 sm:text-[10px] sm:tracking-[0.24em]">
                   <Bell className="h-3.5 w-3.5" />
-                  Live match
+                  <span className="truncate">Live match</span>
                 </div>
                 <button className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80">
                   <Star className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
                 <div className="text-center">
                   <TeamLogo
                     logo={selectedFixture?.homeLogo}
@@ -457,8 +457,8 @@ export default function PredictionsPage() {
                   <p className="mt-2 truncate text-sm font-black text-white">{selectedFixture?.home || "Home"}</p>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-black text-white md:text-4xl">{selectedFixture?.time || selectedFixture?.date || "23:00"}</div>
-                  <div className="mt-1 text-sm font-semibold text-white/70">{selectedFixture?.date ? "Today" : "Upcoming"}</div>
+                  <div className="text-xl font-black text-white sm:text-2xl md:text-4xl">{selectedFixture?.time || selectedFixture?.date || "23:00"}</div>
+                  <div className="mt-1 text-xs font-semibold text-white/70 sm:text-sm">{selectedFixture?.date ? "Today" : "Upcoming"}</div>
                 </div>
                 <div className="text-center">
                   <TeamLogo
@@ -482,7 +482,7 @@ export default function PredictionsPage() {
                   <button
                     key={tab.key}
                     onClick={() => setMatchPanelTab(tab.key as any)}
-                    className={`whitespace-nowrap border-b-2 px-1 py-2 text-sm font-black transition ${
+                    className={`whitespace-nowrap border-b-2 px-1 py-2 text-[11px] font-black transition sm:text-sm ${
                       matchPanelTab === tab.key
                         ? "border-white text-white"
                         : "border-transparent text-white/55 hover:text-white"
@@ -691,7 +691,7 @@ export default function PredictionsPage() {
           <div className="mx-auto flex w-max bg-black/40 backdrop-blur-xl border border-white/10 rounded-full p-1.5 shadow-xl">
             <button 
               onClick={() => setActiveTab("make")} 
-              className={`px-6 md:px-10 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 relative ${
+              className={`px-4 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.16em] transition-all duration-300 relative sm:px-6 sm:text-xs sm:tracking-[0.2em] md:px-10 ${
                 activeTab === "make" 
                   ? "text-white bg-white/10 shadow-[inner_0_0_10px_rgba(255,255,255,0.05)]" 
                   : "text-gray-500 hover:text-white hover:bg-white/5"
@@ -702,7 +702,7 @@ export default function PredictionsPage() {
             </button>
             <button 
               onClick={() => setActiveTab("my")} 
-              className={`px-6 md:px-10 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 relative ${
+              className={`px-4 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.16em] transition-all duration-300 relative sm:px-6 sm:text-xs sm:tracking-[0.2em] md:px-10 ${
                 activeTab === "my" 
                   ? "text-white bg-white/10 shadow-[inner_0_0_10px_rgba(255,255,255,0.05)]" 
                   : "text-gray-500 hover:text-white hover:bg-white/5"
@@ -713,7 +713,7 @@ export default function PredictionsPage() {
             </button>
             <button
               onClick={() => setActiveTab("wc26")}
-              className={`px-6 md:px-10 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 relative ${
+              className={`px-4 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.16em] transition-all duration-300 relative sm:px-6 sm:text-xs sm:tracking-[0.2em] md:px-10 ${
                 activeTab === "wc26"
                   ? "text-black bg-[#FFD700] shadow-[0_0_15px_rgba(255,215,0,0.4)]"
                   : "text-[#FFD700]/70 hover:text-[#FFD700] hover:bg-[#FFD700]/5"
@@ -747,7 +747,7 @@ export default function PredictionsPage() {
                 <div className="mb-3 flex flex-wrap gap-2">
                   {WC26_NATIONS.map(n => (
                     <button key={n} onClick={() => { if (!wc26Saved && !wc26PicksClosed) setWc26Pick(n); }}
-                      className={`rounded-lg border px-3 py-1.5 text-[11px] font-black uppercase transition-all ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"} ${(wc26Saved || wc26PicksClosed) ? "pointer-events-none" : ""}`}>
+                      className={`rounded-lg border px-2.5 py-1.5 text-[10px] font-black uppercase transition-all sm:px-3 sm:text-[11px] ${wc26Pick === n ? "border-[#FFD700]/60 bg-[#FFD700]/15 text-[#FFD700]" : "border-white/10 bg-white/[0.03] text-white/45 hover:border-white/25 hover:text-white"} ${(wc26Saved || wc26PicksClosed) ? "pointer-events-none" : ""}`}>
                       {n}
                     </button>
                   ))}
