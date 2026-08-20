@@ -1,10 +1,8 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
   BellRing,
-  ChevronLeft,
-  ChevronRight,
   Coins,
   Flame,
   Gift,
@@ -14,6 +12,7 @@ import {
   ReceiptText,
   ShieldCheck,
   Sparkles,
+  Swords,
   Target,
   Trophy,
   Users,
@@ -21,13 +20,72 @@ import {
 import SEO from "../components/SEO";
 import SponsorSlot from "../components/SponsorSlot";
 import TeamLogo from "../components/TeamLogo";
+import MatchdayDataHub from "../components/MatchdayDataHub";
 import { useAuth } from "../context/AuthContext";
 import { useDebates, useLeaderboard, useMatches, useProfile, useRecentMatches, useUpcomingFixtures } from "../hooks/useData";
 import { fetchFootballNews, fetchPartnerArticles, timeAgo, type NewsArticle } from "../lib/news-api";
 import { askMchambuziHalisi } from "../lib/mchambuzi-halisi";
+import { supabase } from "../lib/supabase";
 
 
 const card = "border border-white/[0.09] bg-[#0a1014]/95 shadow-[0_18px_50px_rgba(0,0,0,0.28)]";
+
+// ─── Match of the Day helpers ─────────────────────────────────
+const isWCMatch = (m: any) => m?.leagueId === 1 || /world cup/i.test(m?.league || "");
+
+// WC26 knockout calendar — derive the round label from today's date
+function wc26RoundLabel(kickoffAt?: number): string | null {
+  const now = kickoffAt ? new Date(kickoffAt) : new Date();
+  const t = now.getTime();
+  const at = (iso: string) => new Date(iso).getTime();
+  if (t > at("2026-07-20T00:00:00Z") || t < at("2026-06-11T00:00:00Z")) return null;
+  if (t >= at("2026-07-19T00:00:00Z")) return "The Final";
+  if (t >= at("2026-07-18T00:00:00Z")) return "3rd Place Play-off";
+  if (t >= at("2026-07-13T00:00:00Z")) return "Semi-Final";
+  if (t >= at("2026-07-08T00:00:00Z")) return "Quarter-Final";
+  if (t >= at("2026-07-04T00:00:00Z")) return "Round of 16";
+  if (t >= at("2026-06-28T00:00:00Z")) return "Round of 32";
+  return "Group Stage";
+}
+
+// ─── Breaking news ticker — the daily-fresh strip at the very top ──
+function BreakingTicker({ items }: { items: NewsArticle[] }) {
+  if (!items.length) return null;
+  const loop = [...items, ...items]; // duplicated for seamless marquee wrap
+  return (
+    <div className="overflow-hidden border-b border-[#F7B500]/20 bg-[#0b0a04]">
+      <style>{`@keyframes bmTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+      <div className="flex items-stretch">
+        <span className="z-10 flex shrink-0 items-center gap-1.5 bg-[#F7B500] px-3 text-[10px] font-black uppercase tracking-[0.2em] text-black">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-black" />
+          </span>
+          Mtaa Wire
+        </span>
+        <div className="flex min-w-0 flex-1 items-center overflow-hidden">
+          <div className="flex whitespace-nowrap will-change-transform" style={{ animation: "bmTicker 45s linear infinite" }}>
+            {loop.map((a, i) => {
+              const inner = (
+                <>
+                  <span className="text-[8px] text-[#F7B500]">●</span>
+                  {a.title}
+                  <span className="text-[9px] font-semibold uppercase tracking-wide text-white/30">{timeAgo(a.pubDate)}</span>
+                </>
+              );
+              const cls = "mx-5 inline-flex items-center gap-2 py-2 text-xs font-bold text-white/75 transition-colors hover:text-[#F7B500]";
+              return a.isInternal && a.slug ? (
+                <Link key={`${a.id}-${i}`} href={`/article/${a.slug}`} className={cls}>{inner}</Link>
+              ) : (
+                <a key={`${a.id}-${i}`} href={a.link} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MatchTeam({ match, side }: { match: any; side: "home" | "away" }) {
   const name = match?.[side] || (side === "home" ? "Home" : "Away");
@@ -38,88 +96,74 @@ function MatchTeam({ match, side }: { match: any; side: "home" | "away" }) {
       <p className="mt-2 truncate text-xs font-black text-white">{name}</p>
     </div>
   );
-}function PhoneClubMark({ logo, name, fallback, color, accent }: { logo?: string; name: string; fallback: string; color: string; accent: string }) {
-  if (logo) {
-    return (
-      <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-white/20 bg-white p-1.5 shadow-[0_0_24px_rgba(255,255,255,.14)]">
-        <img src={logo} alt={name} className="h-full w-full object-contain" />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="relative mx-auto grid h-12 w-12 place-items-center overflow-hidden border border-white/25 shadow-[0_0_24px_rgba(255,255,255,.12)]"
-      style={{ background: `linear-gradient(145deg, ${color}, #070b10 78%)`, clipPath: "polygon(50% 0%, 92% 16%, 86% 76%, 50% 100%, 14% 76%, 8% 16%)" }}
-      aria-label={name}
-    >
-      <div className="absolute inset-1 border border-white/18" style={{ clipPath: "polygon(50% 0%, 92% 16%, 86% 76%, 50% 100%, 14% 76%, 8% 16%)" }} />
-      <div className="absolute -right-4 top-1 h-12 w-12 rounded-full opacity-70 blur-md" style={{ backgroundColor: accent }} />
-      <div className="absolute inset-x-2 top-2 h-1 rounded-full bg-white/50" />
-      <span className="relative text-[13px] font-black tracking-tight text-white drop-shadow-[0_2px_5px_rgba(0,0,0,.8)]">{fallback}</span>
-      <div className="absolute bottom-2 h-1.5 w-5 rounded-full" style={{ backgroundColor: accent }} />
-    </div>
-  );
 }
 
-function MatchPanel({ match, isLive, fanCount }: { match: any; isLive: boolean; fanCount: number }) {
+function MatchPanel({ match, isLive, predictionCount, roundLabel }: { match: any; isLive: boolean; predictionCount: number; roundLabel?: string | null }) {
   const [homePick, setHomePick] = useState(1);
   const [awayPick, setAwayPick] = useState(0);
   const hasScore = match?.homeScore !== undefined && match?.awayScore !== undefined;
   const hasMatch = Boolean(match);
+
   return (
-    <aside className={`${card} flex h-full flex-col rounded-lg p-5`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/42">{isLive ? "Live at WC26" : "Next big match"}</p>
-          <h2 className="mt-1 text-sm font-black uppercase text-white">{match?.league || "World Cup 2026"}</h2>
-        </div>
-        <Link href="/matches" className="text-[10px] font-black uppercase tracking-wider text-[#F7B500]">View all</Link>
-      </div>
-
-      {hasMatch ? (
-        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <MatchTeam match={match} side="home" />
-          <div className="text-center">
-            {isLive || hasScore ? (
-              <div className="text-2xl font-black text-white">{match?.homeScore ?? 0}<span className="mx-2 text-white/24">-</span>{match?.awayScore ?? 0}</div>
-            ) : (
-              <div className="text-sm font-black text-white/38">VS</div>
-            )}
-            <div className={`mt-1 text-[9px] font-black uppercase tracking-widest ${isLive ? "text-red-400" : "text-white/36"}`}>
-              {isLive ? match?.minute || "Live" : match?.date || "Upcoming"}
-            </div>
+    <aside className="relative flex h-full min-h-[500px] flex-col overflow-hidden rounded-lg border border-[#F7B500]/45 bg-[#081015]/95 p-5 shadow-[0_24px_80px_rgba(0,0,0,.55),0_0_30px_rgba(247,181,0,.12)] backdrop-blur-xl lg:p-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_0%,rgba(247,181,0,.14),transparent_32%)]" />
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#F7B500]">
+              {isLive ? "World Cup live" : isWCMatch(match) ? "World Cup tonight" : "Match of the day"}
+            </p>
+            <h2 className="mt-1 text-xs font-bold uppercase text-white/55">{roundLabel || match?.league || "World Cup 2026"}</h2>
           </div>
-          <MatchTeam match={match} side="away" />
+          <Link href="/matches" className="text-[10px] font-black uppercase tracking-wider text-[#F7B500]">View all</Link>
         </div>
-      ) : (
-        <div className="mt-5 rounded-md border border-dashed border-[#F7B500]/24 bg-black/24 p-5 text-center">
-          <p className="text-sm font-black uppercase text-white">WC26 match feed syncing</p>
-          <p className="mt-2 text-xs leading-5 text-white/45">Open the tournament hub for fixtures, live cards, tables and verified updates as the feed refreshes.</p>
-          <Link href="/world-cup-2026" className="mt-4 inline-flex h-10 items-center justify-center rounded-md bg-[#F7B500] px-4 text-[10px] font-black uppercase tracking-wider text-black">Open WC26 hub</Link>
-        </div>
-      )}
 
-      <div className="mt-5 border-t border-white/8 pt-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Lock your prediction</p>
-          <span className="rounded-full border border-[#F7B500]/24 px-2 py-1 text-[8px] font-black text-[#F7B500]">+50 MTC</span>
-        </div>
-        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <button onClick={() => setHomePick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white" aria-label="Increase home score">{homePick}</button>
-          <span className="text-white/28">-</span>
-          <button onClick={() => setAwayPick(v => (v + 1) % 6)} className="h-12 rounded-md border border-white/10 bg-black/35 text-xl font-black text-white" aria-label="Increase away score">{awayPick}</button>
-        </div>
-        <Link href="/predictions" className="mt-3 flex h-11 items-center justify-center gap-2 rounded-md bg-[#F7B500] text-[11px] font-black uppercase tracking-wider text-black transition hover:bg-[#ffc928]" aria-label="Lock in your WC26 prediction">
-          <LockKeyhole className="h-4 w-4" /> Lock in prediction
-        </Link>
-      </div>
+        {hasMatch ? (
+          <div className="mt-7 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <MatchTeam match={match} side="home" />
+            <div className="text-center">
+              {isLive || hasScore ? (
+                <div className="text-2xl font-black text-white">{match?.homeScore ?? 0}<span className="mx-2 text-white/24">-</span>{match?.awayScore ?? 0}</div>
+              ) : (
+                <div className="text-sm font-black text-white/38">VS</div>
+              )}
+              <div className={`mt-1 text-[9px] font-black uppercase tracking-widest ${isLive ? "text-red-400" : "text-white/45"}`}>
+                {isLive ? match?.minute || "Live" : [match?.date, match?.time].filter(Boolean).join(" | ") || "Upcoming"}
+              </div>
+            </div>
+            <MatchTeam match={match} side="away" />
+          </div>
+        ) : (
+          <div className="mt-7 rounded-md border border-dashed border-[#F7B500]/24 bg-black/24 p-5 text-center">
+            <p className="text-sm font-black uppercase text-white">WC26 match feed syncing</p>
+            <p className="mt-2 text-xs leading-5 text-white/45">Fixtures will appear here as soon as the verified feed resolves.</p>
+            <Link href="/world-cup-2026" className="mt-4 inline-flex h-10 items-center justify-center rounded-md bg-[#F7B500] px-4 text-[10px] font-black uppercase tracking-wider text-black">Open WC26 hub</Link>
+          </div>
+        )}
 
-      <div className="mt-auto pt-4 text-center">
-        <p className="text-sm font-bold text-white/78">{fanCount ? `${fanCount.toLocaleString()} fans on the board` : "Live fan count not available"}</p>
-        <div className="mt-3 flex items-center justify-center -space-x-2">
-          {["P", "J", "M", "A", "K", "S"].map((avatar) => <span key={avatar} className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0a1014] bg-[#F7B500] text-[10px] font-black text-black">{avatar}</span>)}
-          <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0a1014] bg-white/10 text-[10px] font-black text-white">+99</span>
+        <div className="mt-6 border-t border-white/10 pt-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/75">Lock your score</p>
+            <span className="rounded-full border border-[#F7B500]/35 bg-[#F7B500]/8 px-2.5 py-1 text-[8px] font-black text-[#F7B500]">+50 MTC if correct</span>
+          </div>
+          <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <button onClick={() => setHomePick(v => (v + 1) % 6)} className="h-14 rounded-md border border-white/12 bg-black/40 text-2xl font-black text-white transition hover:border-[#F7B500]/45" aria-label="Increase home score">{homePick}</button>
+            <span className="text-white/28">-</span>
+            <button onClick={() => setAwayPick(v => (v + 1) % 6)} className="h-14 rounded-md border border-white/12 bg-black/40 text-2xl font-black text-white transition hover:border-[#F7B500]/45" aria-label="Increase away score">{awayPick}</button>
+          </div>
+          <Link href="/predictions" className="mt-3 flex h-12 items-center justify-center gap-2 rounded-md bg-[#F7B500] text-[11px] font-black uppercase tracking-wider text-black shadow-[0_10px_28px_rgba(247,181,0,.2)] transition hover:bg-[#ffc928]" aria-label="Lock in your WC26 prediction">
+            <LockKeyhole className="h-4 w-4" /> Lock in prediction
+          </Link>
+        </div>
+
+        <div className="mt-auto pt-5 text-center">
+          <p className="text-sm font-bold text-white/78">{predictionCount > 0 ? `${predictionCount.toLocaleString()} fans have predicted` : "Be first to lock a receipt"}</p>
+          {predictionCount > 0 && (
+            <div className="mt-3 flex items-center justify-center -space-x-2" aria-hidden="true">
+              {["B", "M", "K", "N", "J"].map((avatar) => <span key={avatar} className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0a1014] bg-[#F7B500] text-[10px] font-black text-black">{avatar}</span>)}
+              <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#0a1014] bg-white/10 text-[9px] font-black text-white">+{Math.max(0, predictionCount - 5).toLocaleString()}</span>
+            </div>
+          )}
         </div>
       </div>
     </aside>
@@ -236,24 +280,74 @@ function LeaderboardCard({ rows }: { rows: any[] }) {
   );
 }
 
-function NewsCarousel({ articles, loading }: { articles: NewsArticle[]; loading: boolean }) {
-  const rail = useRef<HTMLDivElement>(null);
-  const move = (direction: number) => rail.current?.scrollBy({ left: direction * 360, behavior: "smooth" });
+function cleanArticleText(value?: string): string {
+  if (!value) return "";
+  if (typeof DOMParser === "undefined") return value;
+  const parsed = new DOMParser().parseFromString(value, "text/html");
+  return (parsed.body.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function articleReadTime(article: NewsArticle): number {
+  const words = `${article.title} ${cleanArticleText(article.description)}`.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 180));
+}
+
+function LatestNewsGrid({ articles, loading }: { articles: NewsArticle[]; loading: boolean }) {
+  const latest = articles.slice(0, 6);
+
   return (
-    <section className="border-t border-white/8 bg-[#060a0d] py-8">
+    <section className="border-t border-white/8 bg-[#060a0d] py-9 lg:py-11" aria-labelledby="latest-football-fire">
       <div className="mx-auto max-w-[1800px] px-4 md:px-7">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div><p className="text-[9px] font-black uppercase tracking-[0.24em] text-[#F7B500]">Mtaa Daily</p><h2 className="mt-1 text-xl font-black uppercase text-white">Latest WC26 and football news</h2></div>
-          <div className="flex gap-2"><button onClick={() => move(-1)} title="Previous stories" aria-label="Previous news stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronLeft className="h-4 w-4" /></button><button onClick={() => move(1)} title="Next stories" aria-label="Next news stories" className="grid h-9 w-9 place-items-center rounded-md border border-white/10 text-white/60 hover:border-[#F7B500]/40 hover:text-[#F7B500]"><ChevronRight className="h-4 w-4" /></button></div>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.24em] text-[#F7B500]">Mtaa Daily</p>
+            <h2 id="latest-football-fire" className="mt-1 text-2xl font-black uppercase text-white">Latest football fire</h2>
+            <p className="mt-1 text-sm text-[#A5B0B8]">Fresh stories from the football world.</p>
+          </div>
+          <Link href="/news" className="inline-flex h-10 items-center gap-2 rounded-md border border-[#F7B500]/45 px-4 text-[10px] font-black uppercase tracking-widest text-[#F7B500] transition hover:border-[#F7B500] hover:bg-[#F7B500]/8">
+            View all news <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
-        <div ref={rail} className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-56 min-w-[290px] animate-pulse rounded-lg bg-white/5" />) : articles.slice(0, 10).map(article => {
-            const href = article.isInternal ? `/article/${article.slug}` : article.link;
-            const body = <><div className="relative h-32 overflow-hidden"><img src={article.thumbnail} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-[#080d10] to-transparent" /><span className="absolute bottom-2 left-2 rounded bg-[#F7B500] px-2 py-0.5 text-[8px] font-black uppercase text-black">{article.isWC26 ? "WC26" : article.source}</span></div><div className="p-3"><h3 className="line-clamp-2 text-sm font-black leading-snug text-white">{article.title}</h3><p className="mt-2 text-[9px] uppercase tracking-wider text-white/34">{timeAgo(article.pubDate)}</p></div></>;
-            return article.isInternal ? <Link key={article.id} href={href} className={`${card} group min-w-[290px] max-w-[290px] snap-start overflow-hidden rounded-lg`}>{body}</Link> : <a key={article.id} href={href} target="_blank" rel="noopener noreferrer" className={`${card} group min-w-[290px] max-w-[290px] snap-start overflow-hidden rounded-lg`}>{body}</a>;
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {loading && Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-[310px] animate-pulse rounded-lg border border-white/8 bg-white/5" />)}
+          {!loading && latest.map((article) => {
+            const href = article.isInternal && article.slug ? `/article/${article.slug}` : article.link;
+            const excerpt = cleanArticleText(article.description);
+            const category = article.isWC26 ? "World Cup" : article.source || "Football";
+            const content = (
+              <>
+                <div className="relative h-40 overflow-hidden bg-[#101820]">
+                  <img src={article.thumbnail} loading="lazy" decoding="async" alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B1116] via-transparent to-transparent" />
+                  <span className="absolute left-3 top-3 rounded bg-[#F7B500] px-2 py-1 text-[8px] font-black uppercase text-black">{category}</span>
+                </div>
+                <div className="flex min-h-[168px] flex-col p-4">
+                  <h3 className="line-clamp-2 text-base font-black leading-snug text-white">{article.title}</h3>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#A5B0B8]">{excerpt || "Open the story for the latest football update and fan reaction."}</p>
+                  <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-white/35">{timeAgo(article.pubDate)} | {articleReadTime(article)} min read</span>
+                    <span className="rounded-md border border-[#F7B500]/55 px-3 py-2 text-[9px] font-black uppercase text-[#F7B500] transition group-hover:bg-[#F7B500] group-hover:text-black">Read & React</span>
+                  </div>
+                </div>
+              </>
+            );
+
+            const className = "group overflow-hidden rounded-lg border border-white/[0.08] bg-[#0B1116] shadow-[0_18px_40px_rgba(0,0,0,.22)] transition duration-300 hover:-translate-y-0.5 hover:border-[#F7B500]/70 hover:shadow-[0_20px_50px_rgba(0,0,0,.35),0_0_22px_rgba(247,181,0,.1)]";
+            return article.isInternal && article.slug ? (
+              <Link key={article.id} href={href} className={className}>{content}</Link>
+            ) : (
+              <a key={article.id} href={href} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>
+            );
           })}
         </div>
-        <Link href="/news" className="mt-4 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#F7B500]">All news <ArrowRight className="h-3.5 w-3.5" /></Link>
+
+        {!loading && latest.length === 0 && (
+          <div className="rounded-lg border border-dashed border-white/12 bg-[#0B1116] px-6 py-12 text-center">
+            <p className="text-sm font-black uppercase text-white">Latest stories are syncing</p>
+            <p className="mt-2 text-xs text-white/45">The homepage only publishes verified feed items. Visit the news archive while the feed refreshes.</p>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -270,12 +364,13 @@ export default function MarketHomePage() {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [mchambuziAnswer, setMchambuziAnswer] = useState("");
+  const [predictionCount, setPredictionCount] = useState(0);
 
   useEffect(() => {
     Promise.all([fetchPartnerArticles(), fetchFootballNews({ network: true, fallback: false })]).then(([partner, feed]) => {
       const seen = new Set<string>();
       const combined = [...partner, ...feed].filter(item => !seen.has(item.id) && seen.add(item.id));
-      setNews(combined.sort((a, b) => Number(Boolean(b.isWC26)) - Number(Boolean(a.isWC26))));
+      setNews(combined.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()).slice(0, 6));
     }).finally(() => setNewsLoading(false));
   }, []);
 
@@ -295,8 +390,44 @@ export default function MarketHomePage() {
   }, [liveMatches, upcoming, recent]);
 
 
-  const featuredMatch = liveMatches[0] || upcoming[0] || recent[0] || null;
-  const isLive = liveMatches.length > 0;
+  // Match of the Day — WC26 takes priority over everything else
+  const featuredMatch =
+    liveMatches.find(isWCMatch) ||
+    upcoming.find(isWCMatch) ||
+    liveMatches[0] ||
+    upcoming[0] ||
+    recent.find(isWCMatch) ||
+    recent[0] ||
+    null;
+  const isLive = liveMatches.length > 0 && liveMatches.includes(featuredMatch);
+  const roundLabel = featuredMatch && isWCMatch(featuredMatch) ? wc26RoundLabel(featuredMatch.kickoffAt) : wc26RoundLabel();
+
+  useEffect(() => {
+    let cancelled = false;
+    const matchId = featuredMatch?.id ? String(featuredMatch.id) : "";
+    if (!supabase || !matchId) {
+      setPredictionCount(0);
+      return;
+    }
+
+    supabase
+      .from("predictions")
+      .select("id", { count: "exact", head: true })
+      .eq("match_id", matchId)
+      .then(({ count, error }) => {
+        if (!cancelled) setPredictionCount(error ? 0 : count || 0);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [featuredMatch?.id]);
+
+  const activityDebate = debates[0];
+  const leftBacking = Number(activityDebate?.leftVotes || 0);
+  const rightBacking = Number(activityDebate?.rightVotes || 0);
+  const leftBackingLabel = activityDebate?.left || featuredMatch?.home || "the home side";
+  const rightBackingLabel = activityDebate?.right || featuredMatch?.away || "the away side";
   
   const statItems = useMemo(() => [
     { icon: Users, value: Number(profile?.points || coins || 0).toLocaleString(), label: "MTC balance" },
@@ -310,83 +441,87 @@ export default function MarketHomePage() {
     <main className="min-h-screen bg-[#05080a] text-white">
       <SEO title="BallMtaani | World Cup 2026 Fan Command Center" description="Live World Cup 2026 scores, predictions, debates, news and fan rewards for Kenya's football community." path="/home" />
 
-      <section className="relative overflow-hidden border-b border-white/8 bg-[#030607]">
-        <img fetchPriority="high" loading="eager" decoding="async" src="/bm-market-hero.png" alt="BallMtaani World Cup fan and live match phone" className="absolute inset-0 h-full w-full object-cover object-center opacity-90" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#030607_0%,rgba(3,6,7,.78)_25%,rgba(3,6,7,.22)_50%,rgba(3,6,7,.78)_75%,#030607_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,6,7,.08)_0%,rgba(3,6,7,.38)_64%,#030607_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_55%_42%,rgba(247,181,0,.16),transparent_34%)]" />
-        <div className="relative mx-auto max-w-[1800px] px-4 py-5 md:px-7 lg:py-6">
-          <div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr_1fr] lg:items-stretch">
-            <div className="flex flex-col justify-center py-4">
-              <div className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-black/45 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/86"><span>KE</span> Kenya's home of football fans</div>
-              <h1 className="mt-5 text-[clamp(2.8rem,4.2vw,5.5rem)] font-black uppercase leading-[0.9] tracking-[0] text-white">We predict.<br />We debate.<br /><span className="text-[#F7B500]">We keep receipts.</span></h1>
-              <p className="mt-5 max-w-[34rem] text-[1.05rem] leading-7 text-white/86">Join thousands of fans making bold calls, backing their teams and earning MTC for being on point.</p>
-              <div className="mt-5 flex flex-wrap gap-3"><Link href="/predictions" className="inline-flex h-12 min-w-[15.5rem] items-center justify-center gap-2 rounded-md bg-[#F7B500] px-5 text-xs font-black uppercase tracking-wider text-black shadow-[0_0_22px_rgba(247,181,0,.18)]"><Target className="h-4 w-4" /> Make your prediction</Link><Link href="/fan-zones" className="inline-flex h-12 min-w-[12.5rem] items-center justify-center gap-2 rounded-md border border-[#F7B500]/65 bg-black/45 px-5 text-xs font-black uppercase tracking-wider text-white"><Users className="h-4 w-4" /> Join your tribe</Link></div>
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">{statItems.map(({ icon: Icon, value, label }) => <div key={label} className="flex items-center gap-2"><Icon className="h-5 w-5 shrink-0 text-[#F7B500]" /><div><div className="text-xs font-black text-white">{value}</div><div className="text-[9px] text-white/40">{label}</div></div></div>)}</div>
-            </div>
+      {/* ── Mtaa Wire — breaking headlines, refreshes with every publish ── */}
+      <BreakingTicker items={news.slice(0, 5)} />
 
-            
-<div className="relative hidden min-h-[510px] lg:block">
-              <div className="absolute bottom-4 left-1/2 h-[92%] w-[78%] -translate-x-1/2 rounded-full bg-[#F7B500]/10 blur-3xl" />
-              <div className="absolute bottom-5 right-0 w-[60%] rotate-[6deg] rounded-[36px] border-[6px] border-[#1e252b] bg-[#04080b] p-3 shadow-[0_28px_70px_rgba(0,0,0,.8),0_0_42px_rgba(247,181,0,.14)]">
-                <div className="pointer-events-none absolute -inset-3 rounded-[42px] bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,.2),transparent_22%),linear-gradient(120deg,transparent_8%,rgba(247,181,0,.16)_43%,transparent_56%)] opacity-70" />
-                <div className="relative overflow-hidden rounded-[25px] border border-white/10 bg-[#071015] p-4 shadow-inner">
-                  <img aria-hidden="true" loading="lazy" decoding="async" src="/bm-market-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-[.12] blur-[1px]" />
-                  <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.16)_0%,transparent_28%,rgba(247,181,0,.08)_54%,transparent_68%)]" />
-                  <div className="absolute -right-10 -top-8 h-28 w-28 rounded-full bg-[#F7B500]/16 blur-2xl" />
-                  <div className="relative mx-auto mb-3 h-4 w-20 rounded-full bg-black/80 ring-1 ring-white/8" />
-                  {featuredMatch ? (
-                    <>
-                      <div className="relative flex items-center justify-between text-[9px] font-black uppercase text-white/62">
-                        <span>{isLive ? "Live Match" : "Upcoming Match"}</span>
-                        <span className="rounded bg-red-500 px-1.5 py-0.5 text-white shadow-[0_0_14px_rgba(239,68,68,.45)]">{isLive ? "Live" : "WC26"}</span>
-                        <span className="text-[#F7B500]">{featuredMatch.minute || featuredMatch.date || featuredMatch.time || "WC26"}</span>
-                      </div>
-                      <div className="relative mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                        <div className="text-center">
-                          <PhoneClubMark logo={featuredMatch.homeLogo} name={featuredMatch.home} fallback={String(featuredMatch.home || "").slice(0, 3).toUpperCase() || "H"} color="#8b1118" accent="#f6d04d" />
-                          <p className="mt-1 truncate text-[9px] font-bold text-white/76">{featuredMatch.home}</p>
-                        </div>
-                        <div className="text-2xl font-black text-white drop-shadow-[0_2px_14px_rgba(255,255,255,.22)]">{featuredMatch.homeScore !== undefined && featuredMatch.awayScore !== undefined ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}` : "VS"}</div>
-                        <div className="text-center">
-                          <PhoneClubMark logo={featuredMatch.awayLogo} name={featuredMatch.away} fallback={String(featuredMatch.away || "").slice(0, 3).toUpperCase() || "A"} color="#123f92" accent="#ffffff" />
-                          <p className="mt-1 truncate text-[9px] font-bold text-white/76">{featuredMatch.away}</p>
-                        </div>
-                      </div>
-                      <div className="relative mt-4 flex gap-4 border-b border-white/8 pb-2 text-[8px] font-bold text-white/42"><span className="text-[#F7B500]">{featuredMatch.status || "Feed"}</span><span>{featuredMatch.league || "WC26"}</span><span>Venue</span><span>Updates</span></div>
-                      <div className="relative mt-3 space-y-2 text-[8px] text-white/62">
-                        <p className="rounded-md border border-white/5 bg-white/[.055] p-2"><span className="font-black text-[#F7B500]">Status</span> {featuredMatch.status || featuredMatch.date || "Live feed syncing"}</p>
-                        {featuredMatch.scorers ? <p className="rounded-md border border-white/5 bg-white/[.055] p-2"><span className="font-black text-[#F7B500]">Scorers</span> {featuredMatch.scorers}</p> : null}
-                        {featuredMatch.venue ? <p className="rounded-md border border-white/5 bg-white/[.055] p-2"><span className="font-black text-[#F7B500]">Venue</span> {featuredMatch.venue}</p> : null}
-                      </div>
-                      <div className="relative mt-4 rounded-md border border-white/8 bg-white/[.06] p-3"><div className="flex justify-between text-[8px] text-white/65"><span>{featuredMatch.home || "Home"}</span><span>{featuredMatch.away || "Away"}</span></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-blue-600"><div className="h-full w-[64%] bg-red-600" /></div></div>
-                    </>
-                  ) : (
-                    <div className="relative mt-6 rounded-[25px] border border-dashed border-white/12 bg-black/35 p-6 text-center">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white">WC26 feed syncing</p>
-                      <p className="mt-3 text-[10px] leading-5 text-white/48">Real match data will appear here once the live or upcoming feed resolves.</p>
-                    </div>
-                  )}
-                </div>
+      <section className="relative overflow-hidden border-b border-white/8 bg-[#030607]">
+        <img fetchPriority="high" loading="eager" decoding="async" src="/bm-market-hero.png" alt="BallMtaani football fan celebrating on matchday" className="absolute inset-0 h-full w-full object-cover object-[58%_center] opacity-95" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,#030607_0%,rgba(3,6,7,.94)_23%,rgba(3,6,7,.2)_42%,rgba(3,6,7,.08)_64%,rgba(3,6,7,.82)_80%,#030607_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,6,7,.06)_0%,rgba(3,6,7,.18)_52%,#030607_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_42%,rgba(247,181,0,.2),transparent_36%)]" />
+
+        <div className="relative mx-auto max-w-[1800px] px-4 py-6 md:px-7 lg:py-8">
+          <div className="grid gap-6 lg:min-h-[560px] lg:grid-cols-[minmax(500px,.95fr)_minmax(300px,.7fr)_minmax(350px,.72fr)] lg:items-center">
+            <div className="relative z-10 flex max-w-[670px] flex-col justify-center py-4 lg:py-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex w-fit items-center gap-2 rounded-md border border-white/12 bg-black/50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/86"><span>KE</span> Kenya's home of football fans</div>
+                {roundLabel && (
+                  <Link href="/world-cup-2026" className="inline-flex w-fit items-center gap-2 rounded-md border border-[#F7B500]/45 bg-[#F7B500]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#F7B500]">
+                    <Trophy className="h-3.5 w-3.5" /> WC26 | {roundLabel}
+                  </Link>
+                )}
+              </div>
+              <h1 className="mt-6 max-w-[760px] text-[clamp(3.1rem,4.55vw,5.5rem)] font-black uppercase leading-[0.88] tracking-[0] text-white drop-shadow-[0_10px_28px_rgba(0,0,0,.6)]">We predict.<br />We debate.<br /><span className="text-[#F7B500]">We keep receipts.</span></h1>
+              <p className="mt-5 max-w-[36rem] text-base leading-7 text-white/82 lg:text-lg">Make the call before kickoff. Back your side, rep your tribe, and keep the receipt when the final whistle lands.</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/predictions" className="inline-flex h-[52px] min-w-[16rem] items-center justify-center gap-2 rounded-md bg-[#F7B500] px-6 text-xs font-black uppercase tracking-wider text-black shadow-[0_12px_32px_rgba(247,181,0,.24)] transition hover:bg-[#FFC928]"><Target className="h-4 w-4" /> Lock your prediction</Link>
+                <Link href="/fan-zones" className="inline-flex h-[52px] min-w-[12.5rem] items-center justify-center gap-2 rounded-md border border-[#F7B500]/65 bg-black/50 px-5 text-xs font-black uppercase tracking-wider text-white transition hover:bg-[#F7B500]/10"><Users className="h-4 w-4" /> Join your tribe</Link>
+              </div>
+              <div className="mt-7 grid max-w-[670px] grid-cols-2 gap-3 sm:grid-cols-4">
+                {statItems.map(({ icon: Icon, value, label }) => <div key={label} className="flex items-center gap-2"><Icon className="h-5 w-5 shrink-0 text-[#F7B500]" /><div><div className="text-sm font-black text-white">{value}</div><div className="text-[9px] text-white/44">{label}</div></div></div>)}
               </div>
             </div>
 
-            <MatchPanel match={featuredMatch} isLive={isLive} fanCount={leaderboard.length} />
-
+            <div aria-hidden="true" className="hidden min-h-[520px] lg:block" />
+            <MatchPanel match={featuredMatch} isLive={isLive} predictionCount={predictionCount} roundLabel={roundLabel} />
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4"><PulseCard debate={debates[0]} /><DebateCard debate={debates[0]} /><AnalystCard answer={mchambuziAnswer} /><LeaderboardCard rows={leaderboard} /></div>
+          <div className="mx-auto mt-1 grid max-w-[940px] overflow-hidden rounded-lg border border-[#F7B500]/38 bg-[#070b0d]/92 shadow-[0_0_28px_rgba(247,181,0,.1)] backdrop-blur-xl md:grid-cols-3">
+            <div className="flex min-h-14 items-center justify-center gap-3 border-b border-white/8 px-5 py-3 md:border-b-0 md:border-r">
+              <Flame className="h-5 w-5 text-[#F7B500]" />
+              <div><p className="text-sm font-black text-white">{leftBacking > 0 ? leftBacking.toLocaleString() : "Live"}</p><p className="text-[10px] text-white/55">fans backing {leftBackingLabel}</p></div>
+            </div>
+            <div className="flex min-h-14 items-center justify-center gap-3 border-b border-white/8 px-5 py-3 md:border-b-0 md:border-r">
+              <Swords className="h-5 w-5 text-[#F7B500]" />
+              <div><p className="text-sm font-black text-white">{rightBacking > 0 ? rightBacking.toLocaleString() : "Live"}</p><p className="text-[10px] text-white/55">fans backing {rightBackingLabel}</p></div>
+            </div>
+            <div className="flex min-h-14 items-center justify-center gap-3 px-5 py-3">
+              <ReceiptText className="h-5 w-5 text-[#F7B500]" />
+              <div><p className="text-sm font-black text-white">Receipts drop</p><p className="text-[10px] text-white/55">after full-time</p></div>
+            </div>
+          </div>
 
-          <div className="mt-4 grid gap-4 rounded-lg border border-[#F7B500]/30 bg-[#0b0e0c]/95 p-4 md:grid-cols-[1.25fr_3fr_auto] md:items-center">
-            <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-md bg-[#F7B500]/12"><Gift className="h-6 w-6 text-[#F7B500]" /></div><div><h2 className="text-sm font-black uppercase text-white">Earn MTC daily</h2><p className="text-[10px] text-white/40">Predict. Debate. Share. Win.</p></div></div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[{ icon: BellRing, label: "Daily login", value: "+10" },{ icon: Target, label: "Correct call", value: "+50" },{ icon: Users, label: "Join debate", value: "+20" },{ icon: ShieldCheck, label: "Share receipt", value: "+30" }].map(({ icon: Icon, label, value }) => <div key={label} className="flex items-center gap-2 border-l border-white/8 px-3"><Icon className="h-4 w-4 text-[#F7B500]" /><div><p className="text-[9px] text-white/46">{label}</p><p className="text-xs font-black text-[#F7B500]">{value} MTC</p></div></div>)}</div>
-            <Link href="/store" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#F7B500] px-5 text-[10px] font-black uppercase tracking-wider text-[#F7B500] shadow-[0_0_22px_rgba(247,181,0,.14)]"><Coins className="h-4 w-4" /> {Number(profile?.points || coins || 0).toLocaleString()} MTC</Link>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <PulseCard debate={debates[0]} />
+            <DebateCard debate={debates[0]} />
+            <AnalystCard answer={mchambuziAnswer} />
+            <LeaderboardCard rows={leaderboard} />
+          </div>
+        </div>
+      </section>
+
+      <LatestNewsGrid articles={news} loading={newsLoading} />
+
+      <MatchdayDataHub />
+
+      <section className="border-t border-white/8 bg-[#05080a] py-5" aria-label="MTC daily rewards">
+        <div className="mx-auto max-w-[1800px] px-4 md:px-7">
+          <div className="grid gap-4 rounded-lg border border-[#F7B500]/35 bg-[#0B1116]/95 p-4 shadow-[0_0_30px_rgba(247,181,0,.08)] md:grid-cols-[1.2fr_3fr_auto] md:items-center">
+            <div className="flex items-center gap-3">
+              <div className="grid h-12 w-12 place-items-center rounded-md bg-[#F7B500]/12 shadow-[0_0_18px_rgba(247,181,0,.1)]"><Gift className="h-7 w-7 text-[#F7B500]" /></div>
+              <div><h2 className="text-base font-black uppercase text-white">Earn MTC daily!</h2><p className="text-[10px] text-white/40">Predict. Debate. Share. Win.</p></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[{ icon: BellRing, label: "Daily login", value: "+10" }, { icon: Target, label: "Correct prediction", value: "+50" }, { icon: Users, label: "Join debate", value: "+20" }, { icon: ShieldCheck, label: "Share receipt", value: "+30" }].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex min-h-12 items-center gap-2 border-l border-white/8 px-3"><Icon className="h-5 w-5 shrink-0 text-[#F7B500]" /><div><p className="text-[9px] text-white/46">{label}</p><p className="text-xs font-black text-[#F7B500]">{value} MTC</p></div></div>
+              ))}
+            </div>
+            <Link href="/store" className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#F7B500] px-5 text-[10px] font-black uppercase tracking-wider text-[#F7B500] shadow-[0_0_22px_rgba(247,181,0,.12)] transition hover:bg-[#F7B500] hover:text-black"><Coins className="h-4 w-4" /> See all rewards</Link>
           </div>
         </div>
       </section>
 
       <div className="mx-auto max-w-[1800px] px-4 py-4 md:px-7"><SponsorSlot placement="homepage-hero" /></div>
-      <NewsCarousel articles={news} loading={newsLoading} />
     </main>
   );
 }

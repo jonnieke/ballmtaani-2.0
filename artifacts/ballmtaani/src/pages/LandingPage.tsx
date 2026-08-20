@@ -42,6 +42,7 @@ import {
   type TeamLineup,
   type TeamSeasonStats,
 } from "../lib/football-api";
+import { supabase } from "../lib/supabase";
 
 type DisplayMatch = {
   id: string;
@@ -763,6 +764,174 @@ const LEAGUE_PRIORITY: Record<number, number> = {
   12: 8,  // CAF Champions League
 };
 
+// ─── Match of the Day ────────────────────────────────────────
+const isWCMatch = (m: any) => m?.leagueId === 1 || /world cup/i.test(m?.league || "");
+
+// WC26 knockout calendar — derive the round label from kickoff date
+function wc26RoundLabel(kickoffAt?: number): string {
+  const d = kickoffAt ? new Date(kickoffAt) : new Date();
+  const day = d.getTime();
+  const at = (iso: string) => new Date(iso).getTime();
+  if (day >= at("2026-07-19T00:00:00Z")) return "The Final";
+  if (day >= at("2026-07-18T00:00:00Z")) return "3rd Place Play-off";
+  if (day >= at("2026-07-13T00:00:00Z")) return "Semi-Final";
+  if (day >= at("2026-07-08T00:00:00Z")) return "Quarter-Final";
+  if (day >= at("2026-07-04T00:00:00Z")) return "Round of 16";
+  if (day >= at("2026-06-28T00:00:00Z")) return "Round of 32";
+  return "Group Stage";
+}
+
+function pickMatchOfTheDay(live: any[], todays: any[]): { match: any; isLive: boolean } | null {
+  const liveWC = live.find(isWCMatch);
+  if (liveWC) return { match: liveWC, isLive: true };
+  const wcToday = todays
+    .filter(isWCMatch)
+    .sort((a, b) => (a.kickoffAt ?? 0) - (b.kickoffAt ?? 0));
+  if (wcToday.length) return { match: wcToday[0], isLive: false };
+  if (live.length) return { match: live[0], isLive: true };
+  const ranked = [...todays].sort(
+    (a, b) => (LEAGUE_PRIORITY[a.leagueId] ?? 99) - (LEAGUE_PRIORITY[b.leagueId] ?? 99),
+  );
+  return ranked.length ? { match: ranked[0], isLive: false } : null;
+}
+
+// ─── Mtaa Daily headlines ────────────────────────────────────
+type HeadlineArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  thumbnail_url: string | null;
+  author_name: string | null;
+  published_at: string;
+  is_wc26: boolean;
+};
+
+function timeAgo(iso: string): string {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 60) return `${Math.max(1, mins)}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return days === 1 ? "Yesterday" : `${days}d ago`;
+}
+
+function BreakingTicker({ items }: { items: HeadlineArticle[] }) {
+  if (!items.length) return null;
+  const loop = [...items, ...items]; // duplicated for seamless marquee wrap
+  return (
+    <div className="mb-3 overflow-hidden rounded-lg border border-primary/25 bg-[#0b0405]/92 backdrop-blur-sm">
+      <style>{`@keyframes bmTicker { from { transform: translateX(0); } to { transform: translateX(-50%); } }`}</style>
+      <div className="flex items-stretch">
+        <span className="z-10 flex shrink-0 items-center gap-1.5 bg-primary px-3 text-[10px] font-black uppercase tracking-[0.2em] text-white">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+          </span>
+          Mtaa Wire
+        </span>
+        <div className="flex min-w-0 flex-1 items-center overflow-hidden">
+          <div className="flex whitespace-nowrap will-change-transform" style={{ animation: "bmTicker 45s linear infinite" }}>
+            {loop.map((a, i) => (
+              <Link
+                key={`${a.id}-${i}`}
+                href={`/article/${a.slug}`}
+                className="mx-5 inline-flex items-center gap-2 py-2 text-xs font-bold text-white/75 transition-colors hover:text-[#FFD700]"
+              >
+                <span className="text-[8px] text-primary">●</span>
+                {a.title}
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-white/30">{timeAgo(a.published_at)}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MtaaDailyBoard({ articles }: { articles: HeadlineArticle[] }) {
+  if (!articles.length) return null;
+  const [lead, ...rest] = articles;
+  const sideList = rest.slice(0, 4);
+
+  return (
+    <section className="mb-3 overflow-hidden rounded-xl border border-white/10 bg-[#090d14]/95">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15 text-sm">📰</span>
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+              Mtaa Daily <span className="text-primary">— Talk of the Streets</span>
+            </h2>
+            <p className="text-[10px] font-medium text-white/38">Fresh takes, previews and reactions — updated daily</p>
+          </div>
+        </div>
+        <Link href="/articles" className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-white/65 transition-colors hover:border-primary/40 hover:text-white">
+          All Stories <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+
+      <div className="grid gap-0 md:grid-cols-[1.25fr_1fr]">
+        {/* Lead story */}
+        <Link href={`/article/${lead.slug}`} className="group relative block min-h-[220px] overflow-hidden md:min-h-[280px]">
+          {lead.thumbnail_url ? (
+            <img
+              src={lead.thumbnail_url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#1a0608_0%,#3d0d12_55%,#0b0405_100%)]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="rounded bg-primary px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-white">
+                {lead.is_wc26 ? "WC26" : "Lead Story"}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white/45">{timeAgo(lead.published_at)}</span>
+            </div>
+            <h3 className="text-lg font-black leading-snug text-white transition-colors group-hover:text-[#FFD700] md:text-xl">
+              {lead.title}
+            </h3>
+            {lead.excerpt && (
+              <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-white/55">{lead.excerpt}</p>
+            )}
+          </div>
+        </Link>
+
+        {/* Headline list */}
+        <div className="flex flex-col border-t border-white/8 md:border-l md:border-t-0">
+          {sideList.map((a, i) => (
+            <Link
+              key={a.id}
+              href={`/article/${a.slug}`}
+              className="group flex flex-1 items-center gap-3 border-b border-white/6 px-3 py-3 transition-colors last:border-0 hover:bg-white/[0.03]"
+            >
+              <span className="w-5 shrink-0 text-center text-lg font-black italic text-white/15">{i + 2}</span>
+              {a.thumbnail_url && (
+                <img src={a.thumbnail_url} alt="" loading="lazy" className="h-11 w-16 shrink-0 rounded-md object-cover" />
+              )}
+              <div className="min-w-0">
+                <h4 className="line-clamp-2 text-xs font-bold leading-snug text-white transition-colors group-hover:text-[#FFD700]">
+                  {a.title}
+                </h4>
+                <div className="mt-1 flex items-center gap-2 text-[9px] font-bold uppercase tracking-wide text-white/30">
+                  {a.is_wc26 && <span className="text-[#FFD700]/70">WC26</span>}
+                  <span>{timeAgo(a.published_at)}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 // ─── Visibility Control Hook ─────────────────────────────────
 // Stagger section visibility during initial load for better UX
@@ -807,12 +976,17 @@ function CountBlock({ value, label }: { value: number; label: string }) {
   );
 }
 
-function WC26HeroBanner() {
+function WC26HeroBanner({ motd }: { motd: { match: any; isLive: boolean } | null }) {
   const now = Date.now();
   const isOver = now > WC26_END.getTime();
   const isActive = now >= WC26_START.getTime();
   const [cd, setCd] = useState(getWC26Countdown());
   const { isLoggedIn } = useAuth();
+
+  const m = motd?.match;
+  const isMotdLive = !!motd?.isLive;
+  const roundLabel = m && isWCMatch(m) ? wc26RoundLabel(m.kickoffAt) : null;
+  const hasScore = m && typeof m.homeScore === "number" && typeof m.awayScore === "number";
 
   useEffect(() => {
     if (isActive || isOver) return;
@@ -862,7 +1036,11 @@ function WC26HeroBanner() {
           {isActive && <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />}
           <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
           <span className="text-[10px] font-black uppercase tracking-[0.26em] text-[#FFD700]">
-            {isActive ? "World Cup 2026 — Underway" : "FIFA World Cup 2026 · USA · Canada · Mexico"}
+            {isActive
+              ? roundLabel
+                ? `World Cup 2026 · ${roundLabel} Day`
+                : "World Cup 2026 — Underway"
+              : "FIFA World Cup 2026 · USA · Canada · Mexico"}
           </span>
           <Trophy className="h-3.5 w-3.5 text-[#FFD700]" />
         </div>
@@ -890,14 +1068,65 @@ function WC26HeroBanner() {
           }}
         >
           {isActive ? (
-            <>THE WORLD CUP<br />IS LIVE</>
+            m ? (
+              roundLabel ? (
+                <>{roundLabel.toUpperCase()}<br />{isMotdLive ? "LIVE NOW" : "TONIGHT"}</>
+              ) : (
+                <>MATCH OF<br />THE DAY</>
+              )
+            ) : (
+              <>THE WORLD CUP<br />IS LIVE</>
+            )
           ) : (
             <>THE BIGGEST<br />WORLD CUP EVER</>
           )}
         </h2>
-        <p className="mb-7 rounded-full border border-white/20 bg-black/65 px-5 py-2 text-sm font-bold text-white backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.7)] md:text-base">
-          48 nations · 104 matches · {isActive ? "Running until Jul 19 · All times EAT" : "Jun 11 – Jul 19 · All times EAT"}
-        </p>
+
+        {/* Match of the Day face-off — refreshes daily from live fixtures */}
+        {isActive && m ? (
+          <div className="mb-7 w-full max-w-2xl overflow-hidden rounded-2xl border border-[#FFD700]/25 bg-black/60 backdrop-blur-md shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
+            {isMotdLive && (
+              <div className="flex items-center justify-center gap-1.5 border-b border-red-500/25 bg-red-500/12 py-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-400" />
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-red-400">
+                  Live{(m as any).minute ? ` · ${(m as any).minute}'` : ""}
+                </span>
+              </div>
+            )}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-4 md:gap-4">
+              <div className="flex min-w-0 flex-col items-center gap-2">
+                <TeamLogo logo={m.homeLogo} initial={m.homeInitial || m.home?.slice(0, 3)} color="#182333" size="lg" />
+                <span className="max-w-full truncate text-sm font-black uppercase tracking-tight text-white md:text-lg">{m.home}</span>
+              </div>
+              <div className="text-center">
+                {hasScore ? (
+                  <span className="text-3xl font-black tabular-nums text-[#FFD700] md:text-5xl">
+                    {m.homeScore}<span className="mx-1.5 text-white/25 md:mx-2">–</span>{m.awayScore}
+                  </span>
+                ) : (
+                  <div>
+                    <div className="rounded-full border border-white/15 bg-white/[0.06] px-4 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-white/55">VS</div>
+                    <div className="mt-2 text-sm font-black tabular-nums text-[#FFD700] md:text-base">{m.time?.replace(" EAT", "")} EAT</div>
+                  </div>
+                )}
+              </div>
+              <div className="flex min-w-0 flex-col items-center gap-2">
+                <TeamLogo logo={m.awayLogo} initial={m.awayInitial || m.away?.slice(0, 3)} color="#182333" size="lg" />
+                <span className="max-w-full truncate text-sm font-black uppercase tracking-tight text-white md:text-lg">{m.away}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-2 border-t border-white/8 bg-white/[0.03] py-2 text-[9px] font-black uppercase tracking-[0.2em] text-white/45">
+              {m.league}{roundLabel ? ` · ${roundLabel}` : ""} · All times EAT
+            </div>
+          </div>
+        ) : (
+          <p className="mb-7 rounded-full border border-white/20 bg-black/65 px-5 py-2 text-sm font-bold text-white backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.7)] md:text-base">
+            48 nations · 104 matches · {isActive ? "Running until Jul 19 · All times EAT" : "Jun 11 – Jul 19 · All times EAT"}
+          </p>
+        )}
 
         {/* Countdown */}
         {cd && (
@@ -915,10 +1144,10 @@ function WC26HeroBanner() {
         {/* CTAs */}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/predictions"
+            href={isMotdLive ? "/live-center" : "/predictions"}
             className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-5 py-3 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_28px_rgba(255,214,0,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(255,214,0,0.7)] active:scale-95"
           >
-            {isActive ? "Call the Scoreline" : "Make Your Group Stage Call"}
+            {isMotdLive ? "Follow It Live" : isActive ? "Call the Scoreline" : "Make Your Group Stage Call"}
             <ChevronRight className="h-4 w-4" />
           </Link>
           <Link
@@ -964,6 +1193,7 @@ export default function LandingPage() {
   const [fixtureLineups, setFixtureLineups] = useState<{ home: TeamLineup | null; away: TeamLineup | null }>({ home: null, away: null });
   const [teamStats, setTeamStats] = useState<{ home: TeamSeasonStats | null; away: TeamSeasonStats | null }>({ home: null, away: null });
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [headlines, setHeadlines] = useState<HeadlineArticle[]>([]);
 
   // Derived: standings for currently selected league
   const standings = allStandings[activeLeagueId] || [];
@@ -1019,6 +1249,20 @@ export default function LandingPage() {
       window.clearInterval(timer);
     };
   }, []);
+
+  // Mtaa Daily headlines — latest published articles power the ticker + board
+  useEffect(() => {
+    if (!supabase) return;
+    supabase
+      .from("articles")
+      .select("id, slug, title, excerpt, thumbnail_url, author_name, published_at, is_wc26")
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .limit(6)
+      .then(({ data }) => setHeadlines((data || []) as HeadlineArticle[]));
+  }, []);
+
+  const motd = useMemo(() => pickMatchOfTheDay(live, todaysFixtures), [live, todaysFixtures]);
 
   const matches: DisplayMatch[] = useMemo(() => {
     const liveRows = live.map((m) => ({ ...m, status: normalizeMatchStatus(m.status || "LIVE") }));
@@ -1141,7 +1385,8 @@ export default function LandingPage() {
       </div>
 
       <main className="relative z-10 mx-auto max-w-[1480px] px-3 py-3 md:px-5 md:py-5">
-        <WC26HeroBanner />
+        <BreakingTicker items={headlines.slice(0, 4)} />
+        <WC26HeroBanner motd={motd} />
 
         <header className={`mb-3 flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 backdrop-blur-xl transition-all duration-700 ${live.length > 0 ? "border-primary/30 bg-black/50 shadow-[0_0_30px_rgba(179,0,0,0.15)]" : "border-white/10 bg-black/38"}`}>
           <div className="flex items-center gap-2">
@@ -1181,37 +1426,10 @@ export default function LandingPage() {
           </button>
         </header>
 
-        <section className="mt-4">
-          <div className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
-            Your matchday tools
-          </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8 auto-rows-[minmax(96px,auto)]">
-            {FEATURE_LINKS.map((item, idx) => {
-              const Icon = item.icon;
-              const isWC = item.href === "/world-cup-2026";
-              const isPrimary = idx === 0;
-              const isFeatured = isPrimary || isWC;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg min-h-[104px] md:min-h-[116px] ${isFeatured ? "md:col-span-2 xl:col-span-2" : ""} ${
-                    isWC
-                      ? "border-[#FFD700]/30 bg-[#111006]/92 hover:border-[#FFD700]/70 hover:shadow-[#FFD700]/15"
-                      : isPrimary
-                      ? "border-primary/25 bg-[#0f0a0a]/92 hover:border-primary/55 hover:shadow-primary/15"
-                      : "border-white/10 bg-[#0b1119]/92 hover:border-primary/45 hover:shadow-primary/10"
-                  }`}
-                >
-                  <div className={`absolute -right-4 -top-4 h-12 w-12 rounded-full blur-xl transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${isWC ? "bg-[#FFD700]/20" : "bg-primary/20"}`} />
-                  <Icon className={`relative mb-2.5 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${isWC ? "text-[#FFD700]" : "text-primary"}`} />
-                  <div className={`relative font-bold uppercase tracking-[0.06em] text-white ${isFeatured ? "text-sm md:text-base" : "text-xs"}`}>{item.label}</div>
-                  <div className={`relative mt-0.5 leading-4 text-white/40 group-hover:text-white/60 transition-colors ${isFeatured ? "text-[12px]" : "text-[11px]"}`}>{item.sub}</div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+        {/* ── Mtaa Daily — headlines board, refreshed with every publish ── */}
+        <div className="mt-3">
+          <MtaaDailyBoard articles={headlines} />
+        </div>
 
         {/* ── Rewards Engine Strip ── always visible, all screen sizes */}
         <Link href="/store" className="group mb-3 flex items-center gap-4 rounded-xl border border-[#FFD700]/20 bg-[#0d0b00] px-4 py-3 transition-all hover:border-[#FFD700]/40 hover:bg-[#0d0b00]/80">
@@ -1465,6 +1683,39 @@ export default function LandingPage() {
             </aside>
           )}
         </div>
+
+        {/* ── Matchday tools — full navigation, below the daily content ── */}
+        <section className="mt-4">
+          <div className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/30">
+            Your matchday tools
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8 auto-rows-[minmax(96px,auto)]">
+            {FEATURE_LINKS.map((item, idx) => {
+              const Icon = item.icon;
+              const isWC = item.href === "/world-cup-2026";
+              const isPrimary = idx === 0;
+              const isFeatured = isPrimary || isWC;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg min-h-[104px] md:min-h-[116px] ${isFeatured ? "md:col-span-2 xl:col-span-2" : ""} ${
+                    isWC
+                      ? "border-[#FFD700]/30 bg-[#111006]/92 hover:border-[#FFD700]/70 hover:shadow-[#FFD700]/15"
+                      : isPrimary
+                      ? "border-primary/25 bg-[#0f0a0a]/92 hover:border-primary/55 hover:shadow-primary/15"
+                      : "border-white/10 bg-[#0b1119]/92 hover:border-primary/45 hover:shadow-primary/10"
+                  }`}
+                >
+                  <div className={`absolute -right-4 -top-4 h-12 w-12 rounded-full blur-xl transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${isWC ? "bg-[#FFD700]/20" : "bg-primary/20"}`} />
+                  <Icon className={`relative mb-2.5 h-5 w-5 transition-transform duration-300 group-hover:scale-110 ${isWC ? "text-[#FFD700]" : "text-primary"}`} />
+                  <div className={`relative font-bold uppercase tracking-[0.06em] text-white ${isFeatured ? "text-sm md:text-base" : "text-xs"}`}>{item.label}</div>
+                  <div className={`relative mt-0.5 leading-4 text-white/40 group-hover:text-white/60 transition-colors ${isFeatured ? "text-[12px]" : "text-[11px]"}`}>{item.sub}</div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
 
       </main>
 

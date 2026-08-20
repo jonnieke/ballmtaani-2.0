@@ -21,6 +21,24 @@ import type { TournamentStandingEntry } from "../lib/football-api";
 import AfricanFootballWidget from "../components/AfricanFootballWidget";
 
 type HubView = "all" | "live" | "results" | "fixtures" | "africa" | "tables";
+type DayFilter = "all" | "yesterday" | "today" | "tomorrow";
+
+const EAT_DATE = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Africa/Nairobi",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function eatDateKey(value: Date | number) {
+  return EAT_DATE.format(value instanceof Date ? value : new Date(value));
+}
+
+function relativeDayKey(offset: number) {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + offset);
+  return eatDateKey(date);
+}
 
 // ── League logo registry ──────────────────────────────────────────────────────
 const LEAGUE_LOGOS: Record<string, string> = {
@@ -676,6 +694,7 @@ export default function MatchesPage() {
     if (tab === "wc26") return "World Cup 2026";
     return "all";
   });
+  const [dayFilter, setDayFilter] = useState<DayFilter>("all");
   const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [tableLeague, setTableLeague] = useState(() => {
     const wc26Live = Date.now() >= new Date("2026-06-11T17:00:00Z").getTime() &&
@@ -726,8 +745,12 @@ export default function MatchesPage() {
         (leagueFilter === "World Cup 2026" && m.league === "FIFA World Cup");
       const hay = `${m.home || ""} ${m.away || ""} ${m.league || ""}`.toLowerCase();
       const matchesQ = !query.trim() || hay.includes(query.toLowerCase());
-      return matchesLeague && matchesQ;
-    }), [basePool, leagueFilter, query]);
+      const variant = getVariant(m);
+      const timestamp = Number(m.kickoffAt || m.timestamp || 0);
+      const target = dayFilter === "yesterday" ? relativeDayKey(-1) : dayFilter === "today" ? relativeDayKey(0) : dayFilter === "tomorrow" ? relativeDayKey(1) : "";
+      const matchesDay = dayFilter === "all" || (variant === "live" && dayFilter === "today") || (timestamp > 0 && eatDateKey(timestamp) === target);
+      return matchesLeague && matchesQ && matchesDay;
+    }), [basePool, leagueFilter, query, dayFilter, liveSet, resultSet]);
 
   const groups = useMemo(() => groupByLeague(filteredPool), [filteredPool]);
 
@@ -822,6 +845,31 @@ export default function MatchesPage() {
             </button>
           ))}
         </div>
+
+        {view !== "africa" && view !== "tables" && (
+          <div className="flex items-center gap-2 overflow-x-auto border-t border-white/[0.05] bg-[#0a121d] px-3 py-2 scrollbar-none">
+            <div className="mr-1 flex shrink-0 items-center gap-2 pr-2">
+              <CalendarDays className="h-3.5 w-3.5 text-primary" />
+              <span className="text-[9px] font-black uppercase tracking-[0.16em] text-white/30">Schedule</span>
+            </div>
+            {([
+              { id: "all", label: "All dates", sub: `${liveMatches.length + recentMatches.length + fixturesWithFallback.length} matches` },
+              { id: "yesterday", label: "Yesterday", sub: relativeDayKey(-1) },
+              { id: "today", label: "Today", sub: relativeDayKey(0) },
+              { id: "tomorrow", label: "Tomorrow", sub: relativeDayKey(1) },
+            ] as Array<{ id: DayFilter; label: string; sub: string }>).map(item => (
+              <button key={item.id} onClick={() => setDayFilter(item.id)} className={`min-w-[104px] shrink-0 rounded-md border px-3 py-1.5 text-left transition ${dayFilter === item.id ? "border-primary/45 bg-primary/10" : "border-white/7 bg-white/[0.02] hover:border-white/15"}`}>
+                <span className={`block text-[10px] font-black uppercase tracking-wider ${dayFilter === item.id ? "text-primary" : "text-white/55"}`}>{item.label}</span>
+                <span className="mt-0.5 block text-[8px] tabular-nums text-white/24">{item.sub}</span>
+              </button>
+            ))}
+            <div className="ml-auto hidden shrink-0 items-center gap-5 pl-4 xl:flex">
+              <div><p className="text-xs font-black tabular-nums text-red-400">{liveMatches.length}</p><p className="text-[8px] font-bold uppercase tracking-wider text-white/24">Live now</p></div>
+              <div><p className="text-xs font-black tabular-nums text-white">{fixturesWithFallback.length}</p><p className="text-[8px] font-bold uppercase tracking-wider text-white/24">Scheduled</p></div>
+              <div><p className="text-xs font-black tabular-nums text-white">{sidebarLeagues.length}</p><p className="text-[8px] font-bold uppercase tracking-wider text-white/24">Competitions</p></div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Main 3-column area ────────────────────────────────────────────── */}

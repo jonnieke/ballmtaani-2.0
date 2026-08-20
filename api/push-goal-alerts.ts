@@ -126,12 +126,17 @@ export default async function handler(req: any, res: any) {
       // ── Push notification ──────────────────────────────────────────────
       const sendRes = await fetch(`${base}/api/push-send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(process.env.PUSH_API_SECRET || process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.PUSH_API_SECRET || process.env.CRON_SECRET}` } : {}) },
         body: JSON.stringify({
           title: `⚽ GOAL! ${home} ${hGoals}–${aGoals} ${away}`,
           body: bodyParts.join(" · "),
           url: isWC ? "/world-cup-2026" : "/matches",
           tag: `goal-${fixture.fixture.id}-${hGoals}-${aGoals}`,
+          eventType: "goal",
+          matchId: String(fixture.fixture.id),
+          leagueId: String(fixture.league?.id || ""),
+          teamIds: [fixture.teams?.home?.id, fixture.teams?.away?.id].filter(Boolean).map(String),
+          teamNames: [home, away],
         }),
       });
 

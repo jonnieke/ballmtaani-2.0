@@ -60,6 +60,7 @@ const FunZonePage        = lazyPage(() => import("./pages/FunZonePage"));
 const TriviaPage         = lazyPage(() => import("./pages/TriviaPage"));
 const WarRoomPage        = lazyPage(() => import("./pages/WarRoomPage"));
 const DiagnosticsPage    = lazyPage(() => import("./pages/DiagnosticsPage"));
+const NotificationsPage  = lazyPage(() => import("./pages/NotificationsPage"));
 const TermsPage          = lazyPage(() => import("./pages/TermsPage"));
 const PrivacyPage        = lazyPage(() => import("./pages/PrivacyPage"));
 const AboutPage          = lazyPage(() => import("./pages/AboutPage"));
@@ -173,6 +174,7 @@ function AppShell() {
             <Route path="/war-room" component={WarRoomPage} />
             <Route path="/trivia" component={TriviaPage} />
             <Route path="/diagnostics" component={DiagnosticsPage} />
+            <Route path="/notifications" component={NotificationsPage} />
             <Route path="/terms" component={TermsPage} />
             <Route path="/terms/" component={TermsPage} />
             <Route path="/terms-of-service" component={TermsPage} />

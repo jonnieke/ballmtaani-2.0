@@ -97,12 +97,17 @@ export default async function handler(req: any, res: any) {
       `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/api/push-send`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(process.env.PUSH_API_SECRET || process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.PUSH_API_SECRET || process.env.CRON_SECRET}` } : {}) },
         body: JSON.stringify({
           title: `⚽ Kickoff: ${home} vs ${away}`,
           body: `${league} · ${kickoff} EAT — Make your call on BallMtaani`,
           url: "/predictions",
           tag: `kickoff-${fixture.fixture.id}`,
+          eventType: "kickoff",
+          matchId: String(fixture.fixture.id),
+          leagueId: String(fixture.league?.id || ""),
+          teamIds: [fixture.teams?.home?.id, fixture.teams?.away?.id].filter(Boolean).map(String),
+          teamNames: [home, away],
         }),
       }
     );

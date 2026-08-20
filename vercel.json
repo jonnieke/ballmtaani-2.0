@@ -24,6 +24,14 @@
     {
       "path": "/api/telegram-daily-fixtures",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/newsletter-morning",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/newsletter-evening",
+      "schedule": "0 14 * * *"
     }
   ],
   "redirects": [

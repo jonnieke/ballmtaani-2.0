@@ -30,13 +30,13 @@ export function usePushNotifications() {
     setPushError(null);
     if (!user) {
       setPushError("Sign in to enable match alerts.");
-      return;
+      return false;
     }
 
     const publicVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
     if (!publicVapidKey) {
       setPushError("Push notifications are not configured yet.");
-      return;
+      return false;
     }
 
     setIsLoading(true);
@@ -66,6 +66,21 @@ export function usePushNotifications() {
         }, { onConflict: 'endpoint' });
 
       if (error) throw error;
+
+      await supabase.from('notification_preferences').upsert({
+        user_id: user.id,
+        push_enabled: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+      await supabase.from('notification_consent_events').insert({
+        user_id: user.id,
+        channel: 'push',
+        action: 'granted',
+        purpose: 'football_news_and_match_alerts',
+        source: 'browser_push_prompt',
+        metadata: { user_agent: navigator.userAgent },
+      });
       
       setIsSubscribed(true);
       
@@ -76,9 +91,12 @@ export function usePushNotifications() {
         badge: "/logo.png"
       });
 
+      return true;
+
     } catch (err) {
       console.error("Failed to subscribe:", err);
       setPushError((err as Error).message || "Failed to enable notifications.");
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -101,9 +119,26 @@ export function usePushNotifications() {
             .match({ endpoint: subscription.endpoint });
         }
       }
+      if (user) {
+        await supabase.from('notification_preferences').upsert({
+          user_id: user.id,
+          push_enabled: false,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+        await supabase.from('notification_consent_events').insert({
+          user_id: user.id,
+          channel: 'push',
+          action: 'withdrawn',
+          purpose: 'football_news_and_match_alerts',
+          source: 'notification_preferences',
+        });
+      }
       setIsSubscribed(false);
+      return true;
     } catch (err) {
       console.error("Failed to unsubscribe:", err);
+      setPushError((err as Error).message || "Failed to disable notifications.");
+      return false;
     } finally {
       setIsLoading(false);
     }

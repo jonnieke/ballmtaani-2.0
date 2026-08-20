@@ -123,7 +123,7 @@ export function Navbar() {
           <Link
             href="/home"
             className={`font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-              location === "/home" ? "text-primary" : "text-gray-400 hover:text-white"
+              location === "/home" ? "border-b-2 border-[#FFD700] pb-1 text-[#FFD700]" : "border-b-2 border-transparent pb-1 text-gray-400 hover:text-white"
             }`}
           >
             Home
@@ -135,7 +135,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-1.5 font-bold text-xs xl:text-sm uppercase tracking-wider transition-all ${
-                  isActive ? "text-primary" : "text-gray-400 hover:text-white"
+                  isActive ? "border-b-2 border-[#FFD700] pb-1 text-[#FFD700]" : "border-b-2 border-transparent pb-1 text-gray-400 hover:text-white"
                 }`}
               >
                 {item.label}

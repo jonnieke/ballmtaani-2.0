@@ -430,17 +430,17 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
   try {
     const { data, error } = await supabase
       .from("articles")
-      .select("id, slug, title, excerpt, thumbnail_url, author_name, partner_team_name, is_wc26, published_at")
+      .select("id, slug, title, excerpt, thumbnail_url, author_name, partner_team_name, is_wc26, published_at, created_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
-      .limit(9);
+      .limit(12);
     if (error || !data) return [];
     return data.map((a: any) => ({
       id: a.id,
       slug: a.slug,
       title: a.title,
       link: `/article/${a.slug}`,
-      pubDate: a.published_at,
+      pubDate: a.published_at || a.created_at,
       source: a.partner_team_name || "BallMtaani",
       sourceLogo: "PARTNER",
       thumbnail: a.thumbnail_url || DEFAULT_NEWS_IMAGE,

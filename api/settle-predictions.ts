@@ -201,13 +201,14 @@ export default async function handler(req: any, res: any) {
     try {
       const pushRes = await fetch(`${base}/api/push-send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(process.env.PUSH_API_SECRET || process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.PUSH_API_SECRET || process.env.CRON_SECRET}` } : {}) },
         body: JSON.stringify({
           userId,
           title: "✅ Receipt In — You Called It!",
           body: `+${amount} MTC earned. Check your receipts.`,
           url: "/predictions",
           tag: `settle-${userId}-${Date.now()}`,
+          eventType: "prediction_result",
         }),
       });
       pushResults.push({ userId, ok: pushRes.ok });
@@ -251,13 +252,14 @@ export default async function handler(req: any, res: any) {
     try {
       const pushRes = await fetch(`${base}/api/push-send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(process.env.PUSH_API_SECRET || process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.PUSH_API_SECRET || process.env.CRON_SECRET}` } : {}) },
         body: JSON.stringify({
           userId,
           title,
           body,
           url: "/predictions?tab=my",
           tag: `settle-${userId}-${Date.now()}`,
+          eventType: "prediction_result",
         }),
       });
       pushResults.push({ userId, ok: pushRes.ok });
