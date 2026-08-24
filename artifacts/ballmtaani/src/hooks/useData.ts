@@ -90,7 +90,7 @@ export function useStandings() {
         console.error("Standings API failed:", err);
       }
 
-      return {};
+      return (mock.STANDINGS || {}) as Record<string, any[]>;
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
