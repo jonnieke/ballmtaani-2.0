@@ -509,26 +509,34 @@ export async function fetchPartnerArticles(): Promise<NewsArticle[]> {
   try {
     const { data, error } = await supabase
       .from("articles")
-      .select("id, slug, title, content, excerpt, thumbnail_url, author_name, partner_team_name, is_wc26, published_at")
+      .select("id, slug, title, content, excerpt, thumbnail_url, author_name, partner_team_name, tags, is_wc26, published_at, created_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
-      .limit(9);
+      .limit(30);
     if (error || !data) return [];
-    const published = data.filter((a: any) => isSubstantiveArticle(a.content)).map((a: any) => ({
-      id: a.id,
-      slug: a.slug,
-      title: a.title,
-      link: `/article/${a.slug}`,
-      pubDate: a.published_at,
-      source: a.partner_team_name || "BallMtaani",
-      sourceLogo: "PARTNER",
-      thumbnail: extractArticleImage(a.thumbnail_url) || extractArticleImage(a.content) || DEFAULT_NEWS_IMAGE,
-      imageQuality: "feed" as const,
-      description: a.excerpt || "",
-      isInternal: true,
-      isWC26: !!a.is_wc26,
-    }));
-    return published;
+    return data.map((a: any) => {
+      const pubDate = a.published_at || a.created_at || new Date().toISOString();
+      const author = (!a.author_name || a.author_name.toLowerCase() === "ballmtaani")
+        ? "Mtaa Daily"
+        : a.author_name;
+      const source = a.partner_team_name || author || "BallMtaani";
+      const thumbnail = extractArticleImage(a.thumbnail_url) || extractArticleImage(a.content) || DEFAULT_NEWS_IMAGE;
+
+      return {
+        id: a.id,
+        slug: a.slug,
+        title: a.title,
+        link: `/article/${a.slug}`,
+        pubDate,
+        source,
+        sourceLogo: "PARTNER",
+        thumbnail,
+        imageQuality: "feed" as const,
+        description: a.excerpt || "",
+        isInternal: true,
+        isWC26: !!a.is_wc26,
+      };
+    });
   } catch {
     return [];
   }

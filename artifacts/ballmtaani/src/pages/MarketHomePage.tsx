@@ -26,6 +26,7 @@ import KenyaModeToggle from "../components/KenyaModeToggle";
 import MatchHypeBarometer from "../components/MatchHypeBarometer";
 import MchambuziInsightChip from "../components/MchambuziInsightChip";
 import MatchReceiptModal from "../components/MatchReceiptModal";
+import NewsCarousel from "../components/NewsCarousel";
 import { generateReceiptCode } from "../lib/prediction-receipts";
 
 const TITLE = "BallMtaani: Live Football Scores, Fixtures & Fan Predictions Kenya";
@@ -51,7 +52,12 @@ function dedupeNews(articles: NewsArticle[]) {
     const key = [article.slug, article.link, article.title].filter(Boolean).join("|").toLowerCase();
     if (!unique.has(key)) unique.set(key, article);
   });
-  return [...unique.values()].sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+  return [...unique.values()].sort((a, b) => {
+    // Prioritize original BallMtaani articles from /articles
+    if (a.isInternal && !b.isInternal) return -1;
+    if (!a.isInternal && b.isInternal) return 1;
+    return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+  });
 }
 
 function isKenyanStory(article: NewsArticle) {
@@ -173,7 +179,7 @@ export default function MarketHomePage() {
       if (cancelled) return;
       const partner = partnerResult.status === "fulfilled" ? partnerResult.value : [];
       const headlines = newsResult.status === "fulfilled" ? newsResult.value : [];
-      setNews(dedupeNews([...partner, ...headlines]).slice(0, 18));
+      setNews(dedupeNews([...partner, ...headlines]).slice(0, 30));
     }).finally(() => { if (!cancelled) setNewsLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -925,21 +931,21 @@ export default function MarketHomePage() {
       <div className="relative z-10 mx-auto max-w-7xl px-4">
         <div className="grid gap-12 lg:grid-cols-12 items-center">
 
-          {/* Left Column: Fan-First Copy (5 cols) */}
+          {/* Left Column: Fan-First Copy (6 cols) */}
           <div className="lg:col-span-6">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
-                ⚽ Edge Intelligence Engine
+                BALLMTAANI EDGE
               </span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-black leading-[0.95] tracking-tight text-white mb-5">
-              Real match data.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-[#FFD700]">
-                Zero scam tips.
-              </span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight tracking-tight text-white mb-2">
+              Advanced football predictions.
             </h2>
-            <p className="text-white/75 text-base leading-relaxed max-w-lg mb-6 font-medium">
+            <p className="text-xl sm:text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-[#FFD700] mb-4 leading-snug">
+              Powered by data. Driven by insight.
+            </p>
+            <p className="text-white/75 text-sm sm:text-base leading-relaxed max-w-lg mb-6 font-medium">
               Every BallMtaani prediction is calculated from live attack/defence ratings, team form, and 5+ seasons of historical data — published live on a public ledger so fans can verify every single call.
             </p>
 
@@ -1053,6 +1059,17 @@ export default function MarketHomePage() {
         </div>
       </div>
     </section>
+
+    {/* ═══════════════════════════════════════════════════════════════
+        NEWS CAROUSEL — LATEST FOOTBALL NEWS & ARTICLES
+        Directly below BallMtaani Edge
+    ═══════════════════════════════════════════════════════════════ */}
+    <NewsCarousel
+      articles={news}
+      title="Latest Football News & Match Reports"
+      eyebrow="BallMtaani News Desk"
+      subtitle="Original reporting from Mtaa Daily, tactical breakdowns, Kenyan Premier League coverage, and breaking football news."
+    />
 
     {/* ═══════════════════════════════════════════════════════════════
         PHASE 14: SPORTS HUB — MULTI-SPORT EXPANSION TEASER
