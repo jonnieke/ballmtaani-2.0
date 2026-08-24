@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 const BASE = "https://ballmtaani.com";
 
@@ -85,13 +85,13 @@ export default async function handler(req: any, res: any) {
   if (type === "articles") {
     let articleEntries: string[] = [];
     try {
-      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://rkxrkpahrrgzlnxqxolu.supabase.co";
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJreHJrcGFocnJnemxueHF4b2x1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNDY2MjksImV4cCI6MjA4ODkyMjYyOX0.BHqdmaN6hFZfO_5NYpvfu_4FM3UxoRgYhKECcK3Xc8w";
       if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const { data } = await supabase.from("articles").select("slug, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false });
-        if (data) {
-          articleEntries = data.map((a: any) => urlEntry(`${BASE}/news/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
+        const { data } = await supabase.from("articles").select("slug, published_at, updated_at").eq("status", "published").order("published_at", { ascending: false }).limit(500);
+        if (data && data.length > 0) {
+          articleEntries = data.map((a: any) => urlEntry(`${BASE}/article/${esc(a.slug)}`, { lastmod: (a.updated_at || a.published_at || today).slice(0, 10), changefreq: "weekly", priority: "0.90" }));
         }
       }
     } catch {}

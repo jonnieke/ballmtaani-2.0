@@ -39,6 +39,6 @@
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/((?!api/|assets/|icons/|logo|manifest|sw\\.js|robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|icons/|logo|manifest|sw\\.js|robots\\.txt|sitemap\\.xml|ads\\.txt).*)", "destination": "/index.html" }
   ]
 }

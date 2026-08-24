@@ -6,6 +6,7 @@ import { getEditorialFallbackArticle } from "../data/editorial-fallback-articles
 import { ArrowLeft, Share2, ChevronRight } from "lucide-react";
 import SEO from "../components/SEO";
 import ArticleEngagement from "../components/ArticleEngagement";
+import ArticleAdUnit from "../components/ArticleAdUnit";
 
 interface RelatedArticle {
   id: string;
@@ -388,6 +389,11 @@ export default function ArticlePage() {
                 </span>
               ))}
             </div>
+          )}
+
+          {/* Compliant In-Article Ad Unit */}
+          {isSubstantiveArticle(article.content) && (
+            <ArticleAdUnit slot="horizontal" className="my-6" />
           )}
 
           {/* ── Likes + Comments + Share ── */}

@@ -14,8 +14,9 @@ const TOPICS = [
 ];
 
 const CHANNELS = [
-  { icon: Mail, label: "Email", value: "info@ballmtaani.com", href: "mailto:info@ballmtaani.com", desc: "General enquiries and editorial" },
-  { icon: Briefcase, label: "Sponsorship", value: "sponsors@ballmtaani.com", href: "mailto:sponsors@ballmtaani.com", desc: "Advertising and partnership deals" },
+  { icon: Mail, label: "Editorial Desk", value: "editor@ballmtaani.com", href: "mailto:editor@ballmtaani.com", desc: "News tips, editorial pitches & article feedback" },
+  { icon: Mail, label: "General & Support", value: "info@ballmtaani.com", href: "mailto:info@ballmtaani.com", desc: "General enquiries, account and privacy requests" },
+  { icon: Briefcase, label: "Sponsorship & Ads", value: "sponsors@ballmtaani.com", href: "mailto:sponsors@ballmtaani.com", desc: "Commercial partnerships & direct sponsorships" },
 ];
 
 export default function ContactPage() {
