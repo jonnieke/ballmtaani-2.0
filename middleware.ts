@@ -10,6 +10,7 @@ declare class URL {
   constructor(input: string);
   readonly pathname: string;
 }
+declare function fetch(input: any, init?: any): Promise<any>;
 
 /**
  * Vercel Edge Middleware — Crawlable HTML & Bot SEO Engine
@@ -25,7 +26,12 @@ interface PageMeta {
   description: string;
   keywords: string;
   h1: string;
-  body: string;
+  body?: string;
+  bodyHtml?: string;
+  author?: string;
+  datePublished?: string;
+  dateModified?: string;
+  image?: string;
   links?: { name: string; url: string }[];
   jsonLdType?: string;
   status?: number;
@@ -223,6 +229,7 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
   },
   "/terms-of-service": {
     title: "Terms of Service | BallMtaani",
+    description:
       "Terms and conditions for using BallMtaani: platform rules, user content guidelines, intellectual property, and community standards.",
     keywords:
       "BallMtaani terms of service, platform rules, terms and conditions",
@@ -254,6 +261,7 @@ const TEAM_SLUGS: Record<string, { name: string; country: string; league: string
   "afc-leopards": { name: "AFC Leopards", country: "Kenya", league: "FKF Premier League", desc: "AFC Leopards (Ingwe) — Pride of Kenyan football. Fixtures, derby action, standings, fan predictions and Kenyan football spotlight." },
   "real-madrid": { name: "Real Madrid CF", country: "Spain", league: "La Liga", desc: "Real Madrid CF — Los Blancos Champions League royalty and La Liga battles. Live scores, predictions, and squad analysis." },
   "barcelona": { name: "FC Barcelona", country: "Spain", league: "La Liga", desc: "FC Barcelona — Catalan football flair, La Liga updates, El Clasico predictions and tactical breakdowns." },
+};
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
