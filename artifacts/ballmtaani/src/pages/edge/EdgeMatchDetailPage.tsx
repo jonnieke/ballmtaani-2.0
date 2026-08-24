@@ -15,6 +15,7 @@ import FanModelPulse from "../../components/edge/FanModelPulse";
 import MatchReceiptModal from "../../components/edge/MatchReceiptModal";
 import MchambuziAudioBrief from "../../components/edge/MchambuziAudioBrief";
 import KenyanOddsComparison from "../../components/edge/KenyanOddsComparison";
+import TelegramNotificationBridge from "../../components/edge/TelegramNotificationBridge";
 import { SavedContentService } from "../../lib/edge/alerts/saved-content-service";
 import RouteSEO from "../../components/RouteSEO";
 
@@ -226,6 +227,13 @@ export default function EdgeMatchDetailPage() {
             <LikelyScorelines scorelines={prediction.topScorelines} />
           </div>
         </div>
+
+        {/* 📲 Telegram Match Alert Integration */}
+        <TelegramNotificationBridge
+          fixtureId={prediction.fixtureId}
+          matchTitle={`${prediction.homeTeam} vs ${prediction.awayTeam}`}
+          variant="card"
+        />
 
         {/* Risk Factors */}
         <div className="rounded-xl border border-white/10 bg-[#121212] p-6">

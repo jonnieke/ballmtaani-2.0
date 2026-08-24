@@ -75,6 +75,7 @@ import EdgePerformancePage from "./pages/edge/EdgePerformancePage";
 import EdgeHowItWorksPage from "./pages/edge/EdgeHowItWorksPage";
 import EdgeModelsPage from "./pages/edge/EdgeModelsPage";
 import EdgePricingPreviewPage from "./pages/edge/EdgePricingPreviewPage";
+import EdgeLeaderboardPage from "./pages/edge/EdgeLeaderboardPage";
 import AccountEdgePage from "./pages/edge/AccountEdgePage";
 import EdgeForYouPage from "./pages/edge/EdgeForYouPage";
 import PartnerDeveloperPortalPage from "./pages/edge/PartnerDeveloperPortalPage";
@@ -227,6 +228,8 @@ export default function App() {
                 
                 {/* Edge Intelligence Engine Public & Account Routes */}
                 <Route path="/edge" component={EdgeLandingPage} />
+                <Route path="/edge/leaderboard" component={EdgeLeaderboardPage} />
+                <Route path="/edge/receipts" component={EdgeLeaderboardPage} />
                 <Route path="/edge/for-you" component={EdgeForYouPage} />
                 <Route path="/edge/today" component={EdgeMatchListingPage} />
                 <Route path="/edge/tomorrow" component={EdgeMatchListingPage} />

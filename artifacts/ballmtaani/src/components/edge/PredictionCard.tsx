@@ -8,6 +8,7 @@ import ProbabilityBar from "./ProbabilityBar";
 import ConfidenceBadge from "./ConfidenceBadge";
 import DataQualityBadge from "./DataQualityBadge";
 import MatchReceiptModal from "./MatchReceiptModal";
+import TelegramNotificationBridge from "./TelegramNotificationBridge";
 
 export interface PredictionCardProps {
   prediction: MatchPredictionOutput;
@@ -95,6 +96,12 @@ export default function PredictionCard({ prediction }: PredictionCardProps) {
         <ConfidenceBadge confidence={prediction.confidence} />
 
         <div className="flex items-center gap-2">
+          <TelegramNotificationBridge
+            fixtureId={prediction.fixtureId}
+            matchTitle={`${prediction.homeTeam} vs ${prediction.awayTeam}`}
+            variant="button"
+          />
+
           <Button
             onClick={() => setShowReceipt(true)}
             size="sm"

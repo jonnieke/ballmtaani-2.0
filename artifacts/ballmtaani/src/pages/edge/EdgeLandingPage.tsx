@@ -5,6 +5,7 @@ import { Badge } from "../../components/ui/badge";
 import { ChevronRight, ShieldCheck, BarChart2, Cpu, Lock, AlertCircle } from "lucide-react";
 import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
 import PredictionCard from "../../components/edge/PredictionCard";
+import TelegramNotificationBridge from "../../components/edge/TelegramNotificationBridge";
 import RouteSEO from "../../components/RouteSEO";
 
 export default function EdgeLandingPage() {
@@ -47,6 +48,12 @@ export default function EdgeLandingPage() {
               </Button>
             </Link>
 
+            <Link href="/edge/leaderboard">
+              <Button size="lg" className="h-11 w-full bg-[#FFD700] text-black hover:bg-[#E6C200] px-5 text-sm font-bold sm:w-auto shadow-md">
+                🏆 Mtaa Leaderboard
+              </Button>
+            </Link>
+
             <Link href="/edge/performance">
               <Button size="lg" variant="outline" className="h-11 w-full border-white/20 px-5 text-sm font-bold text-white hover:bg-white/10 sm:w-auto">
                 See Model Performance <BarChart2 className="ml-2 h-4 w-4 text-emerald-400" />
@@ -66,7 +73,10 @@ export default function EdgeLandingPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-10">
+        {/* Telegram Live Notification Banner */}
+        <TelegramNotificationBridge variant="banner" />
+
         {/* Competition Filter Bar */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           <button
