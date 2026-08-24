@@ -125,6 +125,8 @@ import DiligenceRoomPage from "./pages/edge/DiligenceRoomPage";
 import ExitReadinessPage from "./pages/edge/ExitReadinessPage";
 import StrategicTransactionsPage from "./pages/edge/StrategicTransactionsPage";
 
+import PwaInstallPrompt from "./components/edge/PwaInstallPrompt";
+
 export default function App() {
   const [isChooseClubOpen, setIsChooseClubOpen] = useState(false);
 
@@ -319,6 +321,7 @@ export default function App() {
             </main>
 
             <ChooseClubModal isOpen={isChooseClubOpen} onClose={() => setIsChooseClubOpen(false)} />
+            <PwaInstallPrompt />
           </div>
         </AuthProvider>
       </ThemeProvider>
