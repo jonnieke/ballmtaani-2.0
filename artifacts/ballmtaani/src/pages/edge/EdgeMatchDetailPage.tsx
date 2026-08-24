@@ -13,6 +13,8 @@ import PredictionTimeline from "../../components/edge/PredictionTimeline";
 import LineupImpactBanner from "../../components/edge/LineupImpactBanner";
 import FanModelPulse from "../../components/edge/FanModelPulse";
 import MatchReceiptModal from "../../components/edge/MatchReceiptModal";
+import MchambuziAudioBrief from "../../components/edge/MchambuziAudioBrief";
+import KenyanOddsComparison from "../../components/edge/KenyanOddsComparison";
 import { SavedContentService } from "../../lib/edge/alerts/saved-content-service";
 import RouteSEO from "../../components/RouteSEO";
 
@@ -145,6 +147,9 @@ export default function EdgeMatchDetailPage() {
           />
         )}
 
+        {/* 🎙️ 60-Second Tactical Audio Briefing */}
+        <MchambuziAudioBrief prediction={prediction} />
+
         {/* Mtaa Tactical Briefing Box */}
         {prediction.storylines && (
           <div className="rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-950/20 via-[#141414] to-[#121212] p-6 space-y-4 shadow-xl">
@@ -204,6 +209,9 @@ export default function EdgeMatchDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* 🇰🇪 Kenyan Bookmakers Live Odds & Value Edge */}
+        <KenyanOddsComparison prediction={prediction} />
 
         {/* Deterministic Explanation & Top Scorelines */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
