@@ -66,6 +66,11 @@ import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import OTPPage from "./pages/auth/OTPPage";
 import { ChooseClubModal } from "./components/ChooseClubModal";
 
+// Talanta Mtaani, Derrick Okach Shabana FC Hub & Fan Rewards
+import TalantaMtaaniPage from "./pages/talanta/TalantaMtaaniPage";
+import DerrickOkachPage from "./pages/insider/DerrickOkachPage";
+import FanRewardsPage from "./pages/rewards/FanRewardsPage";
+
 // BallMtaani Edge Phase 2 - 6 Pages
 import AdminEdgePage from "./pages/edge/AdminEdgePage";
 import EdgeLandingPage from "./pages/edge/EdgeLandingPage";
@@ -227,6 +232,9 @@ export default function App() {
                 <Route path="/terms" component={TermsPage} />
                 <Route path="/partners/club" component={ClubPartnerPortalPage} />
                 <Route path="/market-watch" component={MarketWatchPage} />
+                <Route path="/talanta" component={TalantaMtaaniPage} />
+                <Route path="/insider/derrick-okach" component={DerrickOkachPage} />
+                <Route path="/rewards" component={FanRewardsPage} />
                 
                 {/* Edge Intelligence Engine Public & Account Routes */}
                 <Route path="/edge" component={EdgeLandingPage} />
