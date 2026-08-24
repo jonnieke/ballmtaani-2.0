@@ -26,6 +26,17 @@ export interface PredictionGeneratorInput {
   isEarlySeason?: boolean;
   isNeutralVenue?: boolean;
   modelVersion?: string;
+  storylines?: {
+    strength: string;
+    vulnerability: string;
+    mtaaVerdict: string;
+  };
+  fanVote?: {
+    homeVotes: number;
+    drawVotes: number;
+    awayVotes: number;
+    totalVotes: number;
+  };
 }
 
 export function generateFixturePrediction(input: PredictionGeneratorInput): MatchPredictionOutput {
@@ -91,6 +102,8 @@ export function generateFixturePrediction(input: PredictionGeneratorInput): Matc
     riskFactors: confRes.riskFactors,
     templateExplanation: `${input.homeTeam} (Elo ${Math.round(input.homeElo)}) vs ${input.awayTeam} (Elo ${Math.round(input.awayElo)}). Model xG: ${modelRes.expectedHomeGoals} - ${modelRes.expectedAwayGoals}.`,
     markets: [],
+    storylines: input.storylines,
+    fanVote: input.fanVote,
     revisionNumber: 1,
     generatedAt: new Date().toISOString(),
     publishedAt: new Date().toISOString(),
