@@ -364,7 +364,7 @@ function StandingsTable({
       {loading ? (
         <EmptyState>Loading verified table...</EmptyState>
       ) : rows.length === 0 ? (
-        <EmptyState>Verified standings are currently unavailable.</EmptyState>
+        <EmptyState>Standings data could not be verified from the configured football data provider right now.</EmptyState>
       ) : (
         rows.slice(0, 8).map((row) => (
           <div
