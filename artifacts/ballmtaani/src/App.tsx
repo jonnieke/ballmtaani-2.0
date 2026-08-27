@@ -18,6 +18,7 @@ import MatchDetailPage from "./pages/MatchDetailPage";
 import MatchesPage from "./pages/MatchesPage";
 import LeagueCentrePage from "./pages/LeagueCentrePage";
 import LeagueDetailPage from "./pages/LeagueDetailPage";
+import KenyaFootballPage from "./pages/KenyaFootballPage";
 import NewsPage from "./pages/NewsPage";
 import LiveCenterPage from "./pages/LiveCenterPage";
 import LiveCenterIndexPage from "./pages/LiveCenterIndexPage";
@@ -173,6 +174,7 @@ export default function App() {
                 <Route path="/leagues/:leagueSlug">{() => <LeagueDetailPage subView="main" />}</Route>
                 <Route path="/leagues/:leagueSlug/fixtures">{() => <LeagueDetailPage subView="fixtures" />}</Route>
                 <Route path="/leagues/:leagueSlug/table">{() => <LeagueDetailPage subView="table" />}</Route>
+                <Route path="/kenya-football" component={KenyaFootballPage} />
 
                 {/* News & Content */}
                 <Route path="/news" component={NewsPage} />
