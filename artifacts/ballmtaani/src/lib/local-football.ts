@@ -45,10 +45,11 @@ export async function fetchLocalFootballDesk(): Promise<LocalFootballDesk> {
       competition:local_competitions(name), team:local_teams(name)
     `).order("published_at", { ascending: false }).order("position", { ascending: true }).limit(10),
   ]);
-  if (matchResult.error || standingResult.error) return { matches: [], standings: [] };
+  // Keep each published feed independent: an empty or unavailable table must
+  // never hide verified fixtures and results that are already public.
   const one = (value: any) => Array.isArray(value) ? value[0] : value;
   return {
-    matches: (matchResult.data || []).map((row: any) => ({
+    matches: (matchResult.error ? [] : matchResult.data || []).map((row: any) => ({
       id: row.id, status: row.status, scheduledDate: row.scheduled_date,
       kickoffTime: row.kickoff_time_text, kickoffAt: row.kickoff_at, round: row.round_label,
       homeScore: row.home_score, awayScore: row.away_score,
@@ -57,7 +58,7 @@ export async function fetchLocalFootballDesk(): Promise<LocalFootballDesk> {
       homeTeam: one(row.home_team)?.name || "TBC", awayTeam: one(row.away_team)?.name || "TBC",
       venue: one(row.venue)?.name || null,
     })),
-    standings: (standingResult.data || []).map((row: any) => ({
+    standings: (standingResult.error ? [] : standingResult.data || []).map((row: any) => ({
       id: row.id, position: row.position, played: row.played,
       goalDifference: row.goal_difference, points: row.points,
       competition: one(row.competition)?.name || "Local table", team: one(row.team)?.name || "TBC",
