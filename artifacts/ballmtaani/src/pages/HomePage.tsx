@@ -828,7 +828,7 @@ function KenyaDailyWidget({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
         <div>
           <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#ef3038]">Daily local desk</p>
-          <h2 className="mt-1 text-[17px] font-black uppercase">Kenya Football Daily</h2>
+          <h2 id="kenya-football-daily-heading" className="mt-1 text-[17px] font-black uppercase">Kenya Football Daily</h2>
         </div>
         <div className="flex items-center gap-3 text-[8px] font-black uppercase">
           <span className="text-white/45">{localDesk.matches.length || localDesk.standings.length ? "Organizer data · Human verified" : "FKF Premier League · Kenya Super League"}</span>
@@ -952,6 +952,15 @@ export default function HomePage() {
       <LeagueRail />
       <div className="mx-auto max-w-[1500px] space-y-3 px-4 py-3">
         <EdgeBanner match={featuredMatch} image={news[0]?.thumbnail} />
+        <section aria-labelledby="kenya-football-daily-heading">
+          <KenyaDailyWidget
+            standings={kenyaDaily?.table || []}
+            fixtures={kenyaDaily?.fixtures || []}
+            stories={kenyaStories}
+            loading={kenyaDailyLoading}
+            localDesk={kenyaDaily?.localDesk || { matches: [], standings: [] }}
+          />
+        </section>
         <NewsCarousel articles={news} />
         <MatchCentre
           fixtures={fixtures}
@@ -981,14 +990,7 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-          <section className="grid gap-2 min-[900px]:grid-cols-[1.55fr_.82fr_.72fr]">
-          <KenyaDailyWidget
-            standings={kenyaDaily?.table || []}
-            fixtures={kenyaDaily?.fixtures || []}
-            stories={kenyaStories}
-            loading={kenyaDailyLoading}
-            localDesk={kenyaDaily?.localDesk || { matches: [], standings: [] }}
-          />
+          <section className="grid gap-2 min-[900px]:grid-cols-2">
           <Panel>
             <SectionHeader title="Editorial picks" href="/news" />
             <CompactStories articles={editorialPicks} />
