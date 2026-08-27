@@ -66,6 +66,7 @@ export default function AdminDashboardPage() {
           <p className="text-[10px] font-black uppercase tracking-widest text-white/25">Quick Actions</p>
           {[
             { href: "/admin/articles", label: "Write New Article", sub: "Partner content for the homepage", color: "border-[#B30000]/20 hover:border-[#B30000]/40" },
+            { href: "/admin/local-football", label: "Process Local Football Poster", sub: "Extract and verify fixtures, results and standings", color: "border-[#B30000]/20 hover:border-[#B30000]/40" },
             { href: "/admin/ads", label: "Create Ad Campaign", sub: "Direct sponsor banners replacing AdSense", color: "border-[#FFD700]/15 hover:border-[#FFD700]/35" },
             { href: "/admin/partners", label: "Manage Partners", sub: "Approve teams to publish articles", color: "border-purple-500/15 hover:border-purple-500/35" },
           ].map(({ href, label, sub, color }) => (

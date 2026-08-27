@@ -38,6 +38,7 @@ import {
   type NewsArticle,
 } from "../lib/news-api";
 import type { HomepageMatch } from "../lib/home-season";
+import { fetchLocalFootballDesk, type LocalFootballDesk } from "../lib/local-football";
 
 const DEFAULT_IMAGE = "/images/hero_player_celebration.png";
 const FANS_IMAGE = "/images/kenyan_fans.png";
@@ -807,11 +808,13 @@ function KenyaDailyWidget({
   fixtures,
   stories,
   loading,
+  localDesk,
 }: {
   standings: StandingEntry[];
   fixtures: HomeMatch[];
   stories: NewsArticle[];
   loading: boolean;
+  localDesk: LocalFootballDesk;
 }) {
   const completed = new Set(["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO"]);
   const nextFixtures = fixtures
@@ -828,7 +831,7 @@ function KenyaDailyWidget({
           <h2 className="mt-1 text-[17px] font-black uppercase">Kenya Football Daily</h2>
         </div>
         <div className="flex items-center gap-3 text-[8px] font-black uppercase">
-          <span className="text-white/45">FKF Premier League · Kenya Super League</span>
+          <span className="text-white/45">{localDesk.matches.length || localDesk.standings.length ? "Organizer data · Human verified" : "FKF Premier League · Kenya Super League"}</span>
           <Link href="/news?section=kenya" className="text-[#ef3038]">Open Kenya desk <ArrowRight className="inline h-3 w-3" /></Link>
         </div>
       </div>
@@ -838,7 +841,14 @@ function KenyaDailyWidget({
             <h3 className="text-[10px] font-black uppercase">FKF standings</h3>
             <Link href="/leagues/fkf-premier-league/table" className="text-[8px] font-black uppercase text-[#ef3038]">Full table</Link>
           </div>
-          {loading ? <p className="py-8 text-center text-[10px] text-white/40">Loading verified table...</p> : standings.length ? (
+          {localDesk.standings.length ? <div className="mt-2 space-y-1">
+            {localDesk.standings.slice(0, 5).map((row) => (
+              <div key={row.id} className="grid grid-cols-[18px_1fr_28px_32px] items-center gap-2 border-b border-white/[0.07] py-1.5 text-[9px]">
+                <span className="text-white/45">{row.position}</span><span className="truncate font-bold">{row.team}</span><span className="text-center text-white/55">{row.played ?? "-"}</span><b className="text-right">{row.points ?? "-"}</b>
+              </div>
+            ))}
+            <p className="pt-1 text-[7px] font-black uppercase text-emerald-400">Verified from organizer poster</p>
+          </div> : loading ? <p className="py-8 text-center text-[10px] text-white/40">Loading verified table...</p> : standings.length ? (
             <div className="mt-2 space-y-1">
               {standings.slice(0, 5).map((row) => (
                 <div key={`${row.rank}-${row.team}`} className="grid grid-cols-[18px_1fr_28px_32px] items-center gap-2 border-b border-white/[0.07] py-1.5 text-[9px]">
@@ -850,7 +860,8 @@ function KenyaDailyWidget({
         </div>
         <div className="border-b border-white/10 p-3 md:border-b-0 md:border-r">
           <div className="flex items-center justify-between"><h3 className="text-[10px] font-black uppercase">Next local fixtures</h3><Link href="/matches?tab=fixtures" className="text-[8px] font-black uppercase text-[#ef3038]">All fixtures</Link></div>
-          {loading ? <p className="py-8 text-center text-[10px] text-white/40">Loading local schedule...</p> : nextFixtures.length ? <div className="mt-2 divide-y divide-white/10">{nextFixtures.map((match) => <Link key={String(match.id)} href={`/match/${match.id}`} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2 text-[9px] hover:bg-white/[0.03]"><span className="truncate font-bold">{shortTeam(match.home)}</span><span className="text-center text-white/40"><b className="block text-white">{matchTime(match)}</b><small>{matchDate(match)}</small></span><span className="truncate text-right font-bold">{shortTeam(match.away)}</span></Link>)}</div> : <p className="py-8 text-center text-[10px] leading-4 text-white/40">No verified FKF or Kenya Super League fixtures are currently published.</p>}
+          {localDesk.matches.length ? <div className="mt-2 divide-y divide-white/10">{localDesk.matches.slice(0, 5).map((match) => <div key={match.id} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2 text-[9px]"><span className="truncate font-bold">{shortTeam(match.homeTeam)}</span><span className="text-center text-white/40">{match.status === "finished" && match.homeScore !== null && match.awayScore !== null ? <b className="block text-white">{match.homeScore} - {match.awayScore}</b> : <><b className="block text-white">{match.kickoffTime || "TBC"}</b><small>{match.scheduledDate || match.round || "Fixture"}</small></>}</span><span className="truncate text-right font-bold">{shortTeam(match.awayTeam)}</span></div>)}</div>
+          : loading ? <p className="py-8 text-center text-[10px] text-white/40">Loading local schedule...</p> : nextFixtures.length ? <div className="mt-2 divide-y divide-white/10">{nextFixtures.map((match) => <Link key={String(match.id)} href={`/match/${match.id}`} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2 text-[9px] hover:bg-white/[0.03]"><span className="truncate font-bold">{shortTeam(match.home)}</span><span className="text-center text-white/40"><b className="block text-white">{matchTime(match)}</b><small>{matchDate(match)}</small></span><span className="truncate text-right font-bold">{shortTeam(match.away)}</span></Link>)}</div> : <p className="py-8 text-center text-[10px] leading-4 text-white/40">No verified FKF or Kenya Super League fixtures are currently published.</p>}
         </div>
         <div className="p-3">
           <div className="flex items-center justify-between"><h3 className="text-[10px] font-black uppercase">Local stories & talent watch</h3><Link href="/news?section=kenya" className="text-[8px] font-black uppercase text-[#ef3038]">More stories</Link></div>
@@ -871,12 +882,13 @@ export default function HomePage() {
   const { data: kenyaDaily, isLoading: kenyaDailyLoading } = useQuery({
     queryKey: ["kenya-daily", 276, 277],
     queryFn: async () => {
-      const [table, fkfFixtures, superLeagueFixtures] = await Promise.all([
+      const [table, fkfFixtures, superLeagueFixtures, localDesk] = await Promise.all([
         fetchStandings(276),
         fetchLeagueSeasonFixtures(276, 2026),
         fetchLeagueSeasonFixtures(277, 2026),
+        fetchLocalFootballDesk(),
       ]);
-      return { table, fixtures: [...fkfFixtures, ...superLeagueFixtures] as HomeMatch[] };
+      return { table, fixtures: [...fkfFixtures, ...superLeagueFixtures] as HomeMatch[], localDesk };
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -975,6 +987,7 @@ export default function HomePage() {
             fixtures={kenyaDaily?.fixtures || []}
             stories={kenyaStories}
             loading={kenyaDailyLoading}
+            localDesk={kenyaDaily?.localDesk || { matches: [], standings: [] }}
           />
           <Panel>
             <SectionHeader title="Editorial picks" href="/news" />

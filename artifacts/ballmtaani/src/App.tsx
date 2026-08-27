@@ -60,6 +60,7 @@ import AdminArticlesPage from "./pages/AdminArticlesPage";
 import AdminPartnersPage from "./pages/AdminPartnersPage";
 import AdminRewardsPage from "./pages/AdminRewardsPage";
 import AdminRolesPage from "./pages/AdminRolesPage";
+import AdminLocalFootballPage from "./pages/AdminLocalFootballPage";
 import ClubPartnerPortalPage from "./pages/ClubPartnerPortalPage";
 import LoginPage from "./pages/auth/LoginPage";
 import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
@@ -261,6 +262,7 @@ export default function App() {
 
                 {/* Platform Admin */}
                 <Route path="/admin" component={AdminDashboardPage} />
+                <Route path="/admin/local-football" component={AdminLocalFootballPage} />
                 <Route path="/admin/articles" component={AdminArticlesPage} />
                 <Route path="/admin/articles/" component={AdminArticlesPage} />
                 <Route path="/admin/ads" component={AdminAdsPage} />
