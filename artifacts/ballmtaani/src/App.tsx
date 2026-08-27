@@ -66,6 +66,11 @@ import AuthCallbackPage from "./pages/auth/AuthCallbackPage";
 import OTPPage from "./pages/auth/OTPPage";
 import { ChooseClubModal } from "./components/ChooseClubModal";
 
+// Talanta Mtaani, Derrick Okach Shabana FC Hub & Fan Rewards
+import TalantaMtaaniPage from "./pages/talanta/TalantaMtaaniPage";
+import DerrickOkachPage from "./pages/insider/DerrickOkachPage";
+import FanRewardsPage from "./pages/rewards/FanRewardsPage";
+
 // BallMtaani Edge Phase 2 - 6 Pages
 import AdminEdgePage from "./pages/edge/AdminEdgePage";
 import EdgeLandingPage from "./pages/edge/EdgeLandingPage";
@@ -75,6 +80,7 @@ import EdgePerformancePage from "./pages/edge/EdgePerformancePage";
 import EdgeHowItWorksPage from "./pages/edge/EdgeHowItWorksPage";
 import EdgeModelsPage from "./pages/edge/EdgeModelsPage";
 import EdgePricingPreviewPage from "./pages/edge/EdgePricingPreviewPage";
+import EdgeLeaderboardPage from "./pages/edge/EdgeLeaderboardPage";
 import AccountEdgePage from "./pages/edge/AccountEdgePage";
 import EdgeForYouPage from "./pages/edge/EdgeForYouPage";
 import PartnerDeveloperPortalPage from "./pages/edge/PartnerDeveloperPortalPage";
@@ -123,6 +129,8 @@ import InvestorPipelinePage from "./pages/edge/InvestorPipelinePage";
 import DiligenceRoomPage from "./pages/edge/DiligenceRoomPage";
 import ExitReadinessPage from "./pages/edge/ExitReadinessPage";
 import StrategicTransactionsPage from "./pages/edge/StrategicTransactionsPage";
+
+import PwaInstallPrompt from "./components/edge/PwaInstallPrompt";
 
 export default function App() {
   const [isChooseClubOpen, setIsChooseClubOpen] = useState(false);
@@ -224,9 +232,14 @@ export default function App() {
                 <Route path="/terms" component={TermsPage} />
                 <Route path="/partners/club" component={ClubPartnerPortalPage} />
                 <Route path="/market-watch" component={MarketWatchPage} />
+                <Route path="/talanta" component={TalantaMtaaniPage} />
+                <Route path="/insider/derrick-okach" component={DerrickOkachPage} />
+                <Route path="/rewards" component={FanRewardsPage} />
                 
                 {/* Edge Intelligence Engine Public & Account Routes */}
                 <Route path="/edge" component={EdgeLandingPage} />
+                <Route path="/edge/leaderboard" component={EdgeLeaderboardPage} />
+                <Route path="/edge/receipts" component={EdgeLeaderboardPage} />
                 <Route path="/edge/for-you" component={EdgeForYouPage} />
                 <Route path="/edge/today" component={EdgeMatchListingPage} />
                 <Route path="/edge/tomorrow" component={EdgeMatchListingPage} />
@@ -316,6 +329,7 @@ export default function App() {
             </main>
 
             <ChooseClubModal isOpen={isChooseClubOpen} onClose={() => setIsChooseClubOpen(false)} />
+            <PwaInstallPrompt />
           </div>
         </AuthProvider>
       </ThemeProvider>

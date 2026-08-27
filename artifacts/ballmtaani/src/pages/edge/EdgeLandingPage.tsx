@@ -5,9 +5,20 @@ import { Badge } from "../../components/ui/badge";
 import { ChevronRight, ShieldCheck, BarChart2, Cpu, Lock, AlertCircle } from "lucide-react";
 import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
 import PredictionCard from "../../components/edge/PredictionCard";
+import TelegramNotificationBridge from "../../components/edge/TelegramNotificationBridge";
 import RouteSEO from "../../components/RouteSEO";
 
 export default function EdgeLandingPage() {
+  const [selectedComp, setSelectedComp] = React.useState<string>("all");
+
+  const filteredPredictions = React.useMemo(() => {
+    if (selectedComp === "all") return MOCK_PUBLISHED_PREDICTIONS;
+    if (selectedComp === "kenya") return MOCK_PUBLISHED_PREDICTIONS.filter(p => p.competition.includes("FKF") || p.competition.includes("AFCON"));
+    if (selectedComp === "epl") return MOCK_PUBLISHED_PREDICTIONS.filter(p => p.competition === "Premier League");
+    if (selectedComp === "ucl") return MOCK_PUBLISHED_PREDICTIONS.filter(p => p.competition.includes("Champions League"));
+    return MOCK_PUBLISHED_PREDICTIONS;
+  }, [selectedComp]);
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#ffffff] pb-20">
       <RouteSEO path="/edge" />
@@ -16,7 +27,7 @@ export default function EdgeLandingPage() {
       <div className="relative border-b border-white/10 bg-gradient-to-b from-[#121212] via-[#0A0A0A] to-[#0A0A0A] px-4 py-10 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-5xl space-y-5 text-center sm:space-y-6">
           <Badge className="mx-auto inline-flex max-w-full flex-wrap justify-center border-[#B30000]/30 bg-[#B30000]/20 px-3 py-1 text-xs font-bold leading-none text-[#B30000]">
-            BallMtaani Edge — Match Intelligence Engine
+            BallMtaani Edge — Kenyan &amp; Global Match Intelligence Engine
           </Badge>
 
           <h1 className="mx-auto max-w-3xl text-[clamp(2rem,8vw,3.75rem)] font-extrabold tracking-tight text-white leading-[1.02] sm:leading-tight">
@@ -27,13 +38,19 @@ export default function EdgeLandingPage() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-sm leading-6 text-gray-300 sm:text-base sm:leading-relaxed">
-            Explore match win probabilities, expected goals, likely scorelines, model confidence levels, and transparent public performance history before kickoff.
+            From the FKF Premier League Mashemeji Derby to the English Premier League and Champions League. Explore win probabilities, expected goals (xG), model scorelines, and public performance history.
           </p>
 
           <div className="flex flex-col items-stretch justify-center gap-3 pt-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <Link href="/edge/today">
               <Button size="lg" className="h-11 w-full bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 sm:w-auto">
                 View Today's Matches <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+
+            <Link href="/edge/leaderboard">
+              <Button size="lg" className="h-11 w-full bg-[#FFD700] text-black hover:bg-[#E6C200] px-5 text-sm font-bold sm:w-auto shadow-md">
+                🏆 Mtaa Leaderboard
               </Button>
             </Link>
 
@@ -56,24 +73,71 @@ export default function EdgeLandingPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-10">
+        {/* Telegram Live Notification Banner */}
+        <TelegramNotificationBridge variant="banner" />
+
+        {/* Competition Filter Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <button
+            onClick={() => setSelectedComp("all")}
+            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              selectedComp === "all"
+                ? "bg-emerald-600 text-white"
+                : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
+            }`}
+          >
+            All Matches ({MOCK_PUBLISHED_PREDICTIONS.length})
+          </button>
+          <button
+            onClick={() => setSelectedComp("kenya")}
+            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              selectedComp === "kenya"
+                ? "bg-[#B30000] text-white"
+                : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
+            }`}
+          >
+            🇰🇪 FKF-PL &amp; African Fixtures
+          </button>
+          <button
+            onClick={() => setSelectedComp("epl")}
+            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              selectedComp === "epl"
+                ? "bg-purple-700 text-white"
+                : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
+            }`}
+          >
+            🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League
+          </button>
+          <button
+            onClick={() => setSelectedComp("ucl")}
+            className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              selectedComp === "ucl"
+                ? "bg-blue-700 text-white"
+                : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
+            }`}
+          >
+            🇪🇺 Champions League
+          </button>
+        </div>
+
         {/* Today's Featured Predictions Grid */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-extrabold text-white">Today's Strongest Insights</h2>
-              <p className="text-xs text-gray-400">Featured matches evaluated by active model version ballmtaani-edge-statistical-v1</p>
+              <h2 className="text-2xl font-extrabold text-white">Featured Match Intelligence</h2>
+              <p className="text-xs text-gray-400">Model version ballmtaani-edge-statistical-v1 with Dixon-Coles Poisson calculations</p>
             </div>
 
             <Link href="/edge/upcoming">
               <Button variant="ghost" size="sm" className="text-xs text-emerald-400 hover:text-emerald-300">
-                View All Upcoming <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                View All <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {MOCK_PUBLISHED_PREDICTIONS.map((pred) => (
+            {filteredPredictions.map((pred) => (
               <PredictionCard key={pred.fixtureId} prediction={pred} />
             ))}
           </div>

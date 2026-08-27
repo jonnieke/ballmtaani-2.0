@@ -99,6 +99,19 @@ export interface MatchPredictionOutput {
   // Markets & Value
   markets: MarketAnalysisResult[];
   
+  // Mtaa Context & Kenyan Fan Intelligence
+  storylines?: {
+    strength: string;
+    vulnerability: string;
+    mtaaVerdict: string;
+  };
+  fanVote?: {
+    homeVotes: number;
+    drawVotes: number;
+    awayVotes: number;
+    totalVotes: number;
+  };
+
   revisionNumber: number;
   generatedAt: string;
   publishedAt: string;

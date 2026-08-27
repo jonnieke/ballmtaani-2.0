@@ -1,9 +1,9 @@
-// BallMtaani Service Worker v12
-// v12: force-evicts v11 and older caches after WC26 hub, news,
-// predictions, and homepage retention changes in this release.
+// BallMtaani Service Worker v13
+// v13: force-evicts v12 and older caches after Edge typography,
+// news carousel and articles priority changes in this release.
 // index.html is NEVER cached — every navigation fetches fresh.
 
-const CACHE_NAME = 'ballmtaani-v12';
+const CACHE_NAME = 'ballmtaani-v13';
 
 // Only cache true static assets that never change between deploys
 const STATIC_ASSETS = [

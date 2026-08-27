@@ -52,18 +52,30 @@ export default function AboutPage() {
         breadcrumbs={[{ name: "BallMtaani", url: "/" }, { name: "About", url: "/about" }]}
         structuredData={{
           "@context": "https://schema.org",
-          "@type": "Organization",
+          "@type": ["NewsMediaOrganization", "SportsOrganization"],
           "name": "BallMtaani",
           "url": "https://ballmtaani.com",
           "logo": "https://ballmtaani.com/logo.png",
-          "description": "A Kenyan football publication for live scores, Premier League, FKF coverage, original reporting and fan community.",
-          "foundingLocation": { "@type": "Place", "name": "Nairobi, Kenya" },
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "email": "info@ballmtaani.com",
-            "contactType": "customer support"
+          "description": "An independent Kenyan football publication and sports media organization for original reporting, live scores, Premier League and FKF coverage.",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Nairobi",
+            "addressCountry": "KE"
           },
-          "sameAs": []
+          "foundingLocation": { "@type": "Place", "name": "Nairobi, Kenya" },
+          "contactPoint": [
+            {
+              "@type": "ContactPoint",
+              "email": "editor@ballmtaani.com",
+              "contactType": "editorial"
+            },
+            {
+              "@type": "ContactPoint",
+              "email": "info@ballmtaani.com",
+              "contactType": "customer support"
+            }
+          ],
+          "sameAs": ["https://twitter.com/ballmtaani"]
         }}
       />
 

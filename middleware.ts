@@ -10,6 +10,7 @@ declare class URL {
   constructor(input: string);
   readonly pathname: string;
 }
+declare function fetch(input: any, init?: any): Promise<any>;
 
 /**
  * Vercel Edge Middleware — Crawlable HTML & Bot SEO Engine
@@ -25,7 +26,12 @@ interface PageMeta {
   description: string;
   keywords: string;
   h1: string;
-  body: string;
+  body?: string;
+  bodyHtml?: string;
+  author?: string;
+  datePublished?: string;
+  dateModified?: string;
+  image?: string;
   links?: { name: string; url: string }[];
   jsonLdType?: string;
   status?: number;
@@ -224,29 +230,12 @@ const STATIC_ROUTES: Record<string, PageMeta> = {
   "/terms-of-service": {
     title: "Terms of Service | BallMtaani",
     description:
-      "BallMtaani Terms of Service outlining community guidelines, MTC engagement status points, content usage, and platform terms.",
-    keywords: "terms of service BallMtaani, user agreement, MTC rules",
-    h1: "BallMtaani Terms of Service",
-    body: "These Terms of Service govern your access to and use of BallMtaani's web platform, fan prediction games, debate rooms, and football intelligence features.",
-    jsonLdType: "WebPage",
-  },
-  "/world-cup-2026": {
-    title: "World Cup 2026 Archive Hub | BallMtaani — Tournament Overview",
-    description:
-      "Archive of FIFA World Cup 2026 coverage — fixtures, standings, African nations and fan predictions on BallMtaani.",
-    keywords: "World Cup 2026 archive, WC26 results, Africa World Cup 2026",
-    h1: "FIFA World Cup 2026 — Completed Tournament Archive",
-    body: "The 2026 FIFA World Cup archive on BallMtaani. Track results, knockout bracket summaries, and African nations tournament history.",
-    jsonLdType: "CollectionPage",
-  },
-  "/world-cup-2026/bracket": {
-    title: "WC26 Knockout Bracket Archive | BallMtaani Results",
-    description:
-      "Completed World Cup 2026 knockout bracket archive — Round of 32, Round of 16, Quarter-finals, Semi-finals and Final results.",
-    keywords: "WC26 knockout bracket archive, World Cup 2026 results",
-    h1: "World Cup 2026 Knockout Bracket Archive",
-    body: "Completed results from the Round of 32 through the Final of the 2026 FIFA World Cup.",
-    jsonLdType: "WebPage",
+      "Terms and conditions for using BallMtaani: platform rules, user content guidelines, intellectual property, and community standards.",
+    keywords:
+      "BallMtaani terms of service, platform rules, terms and conditions",
+    h1: "Terms of Service",
+    body: "Terms and conditions governing the use of the BallMtaani website, mobile experience, prediction games, and community forums.",
+    jsonLdType: "ItemPage",
   },
 };
 
@@ -278,6 +267,42 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+async function fetchSupabaseArticle(slug: string): Promise<any | null> {
+  try {
+    const supabaseUrl = "https://rkxrkpahrrgzlnxqxolu.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJreHJrcGFocnJnemxueHF4b2x1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNDY2MjksImV4cCI6MjA4ODkyMjYyOX0.BHqdmaN6hFZfO_5NYpvfu_4FM3UxoRgYhKECcK3Xc8w";
+    const res = await fetch(`${supabaseUrl}/rest/v1/articles?slug=eq.${encodeURIComponent(slug)}&status=eq.published&select=*`, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    });
+    if (!res.ok) return null;
+    const items = await res.json();
+    return Array.isArray(items) && items.length > 0 ? items[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchRecentArticles(): Promise<any[]> {
+  try {
+    const supabaseUrl = "https://rkxrkpahrrgzlnxqxolu.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJreHJrcGFocnJnemxueHF4b2x1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNDY2MjksImV4cCI6MjA4ODkyMjYyOX0.BHqdmaN6hFZfO_5NYpvfu_4FM3UxoRgYhKECcK3Xc8w";
+    const res = await fetch(`${supabaseUrl}/rest/v1/articles?status=eq.published&order=published_at.desc&limit=30&select=id,slug,title,excerpt,author_name,published_at,thumbnail_url`, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    });
+    if (!res.ok) return [];
+    const items = await res.json();
+    return Array.isArray(items) ? items : [];
+  } catch {
+    return [];
+  }
+}
+
 function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
   const utilityNoindex = /\/(?:login|register|auth|otp|verify-otp|search|diagnostics|profile|notifications|account|admin|predictions|debates|rivalries|war-room|live-center|fun-zone|fun-zones|rapid-fire|trivia|store)(?:\/|$)/.test(canonical);
   const jsonLd = {
@@ -292,6 +317,30 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
         "inLanguage": "en-KE",
         "isPartOf": { "@type": "WebSite", "name": "BallMtaani", "url": "https://ballmtaani.com/" }
       },
+      meta.jsonLdType === "NewsArticle" ? {
+        "@type": "NewsArticle",
+        "@id": `${canonical}/#article`,
+        "headline": meta.title,
+        "description": meta.description,
+        "inLanguage": "en-KE",
+        "datePublished": meta.datePublished || new Date().toISOString(),
+        "dateModified": meta.dateModified || meta.datePublished || new Date().toISOString(),
+        "mainEntityOfPage": canonical,
+        "author": {
+          "@type": "Person",
+          "name": meta.author || "Mtaa Daily Editorial Team"
+        },
+        "publisher": {
+          "@type": "NewsMediaOrganization",
+          "name": "BallMtaani",
+          "url": "https://ballmtaani.com/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://ballmtaani.com/logo.png"
+          }
+        },
+        "image": meta.image || "https://ballmtaani.com/opengraph.jpg"
+      } : null,
       {
         "@type": ["Organization", "SportsOrganization", "NewsMediaOrganization"],
         "@id": "https://ballmtaani.com/#organization",
@@ -314,6 +363,7 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
           { "@type": "WebPage", "name": "Live Matches", "url": "https://ballmtaani.com/matches" },
           { "@type": "WebPage", "name": "League Centres", "url": "https://ballmtaani.com/leagues" },
           { "@type": "WebPage", "name": "Mtaa Daily News", "url": "https://ballmtaani.com/news" },
+          { "@type": "WebPage", "name": "All Articles", "url": "https://ballmtaani.com/articles" },
           { "@type": "WebPage", "name": "Match Predictions", "url": "https://ballmtaani.com/predictions" },
           { "@type": "WebPage", "name": "Fan Debates", "url": "https://ballmtaani.com/debates" },
           { "@type": "WebPage", "name": "About Us", "url": "https://ballmtaani.com/about" },
@@ -322,7 +372,7 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
           { "@type": "WebPage", "name": "Terms of Service", "url": "https://ballmtaani.com/terms" }
         ]
       }
-    ]
+    ].filter(Boolean)
   };
 
   return `<!DOCTYPE html>
@@ -334,37 +384,42 @@ function generateCrawlableHTML(meta: PageMeta, canonical: string): string {
 <meta name="description" content="${esc(meta.description)}"/>
 <meta name="keywords" content="${esc(meta.keywords)}"/>
 <meta name="robots" content="${meta.status === 404 ? "noindex,nofollow" : meta.noindex || utilityNoindex ? "noindex,follow" : "index,follow,max-image-preview:large,max-snippet:-1"}"/>
-<meta name="author" content="BallMtaani"/>
+<meta name="author" content="${esc(meta.author || "BallMtaani")}"/>
 <meta name="geo.region" content="KE"/>
 <meta name="geo.placename" content="Nairobi, Kenya"/>
 <meta property="og:title" content="${esc(meta.title)}"/>
 <meta property="og:description" content="${esc(meta.description)}"/>
-<meta property="og:image" content="https://ballmtaani.com/opengraph.jpg"/>
+<meta property="og:image" content="${esc(meta.image || "https://ballmtaani.com/opengraph.jpg")}"/>
 <meta property="og:url" content="${esc(canonical)}"/>
-<meta property="og:type" content="website"/>
+<meta property="og:type" content="${meta.jsonLdType === "NewsArticle" ? "article" : "website"}"/>
 <meta property="og:site_name" content="BallMtaani"/>
 <meta property="og:locale" content="en_KE"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:site" content="@ballmtaani"/>
 <meta name="twitter:title" content="${esc(meta.title)}"/>
 <meta name="twitter:description" content="${esc(meta.description)}"/>
-<meta name="twitter:image" content="https://ballmtaani.com/opengraph.jpg"/>
+<meta name="twitter:image" content="${esc(meta.image || "https://ballmtaani.com/opengraph.jpg")}"/>
 <link rel="canonical" href="${esc(canonical)}"/>
 <link rel="icon" type="image/png" href="https://ballmtaani.com/logo.png"/>
 <script type="application/ld+json">
 ${JSON.stringify(jsonLd)}
 </script>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0b0b0b; color: #e5e5e5; max-width: 960px; margin: 0 auto; padding: 0 1.25rem; line-height: 1.6; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #0b0b0b; color: #e5e5e5; max-width: 960px; margin: 0 auto; padding: 0 1.25rem; line-height: 1.7; }
   header { border-bottom: 2px solid #B30000; padding: 1.25rem 0; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
   .logo { color: #fff; font-size: 1.75rem; font-weight: 900; text-decoration: none; letter-spacing: -0.03em; }
   .logo span { color: #B30000; }
   nav a { color: #aaa; text-decoration: none; margin-left: 1rem; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   nav a:hover { color: #fff; }
   main { margin-bottom: 3rem; }
-  h1 { font-size: 2.25rem; color: #ffffff; margin-top: 0; margin-bottom: 1rem; font-weight: 900; line-height: 1.2; }
+  h1 { font-size: 2.25rem; color: #ffffff; margin-top: 0; margin-bottom: 1rem; font-weight: 900; line-height: 1.25; }
   h2 { font-size: 1.4rem; color: #B30000; margin-top: 2rem; margin-bottom: 0.75rem; font-weight: 800; border-left: 4px solid #B30000; padding-left: 0.75rem; }
+  h3 { font-size: 1.15rem; color: #ffffff; margin-top: 1.5rem; margin-bottom: 0.5rem; }
   p { font-size: 1.05rem; color: #cccccc; margin-bottom: 1.25rem; }
+  .byline { color: #888; font-size: 0.875rem; margin-bottom: 1.5rem; border-bottom: 1px solid #222; padding-bottom: 0.75rem; }
+  .article-body p { margin-bottom: 1.25rem; font-size: 1.05rem; color: #d6d6d6; line-height: 1.75; }
+  .article-body blockquote { border-left: 3px solid #B30000; padding-left: 1rem; color: #bbb; font-style: italic; margin: 1.5rem 0; }
+  .article-body img { max-width: 100%; height: auto; border-radius: 8px; margin: 1.5rem 0; }
   .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
   .card { background: #141414; border: 1px solid #262626; border-radius: 8px; padding: 1.25rem; }
   .card h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 0.5rem; color: #fff; }
@@ -386,6 +441,7 @@ ${JSON.stringify(jsonLd)}
     <a href="https://ballmtaani.com/">Home</a>
     <a href="https://ballmtaani.com/matches">Matches</a>
     <a href="https://ballmtaani.com/leagues">Leagues</a>
+    <a href="https://ballmtaani.com/articles">Articles</a>
     <a href="https://ballmtaani.com/news">News</a>
     <a href="https://ballmtaani.com/predictions">Predictions</a>
     <a href="https://ballmtaani.com/about">About</a>
@@ -395,7 +451,9 @@ ${JSON.stringify(jsonLd)}
 <main>
   <article>
     <h1>${esc(meta.h1)}</h1>
-    <p>${esc(meta.body)}</p>
+    ${meta.author ? `<div class="byline">By <strong>${esc(meta.author)}</strong> • Published on ${meta.datePublished ? new Date(meta.datePublished).toLocaleDateString('en-KE', { year: 'numeric', month: 'long', day: 'numeric' }) : 'BallMtaani Mtaa Daily'}</div>` : ''}
+    ${meta.image ? `<img src="${esc(meta.image)}" alt="${esc(meta.h1)}" style="width:100%;max-height:450px;object-fit:cover;border-radius:8px;margin-bottom:1.5rem;" />` : ''}
+    ${meta.bodyHtml ? `<div class="article-body">${meta.bodyHtml}</div>` : `<p>${esc(meta.body || meta.description)}</p>`}
 
     <h2>Featured Football Hubs &amp; Coverage</h2>
     <div class="card-grid">
@@ -410,9 +468,9 @@ ${JSON.stringify(jsonLd)}
         <p><a href="https://ballmtaani.com/leagues">Explore League Hubs &rarr;</a></p>
       </div>
       <div class="card">
-        <h3>Mtaa Daily Original News</h3>
+        <h3>Mtaa Daily Original Reporting</h3>
         <p>In-depth original reporting, match analysis, tactical breakdowns, and transfer news tailored for Kenyan fans.</p>
-        <p><a href="https://ballmtaani.com/news">Read Latest News &rarr;</a></p>
+        <p><a href="https://ballmtaani.com/articles">Read All Articles &rarr;</a></p>
       </div>
       <div class="card">
         <h3>Mchambuzi AI Football Analyst</h3>
@@ -420,18 +478,6 @@ ${JSON.stringify(jsonLd)}
         <p><a href="https://ballmtaani.com/mchambuzi-halisi">Try Mchambuzi AI &rarr;</a></p>
       </div>
     </div>
-
-    <h2>Active Competitions &amp; Leagues</h2>
-    <ul>
-      <li><a href="https://ballmtaani.com/leagues/premier-league" style="color:#ff4d4d;font-weight:700">English Premier League</a> — Arsenal, Man United, Chelsea, Liverpool live scores &amp; standings.</li>
-      <li><a href="https://ballmtaani.com/leagues/fkf-premier-league" style="color:#ff4d4d;font-weight:700">FKF Premier League (KPL)</a> — Gor Mahia, AFC Leopards, Tusker FC local derby coverage.</li>
-      <li><a href="https://ballmtaani.com/leagues/champions-league" style="color:#ff4d4d;font-weight:700">UEFA Champions League</a> — Tuesday &amp; Wednesday European night match intelligence.</li>
-      <li><a href="https://ballmtaani.com/leagues/la-liga" style="color:#ff4d4d;font-weight:700">La Liga EA Sports</a> — Real Madrid, FC Barcelona El Clasico updates.</li>
-      <li><a href="https://ballmtaani.com/world-cup-2026" style="color:#ff4d4d;font-weight:700">FIFA World Cup 2026</a> — Completed tournament archive &amp; African nations history.</li>
-    </ul>
-
-    <h2>Editorial Independence &amp; Standards</h2>
-    <p>BallMtaani publishes original editorial pieces through Mtaa Daily. Match data and fixtures are powered by API-Football. We adhere to high standards of editorial integrity, transparent sourcing, and independent reporting.</p>
   </article>
 </main>
 <footer>
@@ -441,7 +487,8 @@ ${JSON.stringify(jsonLd)}
       <a href="https://ballmtaani.com/">Home</a>
       <a href="https://ballmtaani.com/matches">Live Scores</a>
       <a href="https://ballmtaani.com/leagues">Leagues Hub</a>
-      <a href="https://ballmtaani.com/news">Mtaa Daily News</a>
+      <a href="https://ballmtaani.com/articles">Mtaa Daily Articles</a>
+      <a href="https://ballmtaani.com/news">Football News</a>
       <a href="https://ballmtaani.com/world-cup-2026">World Cup 2026</a>
     </div>
     <div class="footer-col">
@@ -467,31 +514,59 @@ ${JSON.stringify(jsonLd)}
 </html>`;
 }
 
-export default function middleware(request: Request): Response | undefined {
+export default async function middleware(request: Request): Promise<Response | undefined> {
   const ua = request.headers.get("user-agent") || "";
   const isBotOrCurl = BOT_OR_CURL_UA.test(ua);
 
-  // ONLY intercept known bots and crawlers.
-  // Regular browsers (Chrome, Firefox, Safari, etc.) must always pass through
-  // to the Vite React application — never serve them the plain HTML shell.
   if (!isBotOrCurl) return undefined;
 
   const url = new URL(request.url);
   const { pathname } = url;
 
-  // Skip static assets
   if (/\.(?:js|css|png|jpg|jpeg|svg|ico|json|txt|xml|webp|woff2?|mp4|gz)$/i.test(pathname)) {
     return undefined;
   }
 
-  // Skip admin, auth, and private API routes
   if (pathname.startsWith("/admin") || pathname.startsWith("/auth") || pathname.startsWith("/api/")) {
     return undefined;
   }
 
   const canonical = `https://ballmtaani.com${pathname}`;
 
-  // 1. Static Route Match
+  if (pathname === "/articles" || pathname === "/articles/" || pathname === "/news" || pathname === "/news/") {
+    const articles = await fetchRecentArticles();
+    let bodyHtml = `<p>Original reporting, tactical deep-dives, and African football analysis from BallMtaani's editorial team in Nairobi, Kenya.</p>`;
+    if (articles.length > 0) {
+      bodyHtml += `<div class="card-grid">`;
+      for (const art of articles) {
+        bodyHtml += `
+          <div class="card">
+            <h3><a href="https://ballmtaani.com/article/${esc(art.slug)}">${esc(art.title)}</a></h3>
+            <p style="font-size:0.8rem;color:#888;margin-bottom:0.5rem;">By ${esc(art.author_name || "Mtaa Daily Desk")} • ${art.published_at ? new Date(art.published_at).toLocaleDateString('en-KE') : 'Recent'}</p>
+            <p>${esc(art.excerpt || "")}</p>
+            <p><a href="https://ballmtaani.com/article/${esc(art.slug)}">Read Full Article &rarr;</a></p>
+          </div>`;
+      }
+      bodyHtml += `</div>`;
+    }
+    const meta: PageMeta = {
+      title: "Mtaa Daily Original Articles & Football Journalism | BallMtaani",
+      description: "Explore all original football articles, match analysis, tactical deep-dives, and African football coverage from BallMtaani's editorial team.",
+      keywords: "BallMtaani articles, Kenya football news, Mtaa Daily, African football reporting",
+      h1: "Mtaa Daily Original Football Reporting",
+      bodyHtml,
+      jsonLdType: "CollectionPage",
+    };
+    return new Response(generateCrawlableHTML(meta, canonical), {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        "X-BallMtaani-Rendered": "edge-ssr-articles",
+      },
+    });
+  }
+
   if (STATIC_ROUTES[pathname]) {
     const meta = STATIC_ROUTES[pathname];
     return new Response(generateCrawlableHTML(meta, canonical), {
@@ -504,7 +579,6 @@ export default function middleware(request: Request): Response | undefined {
     });
   }
 
-  // 2. League Detail Route (/leagues/:leagueSlug)
   if (pathname.startsWith("/leagues/")) {
     const slug = pathname.replace("/leagues/", "").split("/")[0];
     const league = LEAGUE_SLUGS[slug];
@@ -522,7 +596,6 @@ export default function middleware(request: Request): Response | undefined {
         headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600", "X-BallMtaani-Rendered": "edge-ssr" },
       });
     } else {
-      // 404 for missing league
       const meta: PageMeta = {
         title: "League Not Found | BallMtaani",
         description: "The requested league does not exist on BallMtaani.",
@@ -538,7 +611,6 @@ export default function middleware(request: Request): Response | undefined {
     }
   }
 
-  // 3. Team Detail Route (/teams/:teamSlug)
   if (pathname.startsWith("/teams/")) {
     const slug = pathname.replace("/teams/", "");
     const team = TEAM_SLUGS[slug];
@@ -556,7 +628,6 @@ export default function middleware(request: Request): Response | undefined {
         headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600", "X-BallMtaani-Rendered": "edge-ssr" },
       });
     } else {
-      // 404 for unsupported/unknown team
       const meta: PageMeta = {
         title: "Club Not Found | BallMtaani",
         description: "The requested football club hub does not exist.",
@@ -572,7 +643,6 @@ export default function middleware(request: Request): Response | undefined {
     }
   }
 
-  // 4. Permanent Match Route (/matches/:matchSlug)
   if (pathname.startsWith("/matches/") && pathname !== "/matches") {
     const matchSlug = pathname.replace("/matches/", "");
     const slugParts = matchSlug.split("-v-");
@@ -594,33 +664,45 @@ export default function middleware(request: Request): Response | undefined {
     });
   }
 
-  // 5. Canonical article route. Legacy aliases permanently redirect to /news/:slug.
-  if ((pathname.startsWith("/article/") && pathname !== "/article/") || (pathname.startsWith("/articles/") && pathname !== "/articles/")) {
-    const slug = pathname.replace(/^\/(?:article|articles)\//, "").split("/")[0];
-    return new Response("", {
-      status: 301,
-      headers: { "Location": `https://ballmtaani.com/news/${slug}`, "Cache-Control": "public, max-age=86400" },
-    });
+  if (pathname.startsWith("/article/") || pathname.startsWith("/articles/") || pathname.startsWith("/news/")) {
+    const slug = pathname.replace(/^\/(?:article|articles|news)\//, "").split("/")[0];
+    if (slug) {
+      const article = await fetchSupabaseArticle(slug);
+      if (article) {
+        const meta: PageMeta = {
+          title: `${article.title} | BallMtaani Mtaa Daily`,
+          description: article.excerpt || article.seo_description || `Read ${article.title} on BallMtaani — original football reporting from Kenya.`,
+          keywords: article.tags ? (Array.isArray(article.tags) ? article.tags.join(", ") : article.tags) : `${article.title}, BallMtaani article`,
+          h1: article.title,
+          bodyHtml: article.content,
+          author: article.author_name || "Mtaa Daily Editorial Team",
+          datePublished: article.published_at || article.created_at,
+          dateModified: article.updated_at || article.published_at || article.created_at,
+          image: article.thumbnail_url,
+          jsonLdType: "NewsArticle",
+        };
+        return new Response(generateCrawlableHTML(meta, canonical), {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400", "X-BallMtaani-Rendered": "edge-ssr-article" },
+        });
+      }
+
+      const formattedTitle = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const meta: PageMeta = {
+        title: `${formattedTitle} | BallMtaani Mtaa Daily`,
+        description: `Read ${formattedTitle} on BallMtaani — original football reporting and analysis from a Kenyan perspective.`,
+        keywords: `${formattedTitle}, BallMtaani article, Kenya football news, Mtaa Daily`,
+        h1: formattedTitle,
+        body: `Original reporting, tactical deep-dives, and match analysis from BallMtaani's editorial team in Nairobi.`,
+        jsonLdType: "NewsArticle",
+      };
+      return new Response(generateCrawlableHTML(meta, canonical), {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600", "X-BallMtaani-Rendered": "edge-ssr" },
+      });
+    }
   }
 
-  if (pathname.startsWith("/news/") && pathname !== "/news/") {
-    const slug = pathname.replace(/^\/news\//, "").split("/")[0];
-    const formattedTitle = slug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    const meta: PageMeta = {
-      title: `${formattedTitle} | BallMtaani Mtaa Daily`,
-      description: `Read ${formattedTitle} on BallMtaani — original football reporting and analysis from a Kenyan perspective.`,
-      keywords: `${formattedTitle}, BallMtaani article, Kenya football news, Mtaa Daily`,
-      h1: formattedTitle,
-      body: `Original reporting, tactical deep-dives, and match analysis from BallMtaani's editorial team.`,
-      jsonLdType: "NewsArticle",
-    };
-    return new Response(generateCrawlableHTML(meta, canonical), {
-      status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, s-maxage=3600", "X-BallMtaani-Rendered": "edge-ssr" },
-    });
-  }
-
-  // Unknown discovery routes must be genuine, non-indexable 404 responses.
   const meta: PageMeta = {
     title: "Page Not Found | BallMtaani",
     description: "The requested page does not exist on BallMtaani.",

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import SEO from "../components/SEO";
 import TeamLogo from "../components/TeamLogo";
+import NewsCarousel from "../components/NewsCarousel";
 import {
   useDebates,
   useMatches,
@@ -73,12 +74,14 @@ function dedupeArticles(articles: NewsArticle[]) {
       seen.add(key);
       return true;
     })
-    .sort(
-      (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
-    );
+    .sort((a, b) => {
+      if (a.isInternal && !b.isInternal) return -1;
+      if (!a.isInternal && b.isInternal) return 1;
+      return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
+    });
 }
 function articleHref(article: NewsArticle) {
-  return article.isInternal ? `/news/${article.slug}` : article.link;
+  return article.isInternal ? `/article/${article.slug}` : article.link;
 }
 function ArticleLink({
   article,
@@ -272,27 +275,32 @@ function LeagueRail() {
 
 function EdgeBanner({ match, image }: { match?: HomeMatch; image?: string }) {
   return (
-    <Panel className="grid min-h-[122px] md:grid-cols-[minmax(0,1fr)_285px]">
-      <div className="relative flex min-h-[122px] items-end overflow-hidden px-4 py-4 sm:px-7 sm:py-6 md:items-center">
+    <Panel className="grid min-h-[130px] md:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="relative flex min-h-[130px] items-center overflow-hidden px-5 py-5 sm:px-8 sm:py-6">
         <img
           src={image || DEFAULT_IMAGE}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-45"
+          className="absolute inset-0 h-full w-full object-cover opacity-40"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#190407] via-[#5c0911]/85 to-black/45" />
-        <div className="relative grid w-full items-center gap-4 sm:grid-cols-[120px_1fr_auto]">
-          <div className="max-w-[11ch] text-[1.55rem] font-black italic leading-[0.8] tracking-[-0.03em] text-white sm:max-w-none sm:text-2xl">
-            BALLMTAANI
-            <span className="mt-1 block text-[2rem] text-[#ef2430]">EDGE</span>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#190407] via-[#5c0911]/90 to-black/60" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between w-full gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FFD700]">
+                BALLMTAANI EDGE
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
+              Advanced football predictions.
+            </h2>
+            <p className="text-sm sm:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-[#FFD700] leading-snug">
+              Powered by data. Driven by insight.
+            </p>
           </div>
-          <p className="mt-1 max-w-[230px] text-[11px] leading-4 text-white/80 sm:mt-0">
-            Advanced football predictions.
-            <br />
-            Powered by data. Driven by insight.
-          </p>
           <Link
             href="/edge"
-            className="mt-3 inline-flex h-8 w-fit items-center bg-[#d8212d] px-4 text-[9px] font-black uppercase text-white sm:mt-0"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-[#d8212d] hover:bg-red-700 px-5 text-[10px] font-black uppercase tracking-wider text-white transition-all shadow-md"
           >
             Explore Edge
           </Link>
@@ -932,6 +940,7 @@ export default function HomePage() {
       <LeagueRail />
       <div className="mx-auto max-w-[1500px] space-y-3 px-4 py-3">
         <EdgeBanner match={featuredMatch} image={news[0]?.thumbnail} />
+        <NewsCarousel articles={news} />
         <MatchCentre
           fixtures={fixtures}
           live={liveMatches}

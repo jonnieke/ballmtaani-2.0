@@ -3,32 +3,32 @@ import SEO from "../components/SEO";
 
 const sections = [
   {
-    title: "Information We Collect & Use",
+    title: "1. Information We Collect & Use",
     body: "We may collect and use your phone number for secure authentication, your chosen favorite club for personalization, and your platform activity (such as predictions, votes, debates, room posts, invites, and MTC status wallet activity) to deliver the BallMtaani experience.",
   },
   {
-    title: "Why We Use Your Data",
+    title: "2. Why We Use Your Data",
     body: "We use this information to maintain account security, display relevant fan rooms, keep match prediction receipts, power global and local leaderboards, prevent spam or abuse, and continuously improve platform performance.",
   },
   {
-    title: "Public Fan Activity",
-    body: "Certain community activities are visible to other fans, including your chosen username, club avatar badge, public posts, aggregate votes, fan duel challenges, leaderboard rank, and room interactions.",
+    title: "3. Google AdSense & Third-Party Advertising Disclosures",
+    body: "BallMtaani partners with Google AdSense and third-party advertising networks to serve advertisements on our editorial articles. Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to our website or other websites across the internet. Google's use of advertising cookies enables it and its partners to serve ads to our users based on their visit to BallMtaani and/or other sites on the Internet. Users may opt out of personalized advertising by visiting Google Ads Settings (https://www.google.com/settings/ads) or through the Digital Advertising Alliance Consumer Choice page at https://www.aboutads.info/choices/.",
   },
   {
-    title: "Advertising & Sponsorship",
-    body: "BallMtaani may occasionally run clearly labeled direct sponsorships or partner placements on selected editorial pages. If Google AdSense is enabled, ad units will be limited to substantial editorial pages and will stay clearly separated from logins, predictions, games, rewards, live-score utilities and account screens. We do not use hidden or unlabeled ad units.",
+    title: "4. Cookies, Web Beacons & Storage",
+    body: "We use cookies, web beacons, local storage, and session storage to remember your authentication session, preserve your preferred interface atmosphere, and analyze overall site traffic. Third-party advertisers may place and read cookies on your browser or use web beacons to collect information in the course of ads being served on BallMtaani. You can configure your browser to reject cookies or notify you when a cookie is sent.",
   },
   {
-    title: "Cookies & Web Storage",
-    body: "We use cookies, local storage, and session storage to remember your authentication session, preserve your preferred theme atmosphere, and analyze overall site traffic. Third-party services such as Google Analytics and, when enabled, Google advertising technologies may also set cookies to measure traffic, ad delivery and site performance.",
+    title: "5. Analytics (Google Analytics 4)",
+    body: "We use Google Analytics 4 to understand website traffic, user engagement, and reader preferences. Google Analytics collects information anonymously and reports website trends without identifying individual visitors. To learn more about how Google uses data when you visit our partner sites, please visit https://policies.google.com/technologies/partner-sites.",
   },
   {
-    title: "Google Analytics 4",
-    body: "Google Analytics and Google advertising scripts are not loaded until the required consent architecture is active. If these services are enabled, BallMtaani will use a Google-certified consent management platform where required and will respect the visitor's choices before setting advertising or analytics cookies. Learn how Google uses partner-site data at https://policies.google.com/technologies/partner-sites.",
+    title: "6. Editorial Separation & Ad Placement Standards",
+    body: "BallMtaani maintains strict editorial independence. Advertisements and sponsored placements are clearly labeled and strictly separated from editorial judgment, news reporting, and analysis. In accordance with Google Publisher Policies, advertisements are limited to long-form editorial reading pages and are never placed on login dialogs, match prediction tools, scoreboard utility widgets, or interactive games.",
   },
   {
-    title: "Your Choices & Data Rights",
-    body: "You can control cookie preferences in your web browser settings, choose what public club profile details to display, and contact our team at info@ballmtaani.com for account, privacy, or data removal enquiries.",
+    title: "7. Your Data Rights & Contact",
+    body: "You can control cookie preferences in your browser settings, request access to your data, or request account deletion at any time by emailing our privacy officer at privacy@ballmtaani.com or info@ballmtaani.com.",
   },
 ];
 

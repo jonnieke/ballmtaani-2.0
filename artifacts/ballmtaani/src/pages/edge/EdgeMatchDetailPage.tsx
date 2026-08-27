@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useParams } from "wouter";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { ArrowLeft, ShieldCheck, Clock, Activity, Cpu, Lock, Heart } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Clock, Activity, Cpu, Lock, Heart, Share2, Sparkles, AlertCircle, ShieldAlert } from "lucide-react";
 import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
 import ProbabilityBar from "../../components/edge/ProbabilityBar";
 import ConfidenceBadge from "../../components/edge/ConfidenceBadge";
@@ -11,6 +11,11 @@ import LikelyScorelines from "../../components/edge/LikelyScorelines";
 import RiskFactorsList from "../../components/edge/RiskFactorsList";
 import PredictionTimeline from "../../components/edge/PredictionTimeline";
 import LineupImpactBanner from "../../components/edge/LineupImpactBanner";
+import FanModelPulse from "../../components/edge/FanModelPulse";
+import MatchReceiptModal from "../../components/edge/MatchReceiptModal";
+import MchambuziAudioBrief from "../../components/edge/MchambuziAudioBrief";
+import KenyanOddsComparison from "../../components/edge/KenyanOddsComparison";
+import TelegramNotificationBridge from "../../components/edge/TelegramNotificationBridge";
 import { SavedContentService } from "../../lib/edge/alerts/saved-content-service";
 import RouteSEO from "../../components/RouteSEO";
 
@@ -20,6 +25,7 @@ export default function EdgeMatchDetailPage() {
 
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [showReceipt, setShowReceipt] = useState<boolean>(false);
 
   const kickoffDate = new Date(prediction.kickoffAt).toLocaleDateString("en-KE", {
     weekday: "long",
@@ -61,15 +67,23 @@ export default function EdgeMatchDetailPage() {
           
           <div className="flex items-center gap-2">
             <Button
+              onClick={() => setShowReceipt(true)}
+              variant="outline"
+              size="sm"
+              className="text-xs font-bold border-white/20 text-emerald-400 hover:bg-white/10"
+            >
+              <Share2 className="mr-1.5 h-3.5 w-3.5" /> Share Receipt
+            </Button>
+
+            <Button
               onClick={handleToggleSave}
               variant="outline"
               size="sm"
               className={`text-xs font-bold ${isSaved ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" : "border-white/20 text-gray-300"}`}
             >
               <Heart className={`mr-1.5 h-3.5 w-3.5 ${isSaved ? "fill-current" : ""}`} />
-              {isSaved ? "Saved to Watchlist" : "Save Match"}
+              {isSaved ? "Saved" : "Save"}
             </Button>
-            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Official Match Intelligence</Badge>
           </div>
         </div>
       </div>
@@ -134,6 +148,39 @@ export default function EdgeMatchDetailPage() {
           />
         )}
 
+        {/* 🎙️ 60-Second Tactical Audio Briefing */}
+        <MchambuziAudioBrief prediction={prediction} />
+
+        {/* Mtaa Tactical Briefing Box */}
+        {prediction.storylines && (
+          <div className="rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-950/20 via-[#141414] to-[#121212] p-6 space-y-4 shadow-xl">
+            <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+              <Sparkles className="h-4 w-4 text-[#FFD700]" />
+              <h3 className="text-sm font-black uppercase tracking-wider text-white">Mtaa Tactical Briefing &amp; Match Context</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-lg bg-emerald-950/20 border border-emerald-500/20 p-4 space-y-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">🟢 Key Home Strength</span>
+                <p className="text-xs text-gray-300 leading-relaxed">{prediction.storylines.strength}</p>
+              </div>
+
+              <div className="rounded-lg bg-red-950/20 border border-red-500/20 p-4 space-y-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-red-400 block">🔴 Away Threat / Risk Factor</span>
+                <p className="text-xs text-gray-300 leading-relaxed">{prediction.storylines.vulnerability}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-white/5 border border-white/10 p-4 text-xs">
+              <strong className="text-[#FFD700] uppercase tracking-wider block mb-1">🎯 Street Verdict:</strong>
+              <p className="text-gray-200 leading-relaxed">{prediction.storylines.mtaaVerdict}</p>
+            </div>
+          </div>
+        )}
+
+        {/* The Street vs The Model Community Pulse */}
+        <FanModelPulse prediction={prediction} />
+
         {/* Win Probabilities & Market Matrix */}
         <div className="rounded-xl border border-white/10 bg-[#121212] p-6 space-y-6">
           <h3 className="text-lg font-bold text-white">1X2 Match Probabilities</h3>
@@ -164,6 +211,9 @@ export default function EdgeMatchDetailPage() {
           </div>
         </div>
 
+        {/* 🇰🇪 Kenyan Bookmakers Live Odds & Value Edge */}
+        <KenyanOddsComparison prediction={prediction} />
+
         {/* Deterministic Explanation & Top Scorelines */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-xl border border-white/10 bg-[#121212] p-6 space-y-3">
@@ -177,6 +227,13 @@ export default function EdgeMatchDetailPage() {
             <LikelyScorelines scorelines={prediction.topScorelines} />
           </div>
         </div>
+
+        {/* 📲 Telegram Match Alert Integration */}
+        <TelegramNotificationBridge
+          fixtureId={prediction.fixtureId}
+          matchTitle={`${prediction.homeTeam} vs ${prediction.awayTeam}`}
+          variant="card"
+        />
 
         {/* Risk Factors */}
         <div className="rounded-xl border border-white/10 bg-[#121212] p-6">
@@ -207,6 +264,12 @@ export default function EdgeMatchDetailPage() {
           </span>
         </div>
       </div>
+
+      <MatchReceiptModal
+        prediction={prediction}
+        isOpen={showReceipt}
+        onClose={() => setShowReceipt(false)}
+      />
     </div>
   );
 }
