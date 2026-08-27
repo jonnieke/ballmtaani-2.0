@@ -2,11 +2,8 @@
 -- Dates absent from a poster intentionally remain NULL; do not infer them.
 do $$
 declare
-  source_id uuid;
-  competition_id uuid;
-  venue_id uuid;
-  home_id uuid;
-  away_id uuid;
+  v_source_id uuid;
+  v_competition_id uuid;
 begin
   insert into public.local_football_sources (
     source_name, source_type, original_filename, asset_path, mime_type,
@@ -24,13 +21,13 @@ begin
     ), now(), now()
   ) on conflict (asset_path) do update set
     workflow_status = 'published', published_at = now(), updated_at = now()
-  returning id into source_id;
+  returning id into v_source_id;
 
-  select id into competition_id from public.local_competitions where slug = 'pedeshee-wauna-super-cup';
-  if competition_id is null then
+  select id into v_competition_id from public.local_competitions where slug = 'pedeshee-wauna-super-cup';
+  if v_competition_id is null then
     insert into public.local_competitions (slug, name, short_name, season_label, locality, county)
     values ('pedeshee-wauna-super-cup', 'Pedeshee Wauna Super Cup', 'Pedeshee Super Cup', '2026', 'Nairobi', 'Nairobi')
-    returning id into competition_id;
+    returning id into v_competition_id;
   end if;
 
   insert into public.local_venues (slug, name, locality, county)
@@ -71,7 +68,7 @@ begin
 
   -- Results and fixtures. source_match_index makes the seed idempotent.
   insert into public.local_fixtures (source_id, source_match_index, competition_id, home_team_id, away_team_id, venue_id, scheduled_date, kickoff_time_text, status, home_score, away_score, home_penalties, away_penalties, round_label)
-  select source_id, x.idx, competition_id, h.id, a.id, v.id, x.match_date, x.kickoff, x.status, x.home_goals, x.away_goals, x.home_pens, x.away_pens, x.round_label
+  select v_source_id, x.idx, v_competition_id, h.id, a.id, v.id, x.match_date, x.kickoff, x.status, x.home_goals, x.away_goals, x.home_pens, x.away_pens, x.round_label
   from (values
     (1, 'mawe-sacco', 'rada-sports', null::date, null, 'finished', 1, 4, null::int, null::int, 'Pedeshee Wauna Super Cup'),
     (2, 'hakati-sportif', 'jasa', null::date, null, 'finished', 2, 0, null::int, null::int, 'Pedeshee Wauna Super Cup · Zone B'),
