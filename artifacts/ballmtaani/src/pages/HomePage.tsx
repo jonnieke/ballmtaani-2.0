@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -8,7 +9,6 @@ import {
   Globe2,
   MessageCircle,
   Radio,
-  Trophy,
   Users,
 } from "lucide-react";
 import SEO from "../components/SEO";
@@ -24,7 +24,12 @@ import {
   COMPETITIONS,
   type CompetitionConfig,
 } from "../config/football-catalog";
-import { fetchTodaysFixtures, type StandingEntry } from "../lib/football-api";
+import {
+  fetchLeagueSeasonFixtures,
+  fetchStandings,
+  fetchTodaysFixtures,
+  type StandingEntry,
+} from "../lib/football-api";
 import {
   fetchFootballNews,
   fetchPartnerArticles,
@@ -789,12 +794,85 @@ function CompactStories({ articles }: { articles: NewsArticle[] }) {
   );
 }
 
+function KenyaDailyWidget({
+  standings,
+  fixtures,
+  stories,
+  loading,
+}: {
+  standings: StandingEntry[];
+  fixtures: HomeMatch[];
+  stories: NewsArticle[];
+  loading: boolean;
+}) {
+  const completed = new Set(["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO"]);
+  const nextFixtures = fixtures
+    .filter((match) => !completed.has(String(match.status || "").toUpperCase()))
+    .sort((a, b) => (a.kickoffAt || a.timestamp || 0) - (b.kickoffAt || b.timestamp || 0))
+    .slice(0, 5);
+  const talentStories = stories.filter((article) => /player|star|academy|school|youth|talent|striker|midfielder|keeper/i.test(articleCopy(article))).slice(0, 2);
+
+  return (
+    <Panel className="min-[900px]:col-span-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+        <div>
+          <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#ef3038]">Daily local desk</p>
+          <h2 className="mt-1 text-[17px] font-black uppercase">Kenya Football Daily</h2>
+        </div>
+        <div className="flex items-center gap-3 text-[8px] font-black uppercase">
+          <span className="text-white/45">FKF Premier League · Kenya Super League</span>
+          <Link href="/news?section=kenya" className="text-[#ef3038]">Open Kenya desk <ArrowRight className="inline h-3 w-3" /></Link>
+        </div>
+      </div>
+      <div className="grid md:grid-cols-[1fr_1fr_1.15fr]">
+        <div className="border-b border-white/10 p-3 md:border-b-0 md:border-r">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[10px] font-black uppercase">FKF standings</h3>
+            <Link href="/leagues/fkf-premier-league/table" className="text-[8px] font-black uppercase text-[#ef3038]">Full table</Link>
+          </div>
+          {loading ? <p className="py-8 text-center text-[10px] text-white/40">Loading verified table...</p> : standings.length ? (
+            <div className="mt-2 space-y-1">
+              {standings.slice(0, 5).map((row) => (
+                <div key={`${row.rank}-${row.team}`} className="grid grid-cols-[18px_1fr_28px_32px] items-center gap-2 border-b border-white/[0.07] py-1.5 text-[9px]">
+                  <span className="text-white/45">{row.rank}</span><span className="flex min-w-0 items-center gap-1.5 font-bold"><img src={row.logo} alt="" className="h-4 w-4 object-contain" /> <span className="truncate">{row.team}</span></span><span className="text-center text-white/55">{row.played}</span><b className="text-right">{row.points}</b>
+                </div>
+              ))}
+            </div>
+          ) : <p className="py-8 text-center text-[10px] leading-4 text-white/40">The verified FKF table will appear when the provider publishes the current competition data.</p>}
+        </div>
+        <div className="border-b border-white/10 p-3 md:border-b-0 md:border-r">
+          <div className="flex items-center justify-between"><h3 className="text-[10px] font-black uppercase">Next local fixtures</h3><Link href="/matches?tab=fixtures" className="text-[8px] font-black uppercase text-[#ef3038]">All fixtures</Link></div>
+          {loading ? <p className="py-8 text-center text-[10px] text-white/40">Loading local schedule...</p> : nextFixtures.length ? <div className="mt-2 divide-y divide-white/10">{nextFixtures.map((match) => <Link key={String(match.id)} href={`/match/${match.id}`} className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-2 text-[9px] hover:bg-white/[0.03]"><span className="truncate font-bold">{shortTeam(match.home)}</span><span className="text-center text-white/40"><b className="block text-white">{matchTime(match)}</b><small>{matchDate(match)}</small></span><span className="truncate text-right font-bold">{shortTeam(match.away)}</span></Link>)}</div> : <p className="py-8 text-center text-[10px] leading-4 text-white/40">No verified FKF or Kenya Super League fixtures are currently published.</p>}
+        </div>
+        <div className="p-3">
+          <div className="flex items-center justify-between"><h3 className="text-[10px] font-black uppercase">Local stories & talent watch</h3><Link href="/news?section=kenya" className="text-[8px] font-black uppercase text-[#ef3038]">More stories</Link></div>
+          <div className="mt-2">{stories.slice(0, 4).map((article) => <ArticleLink key={articleKey(article)} article={article} className="grid grid-cols-[58px_1fr] gap-2 border-b border-white/10 py-2"><img src={article.thumbnail || DEFAULT_IMAGE} alt="" className="h-9 w-[58px] object-cover" loading="lazy" /><span className="min-w-0"><b className="line-clamp-2 text-[9px] leading-3">{article.title}</b><small className="mt-1 block text-[8px] text-white/40">{timeAgo(article.pubDate)}</small></span></ArticleLink>)}</div>
+          {talentStories.length ? <p className="mt-2 text-[9px] leading-4 text-white/55"><span className="font-black uppercase text-[#FFD700]">Talent watch:</span> {talentStories.map((story) => story.title).join(" · ")}</p> : <p className="mt-3 text-[9px] leading-4 text-white/40">Player, academy, school-games and small-league coverage will surface here as verified stories arrive.</p>}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export default function HomePage() {
   const { data: live = [] } = useMatches();
   const { data: upcoming = [] } = useUpcomingFixtures();
   const { data: recent = [] } = useRecentMatches();
   const { data: standings = {} } = useStandings();
   const { data: debates = [] } = useDebates();
+  const { data: kenyaDaily, isLoading: kenyaDailyLoading } = useQuery({
+    queryKey: ["kenya-daily", 276, 277],
+    queryFn: async () => {
+      const [table, fkfFixtures, superLeagueFixtures] = await Promise.all([
+        fetchStandings(276),
+        fetchLeagueSeasonFixtures(276, 2026),
+        fetchLeagueSeasonFixtures(277, 2026),
+      ]);
+      return { table, fixtures: [...fkfFixtures, ...superLeagueFixtures] as HomeMatch[] };
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
   const [today, setToday] = useState<HomeMatch[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   useEffect(() => {
@@ -883,36 +961,12 @@ export default function HomePage() {
           </div>
         </section>
           <section className="grid gap-2 min-[900px]:grid-cols-[1.55fr_.82fr_.72fr]">
-          <Panel>
-            <SectionHeader
-              title="Kenyan football"
-              href="/news?section=kenya"
-              action="More Kenya"
-            />
-            <div className="grid sm:grid-cols-[1fr_.95fr]">
-              <CompactStories articles={kenyaStories} />
-              <div className="border-t border-white/10 sm:border-l sm:border-t-0">
-                <div className="flex h-9 items-center justify-between px-3">
-                  <b className="text-[9px] uppercase">FKF Premier League</b>
-                  <Link
-                    href="/leagues/fkf-premier-league/table"
-                    className="text-[7px] font-black uppercase text-[#ef3038]"
-                  >
-                    View table
-                  </Link>
-                </div>
-                <div className="grid min-h-[145px] place-items-center border-t border-white/10 px-5 text-center">
-                  <div>
-                    <Trophy className="mx-auto h-5 w-5 text-white/25" />
-                    <p className="mt-2 text-[10px] text-white/48">
-                      Current FKF standings are temporarily unavailable from the
-                      verified provider.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Panel>
+          <KenyaDailyWidget
+            standings={kenyaDaily?.table || []}
+            fixtures={kenyaDaily?.fixtures || []}
+            stories={kenyaStories}
+            loading={kenyaDailyLoading}
+          />
           <Panel>
             <SectionHeader title="Editorial picks" href="/news" />
             <CompactStories articles={editorialPicks} />
