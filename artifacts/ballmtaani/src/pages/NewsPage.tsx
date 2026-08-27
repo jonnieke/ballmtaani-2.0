@@ -7,6 +7,7 @@ import { ExternalLink, Search, Clock, ChevronRight, BarChart2, Gamepad2, Newspap
 import SEO from "../components/SEO";
 import { analytics } from "../lib/analytics";
 import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
+import { fetchLocalFootballDesk, type LocalFootballDesk } from "../lib/local-football";
 
 interface PartnerArticle {
   id: string;
@@ -53,7 +54,7 @@ const TABS = ["Front Page", "Transfers", "Opinion", "World Cup Archive", "Match 
 const SECTION_TABS: Record<string, string> = { transfers: "Transfers", opinion: "Opinion" };
 function initialTab() {
   const section = new URLSearchParams(window.location.search).get("section")?.toLowerCase() || "";
-  return SECTION_TABS[section] || "Front Page";
+  return section === "kenya" ? "Kenyan Fan Angle" : SECTION_TABS[section] || "Front Page";
 }
 
 export default function NewsPage() {
@@ -63,6 +64,7 @@ export default function NewsPage() {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(initialTab);
   const [fixtures, setFixtures] = useState<any[]>([]);
+  const [localDesk, setLocalDesk] = useState<LocalFootballDesk>({ matches: [], standings: [] });
 
   useEffect(() => {
     Promise.all([
@@ -90,6 +92,10 @@ export default function NewsPage() {
       setFixtures((f || []).slice(0, 6));
       setLoading(false);
     });
+  }, []);
+
+  useEffect(() => {
+    fetchLocalFootballDesk().then(setLocalDesk).catch(() => undefined);
   }, []);
 
   const q = query.toLowerCase();
@@ -245,6 +251,19 @@ export default function NewsPage() {
 
         {/* ── CONTENT ── */}
         <div className="mx-auto max-w-6xl px-4 pt-8">
+
+          {activeTab === "Kenyan Fan Angle" && (
+            <section className="mb-8 border border-white/10 bg-[#0b0d12]" aria-labelledby="kenya-data-heading">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                <div><p className="text-[9px] font-black uppercase tracking-[0.25em] text-[#B30000]">Daily local desk</p><h2 id="kenya-data-heading" className="mt-1 text-lg font-black uppercase">Kenya fixtures & standings</h2></div>
+                <Link href="/kenya-football" className="text-[9px] font-black uppercase text-[#B30000]">Open full data desk →</Link>
+              </div>
+              <div className="grid gap-4 p-4 md:grid-cols-2">
+                <div><h3 className="text-[10px] font-black uppercase text-white/60">Latest local results & fixtures</h3>{localDesk.matches.slice(0, 5).map((match) => <div key={match.id} className="grid grid-cols-[80px_1fr_auto] gap-2 border-b border-white/[0.07] py-2 text-[11px]"><span className="text-white/40">{match.status === "finished" ? "FT" : match.scheduledDate || "TBC"}</span><span><b className="block">{match.homeTeam}</b><b className="block">{match.awayTeam}</b></span><b className="text-right">{match.status === "finished" && match.homeScore !== null && match.awayScore !== null ? <><span className="block">{match.homeScore}</span><span className="block">{match.awayScore}</span></> : "-"}</b></div>)}{!localDesk.matches.length && <p className="py-8 text-sm text-white/40">Verified local fixtures will appear here after publication.</p>}</div>
+                <div><h3 className="text-[10px] font-black uppercase text-white/60">Published local table</h3>{localDesk.standings.slice(0, 5).map((row) => <div key={row.id} className="grid grid-cols-[26px_1fr_36px_42px] gap-2 border-b border-white/[0.07] py-2 text-[11px]"><span className="text-white/40">{row.position}</span><b className="truncate">{row.team}</b><span>{row.played ?? "-"}</span><b>{row.points ?? "-"}</b></div>)}{!localDesk.standings.length && <p className="py-8 text-sm text-white/40">No verified local standings have been published yet.</p>}</div>
+              </div>
+            </section>
+          )}
 
           {loading ? (
             <div className="space-y-6">
