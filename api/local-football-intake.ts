@@ -147,29 +147,69 @@ function parseDataUrl(value: unknown) {
   return { mimeType: match[1], base64: match[2], bytes };
 }
 
-async function extractWithVertex(parts: Array<Record<string, unknown>>, label: string) {
-  const token = await getVertexAccessToken(process.env as any);
-  if (!token) throw new Error("Vertex AI extraction is not configured.");
-  const project = process.env.VERTEX_PROJECT_ID || "ball-mtaani-496717";
-  const location = process.env.VERTEX_LOCATION || "us-central1";
-  const model = process.env.VERTEX_VISION_MODEL || process.env.VERTEX_MODEL || "gemini-2.0-flash-001";
-  const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: EXTRACTION_PROMPT }, ...parts] }],
-      generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: "application/json" },
-    }),
-  });
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`${label} extraction failed (${response.status}): ${detail.slice(0, 240)}`);
-  }
-  const result = await response.json() as any;
-  const raw = String(result?.candidates?.[0]?.content?.parts?.[0]?.text || "").replace(/^```json\s*|\s*```$/g, "").trim();
+function parseExtractionResponse(value: unknown) {
+  const raw = String(value || "").replace(/^```(?:json)?\s*|\s*```$/gi, "").trim();
   if (!raw) throw new Error("The extractor returned no data.");
   return extractionSchema.parse(JSON.parse(raw));
+}
+
+async function extractWithOpenAi(parts: Array<Record<string, unknown>>, label: string) {
+  const key = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
+  if (!key) throw new Error("No server-side AI extraction provider is configured.");
+  const content = [
+    { type: "text", text: EXTRACTION_PROMPT },
+    ...parts.flatMap((part) => {
+      const inlineData = part.inlineData as { mimeType?: string; data?: string } | undefined;
+      if (inlineData?.data && inlineData.mimeType) return [{ type: "image_url", image_url: { url: `data:${inlineData.mimeType};base64,${inlineData.data}` } }];
+      return part.text ? [{ type: "text", text: String(part.text) }] : [];
+    }),
+  ];
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: process.env.OPENAI_VISION_MODEL || process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      messages: [{ role: "user", content }],
+      temperature: 0,
+      max_tokens: 8192,
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!response.ok) throw new Error(`${label} fallback extraction failed (${response.status}): ${(await response.text()).slice(0, 240)}`);
+  const result = await response.json() as any;
+  return parseExtractionResponse(result?.choices?.[0]?.message?.content);
+}
+
+async function extractWithVertex(parts: Array<Record<string, unknown>>, label: string) {
+  const token = await getVertexAccessToken(process.env as any);
+  let vertexError: unknown = null;
+  if (token) {
+    try {
+      const project = process.env.VERTEX_PROJECT_ID || "ball-mtaani-496717";
+      const location = process.env.VERTEX_LOCATION || "us-central1";
+      const model = process.env.VERTEX_VISION_MODEL || process.env.VERTEX_MODEL || "gemini-2.0-flash-001";
+      const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: EXTRACTION_PROMPT }, ...parts] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: "application/json" },
+        }),
+      });
+      if (!response.ok) throw new Error(`${label} extraction failed (${response.status}): ${(await response.text()).slice(0, 240)}`);
+      const result = await response.json() as any;
+      return parseExtractionResponse(result?.candidates?.[0]?.content?.parts?.[0]?.text);
+    } catch (error) {
+      vertexError = error;
+    }
+  }
+  try {
+    return await extractWithOpenAi(parts, label);
+  } catch (openAiError) {
+    if (vertexError) throw vertexError;
+    throw openAiError;
+  }
 }
 
 function extractPoster(base64: string, mimeType: string) {
