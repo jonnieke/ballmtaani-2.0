@@ -54,6 +54,14 @@ type HomeMatch = HomepageMatch & {
 function articleCopy(article: NewsArticle) {
   return `${article.title} ${article.description || ""} ${article.source || ""}`.toLowerCase();
 }
+const NEWS_WIRE_PRIORITY_WINDOW_MS = 24 * 60 * 60 * 1000;
+function isFreshBallMtaaniArticle(article: NewsArticle) {
+  if (!article.isInternal || !article.pubDate) return false;
+  const publishedAt = Date.parse(article.pubDate);
+  if (!Number.isFinite(publishedAt)) return false;
+  const age = Date.now() - publishedAt;
+  return age >= 0 && age <= NEWS_WIRE_PRIORITY_WINDOW_MS;
+}
 function articleKey(article: NewsArticle) {
   return article.title
     .toLowerCase()
@@ -910,6 +918,9 @@ export default function HomePage() {
       const wire = newsResult.status === "fulfilled" ? newsResult.value : [];
       const latest = dedupeArticles([...partner, ...wire])
         .sort((a, b) => {
+          const aPriority = isFreshBallMtaaniArticle(a) ? 1 : 0;
+          const bPriority = isFreshBallMtaaniArticle(b) ? 1 : 0;
+          if (aPriority !== bPriority) return bPriority - aPriority;
           const aTime = Date.parse(a.pubDate || "") || 0;
           const bTime = Date.parse(b.pubDate || "") || 0;
           return bTime - aTime;
