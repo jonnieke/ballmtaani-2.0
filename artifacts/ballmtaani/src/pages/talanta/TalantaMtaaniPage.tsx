@@ -71,8 +71,8 @@ export default function TalantaMtaaniPage() {
           <Badge className="border-[#FFD000]/30 bg-[#FFD000]/10 text-[#FFD000]"><Sparkles className="mr-1 h-3.5 w-3.5" /> Talanta Mtaani</Badge>
           <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <h1 className="max-w-3xl text-3xl font-black uppercase leading-tight sm:text-5xl">A verified path from the mtaa pitch to the national radar.</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/60">We separate match-record performance from fully verified player profiles. A goal on an organizer poster can put a name on the radar; identity, age, statistics and contact details require further editorial review before publication.</p>
+              <h1 className="max-w-3xl text-3xl font-black uppercase leading-tight sm:text-5xl">Find Kenya&apos;s next football stars.</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/60">See the players making noise across school games, grassroots tournaments and FKF competitions. Follow local form, discover new names and keep up with the next matchday.</p>
             </div>
             <Button onClick={() => { setShowNominate(true); setSubmitState("idle"); }} className="bg-[#d8212d] font-black text-white hover:bg-[#bb1823]"><PlusCircle className="mr-2 h-4 w-4" /> Nominate a rising player</Button>
           </div>
@@ -81,9 +81,9 @@ export default function TalantaMtaaniPage() {
 
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
         <div className="grid gap-3 sm:grid-cols-3">
-          <TrustCard icon={<Trophy className="h-5 w-5" />} title="Match-record radar" text="Goals and assists appear only when named on a reviewed source." />
-          <TrustCard icon={<ShieldCheck className="h-5 w-5" />} title="Profile verification" text="Public profiles require identity and evidence checks by the editorial desk." />
-          <TrustCard icon={<Users className="h-5 w-5" />} title="Safeguarding first" text="Phone numbers and nomination details stay private and are never shown publicly." />
+          <TrustCard icon={<Trophy className="h-5 w-5" />} title="Matchday form" text="Track goals and assists from published local match records." />
+          <TrustCard icon={<ShieldCheck className="h-5 w-5" />} title="Player profiles" text="Explore fuller player stories as they are reviewed by the desk." />
+          <TrustCard icon={<Users className="h-5 w-5" />} title="Safe submissions" text="Nomination details are kept private while the desk follows the story." />
         </div>
 
         <label className="relative block max-w-lg">
@@ -94,17 +94,17 @@ export default function TalantaMtaaniPage() {
 
         <section aria-labelledby="performance-radar-title">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-3">
-            <div><p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#ef3038]">From verified match records</p><h2 id="performance-radar-title" className="mt-1 text-xl font-black uppercase">Local performance radar</h2></div>
+            <div><p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#ef3038]">The names to watch</p><h2 id="performance-radar-title" className="mt-1 text-xl font-black uppercase">Local performance radar</h2></div>
             <Link href="/kenya-football" className="text-[10px] font-black uppercase text-[#ef3038]">Open Kenya data <ArrowRight className="inline h-3 w-3" /></Link>
           </div>
           {localLoading ? <p className="py-10 text-sm text-white/45">Loading verified performances...</p> : performancePlayers.length ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{performancePlayers.map((player) => <article key={`${player.name}-${player.team}`} className="border border-white/10 bg-[#101010] p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-black">{player.name}</h3><p className="mt-1 text-xs text-white/50">{player.team || "Team not confirmed"}</p></div><span className="text-2xl font-black text-[#FFD000]">{player.goals}</span></div><p className="mt-3 border-t border-white/10 pt-3 text-[10px] uppercase text-white/45">Recorded goals · {player.competition}</p><p className="mt-1 text-[10px] text-white/35">Performance record, not yet a verified biographical profile.</p></article>)}</div>
-          ) : <HonestEmpty text="No named player events match this view yet. BallMtaani will not invent profiles to fill the grid." />}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{performancePlayers.map((player) => <article key={`${player.name}-${player.team}`} className="border border-white/10 bg-[#101010] p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-black">{player.name}</h3><p className="mt-1 text-xs text-white/50">{player.team || "Team not confirmed"}</p></div><span className="text-2xl font-black text-[#FFD000]">{player.goals}</span></div><p className="mt-3 border-t border-white/10 pt-3 text-[10px] uppercase text-white/45">Recorded goals · {player.competition}</p></article>)}</div>
+          ) : <HonestEmpty text="No player performances to show yet. Check back after the next local matchday." />}
         </section>
 
         <section aria-labelledby="verified-profiles-title">
-          <div className="border-b border-white/10 pb-3"><p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#FFD000]">Editorially approved</p><h2 id="verified-profiles-title" className="mt-1 text-xl font-black uppercase">Verified player profiles</h2></div>
-          {profilesLoading ? <p className="py-10 text-sm text-white/45">Loading verified profiles...</p> : visibleProfiles.length ? <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{visibleProfiles.map((profile) => <article key={profile.id} className="overflow-hidden border border-white/10 bg-[#101010]">{profile.image_url && <img src={profile.image_url} alt={profile.player_name} className="h-44 w-full object-cover" loading="lazy" />}<div className="p-4"><span className="text-[9px] font-black uppercase text-[#FFD000]">Verified profile</span><h3 className="mt-1 text-lg font-black">{profile.player_name}</h3><p className="text-xs text-white/50">{profile.position} · {profile.institution} · {profile.county}</p>{profile.summary && <p className="mt-3 text-xs leading-5 text-white/65">{profile.summary}</p>}<p className="mt-3 border-t border-white/10 pt-3 text-[10px] text-white/40">{profile.verification_note}</p></div></article>)}</div> : <HonestEmpty text="No full player profiles have completed verification yet. Nominations remain private until evidence and safeguarding checks are complete." />}
+          <div className="border-b border-white/10 pb-3"><p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#FFD000]">More about the player</p><h2 id="verified-profiles-title" className="mt-1 text-xl font-black uppercase">Verified player profiles</h2></div>
+          {profilesLoading ? <p className="py-10 text-sm text-white/45">Loading player profiles...</p> : visibleProfiles.length ? <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{visibleProfiles.map((profile) => <article key={profile.id} className="overflow-hidden border border-white/10 bg-[#101010]">{profile.image_url && <img src={profile.image_url} alt={profile.player_name} className="h-44 w-full object-cover" loading="lazy" />}<div className="p-4"><span className="text-[9px] font-black uppercase text-[#FFD000]">Verified profile</span><h3 className="mt-1 text-lg font-black">{profile.player_name}</h3><p className="text-xs text-white/50">{profile.position} · {profile.institution} · {profile.county}</p>{profile.summary && <p className="mt-3 text-xs leading-5 text-white/65">{profile.summary}</p>}<p className="mt-3 border-t border-white/10 pt-3 text-[10px] text-white/40">{profile.verification_note}</p></div></article>)}</div> : <HonestEmpty text="Player profiles will appear here as the desk completes each story. Start with the matchday performances above." />}
         </section>
       </div>
 
