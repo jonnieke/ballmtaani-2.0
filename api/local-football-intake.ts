@@ -17,13 +17,15 @@ const eventSchema = z.object({
 });
 
 const matchSchema = z.object({
+  externalProvider: z.string().trim().max(60).nullable().optional(),
+  externalFixtureId: z.number().int().positive().nullable().optional(),
   homeTeam: z.string().trim().min(1).max(140),
   awayTeam: z.string().trim().min(1).max(140),
   homeScore: score,
   awayScore: score,
   homePenalties: score,
   awayPenalties: score,
-  status: z.enum(["scheduled", "finished", "postponed", "cancelled"]).default("scheduled"),
+  status: z.enum(["scheduled", "live", "finished", "postponed", "cancelled"]).default("scheduled"),
   date: z.string().trim().max(20).nullable().optional(),
   kickoffTime: z.string().trim().max(30).nullable().optional(),
   venue: optionalText,
@@ -53,12 +55,24 @@ const extractionSchema = z.object({
     locality: optionalText,
     county: optionalText,
   }).default({}),
-  matches: z.array(matchSchema).max(40).default([]),
+  matches: z.array(matchSchema).max(200).default([]),
   standings: z.array(standingSchema).max(100).default([]),
   confidence: z.number().min(0).max(1),
   warnings: z.array(z.string().trim().max(300)).max(30).default([]),
-  rawText: z.string().max(12000).default(""),
+  rawText: z.string().max(20000).default(""),
 });
+
+function emptyExtraction(rawText = ""): z.infer<typeof extractionSchema> {
+  return {
+    documentType: "unknown",
+    competition: {},
+    matches: [],
+    standings: [],
+    confidence: rawText ? 0.75 : 1,
+    warnings: rawText ? ["Review every field extracted from the pasted report before publishing."] : [],
+    rawText: rawText.slice(0, 20000),
+  };
+}
 
 const EXTRACTION_PROMPT = `You extract structured Kenyan football data from an event poster.
 Return JSON only. Never guess, correct, expand or invent a team, player, venue, score, date or competition.
@@ -74,7 +88,7 @@ Required shape:
 {
   "documentType": "fixture|result|multi_result|standings|team_photo|unknown",
   "competition": {"name": string|null, "shortName": string|null, "seasonLabel": string|null, "locality": string|null, "county": string|null},
-  "matches": [{"homeTeam": string, "awayTeam": string, "homeScore": number|null, "awayScore": number|null, "homePenalties": number|null, "awayPenalties": number|null, "status": "scheduled|finished|postponed|cancelled", "date": string|null, "kickoffTime": string|null, "venue": string|null, "round": string|null, "events": [{"team": string|null, "player": string, "minute": string|null, "assist": string|null, "type": "goal|own_goal|penalty_goal"}]}],
+  "matches": [{"homeTeam": string, "awayTeam": string, "homeScore": number|null, "awayScore": number|null, "homePenalties": number|null, "awayPenalties": number|null, "status": "scheduled|live|finished|postponed|cancelled", "date": string|null, "kickoffTime": string|null, "venue": string|null, "round": string|null, "events": [{"team": string|null, "player": string, "minute": string|null, "assist": string|null, "type": "goal|own_goal|penalty_goal"}]}],
   "standings": [{"position": number, "team": string, "played": number|null, "won": number|null, "drawn": number|null, "lost": number|null, "goalsFor": number|null, "goalsAgainst": number|null, "goalDifference": number|null, "points": number|null}],
   "confidence": number,
   "warnings": [string],
@@ -133,9 +147,9 @@ function parseDataUrl(value: unknown) {
   return { mimeType: match[1], base64: match[2], bytes };
 }
 
-async function extractPoster(base64: string, mimeType: string) {
+async function extractWithVertex(parts: Array<Record<string, unknown>>, label: string) {
   const token = await getVertexAccessToken(process.env as any);
-  if (!token) throw new Error("Vertex AI image extraction is not configured.");
+  if (!token) throw new Error("Vertex AI extraction is not configured.");
   const project = process.env.VERTEX_PROJECT_ID || "ball-mtaani-496717";
   const location = process.env.VERTEX_LOCATION || "us-central1";
   const model = process.env.VERTEX_VISION_MODEL || process.env.VERTEX_MODEL || "gemini-2.0-flash-001";
@@ -144,18 +158,28 @@ async function extractPoster(base64: string, mimeType: string) {
     method: "POST",
     headers: { Authorization: `Bearer ${token.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: EXTRACTION_PROMPT }, { inlineData: { mimeType, data: base64 } }] }],
+      contents: [{ role: "user", parts: [{ text: EXTRACTION_PROMPT }, ...parts] }],
       generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: "application/json" },
     }),
   });
   if (!response.ok) {
     const detail = await response.text();
-    throw new Error(`Poster extraction failed (${response.status}): ${detail.slice(0, 240)}`);
+    throw new Error(`${label} extraction failed (${response.status}): ${detail.slice(0, 240)}`);
   }
   const result = await response.json() as any;
   const raw = String(result?.candidates?.[0]?.content?.parts?.[0]?.text || "").replace(/^```json\s*|\s*```$/g, "").trim();
   if (!raw) throw new Error("The extractor returned no data.");
   return extractionSchema.parse(JSON.parse(raw));
+}
+
+function extractPoster(base64: string, mimeType: string) {
+  return extractWithVertex([{ inlineData: { mimeType, data: base64 } }], "Poster");
+}
+
+function extractTextReport(reportText: string) {
+  return extractWithVertex([{
+    text: `Extract only the football facts explicitly stated in this editor-supplied report:\n\n${reportText}`,
+  }], "Text report");
 }
 
 async function upsertNamed(admin: any, table: string, name: string, extra: Record<string, unknown> = {}) {
@@ -184,6 +208,115 @@ function kickoffIso(date?: string | null, time?: string | null) {
   return new Date(`${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+03:00`).toISOString();
 }
 
+const API_FOOTBALL_LEAGUES: Record<number, { name: string; shortName: string }> = {
+  276: { name: "FKF Premier League", shortName: "FKF PL" },
+  277: { name: "Kenyan Super League", shortName: "NSL" },
+};
+
+function localStatus(status: string): z.infer<typeof matchSchema>["status"] {
+  if (["FT", "AET", "PEN"].includes(status)) return "finished";
+  if (["1H", "2H", "HT", "ET", "P", "BT", "LIVE", "INT"].includes(status)) return "live";
+  if (status === "PST") return "postponed";
+  if (["CANC", "ABD", "AWD", "WO"].includes(status)) return "cancelled";
+  return "scheduled";
+}
+
+async function apiFootball(endpoint: string, params: Record<string, string | number>) {
+  const key = process.env.API_FOOTBALL_KEY || process.env.VITE_API_FOOTBALL_KEY;
+  if (!key) throw new Error("API-Football is not configured on the server.");
+  const query = new URLSearchParams(Object.entries(params).map(([name, value]) => [name, String(value)]));
+  const response = await fetch(`https://v3.football.api-sports.io/${endpoint}?${query}`, {
+    headers: { "x-apisports-key": key },
+  });
+  if (!response.ok) throw new Error(`API-Football ${endpoint} request failed (${response.status}).`);
+  const payload = await response.json() as any;
+  const errors = payload?.errors;
+  if (errors && (Array.isArray(errors) ? errors.length : Object.keys(errors).length)) {
+    throw new Error(`API-Football rejected the ${endpoint} request: ${JSON.stringify(errors).slice(0, 240)}`);
+  }
+  return Array.isArray(payload?.response) ? payload.response : [];
+}
+
+async function importApiFootball(leagueId: number, season: number, from: string, to: string) {
+  const league = API_FOOTBALL_LEAGUES[leagueId];
+  if (!league) throw Object.assign(new Error("Choose a supported Kenyan competition."), { status: 400 });
+  const fromDate = new Date(`${from}T00:00:00Z`);
+  const toDate = new Date(`${to}T00:00:00Z`);
+  const spanDays = (toDate.getTime() - fromDate.getTime()) / 86_400_000;
+  if (!Number.isFinite(spanDays) || spanDays < 0 || spanDays > 93) {
+    throw Object.assign(new Error("Choose an API import window of 93 days or less."), { status: 400 });
+  }
+
+  const [fixturesResult, standingsResult] = await Promise.allSettled([
+    apiFootball("fixtures", { league: leagueId, season, from, to, timezone: "Africa/Nairobi" }),
+    apiFootball("standings", { league: leagueId, season }),
+  ]);
+
+  if (fixturesResult.status === "rejected" && standingsResult.status === "rejected") {
+    throw fixturesResult.reason;
+  }
+  const fixturesResponse = fixturesResult.status === "fulfilled" ? fixturesResult.value : [];
+  const standingsResponse = standingsResult.status === "fulfilled" ? standingsResult.value : [];
+
+  const warnings = [
+    "Imported from API-Football. Verify club names, dates, scores and competition coverage before publishing.",
+    "Match events and goalscorers are not included in this import.",
+  ];
+  if (fixturesResult.status === "rejected") warnings.push(`Fixtures were unavailable: ${String(fixturesResult.reason?.message || fixturesResult.reason).slice(0, 180)}`);
+  if (standingsResult.status === "rejected") warnings.push(`Standings were unavailable: ${String(standingsResult.reason?.message || standingsResult.reason).slice(0, 180)}`);
+  if (fixturesResponse.length > 200) warnings.push("Only the first 200 fixtures in this window were retained for review.");
+
+  const matches = fixturesResponse.slice(0, 200).map((row: any) => {
+    const kickoff = row?.fixture?.date ? new Date(row.fixture.date) : null;
+    const date = kickoff && Number.isFinite(kickoff.getTime())
+      ? new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Nairobi", year: "numeric", month: "2-digit", day: "2-digit" }).format(kickoff)
+      : null;
+    const kickoffTime = kickoff && Number.isFinite(kickoff.getTime())
+      ? new Intl.DateTimeFormat("en-KE", { timeZone: "Africa/Nairobi", hour: "numeric", minute: "2-digit", hour12: true }).format(kickoff)
+      : null;
+    return {
+      externalProvider: "api-football",
+      externalFixtureId: Number(row?.fixture?.id) || null,
+      homeTeam: String(row?.teams?.home?.name || "").trim(),
+      awayTeam: String(row?.teams?.away?.name || "").trim(),
+      homeScore: Number.isInteger(row?.goals?.home) ? row.goals.home : null,
+      awayScore: Number.isInteger(row?.goals?.away) ? row.goals.away : null,
+      homePenalties: Number.isInteger(row?.score?.penalty?.home) ? row.score.penalty.home : null,
+      awayPenalties: Number.isInteger(row?.score?.penalty?.away) ? row.score.penalty.away : null,
+      status: localStatus(String(row?.fixture?.status?.short || "NS")),
+      date,
+      kickoffTime,
+      venue: String(row?.fixture?.venue?.name || "").trim() || null,
+      round: String(row?.league?.round || "").trim() || null,
+      events: [],
+    };
+  }).filter((match: any) => match.externalFixtureId && match.homeTeam && match.awayTeam);
+
+  const rawStandings = standingsResponse.flatMap((row: any) => row?.league?.standings || []).flat();
+  const standings = rawStandings.map((row: any) => ({
+    position: Number(row?.rank),
+    team: String(row?.team?.name || "").trim(),
+    played: Number.isInteger(row?.all?.played) ? row.all.played : null,
+    won: Number.isInteger(row?.all?.win) ? row.all.win : null,
+    drawn: Number.isInteger(row?.all?.draw) ? row.all.draw : null,
+    lost: Number.isInteger(row?.all?.lose) ? row.all.lose : null,
+    goalsFor: Number.isInteger(row?.all?.goals?.for) ? row.all.goals.for : null,
+    goalsAgainst: Number.isInteger(row?.all?.goals?.against) ? row.all.goals.against : null,
+    goalDifference: Number.isInteger(row?.goalsDiff) ? row.goalsDiff : null,
+    points: Number.isInteger(row?.points) ? row.points : null,
+  })).filter((row: any) => Number.isInteger(row.position) && row.position > 0 && row.team);
+
+  return extractionSchema.parse({
+    documentType: matches.length ? "multi_result" : "standings",
+    competition: { name: league.name, shortName: league.shortName, seasonLabel: String(season), locality: null, county: null },
+    matches,
+    standings,
+    confidence: 0.98,
+    warnings,
+    rawText: `API-Football league ${leagueId}, season ${season}, ${from} to ${to}`,
+  });
+}
+
 async function publishSource(admin: any, sourceId: string, editorId: string, extraction: z.infer<typeof extractionSchema>) {
   const competitionName = extraction.competition.name || "Kenyan Local Football";
   const competitionId = await upsertNamed(admin, "local_competitions", competitionName, {
@@ -202,9 +335,11 @@ async function publishSource(admin: any, sourceId: string, editorId: string, ext
       locality: extraction.competition.locality || null,
       county: extraction.competition.county || null,
     }) : null;
-    const { data: fixture, error } = await admin.from("local_fixtures").upsert({
+    const fixturePayload = {
       source_id: sourceId,
-      source_match_index: index,
+      source_match_index: match.externalFixtureId ?? index,
+      external_provider: match.externalProvider || null,
+      external_fixture_id: match.externalFixtureId || null,
       competition_id: competitionId,
       home_team_id: homeTeamId,
       away_team_id: awayTeamId,
@@ -220,7 +355,12 @@ async function publishSource(admin: any, sourceId: string, editorId: string, ext
       away_penalties: match.awayPenalties ?? null,
       verification_status: "verified",
       updated_at: new Date().toISOString(),
-    }, { onConflict: "source_id,source_match_index" }).select("id").single();
+    };
+    const conflictTarget = match.externalProvider && match.externalFixtureId
+      ? "external_provider,external_fixture_id"
+      : "source_id,source_match_index";
+    const { data: fixture, error } = await admin.from("local_fixtures")
+      .upsert(fixturePayload, { onConflict: conflictTarget }).select("id").single();
     if (error) throw error;
 
     await admin.from("local_match_events").delete().eq("fixture_id", fixture.id);
@@ -284,9 +424,86 @@ export default async function handler(req: any, res: any) {
       return json(res, 200, { sources: data || [] });
     }
 
+    if (action === "create-manual") {
+      const sourceName = z.string().trim().min(2).max(180).parse(req.body?.sourceName);
+      const extraction = emptyExtraction();
+      const { data: source, error } = await admin.from("local_football_sources").insert({
+        submitted_by: userId,
+        source_name: sourceName,
+        source_type: "manual_entry",
+        original_filename: "manual-entry.txt",
+        asset_path: `manual://${userId}/${Date.now()}-${slugify(sourceName)}`,
+        mime_type: "text/plain",
+        workflow_status: "pending_review",
+        extraction_payload: extraction,
+        extraction_confidence: 1,
+      }).select("id").single();
+      if (error) throw error;
+      return json(res, 201, { sourceId: source.id, extraction });
+    }
+
+    if (action === "extract-text") {
+      const sourceName = z.string().trim().min(2).max(180).parse(req.body?.sourceName);
+      const reportText = z.string().trim().min(10).max(20000).parse(req.body?.reportText);
+      const extraction = await extractTextReport(reportText);
+      const { data: source, error } = await admin.from("local_football_sources").insert({
+        submitted_by: userId,
+        source_name: sourceName,
+        source_type: "text_report",
+        original_filename: "pasted-football-report.txt",
+        asset_path: `text-report://${userId}/${Date.now()}-${slugify(sourceName)}`,
+        mime_type: "text/plain",
+        document_type: extraction.documentType,
+        workflow_status: "pending_review",
+        extraction_payload: extraction,
+        extraction_confidence: extraction.confidence,
+        extraction_warnings: extraction.warnings,
+      }).select("id").single();
+      if (error) throw error;
+      return json(res, 201, { sourceId: source.id, extraction });
+    }
+
+    if (action === "import-api-football") {
+      const input = z.object({
+        leagueId: z.number().int().refine((value) => Boolean(API_FOOTBALL_LEAGUES[value])),
+        season: z.number().int().min(2020).max(2035),
+        from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      }).parse(req.body);
+      const extraction = await importApiFootball(input.leagueId, input.season, input.from, input.to);
+      const assetPath = `api-football://league/${input.leagueId}/season/${input.season}`;
+      const { data: existing, error: existingError } = await admin.from("local_football_sources")
+        .select("id, workflow_status").eq("asset_path", assetPath).maybeSingle();
+      if (existingError) throw existingError;
+      const sourceValues = {
+        submitted_by: userId,
+        source_name: `API-Football · ${API_FOOTBALL_LEAGUES[input.leagueId].name}`,
+        source_type: "api_football",
+        original_filename: `api-football-${input.leagueId}-${input.season}.json`,
+        asset_path: assetPath,
+        mime_type: "application/json",
+        document_type: extraction.documentType,
+        workflow_status: existing?.workflow_status === "published" ? "published" : "pending_review",
+        extraction_payload: extraction,
+        extraction_confidence: extraction.confidence,
+        extraction_warnings: extraction.warnings,
+        updated_at: new Date().toISOString(),
+      };
+      if (existing?.id) {
+        const { error } = await admin.from("local_football_sources").update(sourceValues).eq("id", existing.id);
+        if (error) throw error;
+        return json(res, 200, { sourceId: existing.id, extraction, refreshOfPublishedSource: existing.workflow_status === "published" });
+      }
+      const { data: source, error } = await admin.from("local_football_sources").insert(sourceValues).select("id").single();
+      if (error) throw error;
+      return json(res, 201, { sourceId: source.id, extraction, refreshOfPublishedSource: false });
+    }
+
     if (action === "extract") {
       const image = parseDataUrl(req.body?.imageDataUrl);
       const sourceName = String(req.body?.sourceName || "").trim().slice(0, 180);
+      const sourceType = z.enum(["organizer_poster", "club_poster", "school_poster", "reporter", "other"])
+        .parse(req.body?.sourceType || "organizer_poster");
       const filename = String(req.body?.filename || "poster.jpg").replace(/[^a-zA-Z0-9._-]/g, "-").slice(-120);
       if (!sourceName) return json(res, 400, { error: "Source or organizer name is required." });
       const extension = image.mimeType === "image/png" ? "png" : image.mimeType === "image/webp" ? "webp" : "jpg";
@@ -297,7 +514,7 @@ export default async function handler(req: any, res: any) {
       const { data: source, error: sourceError } = await admin.from("local_football_sources").insert({
         submitted_by: userId,
         source_name: sourceName,
-        source_type: req.body?.sourceType || "organizer_poster",
+        source_type: sourceType,
         original_filename: filename,
         asset_path: path,
         mime_type: image.mimeType,
@@ -325,12 +542,15 @@ export default async function handler(req: any, res: any) {
     const sourceId = z.string().uuid().parse(req.body?.sourceId);
     const extraction = extractionSchema.parse(req.body?.extraction);
     if (action === "save") {
+      const { data: currentSource, error: currentSourceError } = await admin
+        .from("local_football_sources").select("workflow_status").eq("id", sourceId).single();
+      if (currentSourceError) throw currentSourceError;
       const { error } = await admin.from("local_football_sources").update({
         extraction_payload: extraction,
         document_type: extraction.documentType,
         extraction_confidence: extraction.confidence,
         extraction_warnings: extraction.warnings,
-        workflow_status: "pending_review",
+        workflow_status: currentSource.workflow_status === "published" ? "published" : "pending_review",
         updated_at: new Date().toISOString(),
       }).eq("id", sourceId);
       if (error) throw error;

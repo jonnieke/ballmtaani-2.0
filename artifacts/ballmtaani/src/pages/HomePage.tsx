@@ -9,6 +9,8 @@ import {
   Globe2,
   MessageCircle,
   Radio,
+  ShieldCheck,
+  Star,
   Users,
 } from "lucide-react";
 import SEO from "../components/SEO";
@@ -284,7 +286,7 @@ function LeagueRail() {
 
 function EdgeBanner({ match, image }: { match?: HomeMatch; image?: string }) {
   return (
-    <Panel className="grid min-h-[130px] md:grid-cols-[minmax(0,1fr)_320px]">
+    <Panel className="grid h-full min-h-[290px] md:grid-cols-[minmax(0,1fr)_320px]">
       <div className="relative flex min-h-[130px] items-center overflow-hidden px-5 py-5 sm:px-8 sm:py-6">
         <img
           src={image || DEFAULT_IMAGE}
@@ -811,6 +813,61 @@ function CompactStories({ articles }: { articles: NewsArticle[] }) {
   );
 }
 
+function KenyaHeroWidget({
+  standings,
+  fixtures,
+  stories,
+  loading,
+  localDesk,
+}: {
+  standings: StandingEntry[];
+  fixtures: HomeMatch[];
+  stories: NewsArticle[];
+  loading: boolean;
+  localDesk: LocalFootballDesk;
+}) {
+  const localMatch = localDesk.matches.find((match) => match.status === "live")
+    || localDesk.matches.find((match) => match.status === "scheduled")
+    || localDesk.matches.find((match) => match.status === "finished");
+  const apiMatch = fixtures
+    .filter((match) => !["FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO"].includes(String(match.status || "").toUpperCase()))
+    .sort((a, b) => (a.kickoffAt || a.timestamp || 0) - (b.kickoffAt || b.timestamp || 0))[0];
+  const localTable = localDesk.standings.slice(0, 4);
+  const apiTable = standings.slice(0, 4);
+  const player = localDesk.players[0];
+  const hasVerifiedLocal = Boolean(localDesk.matches.length || localDesk.standings.length);
+
+  return (
+    <Panel className="flex h-full min-h-[290px] flex-col border-[#d8212d]/45">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+        <div>
+          <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#ef3038]">Kenya from the ground up</p>
+          <h2 className="mt-1 text-[17px] font-black uppercase">Kenyan Football</h2>
+        </div>
+        <span className="flex items-center gap-1 text-[8px] font-black uppercase text-emerald-400"><ShieldCheck className="h-3.5 w-3.5" /> {hasVerifiedLocal ? "Verified" : "Data desk"}</span>
+      </div>
+
+      <div className="flex-1 px-4 py-3">
+        <div className="flex items-center justify-between text-[8px] font-black uppercase text-white/35"><span>{localMatch?.competition || (apiMatch ? "FKF Premier League" : "Local match centre")}</span><Link href="/kenya-football#fixtures" className="text-[#ef3038]">All fixtures</Link></div>
+        {localMatch ? <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/10 pb-3 text-center">
+          <b className="text-left text-[11px] leading-4">{shortTeam(localMatch.homeTeam)}</b>
+          <span>{["finished", "live"].includes(localMatch.status) && localMatch.homeScore !== null && localMatch.awayScore !== null ? <><b className="block text-lg">{localMatch.homeScore} - {localMatch.awayScore}</b>{localMatch.status === "live" && <small className="text-[8px] font-black uppercase text-emerald-400">Live</small>}</> : <><b className="block text-sm">{localMatch.kickoffTime || "TBC"}</b><small className={`text-[8px] font-black uppercase ${localMatch.status === "live" ? "text-emerald-400" : "text-white/35"}`}>{localMatch.status === "live" ? "Live" : localMatch.scheduledDate || "Upcoming"}</small></>}</span>
+          <b className="text-right text-[11px] leading-4">{shortTeam(localMatch.awayTeam)}</b>
+        </div> : apiMatch ? <Link href={`/match/${apiMatch.id}`} className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/10 pb-3 text-center hover:text-[#ef3038]"><b className="text-left text-[11px]">{shortTeam(apiMatch.home)}</b><span><b className="block text-sm">{matchTime(apiMatch)}</b><small className="text-[8px] text-white/35">{matchDate(apiMatch)}</small></span><b className="text-right text-[11px]">{shortTeam(apiMatch.away)}</b></Link> : <p className="border-b border-white/10 py-5 text-center text-[10px] leading-4 text-white/40">{loading ? "Loading the Kenya match desk..." : "No verified local fixture is published right now."}</p>}
+
+        <div className="mt-3 flex items-center justify-between"><h3 className="text-[9px] font-black uppercase">{localTable[0]?.competition || "League snapshot"}</h3><Link href="/kenya-football#standings" className="text-[8px] font-black uppercase text-[#ef3038]">Full table</Link></div>
+        <div className="mt-1">
+          {localTable.length ? localTable.map((row) => <div key={row.id} className="grid grid-cols-[18px_1fr_28px_30px] items-center gap-1 border-b border-white/[0.07] py-1 text-[9px]"><span className="text-white/35">{row.position}</span><b className="truncate">{row.team}</b><span className="text-center text-white/45">{row.played ?? "-"}</span><b className="text-right">{row.points ?? "-"}</b></div>) : apiTable.length ? apiTable.map((row) => <div key={`${row.rank}-${row.team}`} className="grid grid-cols-[18px_1fr_28px_30px] items-center gap-1 border-b border-white/[0.07] py-1 text-[9px]"><span className="text-white/35">{row.rank}</span><span className="flex min-w-0 items-center gap-1"><img src={row.logo} alt="" className="h-3.5 w-3.5 object-contain" /><b className="truncate">{row.team}</b></span><span className="text-center text-white/45">{row.played}</span><b className="text-right">{row.points}</b></div>) : <p className="py-3 text-[9px] leading-4 text-white/35">No verified standings are available. We will not substitute invented table rows.</p>}
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 px-4 py-3">
+        {player ? <Link href="/talanta" className="flex items-center gap-2"><Star className="h-4 w-4 shrink-0 text-[#FFD700]" /><span className="min-w-0 text-[9px]"><b className="block truncate uppercase">Talent radar: {player.name}</b><small className="text-white/40">{player.team || player.competition} · {player.goals} goal{player.goals === 1 ? "" : "s"}</small></span><ArrowRight className="ml-auto h-3.5 w-3.5 text-[#ef3038]" /></Link> : stories[0] ? <ArticleLink article={stories[0]} className="flex items-center gap-2"><Star className="h-4 w-4 shrink-0 text-[#FFD700]" /><span className="min-w-0"><b className="line-clamp-2 text-[9px] leading-3">{stories[0].title}</b><small className="text-[8px] text-white/40">Kenya football report</small></span><ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-[#ef3038]" /></ArticleLink> : <Link href="/news?section=kenya" className="flex items-center gap-2 text-[9px] font-black uppercase text-white/60"><Star className="h-4 w-4 text-[#FFD700]" /> Local stories and talent watch <ArrowRight className="ml-auto h-3.5 w-3.5 text-[#ef3038]" /></Link>}
+      </div>
+    </Panel>
+  );
+}
+
 function KenyaDailyWidget({
   standings,
   fixtures,
@@ -969,7 +1026,16 @@ export default function HomePage() {
       />
       <LeagueRail />
       <div className="mx-auto max-w-[1500px] space-y-3 px-4 py-3">
-        <EdgeBanner match={featuredMatch} image={news[0]?.thumbnail} />
+        <section className="grid items-stretch gap-3 min-[1100px]:grid-cols-[minmax(0,1fr)_330px]" aria-label="Featured football and Kenyan football desk">
+          <EdgeBanner match={featuredMatch} image={news[0]?.thumbnail} />
+          <KenyaHeroWidget
+            standings={kenyaDaily?.table || []}
+            fixtures={kenyaDaily?.fixtures || []}
+            stories={kenyaStories}
+            loading={kenyaDailyLoading}
+            localDesk={kenyaDaily?.localDesk || EMPTY_LOCAL_FOOTBALL_DESK}
+          />
+        </section>
         <section aria-labelledby="kenya-football-daily-heading">
           <KenyaDailyWidget
             standings={kenyaDaily?.table || []}
