@@ -38,7 +38,7 @@ import {
   type NewsArticle,
 } from "../lib/news-api";
 import type { HomepageMatch } from "../lib/home-season";
-import { fetchLocalFootballDesk, type LocalFootballDesk } from "../lib/local-football";
+import { EMPTY_LOCAL_FOOTBALL_DESK, fetchLocalFootballDesk, type LocalFootballDesk } from "../lib/local-football";
 
 const DEFAULT_IMAGE = "/images/hero_player_celebration.png";
 const FANS_IMAGE = "/images/kenyan_fans.png";
@@ -831,14 +831,14 @@ function KenyaDailyWidget({
           <h2 id="kenya-football-daily-heading" className="mt-1 text-[17px] font-black uppercase">Kenya Football Daily</h2>
         </div>
         <div className="flex items-center gap-3 text-[8px] font-black uppercase">
-          <span className="text-white/45">{localDesk.matches.length || localDesk.standings.length ? "Organizer data · Human verified" : "FKF Premier League · Kenya Super League"}</span>
+          <span className="text-white/45">{localDesk.matches.length || localDesk.standings.length ? `Organizer data · Human verified${localDesk.lastPublishedAt ? ` · ${new Date(localDesk.lastPublishedAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}` : ""}` : "FKF Premier League · Kenya Super League"}</span>
           <Link href="/kenya-football" className="text-[#ef3038]">Open Kenya data <ArrowRight className="inline h-3 w-3" /></Link>
         </div>
       </div>
       <div className="grid md:grid-cols-[1fr_1fr_1.15fr]">
         <div className="border-b border-white/10 p-3 md:border-b-0 md:border-r">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black uppercase">FKF standings</h3>
+            <h3 className="text-[10px] font-black uppercase">{localDesk.standings[0]?.competition || "FKF standings"}</h3>
             <Link href="/kenya-football#standings" className="text-[8px] font-black uppercase text-[#ef3038]">Full table</Link>
           </div>
           {localDesk.standings.length ? <div className="mt-2 space-y-1">
@@ -856,7 +856,7 @@ function KenyaDailyWidget({
                 </div>
               ))}
             </div>
-          ) : <p className="py-8 text-center text-[10px] leading-4 text-white/40">The verified FKF table will appear when the provider publishes the current competition data.</p>}
+          ) : <p className="py-8 text-center text-[10px] leading-4 text-white/40">{localDesk.standingsStatus === "unavailable" ? "The local standings feed is temporarily unavailable." : "The verified table will appear after an organizer table is reviewed and published."}</p>}
         </div>
         <div className="border-b border-white/10 p-3 md:border-b-0 md:border-r">
           <div className="flex items-center justify-between"><h3 className="text-[10px] font-black uppercase">Next local fixtures</h3><Link href="/kenya-football#fixtures" className="text-[8px] font-black uppercase text-[#ef3038]">All fixtures</Link></div>
@@ -866,7 +866,7 @@ function KenyaDailyWidget({
         <div className="p-3">
           <div className="flex items-center justify-between"><h3 className="text-[10px] font-black uppercase">Local stories & talent watch</h3><Link href="/news?section=kenya" className="text-[8px] font-black uppercase text-[#ef3038]">More stories</Link></div>
           <div className="mt-2">{stories.slice(0, 4).map((article) => <ArticleLink key={articleKey(article)} article={article} className="grid grid-cols-[58px_1fr] gap-2 border-b border-white/10 py-2"><img src={article.thumbnail || DEFAULT_IMAGE} alt="" className="h-9 w-[58px] object-cover" loading="lazy" /><span className="min-w-0"><b className="line-clamp-2 text-[9px] leading-3">{article.title}</b><small className="mt-1 block text-[8px] text-white/40">{timeAgo(article.pubDate)}</small></span></ArticleLink>)}</div>
-          {talentStories.length ? <p className="mt-2 text-[9px] leading-4 text-white/55"><span className="font-black uppercase text-[#FFD700]">Talent watch:</span> {talentStories.map((story) => story.title).join(" · ")}</p> : <p className="mt-3 text-[9px] leading-4 text-white/40">Player, academy, school-games and small-league coverage will surface here as verified stories arrive.</p>}
+          {localDesk.players.length ? <p className="mt-2 text-[9px] leading-4 text-white/55"><span className="font-black uppercase text-[#FFD700]">Performance radar:</span> {localDesk.players.slice(0, 3).map((player) => `${player.name} (${player.goals} goal${player.goals === 1 ? "" : "s"})`).join(" · ")}</p> : talentStories.length ? <p className="mt-2 text-[9px] leading-4 text-white/55"><span className="font-black uppercase text-[#FFD700]">Talent watch:</span> {talentStories.map((story) => story.title).join(" · ")}</p> : <p className="mt-3 text-[9px] leading-4 text-white/40">Player, academy, school-games and small-league coverage will surface here as verified records arrive.</p>}
         </div>
       </div>
     </Panel>
@@ -908,7 +908,14 @@ export default function HomePage() {
       const partner =
         partnerResult.status === "fulfilled" ? partnerResult.value : [];
       const wire = newsResult.status === "fulfilled" ? newsResult.value : [];
-      setNews(dedupeArticles([...partner, ...wire]));
+      const latest = dedupeArticles([...partner, ...wire])
+        .sort((a, b) => {
+          const aTime = Date.parse(a.pubDate || "") || 0;
+          const bTime = Date.parse(b.pubDate || "") || 0;
+          return bTime - aTime;
+        })
+        .slice(0, 6);
+      setNews(latest);
     });
     return () => {
       active = false;
@@ -958,7 +965,7 @@ export default function HomePage() {
             fixtures={kenyaDaily?.fixtures || []}
             stories={kenyaStories}
             loading={kenyaDailyLoading}
-            localDesk={kenyaDaily?.localDesk || { matches: [], standings: [] }}
+            localDesk={kenyaDaily?.localDesk || EMPTY_LOCAL_FOOTBALL_DESK}
           />
         </section>
         <NewsCarousel articles={news} />

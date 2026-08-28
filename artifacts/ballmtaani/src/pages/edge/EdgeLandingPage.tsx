@@ -1,23 +1,25 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { ChevronRight, ShieldCheck, BarChart2, Cpu, Lock, AlertCircle } from "lucide-react";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
+import { getPublishedUpcomingPredictions } from "../../lib/edge/public/public-api-service";
 import PredictionCard from "../../components/edge/PredictionCard";
 import TelegramNotificationBridge from "../../components/edge/TelegramNotificationBridge";
 import RouteSEO from "../../components/RouteSEO";
 
 export default function EdgeLandingPage() {
   const [selectedComp, setSelectedComp] = React.useState<string>("all");
+  const { data: predictions = [], isLoading } = useQuery({ queryKey: ["published-edge-predictions"], queryFn: getPublishedUpcomingPredictions, staleTime: 5 * 60 * 1000 });
 
   const filteredPredictions = React.useMemo(() => {
-    if (selectedComp === "all") return MOCK_PUBLISHED_PREDICTIONS;
-    if (selectedComp === "kenya") return MOCK_PUBLISHED_PREDICTIONS.filter(p => p.competition.includes("FKF") || p.competition.includes("AFCON"));
-    if (selectedComp === "epl") return MOCK_PUBLISHED_PREDICTIONS.filter(p => p.competition === "Premier League");
-    if (selectedComp === "ucl") return MOCK_PUBLISHED_PREDICTIONS.filter(p => p.competition.includes("Champions League"));
-    return MOCK_PUBLISHED_PREDICTIONS;
-  }, [selectedComp]);
+    if (selectedComp === "all") return predictions;
+    if (selectedComp === "kenya") return predictions.filter(p => /FKF|Kenya|AFCON/i.test(p.competition));
+    if (selectedComp === "epl") return predictions.filter(p => p.competition === "Premier League");
+    if (selectedComp === "ucl") return predictions.filter(p => p.competition.includes("Champions League"));
+    return predictions;
+  }, [predictions, selectedComp]);
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#ffffff] pb-20">
@@ -87,7 +89,7 @@ export default function EdgeLandingPage() {
                 : "bg-white/5 border border-white/10 text-gray-400 hover:text-white"
             }`}
           >
-            All Matches ({MOCK_PUBLISHED_PREDICTIONS.length})
+            All Matches ({predictions.length})
           </button>
           <button
             onClick={() => setSelectedComp("kenya")}
@@ -136,11 +138,11 @@ export default function EdgeLandingPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {isLoading ? <div className="border border-white/10 bg-[#121212] px-5 py-12 text-center text-sm text-white/45">Loading published model output...</div> : filteredPredictions.length ? <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredPredictions.map((pred) => (
               <PredictionCard key={pred.fixtureId} prediction={pred} />
             ))}
-          </div>
+          </div> : <div className="border border-white/10 bg-[#121212] px-5 py-12 text-center"><AlertCircle className="mx-auto h-6 w-6 text-amber-400" /><h3 className="mt-3 text-sm font-black text-white">No verified predictions are published</h3><p className="mx-auto mt-2 max-w-xl text-xs leading-5 text-white/45">Edge stays empty until a real fixture has a complete feature snapshot, valid probability totals and a published model record. Demo fixtures are not shown to fans.</p><Link href="/matches" className="mt-4 inline-flex text-xs font-black text-emerald-400">Browse live fixtures <ChevronRight className="ml-1 h-4 w-4" /></Link></div>}
         </div>
 
         {/* How It Works Overview */}

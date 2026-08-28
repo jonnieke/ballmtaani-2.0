@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Sparkles, Heart, Users, ShieldCheck, ChevronRight, SlidersHorizontal } from "lucide-react";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
+import { getPublishedUpcomingPredictions } from "../../lib/edge/public/public-api-service";
 import { rankPersonalizedRecommendations } from "../../lib/edge/personalization/recommendation-engine";
 import { generateMultilingualExplanation, SupportedLanguage } from "../../lib/edge/personalization/multilingual-explanation-engine";
 import { LanguageSwitcher } from "../../components/edge/LanguageSwitcher";
@@ -12,13 +13,14 @@ import RouteSEO from "../../components/RouteSEO";
 
 export default function EdgeForYouPage() {
   const [language, setLanguage] = useState<SupportedLanguage>("en");
-  const [followedTeams, setFollowedTeams] = useState<string[]>(["Arsenal", "Real Madrid"]);
+  const [followedTeams] = useState<string[]>([]);
+  const { data: predictions = [], isLoading } = useQuery({ queryKey: ["published-edge-predictions"], queryFn: getPublishedUpcomingPredictions, staleTime: 5 * 60 * 1000 });
 
-  const ranked = rankPersonalizedRecommendations(MOCK_PUBLISHED_PREDICTIONS, {
+  const ranked = rankPersonalizedRecommendations(predictions, {
     userId: "usr-current",
     followedTeams,
-    followedCompetitions: ["Premier League", "UEFA Champions League"],
-    savedFixtureIds: ["epl-201"],
+    followedCompetitions: [],
+    savedFixtureIds: [],
     mutedTeams: [],
     mutedCompetitions: [],
   });
@@ -55,6 +57,8 @@ export default function EdgeForYouPage() {
 
         {/* Personalized Recommendations Stream */}
         <div className="space-y-6">
+          {isLoading && <div className="border border-white/10 bg-[#121212] py-12 text-center text-sm text-white/45">Loading published match intelligence...</div>}
+          {!isLoading && !ranked.length && <div className="border border-white/10 bg-[#121212] py-12 text-center text-sm text-white/45">No verified predictions are published for personalization yet.</div>}
           {ranked.map((rec) => {
             const explanation = generateMultilingualExplanation(rec.prediction, language);
 

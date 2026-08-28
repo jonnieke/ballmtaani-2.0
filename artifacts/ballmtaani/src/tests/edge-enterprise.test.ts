@@ -12,11 +12,13 @@ import { OperationalHealthService } from "../lib/edge/enterprise/operational-hea
 
 test("1. Typed Mobile API Client & Offline Cache Layer", async () => {
   const firstCall = await MobileApiClient.fetchPredictions("token-1", { lowDataMode: true, cacheTtlMs: 3600000 });
-  assert.ok(firstCall.data.length > 0, "Mobile API client must return predictions");
+  assert.ok(Array.isArray(firstCall.data), "Mobile API client must return a typed prediction collection");
+  assert.ok(firstCall.data.every((prediction) => !prediction.fixtureId.startsWith("demo-")), "Mobile API must not expose demo predictions");
   assert.equal(firstCall.lowDataMode, true, "Low-data mode flag must be respected");
 
   const secondCall = await MobileApiClient.fetchPredictions("token-1", { lowDataMode: true, cacheTtlMs: 3600000 });
   assert.equal(secondCall.isFromCache, true, "Subsequent prediction fetch must be served from offline cache");
+  assert.deepEqual(secondCall.data, firstCall.data, "Offline cache must preserve the published dataset exactly");
 
   const deepLink = MobileApiClient.parseDeepLink("ballmtaani://edge/match/epl-201");
   assert.equal(deepLink.route, "match_detail");

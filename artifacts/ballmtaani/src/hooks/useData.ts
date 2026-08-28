@@ -15,7 +15,7 @@ import {
 } from "../lib/football-api";
 
 /**
- * Live matches — from API-Football (major leagues only), fallback to mock.
+ * Live matches from API-Football. Production never substitutes sample scores.
  * Refreshes every 30 seconds when window is focused.
  */
 export function useMatches() {
@@ -36,7 +36,7 @@ export function useMatches() {
 }
 
 /**
- * Upcoming fixtures — from API-Football (major leagues), fallback to mock.
+ * Upcoming fixtures from API-Football. An unavailable feed returns no fixtures.
  */
 export function useUpcomingFixtures() {
   return useQuery({
@@ -75,7 +75,8 @@ export function useRecentMatches(options: { enabled?: boolean } = {}) {
 }
 
 /**
- * Standings — from API-Football (5 major leagues), fallback to mock.
+ * Standings from API-Football (5 major leagues). Sample tables are available
+ * only when VITE_ENABLE_CONTENT_MOCKS is explicitly enabled for development.
  */
 export function useStandings() {
   return useQuery({
@@ -90,7 +91,9 @@ export function useStandings() {
         console.error("Standings API failed:", err);
       }
 
-      return (mock.STANDINGS || {}) as Record<string, any[]>;
+      return ENABLE_CONTENT_MOCKS
+        ? (mock.STANDINGS || {}) as Record<string, any[]>
+        : {};
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

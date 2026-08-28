@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { ArrowLeft, Filter, Search } from "lucide-react";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
+import { getPublishedUpcomingPredictions } from "../../lib/edge/public/public-api-service";
 import PredictionCard from "../../components/edge/PredictionCard";
 import RouteSEO from "../../components/RouteSEO";
 
@@ -11,6 +12,7 @@ export default function EdgeMatchListingPage() {
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedComp, setSelectedComp] = useState<string>("all");
+  const { data: predictions = [], isLoading } = useQuery({ queryKey: ["published-edge-predictions"], queryFn: getPublishedUpcomingPredictions, staleTime: 5 * 60 * 1000 });
 
   const title = location.includes("today")
     ? "Today's Predictions"
@@ -18,7 +20,7 @@ export default function EdgeMatchListingPage() {
     ? "Tomorrow's Predictions"
     : "Upcoming Match Intelligence";
 
-  const filtered = MOCK_PUBLISHED_PREDICTIONS.filter((p) => {
+  const filtered = predictions.filter((p) => {
     const matchesSearch =
       p.homeTeam.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.awayTeam.toLowerCase().includes(searchQuery.toLowerCase());
@@ -79,7 +81,7 @@ export default function EdgeMatchListingPage() {
         </div>
 
         {/* Grid of Prediction Cards */}
-        {filtered.length > 0 ? (
+        {isLoading ? <div className="border border-white/10 bg-[#121212] py-16 text-center text-sm text-white/45">Loading published model output...</div> : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filtered.map((pred) => (
               <PredictionCard key={pred.fixtureId} prediction={pred} />
@@ -87,7 +89,8 @@ export default function EdgeMatchListingPage() {
           </div>
         ) : (
           <div className="text-center py-16 bg-[#121212] rounded-xl border border-white/10 space-y-3">
-            <p className="text-sm font-semibold text-gray-300">No predictions match your current search criteria.</p>
+            <p className="text-sm font-semibold text-gray-300">{predictions.length ? "No predictions match your current search criteria." : "No verified predictions are published for this window."}</p>
+            {!predictions.length && <p className="mx-auto max-w-lg text-xs leading-5 text-gray-500">BallMtaani does not replace missing model output with demo fixtures or estimated probabilities.</p>}
             <Button size="sm" onClick={() => { setSearchQuery(""); setSelectedComp("all"); }} className="bg-emerald-600 text-xs text-white font-bold">
               Reset Search Filters
             </Button>

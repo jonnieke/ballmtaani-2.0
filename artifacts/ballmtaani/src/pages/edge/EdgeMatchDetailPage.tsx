@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { ArrowLeft, ShieldCheck, Clock, Activity, Cpu, Lock, Heart, Share2, Sparkles, AlertCircle, ShieldAlert } from "lucide-react";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
+import { getPublishedPredictionById } from "../../lib/edge/public/public-api-service";
 import ProbabilityBar from "../../components/edge/ProbabilityBar";
 import ConfidenceBadge from "../../components/edge/ConfidenceBadge";
 import DataQualityBadge from "../../components/edge/DataQualityBadge";
@@ -21,11 +22,19 @@ import RouteSEO from "../../components/RouteSEO";
 
 export default function EdgeMatchDetailPage() {
   const { fixtureId } = useParams();
-  const prediction = MOCK_PUBLISHED_PREDICTIONS.find((p) => String(p.fixtureId) === String(fixtureId)) || MOCK_PUBLISHED_PREDICTIONS[0];
+  const { data: prediction, isLoading } = useQuery({
+    queryKey: ["published-edge-prediction", fixtureId],
+    queryFn: () => getPublishedPredictionById(String(fixtureId || "")),
+    enabled: Boolean(fixtureId),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [showReceipt, setShowReceipt] = useState<boolean>(false);
+
+  if (isLoading) return <div className="grid min-h-screen place-items-center bg-[#0A0A0A] text-sm text-white/45">Loading published prediction...</div>;
+  if (!prediction) return <div className="grid min-h-screen place-items-center bg-[#0A0A0A] p-6 text-center text-white"><div><ShieldAlert className="mx-auto h-8 w-8 text-amber-400" /><h1 className="mt-3 text-xl font-black">Prediction not published</h1><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/50">No verified model record exists for this fixture. BallMtaani will not substitute another match or a demo prediction.</p><Link href="/edge" className="mt-5 inline-flex text-sm font-black text-emerald-400">Back to Edge</Link></div></div>;
 
   const kickoffDate = new Date(prediction.kickoffAt).toLocaleDateString("en-KE", {
     weekday: "long",

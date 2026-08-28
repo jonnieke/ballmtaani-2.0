@@ -1,182 +1,111 @@
-import { useState, useMemo } from "react";
-import { Search, MapPin, Users, Calendar } from "lucide-react";
-import { WC26_TEAMS, WC26_STADIUMS, searchTeams, type WC26TeamData } from "../data/wc26-teams";
+import { useMemo, useState } from "react";
+import { Search, ShieldCheck } from "lucide-react";
+import type { TournamentStandingEntry } from "../lib/football-api";
 
-export default function WC26TeamExplorer() {
+type Props = {
+  standings: Record<string, TournamentStandingEntry[]>;
+};
+
+type VerifiedTeam = TournamentStandingEntry & { group: string };
+
+export default function WC26TeamExplorer({ standings }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<WC26TeamData | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<VerifiedTeam | null>(null);
 
-  const filteredTeams = useMemo(
-    () => (searchQuery.trim() ? searchTeams(searchQuery) : WC26_TEAMS),
-    [searchQuery]
+  const teams = useMemo(
+    () => Object.entries(standings)
+      .filter(([group]) => /^Group [A-L]$/.test(group))
+      .flatMap(([group, rows]) => rows.map((row) => ({ ...row, group: group.replace("Group ", "") })))
+      .sort((a, b) => a.group.localeCompare(b.group) || a.rank - b.rank),
+    [standings],
   );
 
-  const teamStadiums = useMemo(() => {
-    if (!selectedTeam) return [];
-    return WC26_STADIUMS.filter(s =>
-      selectedTeam.fixtures.some(f => f.stadium === s.name)
+  const filteredTeams = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return teams;
+    return teams.filter((team) => team.team.toLowerCase().includes(query) || team.group.toLowerCase() === query);
+  }, [searchQuery, teams]);
+
+  if (!teams.length) {
+    return (
+      <div className="rounded-xl border border-white/8 bg-white/3 p-8 text-center">
+        <p className="text-sm font-bold text-white/65">Verified tournament teams are currently unavailable.</p>
+        <p className="mt-2 text-xs leading-5 text-white/35">BallMtaani does not substitute a static draw when the API-Football group feed is unavailable.</p>
+      </div>
     );
-  }, [selectedTeam]);
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Search bar */}
+    <div className="space-y-5">
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-          <Search className="h-4 w-4" />
-        </div>
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
         <input
-          type="text"
-          placeholder="Search teams by name, group, or region..."
+          type="search"
+          aria-label="Search verified World Cup teams"
+          placeholder="Search verified teams or group..."
           value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
+          onChange={(event) => {
+            setSearchQuery(event.target.value);
             setSelectedTeam(null);
           }}
-          className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-3 text-sm text-white placeholder-white/40 backdrop-blur-sm transition-all focus:border-[#FFD700]/30 focus:bg-white/8 focus:outline-none"
+          className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder-white/40 transition-colors focus:border-[#FFD700]/40 focus:outline-none"
         />
       </div>
 
-      {/* Teams grid */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {filteredTeams.map((team) => (
           <button
-            key={team.name}
-            onClick={() => setSelectedTeam(selectedTeam?.name === team.name ? null : team)}
-            className={`text-left rounded-xl border p-3 transition-all ${
-              selectedTeam?.name === team.name
+            key={`${team.group}-${team.team}`}
+            type="button"
+            onClick={() => setSelectedTeam(selectedTeam?.team === team.team ? null : team)}
+            className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+              selectedTeam?.team === team.team
                 ? "border-[#FFD700]/50 bg-[#FFD700]/10"
                 : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"
             }`}
           >
-            <div className="flex items-center gap-2">
-              <img src={team.logo} alt={team.name} className="h-5 w-5" />
-              <span className="font-bold text-white">{team.name}</span>
-              <span className="ml-auto text-[10px] font-bold text-white/50">
-                {team.group}
-              </span>
-            </div>
+            {team.logo ? (
+              <img src={team.logo} alt="" className="h-7 w-7 object-contain" loading="lazy" />
+            ) : (
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[9px] font-black text-white/50">
+                {team.team.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <span className="min-w-0 flex-1 truncate text-xs font-black text-white">{team.team}</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{team.group}</span>
           </button>
         ))}
       </div>
 
-      {/* Team detail panel */}
       {selectedTeam && (
-        <div className="space-y-4 rounded-2xl border border-[#FFD700]/20 bg-[#0d1018]/90 p-5">
-          {/* Header */}
-          <div className="flex items-start justify-between border-b border-white/10 pb-4">
-            <div className="flex items-center gap-3">
-              <img src={selectedTeam.logo} alt={selectedTeam.name} className="h-10 w-10" />
-              <div>
-                <h3 className="text-lg font-black text-white">{selectedTeam.name}</h3>
-                <p className="text-[10px] text-white/50">
-                  {selectedTeam.confederation}  -  Group {selectedTeam.group}
-                </p>
-              </div>
+        <div className="rounded-2xl border border-[#FFD700]/20 bg-[#0d1018]/90 p-5">
+          <div className="flex flex-wrap items-center gap-4">
+            {selectedTeam.logo && <img src={selectedTeam.logo} alt="" className="h-11 w-11 object-contain" />}
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-black text-white">{selectedTeam.team}</h3>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">Group {selectedTeam.group} · Position {selectedTeam.rank}</p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/8 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-emerald-300">
+              <ShieldCheck className="h-3.5 w-3.5" /> API-Football
             </div>
           </div>
-
-          {/* Two-column layout: Fixtures + Stadiums | Players */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            {/* Fixtures & Stadiums */}
-            <div className="space-y-4">
-              {/* Fixtures */}
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-[#FFD700]" />
-                  <h4 className="text-xs font-black uppercase tracking-widest text-white">
-                    Group Stage Fixtures
-                  </h4>
-                </div>
-                <div className="space-y-2">
-                  {selectedTeam.fixtures.map((f) => (
-                    <div
-                      key={`${f.matchday}`}
-                      className="rounded-lg border border-white/8 bg-white/3 p-2.5 text-[11px]"
-                    >
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="font-bold text-white">
-                          {f.home ? selectedTeam.name : f.opponent} vs{" "}
-                          {f.home ? f.opponent : selectedTeam.name}
-                        </span>
-                        <span className="text-[9px] text-white/50">MD {f.matchday}</span>
-                      </div>
-                      <div className="text-white/60">
-                        {f.date}  -  {f.time} EAT
-                      </div>
-                      <div className="mt-1 flex items-center gap-1 text-white/50">
-                        <MapPin className="h-3 w-3" />
-                        {f.stadium}  -  {f.city}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          <dl className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {[
+              ["Played", selectedTeam.played], ["Won", selectedTeam.won], ["Drawn", selectedTeam.draw],
+              ["Lost", selectedTeam.lost], ["Goal diff", selectedTeam.gd],
+              ["Points", selectedTeam.points],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-white/8 bg-white/3 px-3 py-2 text-center">
+                <dt className="text-[8px] font-black uppercase tracking-widest text-white/30">{label}</dt>
+                <dd className="mt-1 text-base font-black tabular-nums text-white">{value}</dd>
               </div>
-
-              {/* Stadiums */}
-              {teamStadiums.length > 0 && (
-                <div>
-                  <div className="mb-2 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-[#FFD700]" />
-                    <h4 className="text-xs font-black uppercase tracking-widest text-white">
-                      Venues
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    {teamStadiums.map((s) => (
-                      <div
-                        key={s.name}
-                        className="rounded-lg border border-white/8 bg-white/3 p-2.5 text-[11px]"
-                      >
-                        <div className="font-bold text-white">{s.name}</div>
-                        <div className="text-white/60">
-                          {s.city}, {s.country}
-                        </div>
-                        <div className="mt-1 text-white/50">
-                          Capacity: {s.capacity.toLocaleString()}
-                        </div>
-                        {s.note && <div className="mt-1 text-[#FFD700]/80">{s.note}</div>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Players */}
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <Users className="h-4 w-4 text-[#FFD700]" />
-                <h4 className="text-xs font-black uppercase tracking-widest text-white">
-                  Squad ({selectedTeam.players.length} players)
-                </h4>
-              </div>
-              <div className="space-y-1 max-h-64 overflow-y-auto">
-                {selectedTeam.players.map((p, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between rounded-lg bg-white/3 px-2.5 py-1.5 text-[10px]"
-                  >
-                    <div>
-                      <span className="font-bold text-white">{p.name}</span>
-                      <span className="ml-2 text-white/50">{p.club}</span>
-                    </div>
-                    <span className="rounded bg-[#FFD700]/20 px-1.5 py-0.5 font-bold text-[#FFD700]">
-                      {p.position}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+            ))}
+          </dl>
         </div>
       )}
 
-      {/* Empty state */}
-      {filteredTeams.length === 0 && (
-        <div className="rounded-xl border border-white/8 bg-white/3 p-8 text-center">
-          <p className="text-sm text-white/50">No teams match your search</p>
-        </div>
+      {!filteredTeams.length && (
+        <div className="rounded-xl border border-white/8 bg-white/3 p-8 text-center text-sm text-white/50">No verified team matches that search.</div>
       )}
     </div>
   );

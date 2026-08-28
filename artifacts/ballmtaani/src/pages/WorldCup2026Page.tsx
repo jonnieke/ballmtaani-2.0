@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { CalendarDays, ChevronRight, GitBranch, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Flame, Clock, Star, ExternalLink } from "lucide-react";
+import { CalendarDays, ChevronRight, GitBranch, MapPin, MessageCircle, Shield, Sparkles, Trophy, Users, Zap, Clock, ExternalLink } from "lucide-react";
 import SEO from "../components/SEO";
 import WC26TeamExplorer from "../components/WC26TeamExplorer";
 import { fetchPartnerArticles, fetchFootballNews, timeAgo, type NewsArticle } from "../lib/news-api";
@@ -12,7 +12,7 @@ import {
 } from "../lib/football-api";
 import { useWC26Leaderboard } from "../hooks/useData";
 import { WC26_GUIDES } from "../data/wc26-guides";
-import { WC26_STADIUMS, WC26_TEAMS, type WC26TeamData } from "../data/wc26-teams";
+import { WC26_STADIUMS } from "../data/wc26-teams";
 import { supabase } from "../lib/supabase";
 
 const REACTION_EMOJIS = ["🔥", "❤️", "😱", "🤣"] as const;
@@ -36,51 +36,11 @@ const HOSTS = [
   { flag: "https://media.api-sports.io/flags/mx.svg", name: "Mexico",         stadiums: 3,  cities: "Mexico City - Guadalajara - Monterrey" },
 ];
 
-// African nations with proper flag images
-const CAF_NATIONS = [
-  { logo: "https://media.api-sports.io/flags/ma.svg", name: "Morocco",      group: "C", star: true,  note: "Semi-finalists in 2022" },
-  { logo: "https://media.api-sports.io/flags/sn.svg", name: "Senegal",      group: "I", star: true,  note: "AFCON 2021 champions" },
-  { logo: "https://media.api-sports.io/flags/ng.svg", name: "Nigeria",      group: "G", star: false, note: "Super Eagles with Osimhen" },
-  { logo: "https://media.api-sports.io/flags/eg.svg", name: "Egypt",        group: "G", star: true,  note: "Mo Salah's last dance?" },
-  { logo: "https://media.api-sports.io/flags/cm.svg", name: "Cameroon",     group: "F", star: false, note: "Onana & Anguissa lead" },
-  { logo: "https://media.api-sports.io/flags/za.svg", name: "South Africa", group: "A", star: false, note: "Bafana making history" },
-  { logo: "https://media.api-sports.io/flags/gh.svg", name: "Ghana",        group: "L", star: false, note: "Kudus & Partey shine" },
-  { logo: "https://media.api-sports.io/flags/dz.svg", name: "Algeria",      group: "J", star: false, note: "Les Fennecs return" },
-  { logo: "https://media.api-sports.io/flags/tn.svg", name: "Tunisia",      group: "F", star: false, note: "Eagles of Carthage" },
-];
+const CAF_TEAM_NAMES = new Set([
+  "Algeria", "Cape Verde Islands", "Egypt", "Ghana", "Ivory Coast",
+  "Morocco", "Senegal", "South Africa", "Tunisia",
+]);
 
-// Group of Death candidates
-const GROUPS_OF_DEATH = [
-  { group: "C", teams: ["Brazil", "Morocco", "Haiti", "Scotland"],  reason: "Brazil vs Morocco is a must-watch clash of styles" },
-  { group: "E", teams: ["Germany", "Curacao", "Ivory Coast", "Ecuador"], reason: "Germany face AFCON dark horses" },
-  { group: "I", teams: ["France", "Senegal", "Iraq", "Norway"],     reason: "Mbappe vs Mane - the African rivalry game" },
-  { group: "L", teams: ["England", "Croatia", "Ghana", "Panama"],   reason: "England face Euro 2020 final demons again" },
-];
-
-
-// Derive static group tables from WC26_TEAMS. WC26_TEAMS is the single source
-// of truth for squad data — build the zero-stat fallback from it so we don't
-// maintain a separate (and inevitably stale) duplicate list.
-// Only the first 4 entries per group letter are taken because the data file has
-// some overflow entries from an incomplete edit (extra teams appended to G & H).
-const WC26_GROUPS: Record<string, TournamentStandingEntry[]> = (() => {
-  const acc: Record<string, WC26TeamData[]> = {};
-  for (const t of WC26_TEAMS) {
-    const key = `Group ${t.group.toUpperCase()}`;
-    if (!acc[key]) acc[key] = [];
-    if (acc[key].length < 4) acc[key].push(t);
-  }
-  const result: Record<string, TournamentStandingEntry[]> = {};
-  for (const [groupName, teams] of Object.entries(acc).sort(([a], [b]) => a.localeCompare(b))) {
-    result[groupName] = teams.map((t, i) => ({
-      rank: i + 1, team: t.name, logo: t.logo,
-      points: 0, played: 0, won: 0, draw: 0, lost: 0,
-      goalsFor: 0, goalsAgainst: 0, gd: "0", form: [],
-      group: t.group,
-    }));
-  }
-  return result;
-})();
 
 // --- Countdown hook ---
 function useCountdown() {
@@ -238,7 +198,7 @@ const DONE_STATUSES = new Set(["FT","AET","PEN"]);
 export default function WorldCup2026Page() {
   const { data: wc26Board = [] } = useWC26Leaderboard();
   const [fixtures, setFixtures] = useState<any[]>([]);
-  const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>(WC26_GROUPS);
+  const [standings, setStandings] = useState<Record<string, TournamentStandingEntry[]>>({});
   const [topScorers, setTopScorers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [wc26News, setWc26News] = useState<NewsArticle[]>([]);
@@ -488,15 +448,38 @@ export default function WorldCup2026Page() {
 
   const groupEntries = useMemo(() => Object.entries(standings), [standings]);
 
-  // Map each CAF nation to its live standing entry (if standings are available)
+  // Cross-check the scoring feed against the verified tournament field. Provider
+  // responses occasionally include qualifying statistics or unrelated teams.
+  const verifiedTopScorers = useMemo(() => {
+    const tournamentTeams = new Set(
+      Object.values(standings)
+        .flat()
+        .map((row) => row.team.trim().toLocaleLowerCase()),
+    );
+
+    if (!tournamentTeams.size) return [];
+
+    return topScorers.filter((scorer) => {
+      const team = typeof scorer.team === "string" ? scorer.team.trim().toLocaleLowerCase() : "";
+      const played = Number(scorer.played);
+      const goals = Number(scorer.goals);
+      return tournamentTeams.has(team)
+        && Number.isFinite(played)
+        && played >= 0
+        && played <= 8
+        && Number.isFinite(goals)
+        && goals >= 0;
+    });
+  }, [standings, topScorers]);
+
+  // Derive the Africa desk from the same verified group feed shown above.
   const cafLiveData = useMemo(() => {
-    const map: Record<string, TournamentStandingEntry | null> = {};
-    for (const nation of CAF_NATIONS) {
-      const groupKey = `Group ${nation.group}`;
-      const rows = standings[groupKey] ?? [];
-      map[nation.name] = rows.find(r => r.team.toLowerCase() === nation.name.toLowerCase()) ?? null;
-    }
-    return map;
+    return Object.entries(standings)
+      .filter(([group]) => /^Group [A-L]$/.test(group))
+      .flatMap(([group, rows]) => rows
+        .filter((row) => CAF_TEAM_NAMES.has(row.team))
+        .map((row) => ({ ...row, group: group.replace("Group ", "") })))
+      .sort((a, b) => a.group.localeCompare(b.group) || a.rank - b.rank);
   }, [standings]);
 
   // Featured stadiums  -  top 8 for the showcase
@@ -593,7 +576,7 @@ export default function WorldCup2026Page() {
           <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link href="/predictions"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FFD700] px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black shadow-[0_0_28px_rgba(255,214,0,0.5)] transition-all hover:scale-105 hover:shadow-[0_0_45px_rgba(255,214,0,0.7)] active:scale-95">
-              {cd.live ? "Call the Scoreline" : "Make Your Group Stage Call"}
+              {cd.over ? "Review Tournament Receipts" : cd.live ? "Call the Scoreline" : "Make Your Group Stage Call"}
               <ChevronRight className="h-4 w-4" />
             </Link>
             <Link href="/mchambuzi-halisi"
@@ -770,14 +753,22 @@ export default function WorldCup2026Page() {
                   ? `Source: API-Football — synced ${standingsSyncedAt} EAT`
                   : loading
                     ? "Fetching live standings…"
-                    : "Static draw — live standings pending"}
+                    : "Verified standings are unavailable — no substitute table is shown"}
               </p>
             </div>
             </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
-          </div>
+          {groupEntries.length ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {groupEntries.map(([name, rows]) => <GroupTable key={name} name={name} rows={rows} />)}
+            </div>
+          ) : !loading ? (
+            <div className="rounded-2xl border border-white/8 bg-[#0b1119] px-5 py-10 text-center">
+              <Shield className="mx-auto h-6 w-6 text-[#FFD700]/70" />
+              <p className="mt-3 text-sm font-black text-white">Standings verification in progress</p>
+              <p className="mx-auto mt-1 max-w-xl text-xs leading-5 text-white/45">The API-Football table is not currently available. BallMtaani has hidden static and mock standings so fans are not shown misleading results.</p>
+            </div>
+          ) : null}
         </section>
 
         {/* -- FULL SCHEDULE -- */}
@@ -981,13 +972,13 @@ export default function WorldCup2026Page() {
             <div>
               <h2 className="text-lg font-black uppercase tracking-widest text-white">Golden Boot Race</h2>
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-                {topScorers.length > 0 ? "Top scorers — API-Football live" : "Top scorers — standings update as matches complete"}
+                {verifiedTopScorers.length > 0 ? "Top scorers — API-Football live" : "Top scorers — standings update as matches complete"}
               </p>
             </div>
           </div>
-          {topScorers.length > 0 ? (
+          {verifiedTopScorers.length > 0 ? (
             <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#0b0f18]">
-              {topScorers.map((s, i) => (
+              {verifiedTopScorers.map((s, i) => (
                 <div key={s.name} className={`flex items-center gap-4 px-4 py-3 border-b border-white/4 last:border-0 transition-colors hover:bg-white/3 ${i === 0 ? "bg-[#FFD700]/4" : ""}`}>
                   <span className={`w-5 shrink-0 text-center text-xs font-black ${i === 0 ? "text-[#FFD700]" : "text-white/25"}`}>{i + 1}</span>
                   {s.photo ? (
@@ -1027,44 +1018,6 @@ export default function WorldCup2026Page() {
               <p className="text-xs text-white/30">Scorers data loads as the group stage progresses.</p>
             </div>
           )}
-        </section>
-
-        {/* -- CROWD PICKS -- */}
-        <section className="mb-8 overflow-hidden rounded-2xl border border-[#FFD700]/15 bg-[#08090d]">
-          <div className="border-b border-[#FFD700]/10 px-5 py-3.5 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-widest text-white">BallMtaani Crowd Picks</h2>
-              <p className="text-[9px] text-white/30 mt-0.5 font-bold uppercase tracking-widest">Who do Kenyan fans back to lift the trophy?</p>
-            </div>
-            <Link href="/predictions" className="text-[10px] font-black uppercase tracking-widest text-[#FFD700]/70 hover:text-[#FFD700] transition-colors">
-              Add Your Pick →
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-y divide-white/5 sm:grid-cols-3 lg:grid-cols-6">
-            {[
-              { flag: "https://media.api-sports.io/flags/br.svg",  name: "Brazil",    pct: 22 },
-              { flag: "https://media.api-sports.io/flags/ar.svg",  name: "Argentina", pct: 19 },
-              { flag: "https://media.api-sports.io/flags/fr.svg",  name: "France",    pct: 15 },
-              { flag: "https://media.api-sports.io/flags/ma.svg",  name: "Morocco",   pct: 14 },
-              { flag: "https://media.api-sports.io/flags/gb-eng.svg", name: "England", pct: 11 },
-              { flag: "https://media.api-sports.io/flags/de.svg",  name: "Germany",   pct: 9  },
-            ].map((pick, i) => (
-              <div key={pick.name} className={`flex flex-col items-center gap-2 px-4 py-4 hover:bg-white/3 transition-colors ${i === 0 ? "bg-[#FFD700]/4" : ""}`}>
-                <img src={pick.flag} alt={pick.name} className="h-9 w-9 rounded-sm object-contain shadow-[0_2px_8px_rgba(0,0,0,0.4)]" loading="lazy" />
-                <div className="text-center">
-                  <div className={`text-xs font-black ${i === 0 ? "text-[#FFD700]" : "text-white"}`}>{pick.name}</div>
-                  <div className={`mt-0.5 text-lg font-black tabular-nums ${i === 0 ? "text-[#FFD700]" : "text-white/60"}`}>{pick.pct}%</div>
-                </div>
-                <div className="w-full rounded-full bg-white/8 h-1">
-                  <div className="h-1 rounded-full transition-all duration-700"
-                    style={{ width: `${pick.pct}%`, background: i === 0 ? "#FFD700" : "rgba(255,255,255,0.3)" }} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-white/5 px-5 py-2.5 text-[9px] text-white/20 text-center">
-            Based on BallMtaani prediction calls · Updates as the tournament progresses
-          </div>
         </section>
 
         {/* -- WC26 KNOWLEDGE BASE -- */}
@@ -1151,135 +1104,36 @@ export default function WorldCup2026Page() {
           </div>
         </section>
 
-        {/* -- AFRICA AT WC26  -  PREMIUM SECTION -- */}
+        {/* -- AFRICA AT WC26 -- */}
         <section className="mb-8 overflow-hidden rounded-2xl border border-[#006600]/35 bg-[#030804]/95">
           <div className="flex items-center gap-3 border-b border-[#006600]/20 px-5 py-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#006600]/20 text-xl"></div>
             <div className="flex-1">
               <h2 className="text-sm font-black uppercase tracking-widest text-white">Africa at WC26</h2>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-[#22c55e]/65">9 CAF spots  -  Most African nations ever at a World Cup</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-[#22c55e]/65">Verified group records from API-Football</p>
             </div>
-            <Link href="/predictions" className="ml-auto inline-flex items-center gap-1 rounded-lg border border-[#22c55e]/30 bg-[#22c55e]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#22c55e] transition-all hover:bg-[#22c55e]/20">
-              Back a team <ChevronRight className="h-3 w-3" />
-            </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-3">
-            {CAF_NATIONS.map(n => {
-              const live = cafLiveData[n.name];
-              const rank = live?.rank ?? null;
-              const qualifying = rank !== null && rank <= 2;
-              const thirdBest = rank === 3;
-              const eliminated = rank !== null && rank > 3;
-              const hasStats = live && live.played > 0;
-
-              const statusColor = qualifying
-                ? "border-[#22c55e]/40 bg-[#22c55e]/5"
-                : thirdBest
-                  ? "border-amber-500/30 bg-amber-500/5"
-                  : eliminated
-                    ? "border-red-600/20 bg-red-900/5"
-                    : "border-[#006600]/20 bg-transparent";
-
-              const rankBadgeColor = qualifying
-                ? "bg-[#22c55e]/20 text-[#22c55e]"
-                : thirdBest
-                  ? "bg-amber-500/20 text-amber-400"
-                  : eliminated
-                    ? "bg-red-900/20 text-red-400"
-                    : "bg-white/5 text-white/30";
-
-              return (
-                <div key={n.name} className={`flex gap-3 border-b border-r border-[#006600]/10 px-4 py-4 last:border-b-0 transition-all hover:bg-[#006600]/8 ${statusColor} rounded-none`}>
-                  {/* Flag + star */}
-                  <div className="relative shrink-0 pt-0.5">
-                    <img src={n.logo} alt={n.name} className="h-9 w-9 rounded-sm object-contain shadow-[0_2px_8px_rgba(0,0,0,0.5)]" loading="lazy" />
-                    {n.star && (
-                      <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#FFD700] flex items-center justify-center">
-                        <Star className="h-2 w-2 text-black" fill="currentColor" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Name + group + note */}
+          {cafLiveData.length ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {cafLiveData.map((team) => (
+                <div key={team.team} className="flex items-center gap-3 border-b border-r border-[#006600]/10 px-4 py-4">
+                  {team.logo && <img src={team.logo} alt="" className="h-9 w-9 object-contain" loading="lazy" />}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-black text-white leading-tight">{n.name}</span>
-                      {rank !== null && (
-                        <span className={`rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${rankBadgeColor}`}>
-                          {qualifying ? `${rank === 1 ? "1st" : "2nd"} ✓` : thirdBest ? "3rd" : `${rank}th`}
-                        </span>
-                      )}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-black text-white">{team.team}</span>
+                      <span className="rounded bg-[#22c55e]/12 px-1.5 py-0.5 text-[8px] font-black uppercase text-[#22c55e]">Group {team.group} · #{team.rank}</span>
                     </div>
-                    <div className="mt-0.5 text-[9px] text-[#22c55e]/55 font-bold uppercase tracking-wider">Group {n.group}</div>
-                    <div className="mt-1 text-[10px] text-white/38 leading-snug">{n.note}</div>
-
-                    {/* Live stats row */}
-                    {hasStats ? (
-                      <div className="mt-2 flex items-center gap-3">
-                        <div className="flex gap-2 text-[9px] font-bold text-white/50 tabular-nums">
-                          <span title="Played">{live!.played}P</span>
-                          <span title="Won" className="text-[#22c55e]/70">{live!.won}W</span>
-                          <span title="Drawn">{live!.draw}D</span>
-                          <span title="Lost" className="text-red-400/60">{live!.lost}L</span>
-                          <span title="Points" className={`font-black ${qualifying ? "text-[#22c55e]" : "text-white/70"}`}>{live!.points}pts</span>
-                        </div>
-                        {live!.form.length > 0 && (
-                          <div className="flex gap-0.5">
-                            {live!.form.slice(-5).map((r, i) => (
-                              <span key={i} className={`h-2 w-2 rounded-full ${r === "W" ? "bg-[#22c55e]" : r === "D" ? "bg-amber-400" : "bg-red-500"}`} title={r} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-2 text-[9px] text-white/20 italic">Awaiting kick-off</div>
-                    )}
+                    <div className="mt-2 flex gap-2 text-[9px] font-bold tabular-nums text-white/50">
+                      <span>{team.played}P</span><span>{team.won}W</span><span>{team.draw}D</span><span>{team.lost}L</span>
+                      <span className="font-black text-[#22c55e]">{team.points}pts</span>
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-[#006600]/10 px-5 py-3 flex items-center justify-between gap-4">
-            <p className="text-[10px] text-white/28">
-              No Kenya at WC26 — but Harambee Stars are building. Back an African team and keep the receipt when they go deep.
-            </p>
-            <div className="flex items-center gap-3 shrink-0 text-[9px] font-bold text-white/25">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#22c55e]" />Qualifying</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />3rd place</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" />Eliminated</span>
+              ))}
             </div>
-          </div>
-        </section>
-
-        {/* -- GROUPS OF DEATH -- */}
-        <section className="mb-8">
-          <div className="mb-4 flex items-center gap-3">
-            <Flame className="h-5 w-5 text-orange-500" />
-            <div>
-              <h2 className="text-lg font-black uppercase tracking-widest text-white">Groups of Death</h2>
-              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">The most dangerous pools to escape</p>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {GROUPS_OF_DEATH.map(g => (
-              <div key={g.group} className="group rounded-2xl border border-orange-500/20 bg-[#0d0804]/90 p-4 transition-all hover:border-orange-500/40 hover:bg-[#140c04]/90 hover:-translate-y-0.5">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500/15 text-sm font-black text-orange-400">
-                    {g.group}
-                  </div>
-                  <Flame className="h-4 w-4 text-orange-500/60" />
-                </div>
-                <div className="mb-2 flex flex-wrap gap-1">
-                  {g.teams.map(t => (
-                    <span key={t} className="inline-block rounded-full bg-white/6 px-2 py-0.5 text-[10px] font-bold text-white/70">{t}</span>
-                  ))}
-                </div>
-                <p className="text-[10px] text-orange-400/70 leading-relaxed">{g.reason}</p>
-              </div>
-            ))}
-          </div>
+          ) : (
+            <p className="px-5 py-8 text-center text-xs leading-5 text-white/35">The verified Africa group feed is currently unavailable. No static team list is being substituted.</p>
+          )}
         </section>
 
         {/* -- TEAM EXPLORER -- */}
@@ -1287,10 +1141,10 @@ export default function WorldCup2026Page() {
           <div className="mb-4">
             <h2 className="text-lg font-black uppercase tracking-widest text-white">Explore Teams</h2>
             <p className="text-[10px] text-white/30 font-semibold uppercase tracking-widest">
-              Search by name  -  View fixtures  -  Check squads and stadiums
+              Search the verified API-Football group field and review each record
             </p>
           </div>
-          <WC26TeamExplorer />
+          <WC26TeamExplorer standings={standings} />
         </section>
 
         {/* -- STADIUMS SHOWCASE -- */}
@@ -1364,15 +1218,15 @@ export default function WorldCup2026Page() {
         <section className="mb-8 overflow-hidden rounded-2xl border border-white/8 bg-[#080d14]/90">
           <div className="border-b border-white/6 px-5 py-4">
             <h2 className="text-sm font-black uppercase tracking-widest text-white">Your WC26 Command Center</h2>
-            <p className="text-[10px] text-white/30">Everything a Kenyan fan needs  -  live, on BallMtaani.</p>
+            <p className="text-[10px] text-white/30">{cd.over ? "Results, verified tables and the calls fans made before kickoff." : "Everything a Kenyan fan needs - live, on BallMtaani."}</p>
           </div>
           <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-white/6 sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { href: "/predictions",            color: "text-[#B30000]", border: "hover:bg-[#B30000]/8",  icon: Zap,        label: "Call the Score",   sub: "Pick every match. Earn MTC." },
+              { href: "/predictions",            color: "text-[#B30000]", border: "hover:bg-[#B30000]/8",  icon: Zap,        label: cd.over ? "Prediction Archive" : "Call the Score", sub: cd.over ? "Review saved calls and receipts." : "Pick every match. Earn MTC." },
               { href: "/mchambuzi-halisi",       color: "text-[#FFD700]", border: "hover:bg-[#FFD700]/5",  icon: Sparkles,   label: "Ask Mchambuzi",    sub: "WC26 AI analysis. Fan-first tone." },
-              { href: "/live-center",            color: "text-blue-400",  border: "hover:bg-blue-500/8",   icon: Trophy,     label: "Live Center",      sub: "Stats, events, lineups live." },
-              { href: "/debates",                color: "text-purple-400",border: "hover:bg-purple-500/8", icon: Users,      label: "Debates Room",     sub: "Group of death takes. Banter." },
-              { href: "/world-cup-2026/bracket", color: "text-green-400", border: "hover:bg-green-500/8",  icon: GitBranch,  label: "Bracket",          sub: "Knockout rounds as they unfold." },
+              { href: "/live-center",            color: "text-blue-400",  border: "hover:bg-blue-500/8",   icon: Trophy,     label: cd.over ? "Match Archive" : "Live Center", sub: cd.over ? "Results, events and match records." : "Stats, events, lineups live." },
+              { href: "/debates",                color: "text-purple-400",border: "hover:bg-purple-500/8", icon: Users,      label: "Debates Room",     sub: cd.over ? "Review the tournament arguments." : "Matchday takes and fan debate." },
+              { href: "/world-cup-2026/bracket", color: "text-green-400", border: "hover:bg-green-500/8",  icon: GitBranch,  label: "Bracket",          sub: cd.over ? "Review the completed knockout path." : "Knockout rounds as they unfold." },
             ].map(({ href, color, border, icon: Icon, label, sub }) => (
               <Link key={href} href={href} className={`flex flex-col p-5 transition-all ${border}`}>
                 <Icon className={`mb-3 h-5 w-5 ${color}`} />
@@ -1388,15 +1242,15 @@ export default function WorldCup2026Page() {
           <div className="px-6 py-10 text-center md:px-10">
             <Trophy className="mx-auto mb-4 h-12 w-12 text-[#FFD700] drop-shadow-[0_0_20px_rgba(255,215,0,0.5)]" />
             <h2 className="mb-2 text-2xl font-black uppercase tracking-tight text-white md:text-3xl">
-              Call the WC26 Winner
+              {cd.over ? "Review WC26 Receipts" : "Call the WC26 Winner"}
             </h2>
             <p className="mx-auto mb-7 max-w-md text-sm text-white/50">
-              Pick your champion before the group stage starts. Every correct call earns MTC status. The receipt doesn't lie.
+              {cd.over ? "The tournament has ended. Prediction entry is closed, but saved calls and the completed tournament record remain available." : "Pick your champion before the group stage starts. Every correct call earns MTC status. The receipt doesn't lie."}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link href="/predictions"
                 className="inline-flex items-center gap-2 rounded-xl bg-[#FFD700] px-8 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_0_30px_rgba(255,214,0,0.4)] transition-all hover:shadow-[0_0_50px_rgba(255,214,0,0.6)] hover:scale-105 active:scale-95">
-                Make My Call <ChevronRight className="h-4 w-4" />
+                {cd.over ? "Open Prediction Archive" : "Make My Call"} <ChevronRight className="h-4 w-4" />
               </Link>
               <Link href="/leaderboard"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-white/70 transition-all hover:bg-white/10 active:scale-95">

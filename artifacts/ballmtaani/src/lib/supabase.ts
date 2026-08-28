@@ -8,7 +8,7 @@ let _supabase: SupabaseClient | null = null;
 if (supabaseUrl && supabaseAnonKey) {
   _supabase = createClient(supabaseUrl, supabaseAnonKey);
 } else {
-  console.warn("Supabase credentials missing. Mock data will be used.");
+  console.warn("Supabase credentials missing. Database-backed features will remain unavailable.");
 }
 
 export const supabase = _supabase as SupabaseClient;

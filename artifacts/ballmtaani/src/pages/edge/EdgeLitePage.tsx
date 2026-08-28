@@ -1,13 +1,15 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Zap, ArrowLeft, ShieldAlert } from "lucide-react";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
+import { getPublishedUpcomingPredictions } from "../../lib/edge/public/public-api-service";
 import { MatchPredictionOutput } from "../../lib/edge/types";
 import RouteSEO from "../../components/RouteSEO";
 
 export default function EdgeLitePage() {
+  const { data: predictions = [], isLoading } = useQuery({ queryKey: ["published-edge-predictions"], queryFn: getPublishedUpcomingPredictions, staleTime: 5 * 60 * 1000 });
   return (
     <div className="min-h-screen bg-black text-white p-4 max-w-md mx-auto font-mono">
       <RouteSEO path="/edge/lite" />
@@ -21,7 +23,9 @@ export default function EdgeLitePage() {
       </div>
 
       <div className="space-y-4">
-        {MOCK_PUBLISHED_PREDICTIONS.map((pred: MatchPredictionOutput) => (
+        {isLoading && <p className="py-10 text-center text-gray-500">Loading published data...</p>}
+        {!isLoading && !predictions.length && <p className="border border-gray-800 bg-gray-950 p-5 text-center text-gray-500">No verified predictions are published. Demo data is disabled.</p>}
+        {predictions.map((pred: MatchPredictionOutput) => (
           <div key={pred.fixtureId} className="border border-gray-800 p-3 rounded bg-gray-950 space-y-2 text-xs">
             <div className="flex justify-between text-gray-400 text-[10px]">
               <span>{pred.competition}</span>

@@ -1,6 +1,7 @@
 /**
  * BallMtaani Edge Phase 2 — API-Football Data Adapter
- * Implements exponential backoff, rate limit soft/hard caps, and mock fallback mode.
+ * Implements exponential backoff and rate-limit caps. Provider failures are
+ * explicit so an ingestion job can never persist demo football records.
  */
 
 import {
@@ -68,8 +69,8 @@ export class ApiFootballAdapter implements FootballDataProvider {
         type: item.league.type,
         logo: item.league.logo,
       }));
-    } catch {
-      return MOCK_PROVIDER_COMPETITIONS;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -84,12 +85,11 @@ export class ApiFootballAdapter implements FootballDataProvider {
           isCurrent: Boolean(s.current),
         }));
       }
-    } catch {}
+    } catch (error) {
+      throw error;
+    }
 
-    return [
-      { year: 2025, startDate: "2025-08-01", endDate: "2026-05-31", isCurrent: true },
-      { year: 2024, startDate: "2024-08-01", endDate: "2025-05-31", isCurrent: false },
-    ];
+    return [];
   }
 
   public async getTeams(competitionProviderId: number, seasonYear: number): Promise<ProviderTeam[]> {
@@ -103,8 +103,8 @@ export class ApiFootballAdapter implements FootballDataProvider {
         stadium: item.venue?.name,
         logo: item.team.logo,
       }));
-    } catch {
-      return MOCK_PROVIDER_TEAMS;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -137,8 +137,8 @@ export class ApiFootballAdapter implements FootballDataProvider {
         halftimeAwayScore: item.score?.halftime?.away,
         referee: item.fixture.referee,
       }));
-    } catch {
-      return MOCK_PROVIDER_FIXTURES;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -170,8 +170,8 @@ export class ApiFootballAdapter implements FootballDataProvider {
           expectedGoals: parseNum(statsMap.get("expected_goals")),
         };
       });
-    } catch {
-      return MOCK_PROVIDER_STATISTICS;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -193,52 +193,3 @@ function parsePct(val: any): number | undefined {
   }
   return parseNum(val);
 }
-
-// ────────────────────────── MOCK FALLBACK DATA ──────────────────────────
-export const MOCK_PROVIDER_COMPETITIONS: ProviderCompetition[] = [
-  { providerId: 39, name: "Premier League", country: "England", type: "League" },
-  { providerId: 2, name: "UEFA Champions League", country: "World", type: "Cup" },
-  { providerId: 140, name: "La Liga", country: "Spain", type: "League" },
-  { providerId: 135, name: "Serie A", country: "Italy", type: "League" },
-];
-
-export const MOCK_PROVIDER_TEAMS: ProviderTeam[] = [
-  { providerId: 42, name: "Arsenal", country: "England", stadium: "Emirates Stadium" },
-  { providerId: 40, name: "Liverpool", country: "England", stadium: "Anfield" },
-  { providerId: 541, name: "Real Madrid", country: "Spain", stadium: "Santiago Bernabeu" },
-  { providerId: 157, name: "Bayern Munich", country: "Germany", stadium: "Allianz Arena" },
-];
-
-export const MOCK_PROVIDER_FIXTURES: ProviderFixture[] = [
-  {
-    providerFixtureId: 1001,
-    providerCompetitionId: 39,
-    seasonYear: 2025,
-    homeTeamProviderId: 42,
-    awayTeamProviderId: 40,
-    homeTeamName: "Arsenal",
-    awayTeamName: "Liverpool",
-    kickoffAt: "2026-07-26T19:30:00Z",
-    statusShort: "NS",
-  },
-  {
-    providerFixtureId: 1002,
-    providerCompetitionId: 2,
-    seasonYear: 2025,
-    homeTeamProviderId: 541,
-    awayTeamProviderId: 157,
-    homeTeamName: "Real Madrid",
-    awayTeamName: "Bayern Munich",
-    kickoffAt: "2026-07-27T20:00:00Z",
-    statusShort: "FT",
-    homeScore: 2,
-    awayScore: 1,
-    halftimeHomeScore: 1,
-    halftimeAwayScore: 0,
-  },
-];
-
-export const MOCK_PROVIDER_STATISTICS: ProviderFixtureStatistics[] = [
-  { teamProviderId: 541, possessionPct: 56, totalShots: 15, shotsOnTarget: 6, corners: 7, fouls: 10, expectedGoals: 1.95 },
-  { teamProviderId: 157, possessionPct: 44, totalShots: 11, shotsOnTarget: 4, corners: 4, fouls: 12, expectedGoals: 1.20 },
-];

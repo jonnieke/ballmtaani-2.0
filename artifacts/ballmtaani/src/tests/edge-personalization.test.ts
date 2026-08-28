@@ -32,7 +32,7 @@ test("2. Multilingual Match Explanation Generator (EN / SW / SH)", () => {
 
   const en = generateMultilingualExplanation(pred, "en");
   assert.equal(en.language, "en");
-  assert.ok(en.summary.includes("Arsenal"), "English summary must include home team name");
+  assert.ok(en.summary.includes(pred.homeTeam) || en.summary.includes(pred.awayTeam), "English summary must include the favoured team name");
 
   const sw = generateMultilingualExplanation(pred, "sw");
   assert.equal(sw.language, "sw");

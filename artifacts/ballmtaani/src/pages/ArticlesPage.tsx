@@ -21,6 +21,7 @@ interface ArticleItem {
 
 const DEFAULT_AUTHOR = "Mtaa Daily Desk";
 const DEFAULT_IMG = "https://rkxrkpahrrgzlnxqxolu.supabase.co/storage/v1/object/public/ballmtaani-images/Football_culture_stadium.jpeg";
+const ENABLE_CONTENT_FALLBACKS = import.meta.env.VITE_ENABLE_CONTENT_MOCKS === "true";
 
 function readTime(excerpt?: string | null) {
   if (!excerpt) return "2 min";
@@ -33,7 +34,7 @@ export default function ArticlesPage() {
   const [filter, setFilter] = useState<"all" | "wc26">("all");
 
   useEffect(() => {
-    const fallbackArticles = getEditorialFallbackArticles().map((article) => ({
+    const fallbackArticles = (ENABLE_CONTENT_FALLBACKS ? getEditorialFallbackArticles() : []).map((article) => ({
       id: article.id,
       slug: article.slug,
       title: article.title,

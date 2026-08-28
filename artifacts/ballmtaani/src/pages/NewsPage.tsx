@@ -7,7 +7,7 @@ import { ExternalLink, Search, Clock, ChevronRight, BarChart2, Gamepad2, Newspap
 import SEO from "../components/SEO";
 import { analytics } from "../lib/analytics";
 import { getEditorialFallbackArticles } from "../data/editorial-fallback-articles";
-import { fetchLocalFootballDesk, type LocalFootballDesk } from "../lib/local-football";
+import { EMPTY_LOCAL_FOOTBALL_DESK, fetchLocalFootballDesk, type LocalFootballDesk } from "../lib/local-football";
 
 interface PartnerArticle {
   id: string;
@@ -52,6 +52,7 @@ const TAB_KEYWORDS: Record<string, string[]> = {
 
 const TABS = ["Front Page", "Transfers", "Opinion", "World Cup Archive", "Match Reports", "Kenyan Fan Angle", "Africa", "Wire"];
 const SECTION_TABS: Record<string, string> = { transfers: "Transfers", opinion: "Opinion" };
+const ENABLE_CONTENT_FALLBACKS = import.meta.env.VITE_ENABLE_CONTENT_MOCKS === "true";
 function initialTab() {
   const section = new URLSearchParams(window.location.search).get("section")?.toLowerCase() || "";
   return section === "kenya" ? "Kenyan Fan Angle" : SECTION_TABS[section] || "Front Page";
@@ -64,7 +65,7 @@ export default function NewsPage() {
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState(initialTab);
   const [fixtures, setFixtures] = useState<any[]>([]);
-  const [localDesk, setLocalDesk] = useState<LocalFootballDesk>({ matches: [], standings: [] });
+  const [localDesk, setLocalDesk] = useState<LocalFootballDesk>(EMPTY_LOCAL_FOOTBALL_DESK);
 
   useEffect(() => {
     Promise.all([
@@ -74,7 +75,7 @@ export default function NewsPage() {
       fetchFootballNews(),
       fetchTodaysFixtures(),
     ]).then(([p, r, f]) => {
-      const fallbackPartner: PartnerArticle[] = getEditorialFallbackArticles().map(article => ({
+      const fallbackPartner: PartnerArticle[] = (ENABLE_CONTENT_FALLBACKS ? getEditorialFallbackArticles() : []).map(article => ({
         id: article.id,
         slug: article.slug,
         title: article.title,

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import { Download, X, Smartphone, Zap, Sparkles, Share, PlusSquare } from "lucide-react";
+import { Download, X, Share, PlusSquare } from "lucide-react";
 
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -27,23 +26,36 @@ export default function PwaInstallPrompt() {
     const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
     setIsIos(isIosDevice);
 
-    // Android/Desktop Chrome beforeinstallprompt event
+    let installAvailable = isIosDevice;
+    let delayElapsed = false;
+    const hasEngaged = () => {
+      const pageHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      return window.scrollY / pageHeight >= 0.3;
+    };
+    const revealAfterEngagement = () => {
+      if (installAvailable && (delayElapsed || hasEngaged())) setShowPrompt(true);
+    };
+
+    // Keep the native install event, but do not cover editorial content on arrival.
     const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowPrompt(true);
+      installAvailable = true;
+      revealAfterEngagement();
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("scroll", revealAfterEngagement, { passive: true });
 
-    // If iOS and not installed, show after 3 seconds
-    if (isIosDevice && !window.matchMedia("(display-mode: standalone)").matches) {
-      const timer = setTimeout(() => setShowPrompt(true), 3000);
-      return () => clearTimeout(timer);
-    }
+    const timer = window.setTimeout(() => {
+      delayElapsed = true;
+      revealAfterEngagement();
+    }, 45_000);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("scroll", revealAfterEngagement);
+      window.clearTimeout(timer);
     };
   }, []);
 
@@ -69,7 +81,7 @@ export default function PwaInstallPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
-      <div className="relative rounded-2xl border border-emerald-500/40 bg-[#121212]/95 backdrop-blur-md p-4 shadow-2xl space-y-3 text-white">
+      <div className="relative space-y-3 rounded-xl border border-red-500/35 bg-[#121212]/95 p-4 text-white shadow-2xl backdrop-blur-md">
         <button
           onClick={handleDismiss}
           className="absolute top-3 right-3 text-gray-400 hover:text-white p-1"
@@ -79,17 +91,12 @@ export default function PwaInstallPrompt() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-black text-black text-sm shadow-md shrink-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#d71920] text-sm font-black text-white shadow-md">
             BM
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <h4 className="text-xs font-black text-white">Install BallMtaani Edge</h4>
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px] px-1.5 py-0">
-                0 MB
-              </Badge>
-            </div>
-            <p className="text-[11px] text-gray-300">Fast offline access &amp; instant lineup receipts</p>
+            <h4 className="text-xs font-black text-white">Add BallMtaani to your phone</h4>
+            <p className="text-[11px] text-gray-300">Quick access to fixtures, verified tables and football news.</p>
           </div>
         </div>
 
@@ -99,7 +106,7 @@ export default function PwaInstallPrompt() {
               1. Tap Share <Share className="h-3.5 w-3.5 text-blue-400 inline" /> in Safari toolbar.
             </p>
             <p className="flex items-center gap-1.5">
-              2. Select <strong>Add to Home Screen</strong> <PlusSquare className="h-3.5 w-3.5 text-emerald-400 inline" />.
+              2. Select <strong>Add to Home Screen</strong> <PlusSquare className="inline h-3.5 w-3.5 text-red-400" />.
             </p>
           </div>
         ) : (
@@ -107,7 +114,7 @@ export default function PwaInstallPrompt() {
             <Button
               onClick={handleInstallClick}
               size="sm"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-8 shadow-md"
+              className="h-8 flex-1 bg-[#d71920] text-xs font-bold text-white shadow-md hover:bg-[#b31319]"
             >
               <Download className="h-3.5 w-3.5 mr-1.5" /> Install App
             </Button>

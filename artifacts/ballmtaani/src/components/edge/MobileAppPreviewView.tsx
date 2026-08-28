@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Smartphone, WifiOff, Zap, Bell, ArrowLeft, ShieldCheck, Heart } from "lucide-react";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../../lib/edge/public/public-api-service";
+import { getPublishedUpcomingPredictions } from "../../lib/edge/public/public-api-service";
 import PredictionCard from "./PredictionCard";
 
 export default function MobileAppPreviewView() {
   const [lowDataMode, setLowDataMode] = useState<boolean>(false);
   const [isOffline, setIsOffline] = useState<boolean>(false);
+  const { data: predictions = [], isLoading } = useQuery({ queryKey: ["published-edge-predictions"], queryFn: getPublishedUpcomingPredictions, staleTime: 5 * 60 * 1000 });
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center justify-center p-4">
@@ -44,7 +46,9 @@ export default function MobileAppPreviewView() {
 
         {/* Prediction Cards List */}
         <div className="px-4 space-y-4 max-h-[500px] overflow-y-auto">
-          {MOCK_PUBLISHED_PREDICTIONS.slice(0, 2).map((pred) => (
+          {isLoading && <p className="py-8 text-center text-xs text-gray-500">Loading published data...</p>}
+          {!isLoading && !predictions.length && <p className="border border-white/10 p-4 text-center text-xs text-gray-500">No verified predictions are published.</p>}
+          {predictions.slice(0, 2).map((pred) => (
             <PredictionCard key={pred.fixtureId} prediction={pred} />
           ))}
         </div>

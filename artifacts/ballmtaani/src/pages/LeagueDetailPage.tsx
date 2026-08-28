@@ -59,7 +59,9 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
     return [...deduped.values()].sort((a, b) => (a.kickoffAt || 0) - (b.kickoffAt || 0));
   }, [leagueId, leagueFixtures, rawMatches, rawRecentMatches, rawUpcomingFixtures]);
   const allFixturesLoading = fixturesLoading || leagueFixturesLoading;
-  const standings = league && rawStandingsMap ? rawStandingsMap[String(league.id)] || [] : [];
+  const standings = league && rawStandingsMap
+    ? rawStandingsMap[league.officialName] || rawStandingsMap[league.shortName] || []
+    : [];
 
   const [activeTab, setActiveTab] = useState<"overview" | "fixtures" | "table">(
     subView === "table" || isTablePath ? "table" : subView === "fixtures" || isFixturesPath ? "fixtures" : "overview"
@@ -197,16 +199,16 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                         <tr key={row.rank} className="hover:bg-white/5 transition-colors">
                           <td className="py-2.5 px-2 font-bold text-white/70">{row.rank}</td>
                           <td className="py-2.5 px-2 font-bold text-white flex items-center gap-2">
-                            {row.team.logo && <img src={row.team.logo} alt={row.team.name} className="w-5 h-5 object-contain" />}
-                            <Link href={`/teams/${row.team.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="hover:text-[#FFD700] transition-colors">
-                              {row.team.name}
+                            {row.logo && <img src={row.logo} alt="" aria-hidden="true" className="w-5 h-5 object-contain" />}
+                            <Link href={`/teams/${row.team.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="hover:text-[#FFD700] transition-colors">
+                              {row.team}
                             </Link>
                           </td>
-                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.played}</td>
-                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.win}</td>
-                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.draw}</td>
-                          <td className="py-2.5 px-2 text-center text-white/80">{row.all.lose}</td>
-                          <td className="py-2.5 px-2 text-center text-white/80">{row.goalsDiff > 0 ? `+${row.goalsDiff}` : row.goalsDiff}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.played}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.won}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.draw}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.lost}</td>
+                          <td className="py-2.5 px-2 text-center text-white/80">{row.gd}</td>
                           <td className="py-2.5 px-2 text-center font-black text-[#FFD700]">{row.points}</td>
                         </tr>
                       ))}
@@ -215,7 +217,7 @@ export default function LeagueDetailPage({ subView = "main" }: Props) {
                 </div>
               ) : (
                 <div className="py-8 text-center text-xs text-white/50 bg-white/5 rounded-xl border border-white/5">
-                  Standings for the {league.currentSeason} season are being updated. Check back shortly.
+                  Verified standings are currently unavailable from API-Football. BallMtaani will not display a substitute table.
                 </div>
               )}
             </div>

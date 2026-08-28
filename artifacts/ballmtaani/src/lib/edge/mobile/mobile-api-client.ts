@@ -3,7 +3,7 @@
  */
 
 import { MatchPredictionOutput } from "../types";
-import { MOCK_PUBLISHED_PREDICTIONS } from "../public/public-api-service";
+import { getPublishedUpcomingPredictions } from "../public/public-api-service";
 
 export interface MobileCacheConfig {
   lowDataMode: boolean;
@@ -38,13 +38,13 @@ export class MobileApiClient {
       };
     }
 
-    // Populate cache with published predictions
-    MOBILE_PREDICTION_CACHE.set(cacheKey, { data: MOCK_PUBLISHED_PREDICTIONS, timestamp: now });
+    const publishedPredictions = await getPublishedUpcomingPredictions();
+    MOBILE_PREDICTION_CACHE.set(cacheKey, { data: publishedPredictions, timestamp: now });
 
     return {
-      data: MOCK_PUBLISHED_PREDICTIONS,
+      data: publishedPredictions,
       isFromCache: false,
-      freshnessLabel: "Live fresh data",
+      freshnessLabel: publishedPredictions.length ? "Live published data" : "No published predictions",
       lowDataMode: config.lowDataMode,
     };
   }

@@ -12,7 +12,10 @@ import { analyzeMarketValue, removeBookmakerMargin } from "./value-calculator";
 import { MatchPredictionOutput, BacktestSummary } from "./types";
 import { runWalkForwardBacktest } from "./backtest-engine";
 
+const ENABLE_EDGE_DEMO = typeof import.meta !== "undefined" && import.meta.env?.VITE_ENABLE_EDGE_DEMO === "true";
+
 export async function fetchEdgePredictions(competitionId?: string): Promise<MatchPredictionOutput[]> {
+  if (!supabase) return ENABLE_EDGE_DEMO ? MOCK_PREDICTIONS : [];
   try {
     let query = supabase.from("predictions").select(`
       *,
@@ -22,60 +25,72 @@ export async function fetchEdgePredictions(competitionId?: string): Promise<Matc
 
     const { data, error } = await query;
     if (!error && data && data.length > 0) {
-      return data.map((item: any) => mapDbPredictionToOutput(item));
+      return data.map((item: any) => mapDbPredictionToOutput(item)).filter((item): item is MatchPredictionOutput => item !== null);
     }
   } catch (err) {
-    console.warn("Using Edge local prediction generator fallback", err);
+    console.warn("Published Edge predictions are unavailable", err);
   }
 
-  return MOCK_PREDICTIONS;
+  return ENABLE_EDGE_DEMO ? MOCK_PREDICTIONS : [];
 }
 
 export async function fetchEdgePredictionById(fixtureId: string | number): Promise<MatchPredictionOutput | null> {
   const all = await fetchEdgePredictions();
-  return all.find((p) => String(p.fixtureId) === String(fixtureId)) || MOCK_PREDICTIONS[0];
+  return all.find((p) => String(p.fixtureId) === String(fixtureId)) || null;
 }
 
 export async function fetchEdgeBacktestSummary(): Promise<BacktestSummary> {
   return MOCK_BACKTEST_SUMMARY;
 }
 
-function mapDbPredictionToOutput(item: any): MatchPredictionOutput {
+function mapDbPredictionToOutput(item: any): MatchPredictionOutput | null {
   const f = item.fixtures || {};
-  const home = f.home_team?.name || "Home Team";
-  const away = f.away_team?.name || "Away Team";
-  const comp = f.competitions?.name || "Premier League";
+  const home = f.home_team?.name;
+  const away = f.away_team?.name;
+  const comp = f.competitions?.name;
+  const homeWin = Number(item.home_win_probability ?? item.home_probability);
+  const draw = Number(item.draw_probability);
+  const awayWin = Number(item.away_win_probability ?? item.away_probability);
+  const over25 = Number(item.over_2_5_probability);
+  const under25 = Number(item.under_2_5_probability);
+  const bttsYes = Number(item.btts_yes_probability);
+  const bttsNo = Number(item.btts_no_probability);
+  const required = [homeWin, draw, awayWin, over25, under25, bttsYes, bttsNo];
+  const validPair = (values: number[]) => Math.abs(values.reduce((sum, value) => sum + value, 0) - 1) < 0.02;
+  const expectedHomeGoals = Number(item.expected_home_goals);
+  const expectedAwayGoals = Number(item.expected_away_goals);
+  if (!f.id || !home || !away || !comp || !f.kickoff_at || required.some((value) => !Number.isFinite(value))) return null;
+  if (!Number.isFinite(expectedHomeGoals) || !Number.isFinite(expectedAwayGoals)) return null;
+  if (!validPair([homeWin, draw, awayWin]) || !validPair([over25, under25]) || !validPair([bttsYes, bttsNo])) return null;
 
   return {
-    fixtureId: f.id || item.fixture_id,
+    fixtureId: f.id,
     homeTeam: home,
     awayTeam: away,
     competition: comp,
-    kickoffAt: f.kickoff_at || new Date().toISOString(),
-    modelVersion: "v1.0.0",
-    predictionStatus: item.prediction_status || "Strong Edge",
-    homeWinProb: Number(item.home_probability || 0.45),
-    drawProb: Number(item.draw_probability || 0.28),
-    awayWinProb: Number(item.away_probability || 0.27),
-    over25Prob: Number(item.over_2_5_probability || 0.54),
-    under25Prob: Number(item.under_2_5_probability || 0.46),
-    bttsYesProb: Number(item.btts_yes_probability || 0.52),
-    bttsNoProb: Number(item.btts_no_probability || 0.48),
-    expectedHomeGoals: Number(item.expected_home_goals || 1.65),
-    expectedAwayGoals: Number(item.expected_away_goals || 1.10),
-    topScorelines: item.likely_scorelines || [
-      { homeGoals: 2, awayGoals: 1, probability: 0.125, formattedScore: "2 - 1" },
-      { homeGoals: 1, awayGoals: 1, probability: 0.110, formattedScore: "1 - 1" },
-      { homeGoals: 1, awayGoals: 0, probability: 0.098, formattedScore: "1 - 0" },
-    ],
-    confidence: item.confidence || "High",
-    dataQuality: item.data_quality || "Good",
-    riskFactors: ["Standard match outcome volatility applies."],
-    templateExplanation: item.prediction_explanations?.[0]?.content || "Statistical model analysis generated.",
+    kickoffAt: f.kickoff_at,
+    modelVersion: item.model_versions?.version || "published-model",
+    predictionStatus: ["Strong Edge", "Moderate Edge", "Small Edge", "No Edge", "Avoid", "Insufficient Data", "Awaiting Lineups"].includes(item.prediction_status)
+      ? item.prediction_status
+      : "Insufficient Data",
+    homeWinProb: homeWin,
+    drawProb: draw,
+    awayWinProb: awayWin,
+    over25Prob: over25,
+    under25Prob: under25,
+    bttsYesProb: bttsYes,
+    bttsNoProb: bttsNo,
+    expectedHomeGoals,
+    expectedAwayGoals,
+    topScorelines: Array.isArray(item.likely_scorelines) ? item.likely_scorelines : [],
+    confidence: ["High", "Medium", "Low"].includes(item.confidence_label || item.confidence) ? (item.confidence_label || item.confidence) : "Low",
+    dataQuality: ["Excellent", "Good", "Limited", "Insufficient"].includes(item.data_quality_label || item.data_quality) ? (item.data_quality_label || item.data_quality) : "Insufficient",
+    riskFactors: Array.isArray(item.risk_factors) ? item.risk_factors : [],
+    templateExplanation: item.prediction_explanations?.[0]?.content || "No published explanation is available.",
     markets: item.prediction_markets || [],
     revisionNumber: item.revision_number || 1,
-    generatedAt: item.generated_at || new Date().toISOString(),
-    publishedAt: item.published_at || new Date().toISOString(),
+    generatedAt: item.generated_at,
+    publishedAt: item.published_at,
   };
 }
 

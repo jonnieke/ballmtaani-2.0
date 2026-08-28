@@ -5,6 +5,7 @@
 
 import { generateFixturePrediction } from "../engine/prediction-generator";
 import { MatchPredictionOutput } from "../types";
+import { fetchEdgePredictionById, fetchEdgePredictions } from "../edge-data-service";
 
 export const MOCK_PUBLISHED_PREDICTIONS: MatchPredictionOutput[] = [
   generateFixturePrediction({
@@ -166,10 +167,12 @@ export const MOCK_PUBLISHED_PREDICTIONS: MatchPredictionOutput[] = [
 ];
 
 export async function getPublishedUpcomingPredictions(): Promise<MatchPredictionOutput[]> {
-  return MOCK_PUBLISHED_PREDICTIONS;
+  const now = Date.now();
+  return (await fetchEdgePredictions())
+    .filter((prediction) => Date.parse(prediction.kickoffAt) >= now && Boolean(prediction.publishedAt))
+    .sort((a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt));
 }
 
 export async function getPublishedPredictionById(fixtureId: string): Promise<MatchPredictionOutput | null> {
-  const found = MOCK_PUBLISHED_PREDICTIONS.find((p) => String(p.fixtureId) === String(fixtureId));
-  return found || MOCK_PUBLISHED_PREDICTIONS[0];
+  return fetchEdgePredictionById(fixtureId);
 }
